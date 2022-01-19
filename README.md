@@ -1,9 +1,8 @@
-# seedot
+# cdot
 
 [![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/) [![PyReference](https://img.shields.io/pypi/dm/cdot.svg)](https://pypi.org/project/cdot/)
 
-
-Seedot is used to load transcripts for the 2 most popular Python [HGVS](http://varnomen.hgvs.org/) libraries.
+cdot is used to load transcripts for the 2 most popular Python [HGVS](http://varnomen.hgvs.org/) libraries.
 
 It works by:
 
@@ -17,10 +16,10 @@ We currently support 788k transcripts, 5.5x as many as [Universal Transcript Arc
 [Biocommons HGVS](https://github.com/biocommons/hgvs) example:
 
 ```
-from seedot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider
+from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider
 
-hp = JSONDataProvider({"GRCh37": "./seedot_220119.grch38.json.gz")  # Uses local JSON file
-# hp = RESTDataProvider()  # Uses API server at seedot.cc
+hp = JSONDataProvider({"GRCh37": "./cdot_220119.grch38.json.gz")  # Uses local JSON file
+# hp = RESTDataProvider()  # Uses API server at cdot.cc
 
 am = AssemblyMapper(hp,
                     assembly_name='GRCh37',
@@ -39,7 +38,7 @@ am.c_to_g(var_c)
 
 ## Philosophical differences from Universal Transcript Archive
 
-Seedot aims to be as simple as possible: convert existing Ensembl/RefSeq GTFs into JSON format
+cdot aims to be as simple as possible: convert existing Ensembl/RefSeq GTFs into JSON format
 
 Universal transcript archive is an excellent and ambitious project that:
 
