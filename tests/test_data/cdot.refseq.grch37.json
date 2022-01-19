@@ -188,5 +188,5 @@
       "url": "http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.105/GFF/ref_GRCh37.p13_top_level.gff3.gz"
     }
   },
-  "seedot_version": "0.1.1"
+  "cdot_version": "0.1.1"
 }

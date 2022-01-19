@@ -81,9 +81,9 @@ for release in 109.20190607 109.20190905 109.20191205 109.20200228 109.20200522 
   pyreference_args+=(--pyreference-json ${pyreference_file})
 done
 
-merged_file="seedot-$(date --iso).refseq.grch38.json.gz"
+merged_file="cdot-$(date --iso).refseq.grch38.json.gz"
 if [[ ! -e ${merged_file} ]]; then
   BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 
-  python3 ${BASE_DIR}/pyreference_to_seedot_json.py ${pyreference_args[@]} --output ${merged_file}
+  python3 ${BASE_DIR}/pyreference_to_cdot_json.py ${pyreference_args[@]} --output ${merged_file}
 fi

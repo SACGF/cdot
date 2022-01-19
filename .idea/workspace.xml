@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="9c11c9a1-b587-4630-b4c1-b5c113911def" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/cdot.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/seedot.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate_transcript_data/ensembl_gene_annotation_grch37.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate_transcript_data/ensembl_gene_annotation_grch37.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate_transcript_data/ensembl_gene_annotation_grch38.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate_transcript_data/ensembl_gene_annotation_grch38.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate_transcript_data/pyreference_to_seedot_json.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_transcript_data/pyreference_to_seedot_json.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate_transcript_data/refseq_gene_annotation_grch37.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate_transcript_data/refseq_gene_annotation_grch37.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate_transcript_data/refseq_gene_annotation_grch38.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate_transcript_data/refseq_gene_annotation_grch38.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/seedot/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/cdot/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/seedot/hgvs/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/cdot/hgvs/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/seedot/hgvs/dataproviders/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/cdot/hgvs/dataproviders/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/seedot/hgvs/dataproviders/json_data_provider.py" beforeDir="false" afterPath="$PROJECT_DIR$/cdot/hgvs/dataproviders/json_data_provider.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/seedot/pyhgvs/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/cdot/pyhgvs/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/seedot/pyhgvs/pyhgvs_transcript.py" beforeDir="false" afterPath="$PROJECT_DIR$/cdot/pyhgvs/pyhgvs_transcript.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_data/seedot.refseq.grch37.json" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_data/cdot.refseq.grch37.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_json_data_provider.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_json_data_provider.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="23uRILFzlaRF1hORVPl2G4y6pji" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="9c11c9a1-b587-4630-b4c1-b5c113911def" name="Changes" comment="" />
+      <created>1642581906400</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1642581906400</updated>
+      <workItem from="1642581909915" duration="791000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

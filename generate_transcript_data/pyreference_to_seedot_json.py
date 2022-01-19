@@ -10,11 +10,11 @@ import json
 from argparse import ArgumentParser
 from typing import Dict
 
-import seedot
+import cdot
 
 
 def handle_args():
-    parser = ArgumentParser(description='Convert multiple PyReference json.gz files into one for SeeDot')
+    parser = ArgumentParser(description='Convert multiple PyReference json.gz files into one for cdot')
     parser.add_argument('--pyreference-json', required=True, nargs="+", action="extend",
                         help='PyReference JSON.gz - list OLDEST to NEWEST (newest is kept)')
     parser.add_argument("--store-genes", action='store_true', help="Also store gene/version information")
@@ -80,11 +80,11 @@ def main():
                 if hgnc := gene_version.get("hgnc"):
                     transcript_version["hgnc"] = hgnc
 
-    print("Writing SeeDot data")
+    print("Writing cdot data")
     with gzip.open(args.output, 'w') as outfile:
         data = {
             "transcripts": transcript_versions,
-            "seedot_version": seedot.__version__,
+            "cdot_version": cdot.__version__,
         }
         if args.store_genes:
             data["genes"] = gene_versions

@@ -220,6 +220,6 @@ class RESTDataProvider(AbstractJSONDataProvider):
 
     def __init__(self, url=None, mode=None, cache=None):
         if url is None:
-            url = "http://seedot.cc"
+            url = "http://cdot.cc"
         assemblies = ["GRCh37", "GRCh38"]
         super().__init__(assemblies=assemblies, mode=mode, cache=cache)
