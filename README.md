@@ -1,6 +1,6 @@
 # cdot
 
-[![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/) [![PyReference](https://img.shields.io/pypi/dm/cdot.svg)](https://pypi.org/project/cdot/)
+[![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/) [![cdot](https://img.shields.io/pypi/dm/cdot.svg)](https://pypi.org/project/cdot/)
 
 cdot is used to load transcripts for the 2 most popular Python [HGVS](http://varnomen.hgvs.org/) libraries.
 
@@ -54,3 +54,6 @@ However the complexity causes a few downsides:
 * Internet hosted UTA is a PostgreSQL server, so requires client Postgres libraries, is inaccessible behind firewalls. They have been planning on building a [REST server since 2014](https://github.com/biocommons/uta/issues/164)
 * High complexity manual process for releases means they [do not support Ensembl](https://github.com/biocommons/uta/issues/233) and take a while to make RefSeq releases.
 
+## What does cdot stand for?
+
+cdot, pronounced "see dot" stands for Complete Dict of Transcripts
