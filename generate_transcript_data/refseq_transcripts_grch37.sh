@@ -1,8 +1,15 @@
 #!/bin/bash
 
-pyreference_args=()
+set -e
+
+BASE_DIR=$(dirname ${BASH_SOURCE[0]})
+GENOME_BUILD=grch37
+UTA_VERSION=20210129
 
 # Having troubles with corrupted files downloading via FTP from NCBI via IPv6, http works ok
+# NOTE: RefSeq transcripts in GRCh37 before p13 did not have alignment gap information
+
+pyreference_args=()
 
 filename=ref_GRCh37.p5_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/BUILD.37.3/GFF/${filename}
@@ -39,6 +46,12 @@ if [[ ! -e ${pyreference_file} ]]; then
 fi
 pyreference_args+=(--pyreference-json ${pyreference_file})
 
+# UTA transcripts have gaps, so they should overwrite the earlier refseq transcripts (without gaps)
+# But will be overwritten by newer (post p13) official transcripts
+uta_cdot_file="cdot.uta_${UTA_VERSION}.${GENOME_BUILD}.json.gz"
+${BASE_DIR}/uta_transcripts.sh ${UTA_VERSION} ${GENOME_BUILD}
+pyreference_args+=(--pyreference-json ${uta_cdot_file})
+
 
 filename=ref_GRCh37.p13_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.105/GFF/${filename}
@@ -67,9 +80,7 @@ for release in 105.20190906 105.20201022; do
 done
 
 merged_file="cdot-$(date --iso).refseq.grch37.json.gz"
-echo "Creating ${merged_file}"
 if [[ ! -e ${merged_file} ]]; then
-  BASE_DIR=$(dirname ${BASH_SOURCE[0]})
-
+  echo "Creating ${merged_file}"
   python3 ${BASE_DIR}/pyreference_to_cdot_json.py ${pyreference_args[@]} --output ${merged_file}
 fi

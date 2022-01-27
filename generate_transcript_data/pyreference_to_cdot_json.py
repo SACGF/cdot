@@ -8,6 +8,7 @@
 import gzip
 import json
 from argparse import ArgumentParser
+from collections import Counter
 from typing import Dict
 
 import cdot
@@ -24,10 +25,12 @@ def handle_args():
 
 def convert_gene_pyreference_to_gene_version_data(gene_data: Dict) -> Dict:
     gene_version_data = {
-        'biotype': ",".join(gene_data["biotype"]),
         'description': gene_data.get("description"),
         'gene_symbol': gene_data["name"],
     }
+
+    if biotype_list := gene_data.get("biotype"):
+        gene_version_data['biotype'] = ",".join(biotype_list)
 
     if hgnc_str := gene_data.get("HGNC"):
         # Has HGNC: (5 characters) at start of it
@@ -73,12 +76,23 @@ def main():
                 gene_accession = transcript_gene_version[transcript_accession]
                 gene_version = gene_versions[gene_accession]
                 transcript_version["id"] = transcript_accession
-                transcript_version["gene_version"] = gene_accession
+                if not gene_accession.startswith("_"):
+                    transcript_version["gene_version"] = gene_accession
                 transcript_version["gene_name"] = gene_version["gene_symbol"]
                 transcript_version["url"] = url
                 transcript_versions[transcript_accession] = transcript_version
                 if hgnc := gene_version.get("hgnc"):
                     transcript_version["hgnc"] = hgnc
+
+    # Summarise where it's from
+    transcript_urls = Counter()
+    for tv in transcript_versions.values():
+        transcript_urls[tv["url"]] += 1
+
+    total = sum(transcript_urls.values())
+    print("Final transcripts are from:")
+    for url, count in transcript_urls.most_common():
+        print(f"{url}: {count} ({count*100 / total:.1f}%)")
 
     print("Writing cdot data")
     with gzip.open(args.output, 'w') as outfile:
