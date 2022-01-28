@@ -23,15 +23,16 @@ class AbstractJSONDataProvider(Interface):
             self.assembly_by_contig.update({contig: assembly_name for contig in contig_map.keys()})
 
     @abc.abstractmethod
-    def _get_transcript_for_assembly(self, tx_ac, assembly):
+    def _get_transcript(self, tx_ac):
         pass
 
-    def _get_transcript(self, tx_ac, alt_ac):
+    def _get_transcript_coordinates_for_contig(self, transcript, alt_ac):
         assembly = self.assembly_by_contig.get(alt_ac)
         if assembly is None:
             supported_assemblies = ", ".join(self.assembly_maps.keys())
             raise ValueError(f"Contig '{alt_ac}' not supported. Supported assemblies: {supported_assemblies}")
-        return self._get_transcript_for_assembly(tx_ac, assembly)
+
+        return transcript["genome_builds"].get(assembly)
 
     def data_version(self):
         return self.required_version
@@ -46,7 +47,9 @@ class AbstractJSONDataProvider(Interface):
         """return a list of accessions for the specified assembly name (e.g., GRCh38.p5) """
         assembly_map = self.assembly_maps.get(assembly_name)
         if assembly_map is None:
-            raise ValueError(f"Assembly '{assembly_name}' not supported.")
+            supported_assemblies = ", ".join(self.assembly_maps.keys())
+            raise ValueError(f"Assembly '{assembly_name}' not supported. Supported assemblies: {supported_assemblies}")
+
         return assembly_map
 
     def get_gene_info(self, gene):
@@ -96,13 +99,15 @@ class AbstractJSONDataProvider(Interface):
         return "".join(cigar_ops)
 
     def get_tx_exons(self, tx_ac, alt_ac, alt_aln_method):
-        transcript = self._get_transcript(tx_ac, alt_ac)
+        transcript = self._get_transcript(tx_ac)
         if not transcript:
             return None
 
+        assembly_coordinates = self._get_transcript_coordinates_for_contig(transcript, alt_ac)
+
         tx_exons = []  # Genomic order
-        exons = transcript["exons"]
-        alt_strand = 1 if transcript["strand"] == "+" else -1
+        exons = assembly_coordinates["exons"]
+        alt_strand = 1 if assembly_coordinates["strand"] == "+" else -1
 
         for (alt_start_i, alt_end_i, exon_id, cds_start_i, cds_end_i, gap) in exons:
             tx_start_i = cds_start_i - 1
@@ -139,17 +144,18 @@ class AbstractJSONDataProvider(Interface):
 
     def get_tx_identity_info(self, tx_ac):
         # Get any transcript as it's assembly independent
-        transcript = None
-        for assembly in self.assembly_maps:
-            transcript = self._get_transcript_for_assembly(tx_ac, assembly)
-            if transcript:
-                break
-
+        transcript = self._get_transcript(tx_ac)
         if not transcript:
             return None
 
         tx_info = self._get_transcript_info(transcript)
-        exons = transcript["exons"]
+
+        # Only using lengths (same in each build) not coordinates so grab anything
+        exons = []
+        for build_coordinates in transcript["genome_builds"].values():
+            exons = build_coordinates["exons"]
+            break
+
         stranded_order_exons = sorted(exons, key=lambda e: e[2])  # sort by exon_id
         tx_info["lengths"] = [ex[4] + 1 - ex[3] for ex in stranded_order_exons]
         tx_info["tx_ac"] = tx_ac
@@ -169,7 +175,7 @@ class AbstractJSONDataProvider(Interface):
         }
 
     def get_tx_info(self, tx_ac, alt_ac, alt_aln_method):
-        transcript = self._get_transcript(tx_ac, alt_ac)
+        transcript = self._get_transcript(tx_ac)
         if not transcript:
             return None
 
@@ -181,11 +187,11 @@ class AbstractJSONDataProvider(Interface):
 
     def get_tx_mapping_options(self, tx_ac):
         mapping_options = []
-        for assembly in self.assembly_maps:
-            if transcript := self._get_transcript_for_assembly(tx_ac, assembly):
+        if transcript := self._get_transcript(tx_ac):
+            for build_coordinates in transcript["genome_builds"].values():
                 mo = {
                     "tx_ac": tx_ac,
-                    "alt_ac": transcript["contig"],
+                    "alt_ac": build_coordinates["contig"],
                     "alt_aln_method": self.NCBI_ALN_METHOD,
                 }
                 mapping_options.append(mo)
@@ -193,25 +199,21 @@ class AbstractJSONDataProvider(Interface):
 
 
 class JSONDataProvider(AbstractJSONDataProvider):
-    def _get_transcript_for_assembly(self, tx_ac, assembly):
-        return self._assembly_json[assembly].get(tx_ac)
+    def _get_transcript(self, tx_ac):
+        return self.transcripts.get(tx_ac)
 
-    def __init__(self, assembly_json, mode=None, cache=None):
-        super().__init__(assemblies=assembly_json.keys(), mode=mode, cache=cache)
-
-        # No point being lazy as HGVS calls get_tx_mapping_options which requires us to check all builds
-        self._assembly_json = {}
-        for assembly, file_or_filename in assembly_json.items():
-            if isinstance(file_or_filename, str):
-                if file_or_filename.endswith(".gz"):
-                    f = gzip.open(file_or_filename)
-                else:
-                    f = open(file_or_filename)
+    def __init__(self, file_or_filename, mode=None, cache=None):
+        if isinstance(file_or_filename, str):
+            if file_or_filename.endswith(".gz"):
+                f = gzip.open(file_or_filename)
             else:
-                f = file_or_filename
-            data = json.load(f)
-            # TODO: Check version is ok?
-            self._assembly_json[assembly] = data["transcripts"]
+                f = open(file_or_filename)
+        else:
+            f = file_or_filename
+        data = json.load(f)
+        assemblies = data["genome_builds"]
+        super().__init__(assemblies=assemblies, mode=mode, cache=cache)
+        self.transcripts = data["transcripts"]
 
 
 class RESTDataProvider(AbstractJSONDataProvider):

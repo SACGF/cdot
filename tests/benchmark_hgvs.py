@@ -39,7 +39,7 @@ def main():
     elif args.rest:
         hdp = RESTDataProvider()  # Uses API server at cdot.cc
     elif args.json:
-        hdp = JSONDataProvider({"GRCh38": args.json})
+        hdp = JSONDataProvider(args.json)
 
     am = AssemblyMapper(hdp,
                         assembly_name='GRCh38',

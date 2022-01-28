@@ -99,5 +99,5 @@ done
 merged_file="cdot-$(date --iso).refseq.grch38.json.gz"
 if [[ ! -e ${merged_file} ]]; then
   echo "Creating ${merged_file}"
-  python3 ${BASE_DIR}/pyreference_to_cdot_json.py ${pyreference_args[@]} --output ${merged_file}
+  python3 ${BASE_DIR}/pyreference_to_cdot_json.py ${pyreference_args[@]} --genome-build=GRCh38 --output ${merged_file}
 fi

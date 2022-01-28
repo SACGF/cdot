@@ -19,6 +19,7 @@ def handle_args():
     parser.add_argument('--pyreference-json', required=True, nargs="+", action="extend",
                         help='PyReference JSON.gz - list OLDEST to NEWEST (newest is kept)')
     parser.add_argument("--store-genes", action='store_true', help="Also store gene/version information")
+    parser.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
     parser.add_argument('--output', required=True, help='Output filename')
     return parser.parse_args()
 
@@ -44,6 +45,9 @@ def convert_gene_pyreference_to_gene_version_data(gene_data: Dict) -> Dict:
 
 
 def main():
+    TRANSCRIPT_FIELDS = ["biotype", "start_codon", "stop_codon"]
+    GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons"]
+
     args = handle_args()
 
     gene_versions = {}  # We only keep those that are in the latest transcript version
@@ -72,22 +76,39 @@ def main():
                 for transcript_accession in gene["transcripts"]:
                     transcript_gene_version[transcript_accession] = gene_accession
 
-            for transcript_accession, transcript_version in pyref_data["transcripts_by_id"].items():
+            for transcript_accession, pyreference_transcript_version in pyref_data["transcripts_by_id"].items():
                 gene_accession = transcript_gene_version[transcript_accession]
                 gene_version = gene_versions[gene_accession]
-                transcript_version["id"] = transcript_accession
+
+                transcript_version = {
+                    "id": transcript_accession,
+                    "gene_name": gene_version["gene_symbol"],
+                }
+                for field in TRANSCRIPT_FIELDS:
+                    value = pyreference_transcript_version.get(field)
+                    if value is not None:
+                        transcript_version[field] = value
+
                 if not gene_accession.startswith("_"):
                     transcript_version["gene_version"] = gene_accession
-                transcript_version["gene_name"] = gene_version["gene_symbol"]
-                transcript_version["url"] = url
-                transcript_versions[transcript_accession] = transcript_version
                 if hgnc := gene_version.get("hgnc"):
                     transcript_version["hgnc"] = hgnc
+
+                genome_build_coordinates = {
+                    "url": url,
+                }
+                for field in GENOME_BUILD_FIELDS:
+                    value = pyreference_transcript_version.get(field)
+                    if value is not None:
+                        genome_build_coordinates[field] = value
+                transcript_version["genome_builds"] = {args.genome_build: genome_build_coordinates}
+                transcript_versions[transcript_accession] = transcript_version
 
     # Summarise where it's from
     transcript_urls = Counter()
     for tv in transcript_versions.values():
-        transcript_urls[tv["url"]] += 1
+        for build_coordinates in tv["genome_builds"].values():
+            transcript_urls[build_coordinates["url"]] += 1
 
     total = sum(transcript_urls.values())
     print(f"{total} transcript versions from:")
@@ -99,6 +120,7 @@ def main():
         data = {
             "transcripts": transcript_versions,
             "cdot_version": cdot.__version__,
+            "genome_builds": [args.genome_build],
         }
         if args.store_genes:
             data["genes"] = gene_versions
