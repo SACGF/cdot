@@ -90,7 +90,7 @@ def main():
         transcript_urls[tv["url"]] += 1
 
     total = sum(transcript_urls.values())
-    print("Final transcripts are from:")
+    print(f"{total} transcript versions from:")
     for url, count in transcript_urls.most_common():
         print(f"{url}: {count} ({count*100 / total:.1f}%)")
 

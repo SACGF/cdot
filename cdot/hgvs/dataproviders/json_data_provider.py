@@ -160,8 +160,8 @@ class AbstractJSONDataProvider(Interface):
     @staticmethod
     def _get_transcript_info(transcript):
         gene_name = transcript["gene_name"]
-        cds_start_i = transcript["start_codon"]
-        cds_end_i = transcript["stop_codon"]
+        cds_start_i = transcript.get("start_codon")
+        cds_end_i = transcript.get("stop_codon")
         return {
             "hgnc": gene_name,
             "cds_start_i": cds_start_i,
