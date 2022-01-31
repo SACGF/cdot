@@ -45,8 +45,8 @@ def convert_gene_pyreference_to_gene_version_data(gene_data: Dict) -> Dict:
 
 
 def main():
-    TRANSCRIPT_FIELDS = ["biotype", "start_codon", "stop_codon"]
-    GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons"]
+    PYREFERENCE_TRANSCRIPT_FIELDS = ["biotype", "start_codon", "stop_codon"]
+    PYREFERENCE_GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons"]
 
     args = handle_args()
 
@@ -84,7 +84,7 @@ def main():
                     "id": transcript_accession,
                     "gene_name": gene_version["gene_symbol"],
                 }
-                for field in TRANSCRIPT_FIELDS:
+                for field in PYREFERENCE_TRANSCRIPT_FIELDS:
                     value = pyreference_transcript_version.get(field)
                     if value is not None:
                         transcript_version[field] = value
@@ -97,7 +97,7 @@ def main():
                 genome_build_coordinates = {
                     "url": url,
                 }
-                for field in GENOME_BUILD_FIELDS:
+                for field in PYREFERENCE_GENOME_BUILD_FIELDS:
                     value = pyreference_transcript_version.get(field)
                     if value is not None:
                         genome_build_coordinates[field] = value
