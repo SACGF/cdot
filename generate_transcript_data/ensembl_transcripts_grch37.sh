@@ -24,5 +24,5 @@ merged_file="cdot-$(date --iso).ensembl.grch37.json.gz"
 if [[ ! -e ${merged_file} ]]; then
   BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 
-  python3 ${BASE_DIR}/pyreference_to_cdot_json.py ${pyreference_args[@]} --output ${merged_file}
+  python3 ${BASE_DIR}/pyreference_to_cdot_json.py ${pyreference_args[@]}  --genome-build=GRCh37 --output ${merged_file}
 fi
