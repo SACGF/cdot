@@ -14,24 +14,23 @@
 #done
 
 #81 is first GFF3 for GRCh38
-pyreference_args=()
+merge_args=()
 for release in 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105; do
   filename=Homo_sapiens.GRCh38.${release}.gff3.gz
   url=ftp://ftp.ensembl.org/pub/release-${release}/gff3/homo_sapiens/${filename}
-  pyreference_file=$(basename $filename .gz).json.gz
+  cdot_file=$(basename $filename .gz).json.gz
 
   if [[ ! -e ${filename} ]]; then
     wget ${url}
   fi
-  if [[ ! -e ${filename}.json.gz ]]; then
-    pyreference_gff_to_json.py --url "${url}" --gff3 "${filename}"
+  if [[ ! -e ${cdot_file} ]]; then
+    cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
   fi
-  pyreference_args+=(--pyreference-json ${pyreference_file})
+  merge_args+=(${cdot_file})
 done
 
 merged_file="cdot-$(date --iso).ensembl.grch38.json.gz"
 if [[ ! -e ${merged_file} ]]; then
   BASE_DIR=$(dirname ${BASH_SOURCE[0]})
-
-  python3 ${BASE_DIR}/pyreference_to_cdot_json.py ${pyreference_args[@]}  --genome-build=GRCh38 --output ${merged_file}
+  cdot_json.py merge_historical ${merge_args[@]} --genome-build=GRCh38 --output "${merged_file}"
 fi
