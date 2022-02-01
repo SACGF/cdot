@@ -227,7 +227,10 @@ class RESTDataProvider(AbstractJSONDataProvider):
         transcript_url = self.url + "/transcript/" + tx_ac
         response = requests.get(transcript_url)
         if response.ok:
-            transcript = response.json()
+            if 'application/json' in response.headers.get('Content-Type'):
+                transcript = response.json()
+            else:
+                raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % transcript_url)
         else:
             transcript = None
         self.transcripts[tx_ac] = transcript
