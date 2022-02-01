@@ -2,6 +2,7 @@ import abc
 import gzip
 import json
 import os
+import requests
 
 from bioutils.assemblies import make_ac_name_map
 from hgvs.dataproviders.interface import Interface
@@ -40,9 +41,6 @@ class AbstractJSONDataProvider(Interface):
     def schema_version(self):
         return self.required_version
 
-    def get_acs_for_protein_seq(self, seq):
-        raise NotImplementedError("JSON data provider doesn't support get_acs_for_protein_seq")
-
     def get_assembly_map(self, assembly_name):
         """return a list of accessions for the specified assembly name (e.g., GRCh38.p5) """
         assembly_map = self.assembly_maps.get(assembly_name)
@@ -51,12 +49,6 @@ class AbstractJSONDataProvider(Interface):
             raise ValueError(f"Assembly '{assembly_name}' not supported. Supported assemblies: {supported_assemblies}")
 
         return assembly_map
-
-    def get_gene_info(self, gene):
-        raise NotImplementedError("JSON data provider doesn't support get_gene_info")
-
-    def get_pro_ac_for_tx_ac(self, tx_ac):
-        raise NotImplementedError("JSON data provider doesn't support get_pro_ac_for_tx_ac")
 
     @staticmethod
     def sequence_source():
@@ -71,9 +63,6 @@ class AbstractJSONDataProvider(Interface):
 
     def get_seq(self, ac, start_i=None, end_i=None):
         return self.seqfetcher.fetch_seq(ac, start_i, end_i)
-
-    def get_similar_transcripts(self, tx_ac):
-        raise NotImplementedError("JSON data provider doesn't support get_similar_transcripts")
 
     @staticmethod
     def _convert_gap_to_cigar(gap):
@@ -134,14 +123,6 @@ class AbstractJSONDataProvider(Interface):
 
         return tx_exons
 
-    def get_tx_for_gene(self, gene):
-        # TODO: We could do this via JSON genes data
-        raise NotImplementedError("TODO: get_tx_for_gene")
-
-    def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
-        # TODO: We could do this via HTSeq etc
-        raise NotImplementedError("TODO")
-
     def get_tx_identity_info(self, tx_ac):
         # Get any transcript as it's assembly independent
         transcript = self._get_transcript(tx_ac)
@@ -197,6 +178,26 @@ class AbstractJSONDataProvider(Interface):
                 mapping_options.append(mo)
         return mapping_options
 
+    def get_acs_for_protein_seq(self, seq):
+        raise NotImplementedError()
+
+    def get_gene_info(self, gene):
+        raise NotImplementedError()
+
+    def get_pro_ac_for_tx_ac(self, tx_ac):
+        raise NotImplementedError()
+
+    def get_similar_transcripts(self, tx_ac):
+        raise NotImplementedError()
+
+    def get_tx_for_gene(self, gene):
+        # TODO: We could build this from JSON pretty easily
+        raise NotImplementedError()
+
+    def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
+        # TODO: This would be hard to do in Redis but we could do via HTSeq
+        raise NotImplementedError()
+
 
 class JSONDataProvider(AbstractJSONDataProvider):
     def _get_transcript(self, tx_ac):
@@ -217,11 +218,25 @@ class JSONDataProvider(AbstractJSONDataProvider):
 
 
 class RESTDataProvider(AbstractJSONDataProvider):
-    def _get_transcript_for_assembly(self, tx_ac, assembly):
-        pass
+
+    def _get_transcript(self, tx_ac):
+        # We store None for 404 on REST
+        if tx_ac in self.transcripts:
+            return self.transcripts[tx_ac]
+
+        transcript_url = self.url + "/transcript/" + tx_ac
+        response = requests.get(transcript_url)
+        if response.ok:
+            transcript = response.json()
+        else:
+            transcript = None
+        self.transcripts[tx_ac] = transcript
+        return transcript
 
     def __init__(self, url=None, mode=None, cache=None):
-        if url is None:
-            url = "http://cdot.cc"
         assemblies = ["GRCh37", "GRCh38"]
         super().__init__(assemblies=assemblies, mode=mode, cache=cache)
+        if url is None:
+            url = "http://cdot.cc"
+        self.url = url
+        self.transcripts = {}

@@ -1,5 +1,11 @@
 #!/bin/env python3
+
+"""
+    See instructions at end of file on how to extract test HGVS from clinvar
+"""
+
 import time
+import pandas as pd
 from argparse import ArgumentParser
 
 import hgvs
@@ -40,6 +46,8 @@ def main():
         hdp = RESTDataProvider()  # Uses API server at cdot.cc
     elif args.json:
         hdp = JSONDataProvider(args.json)
+    else:
+        raise ValueError("Unknown data provider method!")
 
     am = AssemblyMapper(hdp,
                         assembly_name='GRCh38',
@@ -74,12 +82,15 @@ def main():
             print(f"{hgvs_c}: '{hgvs_g}' != '{converted_hgvs_g}' (actual)")
             continue
 
+        # We only keep times for correct data
         end = time.time()
         time_taken = end - start
         run_times.append(time_taken)
 
     print(f"Total: {total}, correct: {correct}, incorrect: {incorrect}, no data: {no_data}")
-    print(run_times)
+    df = pd.DataFrame(run_times)
+    print(df.describe())
+
 
 
 if __name__ == '__main__':
