@@ -1,6 +1,6 @@
 # cdot
 
-[![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/) [![cdot](https://img.shields.io/pypi/dm/cdot.svg)](https://pypi.org/project/cdot/)
+[![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/)
 
 cdot is used to load transcripts for the 2 most popular Python [HGVS](http://varnomen.hgvs.org/) libraries.
 
