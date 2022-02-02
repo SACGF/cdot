@@ -169,9 +169,8 @@ def write_json(output_filename, data, url=None):
 
     data["version"] = cdot.get_json_schema_version()
 
-    with gzip.open(output_filename, 'w') as outfile:
-        json_str = json.dumps(data, cls=SortedSetEncoder, sort_keys=True)  # Sort so diffs work
-        outfile.write(json_str.encode('ascii'))
+    with gzip.open(output_filename, 'wt') as outfile:
+        json.dump(data, outfile, cls=SortedSetEncoder, sort_keys=True)  # Sort so diffs work
 
     print("Wrote:", output_filename)
 
@@ -248,7 +247,7 @@ def merge_historical(args):
         print(f"{url}: {count} ({count*100 / total:.1f}%)")
 
     print("Writing cdot data")
-    with gzip.open(args.output, 'w') as outfile:
+    with gzip.open(args.output, 'wt') as outfile:
         data = {
             "transcripts": transcript_versions,
             "cdot_version": cdot.__version__,
@@ -257,8 +256,7 @@ def merge_historical(args):
         if args.store_genes:
             data["genes"] = gene_versions
 
-        json_str = json.dumps(data)
-        outfile.write(json_str.encode('ascii'))
+        json.dump(data, outfile)
 
 
 def convert_gene_pyreference_to_gene_version_data(gene_data: Dict) -> Dict:
@@ -316,16 +314,16 @@ def combine_builds(args):
             # Use latest (with merged genome builds)
             build_transcript["genome_builds"] = genome_builds
             transcripts[transcript_id] = build_transcript
+        f.close()
 
     print("Writing cdot data")
-    with gzip.open(args.output, 'w') as outfile:
+    with gzip.open(args.output, 'wt') as outfile:
         data = {
             "transcripts": transcripts,
             "cdot_version": cdot.__version__,
             "genome_builds": list(genome_build_file.keys()),
         }
-        json_str = json.dumps(data)
-        outfile.write(json_str.encode('ascii'))
+        json.dump(data, outfile)
 
     if urls_different_coding:
         print("Some transcripts were removed as they had different coding coordinates from latest")
