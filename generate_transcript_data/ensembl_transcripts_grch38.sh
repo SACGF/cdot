@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Skip earlier GTFs as they don't have versions
 #for release in 76 77 78 79 80; do
 #  filename=Homo_sapiens.GRCh38.${release}.gtf.gz

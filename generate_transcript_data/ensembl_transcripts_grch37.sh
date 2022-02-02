@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # v81 (points to 75) and earlier at GTFs that don't have transcript versions - just skip them
 
 #82 is first GFF3 for GRCh37
