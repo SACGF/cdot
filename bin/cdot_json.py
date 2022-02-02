@@ -11,6 +11,7 @@ from csv import DictReader
 from typing import Dict
 
 import cdot
+import ijson
 from cdot.gff.gff_parser import GTFParser, GFF3Parser
 
 
@@ -144,7 +145,7 @@ def _cigar_to_gap_and_length(cigar):
         "X": "=",  # TODO: This is probably wrong! check if GTF gap has mismatch?
     }
 
-    cigar_pattern = re.compile("(\d+)([" + "".join(OP_CONVERSION.keys()) + "])")
+    cigar_pattern = re.compile(r"(\d+)([" + "".join(OP_CONVERSION.keys()) + "])")
     gap_ops = []
     exon_length = 0
     for (length_str, cigar_code) in cigar_pattern.findall(cigar):
@@ -186,14 +187,14 @@ def merge_historical(args):
     for filename in args.json_filenames:
         print(f"Loading '{filename}'")
         with gzip.open(filename) as f:
-            pyref_data = json.load(f)
-
-            url = pyref_data["reference_gtf"]["url"]
+            reference_gtf = next(ijson.items(f, "reference_gtf"))
+            url = reference_gtf["url"]
 
             # PyReference stores transcripts under genes, while PyReference only has transcripts (that contain genes)
             transcript_gene_version = {}
 
-            for gene_id, gene in pyref_data["genes_by_id"].items():
+            f.seek(0)  # Reset for next ijson call
+            for gene_id, gene in ijson.kvitems(f, "genes_by_id"):
                 if version := gene.get("version"):
                     gene_accession = f"{gene_id}.{version}"
                 else:
@@ -206,7 +207,8 @@ def merge_historical(args):
                 for transcript_accession in gene["transcripts"]:
                     transcript_gene_version[transcript_accession] = gene_accession
 
-            for transcript_accession, pyreference_transcript_version in pyref_data["transcripts_by_id"].items():
+            f.seek(0)  # Reset for next ijson call
+            for transcript_accession, pyreference_transcript_version in ijson.kvitems(f, "transcripts_by_id"):
                 gene_accession = transcript_gene_version[transcript_accession]
                 gene_version = gene_versions[gene_accession]
 
@@ -289,7 +291,7 @@ def combine_builds(args):
     all_transcript_ids = set()
     for genome_build, data in genome_build_data.items():
         # TODO: Check cdot versions
-        json_builds  = data["genome_builds"]
+        json_builds = data["genome_builds"]
         if json_builds != [genome_build]:
             raise ValueError(f"JSON file provided for {genome_build} needs to have only {genome_build} data (has {json_builds})")
         all_transcript_ids.update(data["transcripts"].keys())
