@@ -45,7 +45,7 @@ def main():
     elif args.rest:
         hdp = RESTDataProvider()  # Uses API server at cdot.cc
     elif args.json:
-        hdp = JSONDataProvider(args.json)
+        hdp = JSONDataProvider([args.json])
     else:
         raise ValueError("Unknown data provider method!")
 

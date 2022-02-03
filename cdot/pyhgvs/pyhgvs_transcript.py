@@ -108,7 +108,7 @@ class RESTPyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):
     def __init__(self, url=None):
         super().__init__()
         if url is None:
-            url = "http://cdot.cc"
+            url = "https://cdot.cc"
         self.url = url
         self.transcripts = {}
 

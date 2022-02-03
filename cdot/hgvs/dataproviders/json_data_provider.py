@@ -243,6 +243,6 @@ class RESTDataProvider(AbstractJSONDataProvider):
         assemblies = ["GRCh37", "GRCh38"]
         super().__init__(assemblies=assemblies, mode=mode, cache=cache)
         if url is None:
-            url = "http://cdot.cc"
+            url = "https://cdot.cc"
         self.url = url
         self.transcripts = {}
