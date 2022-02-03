@@ -49,9 +49,9 @@ pyhgvs.parse_hgvs_name(hgvs_c, genome, get_transcript=factory.get_transcript_grc
 
 ## Q. What's the performance like?
 
-UTA public DB - 1.5 seconds / transcript
-cdot REST service - 10/second
-cdot JSON.gz - 500-1k/second
+* UTA public DB: 1-1.5 seconds / transcript
+* cdot REST service: 10/second
+* cdot JSON.gz: 500-1k/second
 
 ## Q. Where can I download the JSON.gz files?
 
