@@ -2,6 +2,7 @@
 
 set -e
 
+CDOT_VERSION=0.2.1
 BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 GENOME_BUILD=grch37
 UTA_VERSION=20210129
@@ -79,7 +80,7 @@ for release in 105.20190906 105.20201022; do
   merge_args+=(${cdot_file})
 done
 
-merged_file="cdot-$(date --iso).refseq.grch37.json.gz"
+merged_file="cdot-${CDOT_VERSION}.refseq.grch37.json.gz"
 if [[ ! -e ${merged_file} ]]; then
   echo "Creating ${merged_file}"
   cdot_json.py merge_historical ${merge_args[@]} --genome-build=GRCh37 --output "${merged_file}"

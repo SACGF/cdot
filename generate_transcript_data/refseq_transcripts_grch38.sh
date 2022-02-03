@@ -2,6 +2,7 @@
 
 set -e
 
+CDOT_VERSION=0.2.1
 BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 GENOME_BUILD=grch38
 UTA_VERSION=20210129
@@ -81,9 +82,9 @@ fi
 merge_args+=(${cdot_file})
 
 
-# These all have the same name, so rename them based on release ID
-# 28 Jan 2022 - HTSeq GFF Parser currently dies on 109.20211119 - removed, waiting for it to get fixed
-for release in 109.20190607 109.20190905 109.20191205 109.20200228 109.20200522 109.20200815 109.20201120 109.20210226 109.20210514; do
+# 109.20211119 needs latest HTSeq (Feb 2022) or dies with quoting error
+for release in 109.20190607 109.20190905 109.20191205 109.20200228 109.20200522 109.20200815 109.20201120 109.20210226 109.20210514 109.20211119; do
+  # These all have the same name, so rename them based on release ID
   filename=GCF_000001405.39_GRCh38.p13_genomic.${release}.gff.gz
   url=http://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/annotation_releases/${release}/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz
   cdot_file=$(basename $filename .gz).json.gz
@@ -96,7 +97,7 @@ for release in 109.20190607 109.20190905 109.20191205 109.20200228 109.20200522 
   merge_args+=(${cdot_file})
 done
 
-merged_file="cdot-$(date --iso).refseq.grch38.json.gz"
+merged_file="cdot-${CDOT_VERSION}.refseq.grch38.json.gz"
 if [[ ! -e ${merged_file} ]]; then
   echo "Creating ${merged_file}"
   cdot_json.py merge_historical ${merge_args[@]} --genome-build=GRCh38 --output "${merged_file}"
