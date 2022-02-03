@@ -105,10 +105,13 @@ class RESTPyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):
         self.transcripts[transcript_id] = transcript
         return transcript
 
-    def __init__(self, url=None):
+    def __init__(self, url=None, secure=True):
         super().__init__()
         if url is None:
-            url = "https://cdot.cc"
+            if secure:
+                url = "https://cdot.cc"
+            else:
+                url = "http://cdot.cc"
         self.url = url
         self.transcripts = {}
 

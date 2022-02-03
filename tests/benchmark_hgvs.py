@@ -22,10 +22,11 @@ def handle_args():
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--uta', action='store_true')
     group.add_argument('--rest', action='store_true')
+    group.add_argument('--rest-insecure', action='store_true')
     parser.add_argument('--json', help='JSON file')
     args = parser.parse_args()
-    if not any([args.uta, args.rest, args.json]):
-        parser.error("You need to specify at least one of 'uta', 'rest', 'json'")
+    if not any([args.uta, args.rest, args.rest_insecure, args.json]):
+        parser.error("You need to specify at least one of 'uta', 'rest', 'rest-insecure', 'json'")
     return args
 
 
@@ -46,6 +47,8 @@ def main():
         hdp = RESTDataProvider()  # Uses API server at cdot.cc
     elif args.json:
         hdp = JSONDataProvider([args.json])
+    elif args.json_insecure:
+        hdp = JSONDataProvider([args.json], secure=False)
     else:
         raise ValueError("Unknown data provider method!")
 

@@ -239,10 +239,13 @@ class RESTDataProvider(AbstractJSONDataProvider):
         self.transcripts[tx_ac] = transcript
         return transcript
 
-    def __init__(self, url=None, mode=None, cache=None):
+    def __init__(self, url=None, secure=True, mode=None, cache=None):
         assemblies = ["GRCh37", "GRCh38"]
         super().__init__(assemblies=assemblies, mode=mode, cache=cache)
         if url is None:
-            url = "https://cdot.cc"
+            if secure:
+                url = "https://cdot.cc"
+            else:
+                url = "http://cdot.cc"
         self.url = url
         self.transcripts = {}
