@@ -22,5 +22,5 @@ fi
 cdot_file="cdot.uta_${UTA_VERSION}.${GENOME_BUILD}.json.gz"
 if [[ ! -e ${cdot_file} ]]; then
   POSTGRES_URL=postgresql://uta.invitae.com/uta_${UTA_VERSION}
-  cdot_json.py uta_to_json "${uta_csv_filename}" --url "${POSTGRES_URL}" --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py uta_to_json "${uta_csv_filename}" --url "${POSTGRES_URL}" --output "${cdot_file}"
 fi

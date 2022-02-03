@@ -3,6 +3,7 @@
 set -e
 
 CDOT_VERSION=0.2.1
+BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 
 # v81 (points to 75) and earlier at GTFs that don't have transcript versions - just skip them
 
@@ -19,13 +20,12 @@ for release in 82 85 87; do
     wget ${url}
   fi
   if [[ ! -e ${cdot_file} ]]; then
-    cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
   fi
   merge_args+=(${cdot_file})
 done
 
 merged_file="cdot-${CDOT_VERSION}.ensembl.grch37.json.gz"
 if [[ ! -e ${merged_file} ]]; then
-  BASE_DIR=$(dirname ${BASH_SOURCE[0]})
-  cdot_json.py merge_historical ${merge_args[@]} --genome-build=GRCh37 --output "${merged_file}"
+  ${BASE_DIR}/cdot_json.py merge_historical ${merge_args[@]} --genome-build=GRCh37 --output "${merged_file}"
 fi

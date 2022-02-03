@@ -25,7 +25,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
 fi
 merge_args+=(${cdot_file})
 
@@ -38,7 +38,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
 fi
 merge_args+=(${cdot_file})
 
@@ -51,7 +51,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
 fi
 merge_args+=(${cdot_file})
 
@@ -64,7 +64,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
 fi
 merge_args+=(${cdot_file})
 
@@ -77,7 +77,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
 fi
 merge_args+=(${cdot_file})
 
@@ -92,7 +92,7 @@ for release in 109.20190607 109.20190905 109.20191205 109.20200228 109.20200522 
     wget ${url} --output-document=${filename}
   fi
   if [[ ! -e ${cdot_file} ]]; then
-    cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
   fi
   merge_args+=(${cdot_file})
 done
@@ -100,5 +100,5 @@ done
 merged_file="cdot-${CDOT_VERSION}.refseq.grch38.json.gz"
 if [[ ! -e ${merged_file} ]]; then
   echo "Creating ${merged_file}"
-  cdot_json.py merge_historical ${merge_args[@]} --genome-build=GRCh38 --output "${merged_file}"
+  ${BASE_DIR}/cdot_json.py merge_historical ${merge_args[@]} --genome-build=GRCh38 --output "${merged_file}"
 fi
