@@ -49,6 +49,9 @@ pyhgvs.parse_hgvs_name(hgvs_c, genome, get_transcript=factory.get_transcript_grc
 
 ## Q. What's the performance like?
 
+UTA public DB - 1.5 seconds / transcript
+cdot REST service - 10/second
+cdot JSON.gz - 500-1k/second
 
 ## Q. Where can I download the JSON.gz files?
 
@@ -76,6 +79,4 @@ We think a standard for JSON gene/transcript information would be a great thing,
 
 cdot, pronounced "see dot" stands for Complete Dict of Transcripts
 
-## Q. What does cdot stand for?
-
-[Australian Genomics](https://www.australiangenomics.org.au/)
+This was developed for the [Australian Genomics](https://www.australiangenomics.org.au/) [Shariant](https://shariant.org.au/) project, due to the need to load historical HGVS from lab archives.   
