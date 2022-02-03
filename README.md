@@ -6,10 +6,16 @@ cdot provides transcripts for the 2 most popular Python [HGVS](http://varnomen.h
 
 It works by:
 
-* Converting RefSeq/Ensembl GTFs to JSON
-* Providing loaders from JSON.gz files, or REST API via [cdot_rest](https://github.com/SACGF/cdot_rest))
+* Converting RefSeq/Ensembl GTFs to JSON 
+* Providing loaders for the HGVS libraries, via JSON.gz files, or REST API via [cdot_rest](https://github.com/SACGF/cdot_rest))
 
-We currently support ~800k transcripts, with API responses under 0.1 second
+We currently support ~800k transcripts
+
+## Install
+
+```
+pip install cdot
+```
 
 ## Examples
 
@@ -41,28 +47,35 @@ pyhgvs.parse_hgvs_name(hgvs_c, genome, get_transcript=factory.get_transcript_grc
 
 ```
 
-## Download data
+## Q. What's the performance like?
 
-TODO
 
-## Philosophical differences from Universal Transcript Archive
+## Q. Where can I download the JSON.gz files?
 
-cdot aims to be as simple as possible: convert existing Ensembl/RefSeq GTFs into JSON format
+[RefSeq 37+38](http://cdot.cc/download/cdot-0.2.1.refseq.grch37_grch38.json.gz) - 70Mb
+[Ensembl 37+38](http://cdot.cc/download/cdot-0.2.1.ensembl.grch37_grch38.json.gz) - 53Mb
 
-Universal transcript archive is an excellent and ambitious project that:
+See also [Download JSON.gz files](https://github.com/SACGF/cdot/wiki/Download-JSON.gz-files) if you only want individual builds.
 
-* Performs its own mapping of transcript sequences to reference genomes
-* Stores the transcript version data (exons etc) in a SQL database
+## Q. How does this compare to Universal Transcript Archive?
 
-This has some advantages, namely that you can resolve a GRCh37 coordinate for a transcript which was never officially released for that build.
+Both projects have similar goals of providing transcripts for loading HGVS, but they approach it from different ways
 
-However the complexity causes a few downsides:
+* UTA aligns sequences, then stores coordinates in an SQL database. 
+* cdot convert existing Ensembl/RefSeq GTFs into JSON
 
-* Alignments may not exactly match those in official Ensembl/RefSeq releases
-* Local install requires a PostgreSQL installation
-* Internet hosted UTA is a PostgreSQL server, so requires client Postgres libraries, is inaccessible behind firewalls. They have been planning on building a [REST server since 2014](https://github.com/biocommons/uta/issues/164)
-* High complexity manual process for releases means they [do not support Ensembl](https://github.com/biocommons/uta/issues/233) and take a while to make RefSeq releases.
+See [wiki for more details](https://github.com/SACGF/cdot/wiki/cdot-vs-UTA)
 
-## What does cdot stand for?
+## Q. How do you store transcripts in JSON?
+
+See [wiki page](https://github.com/SACGF/cdot/wiki/Transcript-JSON-format) for the format.
+
+We think a standard for JSON gene/transcript information would be a great thing, and am keen to collaborate to make it happen!
+
+## Q. What does cdot stand for?
 
 cdot, pronounced "see dot" stands for Complete Dict of Transcripts
+
+## Q. What does cdot stand for?
+
+[Australian Genomics](https://www.australiangenomics.org.au/)
