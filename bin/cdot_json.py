@@ -162,6 +162,9 @@ def _cigar_to_gap_and_length(cigar):
 
 
 def write_json(output_filename, data, url=None):
+    # These single GTF/GFF JSON files are used by PyReference, and not meant to be used for cdot HGVS
+    # If you only want 1 build for cdot, you can always run merge_historical on a single file
+
     if url:
         reference_gtf = data.get("reference_gtf", {})
         reference_gtf["url"] = url
@@ -176,7 +179,9 @@ def write_json(output_filename, data, url=None):
 
 
 def merge_historical(args):
-    print("merge_historical")
+    # The merged files are not the same as individual GTF json files
+    # @see https://github.com/SACGF/cdot/wiki/Transcript-JSON-format
+
     TRANSCRIPT_FIELDS = ["biotype", "start_codon", "stop_codon"]
     GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons"]
 
@@ -188,8 +193,6 @@ def merge_historical(args):
         with gzip.open(filename) as f:
             reference_gtf = next(ijson.items(f, "reference_gtf"))
             url = reference_gtf["url"]
-
-            # PyReference stores transcripts under genes, while PyReference only has transcripts (that contain genes)
             transcript_gene_version = {}
 
             f.seek(0)  # Reset for next ijson call

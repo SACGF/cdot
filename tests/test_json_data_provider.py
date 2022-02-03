@@ -14,7 +14,7 @@ class TestJSONDataProvider(unittest.TestCase):
         this_file_dir = os.path.dirname(abspath(getsourcefile(lambda: 0)))
 #        parent_dir = os.path.dirname(this_file_dir)
         test_json_file = os.path.join(this_file_dir, "test_data/cdot.refseq.grch37.json")
-        json_data_provider = JSONDataProvider(assembly_json={"GRCh37": test_json_file})
+        json_data_provider = JSONDataProvider([test_json_file])
         am = AssemblyMapper(json_data_provider,
                             assembly_name='GRCh37', alt_aln_method='splign', replace_reference=True)
         HGVS_C_TO_G = [

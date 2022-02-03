@@ -2,14 +2,14 @@
 
 [![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/)
 
-cdot is used to load transcripts for the 2 most popular Python [HGVS](http://varnomen.hgvs.org/) libraries.
+cdot provides transcripts for the 2 most popular Python [HGVS](http://varnomen.hgvs.org/) libraries.
 
 It works by:
 
-* Converting RefSeq and Ensembl GTFs into a JSON format
-* Providing loaders from that JSON format (or a REST service)
+* Converting RefSeq/Ensembl GTFs to JSON
+* Providing loaders from JSON.gz files, or REST API via [cdot_rest](https://github.com/SACGF/cdot_rest))
 
-We currently support 788k transcripts, 5.5x as many as [Universal Transcript Archive](https://github.com/biocommons/uta/)
+We currently support ~800k transcripts, with API responses under 0.1 second
 
 ## Examples
 
@@ -18,10 +18,10 @@ We currently support 788k transcripts, 5.5x as many as [Universal Transcript Arc
 ```
 from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider
 
-hp = JSONDataProvider({"GRCh37": "./cdot_220119.grch38.json.gz")  # Uses local JSON file
-# hp = RESTDataProvider()  # Uses API server at cdot.cc
+hdp = RESTDataProvider()  # Uses API server at cdot.cc
+# hdp = JSONDataProvider(["./cdot-0.2.1.refseq.grch38.json.gz"])  # Uses local JSON file
 
-am = AssemblyMapper(hp,
+am = AssemblyMapper(hdp,
                     assembly_name='GRCh37',
                     alt_aln_method='splign', replace_reference=True)
 
@@ -33,8 +33,17 @@ am.c_to_g(var_c)
 [PyHGVS](https://github.com/counsyl/hgvs) example:
 
 ```
-# TODO
+from cdot.pyhgvs.pyhgvs_transcript import JSONPyHGVSTranscriptFactory, RESTPyHGVSTranscriptFactory
+
+factory = RESTPyHGVSTranscriptFactory()
+# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.1.refseq.grch38.json.gz"])  # Uses local JSON file
+pyhgvs.parse_hgvs_name(hgvs_c, genome, get_transcript=factory.get_transcript_grch37)
+
 ```
+
+## Download data
+
+TODO
 
 ## Philosophical differences from Universal Transcript Archive
 

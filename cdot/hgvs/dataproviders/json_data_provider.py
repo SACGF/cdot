@@ -203,18 +203,21 @@ class JSONDataProvider(AbstractJSONDataProvider):
     def _get_transcript(self, tx_ac):
         return self.transcripts.get(tx_ac)
 
-    def __init__(self, file_or_filename, mode=None, cache=None):
-        if isinstance(file_or_filename, str):
-            if file_or_filename.endswith(".gz"):
-                f = gzip.open(file_or_filename)
+    def __init__(self, file_or_filename_list, mode=None, cache=None):
+        assemblies = set()
+        self.transcripts = {}
+        for file_or_filename in file_or_filename_list:
+            if isinstance(file_or_filename, str):
+                if file_or_filename.endswith(".gz"):
+                    f = gzip.open(file_or_filename)
+                else:
+                    f = open(file_or_filename)
             else:
-                f = open(file_or_filename)
-        else:
-            f = file_or_filename
-        data = json.load(f)
-        assemblies = data["genome_builds"]
+                f = file_or_filename
+            data = json.load(f)
+            assemblies.update(data["genome_builds"])
+            self.transcripts.update(data["transcripts"])
         super().__init__(assemblies=assemblies, mode=mode, cache=cache)
-        self.transcripts = data["transcripts"]
 
 
 class RESTDataProvider(AbstractJSONDataProvider):

@@ -1,4 +1,4 @@
-__version__ = "0.1.1"
+__version__ = "0.2.1"
 
 
 def get_json_schema_version():
