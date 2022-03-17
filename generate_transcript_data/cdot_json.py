@@ -36,7 +36,7 @@ def handle_args():
     parser_historical = subparsers.add_parser("merge_historical", help="Merge multiple JSON files (keeping latest)")
     parser_historical.add_argument('json_filenames', nargs="+", action="extend",
                                    help='cdot JSON.gz - list OLDEST to NEWEST (newest is kept)')
-    parser_historical.add_argument("--store-genes", action='store_true', help="Also store gene/version information")
+    parser_historical.add_argument("--no-genes", action='store_true', help="Save <5% space by not storing gene/version information")
     parser_historical.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
 
     parser_builds = subparsers.add_parser("combine_builds", help="Merge multiple JSON files from different genome builds")
@@ -256,7 +256,7 @@ def merge_historical(args):
             "cdot_version": cdot.__version__,
             "genome_builds": [args.genome_build],
         }
-        if args.store_genes:
+        if not args.no_genes:
             data["genes"] = gene_versions
 
         json.dump(data, outfile)
@@ -271,9 +271,8 @@ def convert_gene_pyreference_to_gene_version_data(gene_data: Dict) -> Dict:
     if biotype_list := gene_data.get("biotype"):
         gene_version_data['biotype'] = ",".join(biotype_list)
 
-    if hgnc_str := gene_data.get("HGNC"):
-        # Has HGNC: (5 characters) at start of it
-        gene_version_data["hgnc"] = hgnc_str[5:]
+    if hgnc := gene_data.get("hgnc"):
+        gene_version_data["hgnc"] = hgnc
 
     # Only Ensembl Genes have versions
     if version := gene_data.get("version"):

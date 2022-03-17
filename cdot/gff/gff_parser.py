@@ -2,6 +2,7 @@ import abc
 import logging
 import operator
 import os
+import re
 from collections import Counter, defaultdict
 from hashlib import md5
 
@@ -367,7 +368,8 @@ class GTFParser(GFFParser):
 
 
 class GFF3Parser(GFFParser):
-    """ GFF3 - Used by RefSeq, @see https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md
+    """ GFF3 - @see https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md
+        Used by RefSeq and later Ensembl (82 onwards)
 
         GFF3 support arbitrary hierarchy
 
@@ -380,6 +382,7 @@ class GFF3Parser(GFFParser):
         super(GFF3Parser, self).__init__(*args, **kwargs)
         self.gene_id_by_feature_id = defaultdict()
         self.transcript_id_by_feature_id = defaultdict()
+        self.hgnc_pattern = re.compile(r".*\[Source:HGNC.*Acc:(HGNC:)?(\d+)\]")
 
     def handle_feature(self, feature):
         parent_id = feature.attr.get("Parent")
@@ -402,9 +405,17 @@ class GFF3Parser(GFFParser):
                 # If a gene already exists - then need to merge it...
                 self.genes_by_id[gene_id] = gene
 
-            hgnc = dbxref.get("HGNC")
-            if hgnc:
-                gene["HGNC"] = hgnc
+            # RefSeq stores HGNC in dbxref
+            if hgnc := dbxref.get("HGNC"):
+                # Might have HGNC: (5 characters) at start of it
+                if hgnc.startswith("HGNC"):
+                    hgnc = hgnc[5:]
+                gene["hgnc"] = hgnc
+            elif description := gene.get("description"):
+                # Ensembl stores HGNC in description comment. Sometimes has "HGNC:" prefix eg:
+                # Can be either "[Source:HGNC Symbol%3BAcc:HGNC:8907]" or "[Source:HGNC Symbol%3BAcc:37102]"
+                if m := self.hgnc_pattern.match(description):
+                    gene["hgnc"] = m.group(2)
 
             if gene_name:
                 self.gene_id_by_name[gene_name] = gene_id
