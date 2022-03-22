@@ -4,7 +4,7 @@ import json
 
 import requests
 
-from pyhgvs.models import Transcript, Position, Exon
+from pyhgvs.utils import make_transcript
 
 
 class AbstractPyHGVSTranscriptFactory(abc.ABC):
@@ -15,66 +15,59 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
     def _get_transcript(self, transcript_id):
         pass
 
-    def get_transcript_grch37(self, transcript_id):
-        return self.get_transcript(transcript_id, "GRCh37")
+    def get_transcript_grch37(self, transcript_id, sacgf_pyhgvs_fork=False):
+        return self.get_transcript(transcript_id, "GRCh37", sacgf_pyhgvs_fork=sacgf_pyhgvs_fork)
 
-    def get_transcript_grch38(self, transcript_id):
-        return self.get_transcript(transcript_id, "GRCh38")
+    def get_transcript_grch38(self, transcript_id, sacgf_pyhgvs_fork=False):
+        return self.get_transcript(transcript_id, "GRCh38", sacgf_pyhgvs_fork=sacgf_pyhgvs_fork)
 
-    def get_transcript(self, transcript_id, genome_build):
+    def get_transcript(self, transcript_id, genome_build, sacgf_pyhgvs_fork=False):
+        transcript = None
+        if pyhgvs_data := self.get_pyhgvs_data(transcript_id, genome_build, sacgf_pyhgvs_fork=True):
+            transcript = make_transcript(pyhgvs_data)
+        return transcript
+
+    def get_pyhgvs_data(self, transcript_id, genome_build, sacgf_pyhgvs_fork=False):
         transcript_json = self._get_transcript(transcript_id)
         build_coords = transcript_json["genome_builds"].get(genome_build)
         if build_coords is None:
-            return None
+            return {}
 
-        transcript_name = transcript_json['id']
-        if '.' in transcript_name:
-            name, version = transcript_name.split('.')
-        else:
-            name, version = transcript_name, None
+        exons = build_coords['exons']
+        # Remove the 3rd element (exon_number)
+        exons = [e[:2] + e[3:] for e in exons]
 
-        contig = build_coords['contig']
-        start = build_coords['exons'][0][0]
-        end = build_coords['exons'][-1][1]
-        is_forward_strand = build_coords['strand'] == '+'
+        pyhgvs_data = {
+            "id": transcript_json["id"],
+            "chrom": build_coords['contig'],
+            "start": exons[0][0],
+            "end": exons[-1][1],
+            "strand": build_coords["strand"],
+            "cds_start": build_coords.get('cds_start'),
+            "cds_end": build_coords.get('cds_end'),
+            "exons": exons,
+            "gene_name": transcript_json['gene_name'],
+        }
 
-        transcript = Transcript(
-            name=name,
-            version=int(version) if version is not None else None,
-            gene=transcript_json['gene_name'],
-            tx_position=Position(
-                contig,
-                start,
-                end,
-                is_forward_strand),
-            cds_position=Position(
-                contig,
-                build_coords['cds_start'],
-                build_coords['cds_end'],
-                is_forward_strand),
-        )
-
-        stranded_exons = sorted([ex[:3] for ex in build_coords['exons']], key=lambda ex: ex[2])
-        for (exon_start, exon_end, exon_number) in stranded_exons:
-            transcript.exons.append(
-                Exon(transcript=transcript,
-                     tx_position=Position(
-                         contig,
-                         exon_start,
-                         exon_end,
-                         is_forward_strand),
-                     exon_number=exon_number))
-
-        return transcript
+        if sacgf_pyhgvs_fork:
+            pyhgvs_data["cdna_match"] = exons
+            pyhgvs_data["start_codon_transcript_pos"] = transcript_json.get("start_codon")
+            pyhgvs_data["stop_codon_transcript_pos"] = transcript_json.get("stop_codon")
+        return pyhgvs_data
 
 
-class JSONPyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):
+class PyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):
     def _get_transcript(self, transcript_id):
         return self.transcripts.get(transcript_id)
 
-    def __init__(self, file_or_filename_list):
+    def __init__(self, transcripts):
         super().__init__()
-        self.transcripts = {}
+        self.transcripts = transcripts
+
+
+class JSONPyHGVSTranscriptFactory(PyHGVSTranscriptFactory):
+    def __init__(self, file_or_filename_list):
+        transcripts = {}
         for file_or_filename in file_or_filename_list:
             if isinstance(file_or_filename, str):
                 if file_or_filename.endswith(".gz"):
@@ -84,7 +77,8 @@ class JSONPyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):
             else:
                 f = file_or_filename
             data = json.load(f)
-            self.transcripts.update(data["transcripts"])
+            transcripts.update(data["transcripts"])
+        super().__init__(transcripts=transcripts)
 
 
 class RESTPyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):
@@ -115,9 +109,6 @@ class RESTPyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):
                 url = "http://cdot.cc"
         self.url = url
         self.transcripts = {}
-
-
-# TODO: Write code to load SACGF pyhgvs changes, ie gaps and start/stop codons etc
 
 # Changes from old loading:
 
