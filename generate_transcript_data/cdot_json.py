@@ -223,8 +223,11 @@ def merge_historical(args):
                     if value is not None:
                         transcript_version[field] = value
 
-                if not gene_accession.startswith("_"):
-                    transcript_version["gene_version"] = gene_accession
+                if gene_accession.startswith("_"):  # Not real - fake UTA so try and grab old one
+                    if previous_tv := transcript_versions.get(transcript_accession):
+                        gene_accession = previous_tv.get("gene_version")
+                transcript_version["gene_version"] = gene_accession
+
                 if hgnc := gene_version.get("hgnc"):
                     transcript_version["hgnc"] = hgnc
 
@@ -238,9 +241,13 @@ def merge_historical(args):
                 transcript_version["genome_builds"] = {args.genome_build: genome_build_coordinates}
                 transcript_versions[transcript_accession] = transcript_version
 
+    genes = {}  # Only keep those that are used in transcript versions
     # Summarise where it's from
     transcript_urls = Counter()
     for tv in transcript_versions.values():
+        if gene_accession := tv.get("gene_version"):
+            genes[gene_accession] = gene_versions[gene_accession]
+
         for build_coordinates in tv["genome_builds"].values():
             transcript_urls[build_coordinates["url"]] += 1
 
@@ -257,7 +264,7 @@ def merge_historical(args):
             "genome_builds": [args.genome_build],
         }
         if not args.no_genes:
-            data["genes"] = gene_versions
+            data["genes"] = genes
 
         json.dump(data, outfile)
 
