@@ -76,7 +76,12 @@ def uta_to_json(args):
     transcripts_by_id = {}
 
     for data in DictReader(open(args.uta_csv_filename)):
+        contig = data["contig"]
+        if "," in contig:
+            continue  # query returned both chrX/Y - only 8 of these so skip
         transcript_accession = data["ac"]
+        if "/" in transcript_accession:
+            continue  # transcript accession looks strange eg "NM_001202404.1/111..1620"
         gene_name = data["hgnc"]
 
         # PyReference expects a gene versions etc - we don't know these so will make a fake one.
@@ -92,7 +97,7 @@ def uta_to_json(args):
             gene["transcripts"].append(transcript_accession)
 
         transcript_version = {
-            "contig": data["contig"],
+            "contig": contig,
             "strand": "+" if data["strand"] == 1 else "-",
             "gene_version": fake_gene_version,
             "exons": _convert_uta_exons(data["exon_starts"], data["exon_ends"], data["cigars"]),
@@ -187,6 +192,7 @@ def merge_historical(args):
 
     gene_versions = {}  # We only keep those that are in the latest transcript version
     transcript_versions = {}
+    gene_accessions_for_symbol = defaultdict(set)
 
     for filename in args.json_filenames:
         print(f"Loading '{filename}'")
@@ -205,6 +211,8 @@ def merge_historical(args):
                 gene_version = convert_gene_pyreference_to_gene_version_data(gene)
                 gene_version["url"] = url
                 gene_versions[gene_accession] = gene_version
+                if not gene_accession.startswith("_"):
+                    gene_accessions_for_symbol[gene_version["gene_symbol"]].add(gene_accession)
 
                 for transcript_accession in gene["transcripts"]:
                     transcript_gene_version[transcript_accession] = gene_accession
@@ -213,10 +221,11 @@ def merge_historical(args):
             for transcript_accession, pyreference_transcript_version in ijson.kvitems(f, "transcripts_by_id"):
                 gene_accession = transcript_gene_version[transcript_accession]
                 gene_version = gene_versions[gene_accession]
+                gene_symbol = gene_version["gene_symbol"]
 
                 transcript_version = {
                     "id": transcript_accession,
-                    "gene_name": gene_version["gene_symbol"],
+                    "gene_name": gene_symbol,
                 }
                 for field in TRANSCRIPT_FIELDS:
                     value = pyreference_transcript_version.get(field)
@@ -224,8 +233,15 @@ def merge_historical(args):
                         transcript_version[field] = value
 
                 if gene_accession.startswith("_"):  # Not real - fake UTA so try and grab old one
+                    fixed_ga = None
                     if previous_tv := transcript_versions.get(transcript_accession):
-                        gene_accession = previous_tv.get("gene_version")
+                        fixed_ga = previous_tv.get("gene_version")
+                    if not fixed_ga:
+                        if potential_ga := gene_accessions_for_symbol.get(gene_symbol):
+                            if len(potential_ga):
+                                fixed_ga = next(iter(potential_ga))
+                    if fixed_ga:
+                        gene_accession = fixed_ga
                 transcript_version["gene_version"] = gene_accession
 
                 if hgnc := gene_version.get("hgnc"):

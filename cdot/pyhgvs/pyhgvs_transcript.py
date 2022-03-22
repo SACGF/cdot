@@ -1,4 +1,5 @@
 import abc
+import gzip
 import json
 
 import requests
