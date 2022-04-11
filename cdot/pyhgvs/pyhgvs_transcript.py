@@ -53,6 +53,8 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
             pyhgvs_data["cdna_match"] = exons
             pyhgvs_data["start_codon_transcript_pos"] = transcript_json.get("start_codon")
             pyhgvs_data["stop_codon_transcript_pos"] = transcript_json.get("stop_codon")
+            if other_chroms := build_coords.get("other_chroms"):
+                pyhgvs_data["other_chroms"] = other_chroms
         return pyhgvs_data
 
 
