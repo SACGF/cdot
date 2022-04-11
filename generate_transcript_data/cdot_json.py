@@ -188,7 +188,7 @@ def merge_historical(args):
     # @see https://github.com/SACGF/cdot/wiki/Transcript-JSON-format
 
     TRANSCRIPT_FIELDS = ["biotype", "start_codon", "stop_codon"]
-    GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons"]
+    GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms"]
 
     gene_versions = {}  # We only keep those that are in the latest transcript version
     transcript_versions = {}
@@ -218,7 +218,7 @@ def merge_historical(args):
                     transcript_gene_version[transcript_accession] = gene_accession
 
             f.seek(0)  # Reset for next ijson call
-            for transcript_accession, pyreference_transcript_version in ijson.kvitems(f, "transcripts_by_id"):
+            for transcript_accession, historical_transcript_version in ijson.kvitems(f, "transcripts_by_id"):
                 gene_accession = transcript_gene_version[transcript_accession]
                 gene_version = gene_versions[gene_accession]
                 gene_symbol = gene_version["gene_symbol"]
@@ -228,7 +228,7 @@ def merge_historical(args):
                     "gene_name": gene_symbol,
                 }
                 for field in TRANSCRIPT_FIELDS:
-                    value = pyreference_transcript_version.get(field)
+                    value = historical_transcript_version.get(field)
                     if value is not None:
                         transcript_version[field] = value
 
@@ -251,7 +251,7 @@ def merge_historical(args):
                     "url": url,
                 }
                 for field in GENOME_BUILD_FIELDS:
-                    value = pyreference_transcript_version.get(field)
+                    value = historical_transcript_version.get(field)
                     if value is not None:
                         genome_build_coordinates[field] = value
                 transcript_version["genome_builds"] = {args.genome_build: genome_build_coordinates}
