@@ -2,6 +2,7 @@
 
 ### Changed
 
+- Fixed bug where all UTA transcripts were '-' strand
 - Add "other_chroms" to combined historical file
 
 ## [0.2.3] - 2022-03-29

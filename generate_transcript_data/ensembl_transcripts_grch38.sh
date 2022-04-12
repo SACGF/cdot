@@ -2,8 +2,8 @@
 
 set -e
 
-CDOT_VERSION=0.2.1
 BASE_DIR=$(dirname ${BASH_SOURCE[0]})
+CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 
 # Skip earlier GTFs as they don't have versions
 #for release in 76 77 78 79 80; do

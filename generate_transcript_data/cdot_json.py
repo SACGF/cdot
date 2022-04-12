@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import
 import gzip
 import json
 import re
+import sys
 from argparse import ArgumentParser
 from collections import defaultdict, Counter
 from csv import DictReader
@@ -17,8 +18,9 @@ from cdot.gff.gff_parser import GTFParser, GFF3Parser
 
 def handle_args():
     parser = ArgumentParser(description='cdot JSON manipulation tools')
+    parser.add_argument('--version', action='store_true', help='show version number')
 
-    subparsers = parser.add_subparsers(dest='subcommand', required=True, help='TODO sub-command help')
+    subparsers = parser.add_subparsers(dest='subcommand', help='TODO sub-command help')
     parser_gtf = subparsers.add_parser("gtf_to_json", help="Convert GTF to JSON")
     parser_gtf.add_argument("gtf_filename", help="GTF to convert to JSON")
 
@@ -98,7 +100,7 @@ def uta_to_json(args):
 
         transcript_version = {
             "contig": contig,
-            "strand": "+" if data["strand"] == 1 else "-",
+            "strand": "+" if data["strand"] == "1" else "-",
             "gene_version": fake_gene_version,
             "exons": _convert_uta_exons(data["exon_starts"], data["exon_ends"], data["cigars"]),
         }
@@ -358,6 +360,10 @@ def combine_builds(args):
 
 def main():
     args = handle_args()
+    if args.version:
+        print(cdot.__version__)
+        sys.exit(0)
+
     subcommands = {
         "gtf_to_json": gtf_to_json,
         "gff3_to_json": gff3_to_json,
