@@ -2,7 +2,8 @@
 
 set -e
 
-BASE_DIR=$(dirname ${BASH_SOURCE[0]})
+FULL_PATH_TO_SCRIPT="$(realpath "${BASH_SOURCE[-1]}")"
+BASE_DIR=$(dirname ${FULL_PATH_TO_SCRIPT})
 CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 
 # RefSeq
