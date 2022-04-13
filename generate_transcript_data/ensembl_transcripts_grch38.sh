@@ -20,7 +20,7 @@ CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 
 #81 is first GFF3 for GRCh38
 merge_args=()
-for release in 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105; do
+for release in 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106; do
   filename=Homo_sapiens.GRCh38.${release}.gff3.gz
   url=ftp://ftp.ensembl.org/pub/release-${release}/gff3/homo_sapiens/${filename}
   cdot_file=$(basename $filename .gz).json.gz

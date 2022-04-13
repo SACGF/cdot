@@ -97,6 +97,20 @@ for release in 109.20190607 109.20190905 109.20191205 109.20200228 109.20200522 
   merge_args+=(${cdot_file})
 done
 
+
+filename=GCF_000001405.40_GRCh38.p14_genomic.gff.gz
+url=https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/annotation_releases/110/GCF_000001405.40_GRCh38.p14/${filename}
+cdot_file=$(basename $filename .gz).json.gz
+
+if [[ ! -e ${filename} ]]; then
+  wget ${url}
+fi
+if [[ ! -e ${cdot_file} ]]; then
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+fi
+merge_args+=(${cdot_file})
+
+
 merged_file="cdot-${CDOT_VERSION}.refseq.grch38.json.gz"
 if [[ ! -e ${merged_file} ]]; then
   echo "Creating ${merged_file}"

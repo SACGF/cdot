@@ -1,5 +1,9 @@
 ## Unreleased [unreleased]
 
+### Added
+
+- Latest RefSeq (110) and Ensembl (106) transcripts
+
 ### Changed
 
 - Fixed bug where all UTA transcripts were '-' strand
