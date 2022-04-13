@@ -2,8 +2,8 @@
 
 set -e
 
-CDOT_VERSION=0.2.1
 BASE_DIR=$(dirname ${BASH_SOURCE[0]})
+CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 
 # RefSeq
 mkdir -p refseq
