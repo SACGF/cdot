@@ -36,15 +36,18 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
         exons = build_coords['exons']
         # Remove the 3rd element (exon_number)
         exons = [e[:2] + e[3:] for e in exons]
+        start = exons[0][0]
+        end = exons[-1][1]
 
         pyhgvs_data = {
             "id": transcript_json["id"],
             "chrom": build_coords['contig'],
-            "start": exons[0][0],
-            "end": exons[-1][1],
+            "start": start,
+            "end": end,
             "strand": build_coords["strand"],
-            "cds_start": build_coords.get('cds_start'),
-            "cds_end": build_coords.get('cds_end'),
+            # PyHGVS has cds_start/cds_end equal start/end if non-coding
+            "cds_start": build_coords.get('cds_start', start),
+            "cds_end": build_coords.get('cds_end', end),
             "exons": exons,
             "gene_name": transcript_json['gene_name'],
         }

@@ -1,5 +1,15 @@
 ## Unreleased [unreleased]
 
+-
+
+## [0.2.5] - 2022-04-14
+
+### Changed
+
+- PyHGVS conversion fix - non-coding cds_start/cds_end is set to start/end (not None)
+
+## [0.2.4] - 2022-04-13
+
 ### Added
 
 - Latest RefSeq (110) and Ensembl (106) transcripts
@@ -42,7 +52,9 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.3...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/SACGF/cdot/compare/v0.2.4...v0.2.5
+[0.2.4]: https://github.com/SACGF/cdot/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/SACGF/cdot/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/SACGF/cdot/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/SACGF/cdot/compare/v0.1.1...v0.2.1
