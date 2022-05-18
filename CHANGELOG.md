@@ -2,6 +2,12 @@
 
 -
 
+## [0.2.5] - 2022-05-19
+
+### Changed
+
+- Fixed issue [Ensembl contigs g_to_c](https://github.com/SACGF/cdot/issues/9) - Ensembl JSON was using chrom names ie "17" instead of "NC_000017.11" for contig 
+
 ## [0.2.5] - 2022-04-14
 
 ### Changed
@@ -52,7 +58,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.5...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/SACGF/cdot/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/SACGF/cdot/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/SACGF/cdot/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/SACGF/cdot/compare/v0.2.2...v0.2.3
