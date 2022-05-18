@@ -13,6 +13,7 @@ from typing import Dict
 
 import cdot
 import ijson
+from bioutils.assemblies import make_name_ac_map
 from cdot.gff.gff_parser import GTFParser, GFF3Parser
 
 
@@ -192,6 +193,9 @@ def merge_historical(args):
     TRANSCRIPT_FIELDS = ["biotype", "start_codon", "stop_codon"]
     GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms"]
 
+    # name_ac_map: Mapping from chromosome names to accessions eg {"17": "NC_000017.11"}
+    name_ac_map = make_name_ac_map(args.genome_build)
+
     gene_versions = {}  # We only keep those that are in the latest transcript version
     transcript_versions = {}
     gene_accessions_for_symbol = defaultdict(set)
@@ -255,7 +259,13 @@ def merge_historical(args):
                 for field in GENOME_BUILD_FIELDS:
                     value = historical_transcript_version.get(field)
                     if value is not None:
+                        if field == "contig":
+                            value = name_ac_map.get(value, value)
                         genome_build_coordinates[field] = value
+
+                contig = genome_build_coordinates["contig"]
+                genome_build_coordinates["contig"] = name_ac_map.get(contig, contig)
+
                 transcript_version["genome_builds"] = {args.genome_build: genome_build_coordinates}
                 transcript_versions[transcript_accession] = transcript_version
 
