@@ -62,6 +62,7 @@ class AbstractJSONDataProvider(Interface):
             return "seqfetcher"
 
     def get_seq(self, ac, start_i=None, end_i=None):
+        ac = ac.split('.')[0]
         return self.seqfetcher.fetch_seq(ac, start_i, end_i)
 
     @staticmethod
