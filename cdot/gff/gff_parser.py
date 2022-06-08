@@ -1,25 +1,16 @@
 import abc
 import logging
 import operator
-import os
 import re
 from collections import Counter, defaultdict
-from hashlib import md5
 
 import HTSeq
 
 # Keys used in dictionary (serialized to JSON)
+from bioutils.assemblies import make_name_ac_map
+
 CONTIG = "contig"
-START = "start"
-END = "stop"
 STRAND = "strand"
-
-
-def file_md5sum(filename):
-    m = md5()
-    with open(filename, "rb") as f:
-        m.update(f.read())
-    return m.hexdigest()
 
 
 class GFFParser(abc.ABC):
@@ -27,22 +18,25 @@ class GFFParser(abc.ABC):
     FEATURE_ALLOW_LIST = {}
     FEATURE_IGNORE_LIST = {"biological_region", "chromosome", "region", "scaffold", "supercontig"}
 
-    def __init__(self, filename, discard_contigs_with_underscores=True):
+    def __init__(self, filename, genome_build, url, discard_contigs_with_underscores=True):
         self.filename = filename
+        self.genome_build = genome_build
+        self.url = url
         self.discard_contigs_with_underscores = discard_contigs_with_underscores
 
         self.discarded_contigs = Counter()
         self.genes_by_id = {}
         self.transcripts_by_id = {}
-        self.gene_id_by_name = {}
         # Store features in separate dict as we don't need to write all as JSON
         self.transcript_features_by_type = defaultdict(lambda: defaultdict(list))
+        self.name_ac_map = make_name_ac_map(genome_build)
+
 
     @abc.abstractmethod
     def handle_feature(self, feature):
         pass
 
-    def parse(self):
+    def _parse(self):
         for feature in HTSeq.GFF_Reader(self.filename):
             if self.FEATURE_ALLOW_LIST and feature.type not in self.FEATURE_ALLOW_LIST:
                 continue
@@ -59,8 +53,28 @@ class GFFParser(abc.ABC):
                 print("Could not parse '%s': %s" % (feature.get_gff_line(), e))
                 raise e
 
-    def finish(self):
+    def _finish(self):
         self._process_coding_features()
+
+        for gene in self.genes_by_id.values():
+            # Turn set into comma sep string
+            gene["biotype"] = ",".join(sorted(gene["biotype"]))
+            gene["url"] = self.url
+
+        # At the moment the transcript dict is flat - need to move it into "genome_builds" dict
+        GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms"]
+        for transcript in self.transcripts_by_id.values():
+            genome_build_coordinates = {
+                "url": self.url,
+            }
+            for field in GENOME_BUILD_FIELDS:
+                if value := transcript.pop(field, None):
+                    genome_build_coordinates[field] = value
+
+            # Make sure contig uses accession not chromosome names
+            contig = genome_build_coordinates["contig"]
+            genome_build_coordinates["contig"] = self.name_ac_map.get(contig, contig)
+            transcript["genome_builds"] = {self.genome_build: genome_build_coordinates}
 
         if self.discarded_contigs:
             print("Discarded contigs: %s" % self.discarded_contigs)
@@ -68,24 +82,17 @@ class GFFParser(abc.ABC):
     @staticmethod
     def _create_gene(gene_name, feature):
         biotypes = set()
+        description = None
 
         gene = {
-            "name": gene_name,
-            "transcripts": set(),
+            "gene_symbol": gene_name,
             "biotype": biotypes,
-            CONTIG: feature.iv.chrom,
-            START: feature.iv.start,
-            END: feature.iv.end,
-            STRAND: feature.iv.strand
         }
-
         # Attempt to get some biotypes in there if available
         if feature.type == "gene":
             gene_version = feature.attr.get("version")
             biotype = feature.attr.get("biotype")
             description = feature.attr.get("description")
-            if description:
-                gene["description"] = description
         else:
             gene_version = feature.attr.get("gene_version")
             biotype = feature.attr.get("gene_biotype")
@@ -95,16 +102,19 @@ class GFFParser(abc.ABC):
 
         if gene_version:
             gene["version"] = int(gene_version)
+
+        gene["description"] = description
         return gene
 
     @staticmethod
-    def _create_transcript(feature):
+    def _create_transcript(feature, transcript_id, gene_id, gene_symbol):
         return {
+            "id": transcript_id,
+            "gene_name": gene_symbol,
+            "gene_version": gene_id,
             "exons": [],
             "biotype": set(),
             CONTIG: feature.iv.chrom,
-            START: feature.iv.start,
-            END: feature.iv.end,
             STRAND: feature.iv.strand,
         }
 
@@ -276,23 +286,11 @@ class GFFParser(abc.ABC):
             label = "Genomic coordinate: %d" % genomic_coordinate
         raise ValueError('%s is not in any of the exons' % label)
 
-    def get_data(self):
-        self.parse()
-        self.finish()
+    def get_genes_and_transcripts(self):
+        self._parse()
+        self._finish()
 
-        gene_ids_by_biotype = defaultdict(set)
-        for gene_id, gene in self.genes_by_id.items():
-            for biotype in gene["biotype"]:
-                gene_ids_by_biotype[biotype].add(gene_id)
-
-        return {
-            "reference_gtf": {"path": os.path.abspath(self.filename),
-                              "md5sum": file_md5sum(self.filename)},
-            "genes_by_id": self.genes_by_id,
-            "transcripts_by_id": self.transcripts_by_id,
-            "gene_id_by_name": self.gene_id_by_name,
-            "gene_ids_by_biotype": gene_ids_by_biotype,
-        }
+        return self.genes_by_id, self.transcripts_by_id
 
 
 class GTFParser(GFFParser):
@@ -307,22 +305,19 @@ class GTFParser(GFFParser):
         super(GTFParser, self).__init__(*args, **kwargs)
 
     def handle_feature(self, feature):
+        print("gene feature:")
+        print(feature.attr)
         gene_id = feature.attr["gene_id"]
         # Non mandatory - Ensembl doesn't have on some RNAs
-        gene_name = None
         if feature.type == "gene":
             gene_name = feature.attr.get("Name")
         else:
             gene_name = feature.attr.get("gene_name")
-        if gene_name:
-            self.gene_id_by_name[gene_name] = gene_id  # Shouldn't be dupes per file
 
         gene = self.genes_by_id.get(gene_id)
         if gene is None:
             gene = self._create_gene(gene_name, feature)
             self.genes_by_id[gene_id] = gene
-        else:
-            self._update_extents(gene, feature)
 
         transcript_id = feature.attr.get("transcript_id")
         transcript_version = feature.attr.get("transcript_version")
@@ -330,13 +325,13 @@ class GTFParser(GFFParser):
             transcript_id += "." + transcript_version
 
         if transcript_id:
-            gene["transcripts"].add(transcript_id)
             transcript = self.transcripts_by_id.get(transcript_id)
             if transcript is None:
-                transcript = self._create_transcript(feature)
+                transcript = self._create_transcript(feature, transcript_id, gene_id, gene_name)
                 self.transcripts_by_id[transcript_id] = transcript
             else:
-                self._update_extents(transcript, feature)
+                if feature.iv.chrom != transcript[CONTIG]:
+                    GFFParser._store_other_chrom(transcript, feature)
 
             # No need to store chrom/strand for each feature, will use transcript
             if feature.type in self.GTF_TRANSCRIPTS_DATA:
@@ -352,19 +347,6 @@ class GTFParser(GFFParser):
             if biotype:
                 gene["biotype"].add(biotype)
                 transcript["biotype"].add(biotype)
-
-    @staticmethod
-    def _update_extents(genomic_region_dict, feature):
-        if feature.iv.chrom == genomic_region_dict[CONTIG]:
-            start = genomic_region_dict[START]
-            if feature.iv.start < start:
-                genomic_region_dict[START] = feature.iv.start
-
-            end = genomic_region_dict[END]
-            if feature.iv.end > end:
-                genomic_region_dict[END] = feature.iv.end
-        else:
-            GFFParser._store_other_chrom(genomic_region_dict, feature)
 
 
 class GFF3Parser(GFFParser):
@@ -417,8 +399,6 @@ class GFF3Parser(GFFParser):
                 if m := self.hgnc_pattern.match(description):
                     gene["hgnc"] = m.group(2)
 
-            if gene_name:
-                self.gene_id_by_name[gene_name] = gene_id
             self.gene_id_by_feature_id[feature.attr["ID"]] = gene_id
         else:
             if feature.type in self.GFF3_TRANSCRIPTS_DATA:
@@ -449,7 +429,7 @@ class GFF3Parser(GFFParser):
                     if not gene_id:
                         raise ValueError("Don't know how to handle feature type %s (not child of gene)" % feature.type)
                     gene = self.genes_by_id[gene_id]
-                    self._handle_transcript(gene, transcript_id, feature)
+                    self._handle_transcript(gene, transcript_id, gene_id, feature)
 
     @staticmethod
     def _get_dbxref(feature):
@@ -460,12 +440,11 @@ class GFF3Parser(GFFParser):
             dbxref = dict(d.split(":", 1) for d in dbxref_str.split(","))
         return dbxref
 
-    def _handle_transcript(self, gene, transcript_id, feature):
+    def _handle_transcript(self, gene, transcript_id, gene_id, feature):
         """ Sometimes we can get multiple transcripts in the same file - just taking 1st """
         if transcript_id not in self.transcripts_by_id:
             # print("_handle_transcript(%s, %s)" % (gene, feature))
-            gene["transcripts"].add(transcript_id)
-            transcript = self._create_transcript(feature)
+            transcript = self._create_transcript(feature, transcript_id, gene_id, gene["gene_symbol"])
             biotype = self._get_biotype_from_transcript_id(transcript_id)
             if biotype:
                 gene["biotype"].add(biotype)

@@ -3,6 +3,7 @@
 ### Changed
 
 - Fixed default arguments bug where PyHGVS only worked on SACGF fork
+- gtf_to_json now goes straight to cdot format (without intermediary PyReference format)
 
 ## [0.2.5] - 2022-05-19
 

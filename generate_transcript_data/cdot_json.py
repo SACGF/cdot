@@ -9,11 +9,9 @@ import sys
 from argparse import ArgumentParser
 from collections import defaultdict, Counter
 from csv import DictReader
-from typing import Dict
 
 import cdot
 import ijson
-from bioutils.assemblies import make_name_ac_map
 from cdot.gff.gff_parser import GTFParser, GFF3Parser
 
 
@@ -30,11 +28,12 @@ def handle_args():
 
     for p in [parser_gtf, parser_gff3]:
         p.add_argument("--discard-contigs-with-underscores", action='store_true', default=True)
-        p.add_argument('--url', help='URL (source of GFF) to store in "reference_gtf.url"')
+        p.add_argument('--url', required=True, help='URL (source of GFF) to store in "reference_gtf.url"')
+        p.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
 
     parser_uta = subparsers.add_parser("uta_to_json", help="Convert UTA to JSON")
     parser_uta.add_argument("uta_csv_filename", help="UTA SQL CSV to convert to JSON")
-    parser_uta.add_argument('--url', help='UTA URL to store in "reference_gtf.url"')
+    parser_uta.add_argument('--url', required=True, help='UTA URL to store in "reference_gtf.url"')
 
     parser_historical = subparsers.add_parser("merge_historical", help="Merge multiple JSON files (keeping latest)")
     parser_historical.add_argument('json_filenames', nargs="+", action="extend",
@@ -65,13 +64,17 @@ class SortedSetEncoder(json.JSONEncoder):
 
 
 def gtf_to_json(args):
-    parser = GTFParser(args.gtf_filename, args.discard_contigs_with_underscores)
-    write_json(args.output, parser.get_data(), args.url)
+    parser = GTFParser(args.gtf_filename, args.genome_build, args.url,
+                       discard_contigs_with_underscores=args.discard_contigs_with_underscores)
+    genes, transcripts = parser.get_genes_and_transcripts()
+    write_cdot_json(args.output, genes, transcripts, [args.genome_build])
 
 
 def gff3_to_json(args):
-    parser = GFF3Parser(args.gff3_filename, args.discard_contigs_with_underscores)
-    write_json(args.output, parser.get_data(), args.url)
+    parser = GFF3Parser(args.gff3_filename, args.genome_build, args.url,
+                        discard_contigs_with_underscores=args.discard_contigs_with_underscores)
+    genes, transcripts = parser.get_genes_and_transcripts()
+    write_cdot_json(args.output, genes, transcripts, [args.genome_build])
 
 
 def uta_to_json(args):
@@ -117,7 +120,7 @@ def uta_to_json(args):
         "genes_by_id": genes_by_id,
         "transcripts_by_id": transcripts_by_id,
     }
-    write_json(args.output, data, args.url)
+    write_cdot_json(args.output, genes_by_id, transcripts_by_id, [args.genome_build])
 
 
 def _convert_uta_exons(exon_starts, exon_ends, cigars):
@@ -169,33 +172,22 @@ def _cigar_to_gap_and_length(cigar):
     return gap, exon_length
 
 
-def write_json(output_filename, data, url=None):
-    # These single GTF/GFF JSON files are used by PyReference, and not meant to be used for cdot HGVS
-    # If you only want 1 build for cdot, you can always run merge_historical on a single file
+def write_cdot_json(filename, genes, transcript_versions, genome_builds):
+    print("Writing cdot data")
+    data = {
+        "cdot_version": cdot.__version__,
+        "genome_builds": genome_builds,
+        "transcripts": transcript_versions,
+    }
+    if genes:
+        data["genes"] = genes
 
-    if url:
-        reference_gtf = data.get("reference_gtf", {})
-        reference_gtf["url"] = url
-        data["reference_gtf"] = reference_gtf
-
-    data["version"] = cdot.get_json_schema_version()
-
-    with gzip.open(output_filename, 'wt') as outfile:
+    with gzip.open(filename, 'wt') as outfile:
         json.dump(data, outfile, cls=SortedSetEncoder, sort_keys=True)  # Sort so diffs work
-
-    print("Wrote:", output_filename)
 
 
 def merge_historical(args):
-    # The merged files are not the same as individual GTF json files
-    # @see https://github.com/SACGF/cdot/wiki/Transcript-JSON-format
-
-    TRANSCRIPT_FIELDS = ["biotype", "start_codon", "stop_codon"]
-    GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms"]
-
-    # name_ac_map: Mapping from chromosome names to accessions eg {"17": "NC_000017.11"}
-    name_ac_map = make_name_ac_map(args.genome_build)
-
+    """ Loads multiple JSON files, produces a file with the latest transcript version """
     gene_versions = {}  # We only keep those that are in the latest transcript version
     transcript_versions = {}
     gene_accessions_for_symbol = defaultdict(set)
@@ -203,40 +195,16 @@ def merge_historical(args):
     for filename in args.json_filenames:
         print(f"Loading '{filename}'")
         with gzip.open(filename) as f:
-            reference_gtf = next(ijson.items(f, "reference_gtf"))
-            url = reference_gtf["url"]
-            transcript_gene_version = {}
-
-            f.seek(0)  # Reset for next ijson call
-            for gene_id, gene in ijson.kvitems(f, "genes_by_id"):
-                if version := gene.get("version"):
-                    gene_accession = f"{gene_id}.{version}"
-                else:
-                    gene_accession = gene_id
-
-                gene_version = convert_gene_pyreference_to_gene_version_data(gene)
-                gene_version["url"] = url
+            for gene_accession, gene_version in ijson.kvitems(f, "genes"):
                 gene_versions[gene_accession] = gene_version
                 if not gene_accession.startswith("_"):
                     gene_accessions_for_symbol[gene_version["gene_symbol"]].add(gene_accession)
 
-                for transcript_accession in gene["transcripts"]:
-                    transcript_gene_version[transcript_accession] = gene_accession
-
             f.seek(0)  # Reset for next ijson call
-            for transcript_accession, historical_transcript_version in ijson.kvitems(f, "transcripts_by_id"):
-                gene_accession = transcript_gene_version[transcript_accession]
+            for transcript_accession, historical_transcript_version in ijson.kvitems(f, "transcripts"):
+                gene_accession = historical_transcript_version["gene_version"]
                 gene_version = gene_versions[gene_accession]
                 gene_symbol = gene_version["gene_symbol"]
-
-                transcript_version = {
-                    "id": transcript_accession,
-                    "gene_name": gene_symbol,
-                }
-                for field in TRANSCRIPT_FIELDS:
-                    value = historical_transcript_version.get(field)
-                    if value is not None:
-                        transcript_version[field] = value
 
                 if gene_accession.startswith("_"):  # Not real - fake UTA so try and grab old one
                     fixed_ga = None
@@ -248,33 +216,16 @@ def merge_historical(args):
                                 fixed_ga = next(iter(potential_ga))
                     if fixed_ga:
                         gene_accession = fixed_ga
-                transcript_version["gene_version"] = gene_accession
-
-                if hgnc := gene_version.get("hgnc"):
-                    transcript_version["hgnc"] = hgnc
-
-                genome_build_coordinates = {
-                    "url": url,
-                }
-                for field in GENOME_BUILD_FIELDS:
-                    value = historical_transcript_version.get(field)
-                    if value is not None:
-                        if field == "contig":
-                            value = name_ac_map.get(value, value)
-                        genome_build_coordinates[field] = value
-
-                contig = genome_build_coordinates["contig"]
-                genome_build_coordinates["contig"] = name_ac_map.get(contig, contig)
-
-                transcript_version["genome_builds"] = {args.genome_build: genome_build_coordinates}
-                transcript_versions[transcript_accession] = transcript_version
+                historical_transcript_version["gene_version"] = gene_accession
+                transcript_versions[transcript_accession] = historical_transcript_version
 
     genes = {}  # Only keep those that are used in transcript versions
     # Summarise where it's from
     transcript_urls = Counter()
     for tv in transcript_versions.values():
-        if gene_accession := tv.get("gene_version"):
-            genes[gene_accession] = gene_versions[gene_accession]
+        if not args.no_genes:
+            if gene_accession := tv.get("gene_version"):
+                genes[gene_accession] = gene_versions[gene_accession]
 
         for build_coordinates in tv["genome_builds"].values():
             transcript_urls[build_coordinates["url"]] += 1
@@ -284,36 +235,7 @@ def merge_historical(args):
     for url, count in transcript_urls.most_common():
         print(f"{url}: {count} ({count*100 / total:.1f}%)")
 
-    print("Writing cdot data")
-    with gzip.open(args.output, 'wt') as outfile:
-        data = {
-            "transcripts": transcript_versions,
-            "cdot_version": cdot.__version__,
-            "genome_builds": [args.genome_build],
-        }
-        if not args.no_genes:
-            data["genes"] = genes
-
-        json.dump(data, outfile)
-
-
-def convert_gene_pyreference_to_gene_version_data(gene_data: Dict) -> Dict:
-    gene_version_data = {
-        'description': gene_data.get("description"),
-        'gene_symbol': gene_data["name"],
-    }
-
-    if biotype_list := gene_data.get("biotype"):
-        gene_version_data['biotype'] = ",".join(biotype_list)
-
-    if hgnc := gene_data.get("hgnc"):
-        gene_version_data["hgnc"] = hgnc
-
-    # Only Ensembl Genes have versions
-    if version := gene_data.get("version"):
-        gene_data["version"] = version
-
-    return gene_version_data
+    write_cdot_json(args.output, genes, transcript_versions, [args.genome_build])
 
 
 def combine_builds(args):
