@@ -31,7 +31,6 @@ class GFFParser(abc.ABC):
         self.transcript_features_by_type = defaultdict(lambda: defaultdict(list))
         self.name_ac_map = make_name_ac_map(genome_build)
 
-
     @abc.abstractmethod
     def handle_feature(self, feature):
         pass

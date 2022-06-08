@@ -135,5 +135,4 @@ def is_sacgf_pyhgvs_fork():
 #     cds_end = transcript_data.get("cds_end", end)
 
 
-
 # VG loader also expects biotype to be comma sep, now is list
