@@ -20,7 +20,7 @@ for release in 82 85 87; do
     wget ${url}
   fi
   if [[ ! -e ${cdot_file} ]]; then
-    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}"
   fi
   merge_args+=(${cdot_file})
 done

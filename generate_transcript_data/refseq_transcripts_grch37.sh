@@ -19,7 +19,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}"
 fi
 merge_args+=(${cdot_file})
 
@@ -31,7 +31,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}"
 fi
 merge_args+=(${cdot_file})
 
@@ -43,7 +43,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}"
 fi
 merge_args+=(${cdot_file})
 
@@ -61,7 +61,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}"
 fi
 merge_args+=(${cdot_file})
 
@@ -75,7 +75,7 @@ for release in 105.20190906 105.20201022; do
     wget ${url} --output-document=${filename}
   fi
   if [[ ! -e ${cdot_file} ]]; then
-    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --output "${cdot_file}"
+    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}"
   fi
   merge_args+=(${cdot_file})
 done
