@@ -1,6 +1,8 @@
 ## Unreleased [unreleased]
 
--
+### Changed
+
+- Fixed default arguments bug where PyHGVS only worked on SACGF fork
 
 ## [0.2.5] - 2022-05-19
 

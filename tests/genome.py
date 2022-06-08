@@ -8,7 +8,12 @@ from __future__ import unicode_literals
 import itertools
 import os
 
-from pyhgvs.variants import revcomp
+try:
+    # Original PyHGVS
+    from pyhgvs.variants import revcomp
+except ImportError:
+    # SACGF fork of PyHGVS
+    from pyhgvs.models.variants import revcomp
 
 
 try:

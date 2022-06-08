@@ -1,6 +1,7 @@
 import abc
 import gzip
 import json
+from importlib import metadata
 
 import requests
 
@@ -23,7 +24,7 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
 
     def get_transcript(self, transcript_id, genome_build, sacgf_pyhgvs_fork=False):
         transcript = None
-        if pyhgvs_data := self.get_pyhgvs_data(transcript_id, genome_build, sacgf_pyhgvs_fork=True):
+        if pyhgvs_data := self.get_pyhgvs_data(transcript_id, genome_build, sacgf_pyhgvs_fork=sacgf_pyhgvs_fork):
             transcript = make_transcript(pyhgvs_data)
         return transcript
 
@@ -34,8 +35,6 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
             return {}
 
         exons = build_coords['exons']
-        # Remove the 3rd element (exon_number)
-        exons = [e[:2] + e[3:] for e in exons]
         start = exons[0][0]
         end = exons[-1][1]
 
@@ -48,16 +47,22 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
             # PyHGVS has cds_start/cds_end equal start/end if non-coding
             "cds_start": build_coords.get('cds_start', start),
             "cds_end": build_coords.get('cds_end', end),
-            "exons": exons,
             "gene_name": transcript_json['gene_name'],
         }
 
         if sacgf_pyhgvs_fork:
+            # Remove the 3rd element (exon_number)
+            exons = [e[:2] + e[3:] for e in exons]
             pyhgvs_data["cdna_match"] = exons
             pyhgvs_data["start_codon_transcript_pos"] = transcript_json.get("start_codon")
             pyhgvs_data["stop_codon_transcript_pos"] = transcript_json.get("stop_codon")
             if other_chroms := build_coords.get("other_chroms"):
                 pyhgvs_data["other_chroms"] = other_chroms
+        else:
+            # Standard PyHGVS - only keep start/end
+            exons = [e[:2] for e in exons]
+
+        pyhgvs_data["exons"] = exons
         return pyhgvs_data
 
 
@@ -114,6 +119,13 @@ class RESTPyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):
                 url = "http://cdot.cc"
         self.url = url
         self.transcripts = {}
+
+
+def is_sacgf_pyhgvs_fork():
+    required_version = (0, 12, 0)  # Bumped version on 24 Nov 2021 - has mito and cDNA_match fixes
+    imported_version = [int(v) for v in metadata.version("pyhgvs").split(".")]
+    return tuple(imported_version) >= required_version
+
 
 # Changes from old loading:
 
