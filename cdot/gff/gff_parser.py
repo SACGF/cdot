@@ -108,7 +108,7 @@ class GFFParser(abc.ABC):
 
     @staticmethod
     def _create_transcript(feature, transcript_accession, gene_data):
-        return {
+        transcript_data = {
             "id": transcript_accession,
             "gene_name": gene_data["gene_symbol"],
             "gene_version": gene_data["id"],
@@ -117,6 +117,10 @@ class GFFParser(abc.ABC):
             CONTIG: feature.iv.chrom,
             STRAND: feature.iv.strand,
         }
+        print(gene_data)
+        if hgnc := gene_data.get("hgnc"):
+            transcript_data["hgnc"] = hgnc
+        return transcript_data
 
     @staticmethod
     def _store_other_chrom(data, feature):

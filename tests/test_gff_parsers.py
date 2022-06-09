@@ -59,6 +59,7 @@ class Test(unittest.TestCase):
         parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME, genome_build, self.FAKE_URL)
         _, transcripts = parser.get_genes_and_transcripts()
         transcript = transcripts["NM_007294.4"]
+        self.assertEquals(transcript.get("hgnc"), "1100", f"{transcript} has HGNC:1100")
         exons = transcript["genome_builds"][genome_build]["exons"]
         first_exon = exons[0]
         last_exon = exons[-1]
