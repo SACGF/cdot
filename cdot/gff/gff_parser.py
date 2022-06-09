@@ -117,7 +117,6 @@ class GFFParser(abc.ABC):
             CONTIG: feature.iv.chrom,
             STRAND: feature.iv.strand,
         }
-        print(gene_data)
         if hgnc := gene_data.get("hgnc"):
             transcript_data["hgnc"] = hgnc
         return transcript_data
@@ -299,7 +298,7 @@ class GFFParser(abc.ABC):
             if transcript_version := feature.attr.get(version_key):
                 transcript_accession = f"{transcript_id}.{transcript_version}"
             else:
-                print(f"warning: Couldn't get out {version_key} from {feature.type=} {feature.attr=}")
+                # print(f"warning: Couldn't get out {version_key} from {feature.type=} {feature.attr=}")
                 transcript_accession = transcript_id
         return transcript_accession
 
