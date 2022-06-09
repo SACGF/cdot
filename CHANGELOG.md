@@ -1,5 +1,9 @@
 ## Unreleased [unreleased]
 
+### Added
+
+- Latest RefSeq GRCh37 (105) transcripts
+
 ### Changed
 
 - Fixed default arguments bug where PyHGVS only worked on SACGF fork

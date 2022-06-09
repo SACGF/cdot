@@ -67,7 +67,7 @@ merge_args+=(${cdot_file})
 
 
 # These all have the same name, so rename them based on release ID
-for release in 105.20190906 105.20201022; do
+for release in 105.20190906 105.20201022 105.20220307; do
   filename=GCF_000001405.25_GRCh37.p13_genomic.${release}.gff.gz
   url=http://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/annotation_releases/${release}/GCF_000001405.25_GRCh37.p13/GCF_000001405.25_GRCh37.p13_genomic.gff.gz
   cdot_file=$(basename $filename .gz).json.gz
