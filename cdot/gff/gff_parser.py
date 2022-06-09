@@ -3,6 +3,7 @@ import logging
 import operator
 import re
 from collections import Counter, defaultdict
+from typing import Optional
 
 import HTSeq
 
@@ -25,8 +26,8 @@ class GFFParser(abc.ABC):
         self.discard_contigs_with_underscores = discard_contigs_with_underscores
 
         self.discarded_contigs = Counter()
-        self.genes_by_id = {}
-        self.transcripts_by_id = {}
+        self.gene_data_by_accession = {}
+        self.transcript_data_by_accession = {}
         # Store features in separate dict as we don't need to write all as JSON
         self.transcript_features_by_type = defaultdict(lambda: defaultdict(list))
         self.name_ac_map = make_name_ac_map(genome_build)
@@ -55,62 +56,62 @@ class GFFParser(abc.ABC):
     def _finish(self):
         self._process_coding_features()
 
-        for gene in self.genes_by_id.values():
+        for gene_data in self.gene_data_by_accession.values():
+            # TODO: Can turn this back on if we want - just removing for diff
+            gene_data.pop("id", None)
+            #############
             # Turn set into comma sep string
-            gene["biotype"] = ",".join(sorted(gene["biotype"]))
-            gene["url"] = self.url
+            gene_data["biotype"] = ",".join(sorted(gene_data["biotype"]))
+            gene_data["url"] = self.url
 
         # At the moment the transcript dict is flat - need to move it into "genome_builds" dict
         GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms"]
-        for transcript in self.transcripts_by_id.values():
+        for transcript_data in self.transcript_data_by_accession.values():
             genome_build_coordinates = {
                 "url": self.url,
             }
             for field in GENOME_BUILD_FIELDS:
-                if value := transcript.pop(field, None):
+                if value := transcript_data.pop(field, None):
                     genome_build_coordinates[field] = value
 
             # Make sure contig uses accession not chromosome names
             contig = genome_build_coordinates["contig"]
             genome_build_coordinates["contig"] = self.name_ac_map.get(contig, contig)
-            transcript["genome_builds"] = {self.genome_build: genome_build_coordinates}
+            transcript_data["genome_builds"] = {self.genome_build: genome_build_coordinates}
 
         if self.discarded_contigs:
             print("Discarded contigs: %s" % self.discarded_contigs)
 
     @staticmethod
-    def _create_gene(gene_name, feature):
-        biotypes = set()
+    def _create_gene(feature, gene_accession):
+        biotype_set = set()
         description = None
 
-        gene = {
-            "gene_symbol": gene_name,
-            "biotype": biotypes,
-        }
-        # Attempt to get some biotypes in there if available
-        if feature.type == "gene":
-            gene_version = feature.attr.get("version")
-            biotype = feature.attr.get("biotype")
+        # Non mandatory - Ensembl doesn't have some stuff on some RNAs
+        if feature.type in {"gene", "pseudogene"}:
+            gene_name = feature.attr.get("Name")
             description = feature.attr.get("description")
+            biotype = feature.attr.get("biotype")
         else:
-            gene_version = feature.attr.get("gene_version")
+            gene_name = feature.attr.get("gene_name")
             biotype = feature.attr.get("gene_biotype")
 
         if biotype:
-            biotypes.add(biotype)
+            biotype_set.add(biotype)
 
-        if gene_version:
-            gene["version"] = int(gene_version)
-
-        gene["description"] = description
-        return gene
+        return {
+            "gene_symbol": gene_name,
+            "biotype": biotype_set,
+            "id": gene_accession,
+            "description": description
+        }
 
     @staticmethod
-    def _create_transcript(feature, transcript_id, gene_id, gene_symbol):
+    def _create_transcript(feature, transcript_accession, gene_data):
         return {
-            "id": transcript_id,
-            "gene_name": gene_symbol,
-            "gene_version": gene_id,
+            "id": transcript_accession,
+            "gene_name": gene_data["gene_symbol"],
+            "gene_version": gene_data["id"],
             "exons": [],
             "biotype": set(),
             CONTIG: feature.iv.chrom,
@@ -124,17 +125,17 @@ class GFFParser(abc.ABC):
         data["other_chroms"] = other_chroms
 
     @staticmethod
-    def _get_biotype_from_transcript_id(transcript_id):
+    def _get_biotype_from_transcript_accession(transcript_accession):
         biotypes_by_transcript_id_start = {"NM_": "protein_coding", "NR_": "non_coding"}
         for (start, biotype) in biotypes_by_transcript_id_start.items():
-            if transcript_id.startswith(start):
+            if transcript_accession.startswith(start):
                 return biotype
 
-        if "tRNA" in transcript_id:
+        if "tRNA" in transcript_accession:
             return "tRNA"
         return None
 
-    def _add_transcript_data(self, transcript_id, transcript, feature):
+    def _add_transcript_data(self, transcript_accession, transcript, feature):
         if feature.iv.chrom != transcript[CONTIG]:
             self._store_other_chrom(transcript, feature)
             return
@@ -149,20 +150,20 @@ class GFFParser(abc.ABC):
         else:
             feature_tuple = (feature.iv.start, feature.iv.end)
 
-        features_by_type = self.transcript_features_by_type[transcript_id]
+        features_by_type = self.transcript_features_by_type[transcript_accession]
         features_by_type[feature.type].append(feature_tuple)
         if feature.type in self.CODING_FEATURES:
             features_by_type["coding_starts"].append(feature.iv.start)
             features_by_type["coding_ends"].append(feature.iv.end)
 
     def _process_coding_features(self):
-        for transcript_id, transcript in self.transcripts_by_id.items():
-            features_by_type = self.transcript_features_by_type.get(transcript_id)
+        for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
+            features_by_type = self.transcript_features_by_type.get(transcript_accession)
 
             # Store coding start/stop transcript positions
             # For RefSeq, we need to deal with alignment gaps, so easiest is to convert exons w/o gaps
             # into cDNA match objects, so the same objects/algorithm can be used
-            forward_strand = transcript[STRAND] == '+'
+            forward_strand = transcript_data[STRAND] == '+'
             cdna_matches = features_by_type.get("cDNA_match")
             if cdna_matches:
                 cdna_matches_stranded_order = cdna_matches
@@ -183,24 +184,26 @@ class GFFParser(abc.ABC):
                 cds_min = min(features_by_type["coding_starts"])
                 cds_max = max(features_by_type["coding_ends"])
 
-                transcript["cds_start"] = cds_min
-                transcript["cds_end"] = cds_max
+                transcript_data["cds_start"] = cds_min
+                transcript_data["cds_end"] = cds_max
 
                 try:
                     (coding_left, coding_right) = ("start_codon", "stop_codon")
                     if not forward_strand:  # Switch
                         (coding_left, coding_right) = (coding_right, coding_left)
-                    transcript[coding_left] = GFFParser._get_transcript_position(forward_strand, exons_stranded_order,
-                                                                                 cds_min)
-                    transcript[coding_right] = GFFParser._get_transcript_position(forward_strand, exons_stranded_order,
-                                                                                  cds_max)
+                    transcript_data[coding_left] = GFFParser._get_transcript_position(forward_strand,
+                                                                                      exons_stranded_order,
+                                                                                      cds_min)
+                    transcript_data[coding_right] = GFFParser._get_transcript_position(forward_strand,
+                                                                                       exons_stranded_order,
+                                                                                       cds_max)
                 except Exception as e:
                     logging.warning("Couldn't set coding start/end transcript positions: %s", e)
 
             exons_genomic_order = exons_stranded_order
             if not forward_strand:
                 exons_genomic_order.reverse()
-            transcript["exons"] = exons_genomic_order
+            transcript_data["exons"] = exons_genomic_order
 
     @staticmethod
     def _create_perfect_exons(raw_exon_stranded_order):
@@ -285,11 +288,39 @@ class GFFParser(abc.ABC):
             label = "Genomic coordinate: %d" % genomic_coordinate
         raise ValueError('%s is not in any of the exons' % label)
 
+    @staticmethod
+    def _get_transcript_accession(feature, version_key) -> Optional[str]:
+        transcript_accession = None
+        if transcript_id := feature.attr.get("transcript_id"):
+            if transcript_version := feature.attr.get(version_key):
+                transcript_accession = f"{transcript_id}.{transcript_version}"
+            else:
+                print(f"warning: Couldn't get out {version_key} from {feature.type=} {feature.attr=}")
+                transcript_accession = transcript_id
+        return transcript_accession
+
+    @staticmethod
+    def _get_gene_accession(feature) -> Optional[str]:
+        """ This can sometimes fail, in which case RefSeq will use dbxRef """
+        gene_accession = None
+        if gene_id := feature.attr.get("gene_id"):
+            if feature.type == "gene":
+                gene_version = feature.attr.get("version")
+            else:
+                gene_version = feature.attr.get("gene_version")
+
+            if gene_version:
+                gene_accession = f"{gene_id}.{gene_version}"
+            else:
+                gene_accession = gene_id
+        return gene_accession
+
+
     def get_genes_and_transcripts(self):
         self._parse()
         self._finish()
 
-        return self.genes_by_id, self.transcripts_by_id
+        return self.gene_data_by_accession, self.transcript_data_by_accession
 
 
 class GTFParser(GFFParser):
@@ -304,47 +335,34 @@ class GTFParser(GFFParser):
         super(GTFParser, self).__init__(*args, **kwargs)
 
     def handle_feature(self, feature):
-        print("gene feature:")
-        print(feature.attr)
-        gene_id = feature.attr["gene_id"]
-        # Non mandatory - Ensembl doesn't have on some RNAs
-        if feature.type == "gene":
-            gene_name = feature.attr.get("Name")
-        else:
-            gene_name = feature.attr.get("gene_name")
+        gene_accession = self._get_gene_accession(feature)
+        gene_data = self.gene_data_by_accession.get(gene_accession)
+        if gene_data is None:
+            gene_data = self._create_gene(feature, gene_accession)
+            self.gene_data_by_accession[gene_accession] = gene_data
 
-        gene = self.genes_by_id.get(gene_id)
-        if gene is None:
-            gene = self._create_gene(gene_name, feature)
-            self.genes_by_id[gene_id] = gene
-
-        transcript_id = feature.attr.get("transcript_id")
-        transcript_version = feature.attr.get("transcript_version")
-        if transcript_version:
-            transcript_id += "." + transcript_version
-
-        if transcript_id:
-            transcript = self.transcripts_by_id.get(transcript_id)
+        if transcript_accession := self._get_transcript_accession(feature, version_key="transcript_version"):
+            transcript = self.transcript_data_by_accession.get(transcript_accession)
             if transcript is None:
-                transcript = self._create_transcript(feature, transcript_id, gene_id, gene_name)
-                self.transcripts_by_id[transcript_id] = transcript
+                transcript = self._create_transcript(feature, transcript_accession, gene_data)
+                self.transcript_data_by_accession[transcript_accession] = transcript
             else:
                 if feature.iv.chrom != transcript[CONTIG]:
                     GFFParser._store_other_chrom(transcript, feature)
 
             # No need to store chrom/strand for each feature, will use transcript
             if feature.type in self.GTF_TRANSCRIPTS_DATA:
-                self._add_transcript_data(transcript_id, transcript, feature)
+                self._add_transcript_data(transcript_accession, transcript, feature)
 
             biotype = feature.attr.get("gene_biotype")
             if biotype is None:
                 # Ensembl GTFs store biotype info under gene_type or transcript_type
                 biotype = feature.attr.get("gene_type")
                 if biotype is None:
-                    biotype = self._get_biotype_from_transcript_id(transcript_id)
+                    biotype = self._get_biotype_from_transcript_accession(transcript_accession)
 
             if biotype:
-                gene["biotype"].add(biotype)
+                gene_data["biotype"].add(biotype)
                 transcript["biotype"].add(biotype)
 
 
@@ -361,8 +379,8 @@ class GFF3Parser(GFFParser):
 
     def __init__(self, *args, **kwargs):
         super(GFF3Parser, self).__init__(*args, **kwargs)
-        self.gene_id_by_feature_id = defaultdict()
-        self.transcript_id_by_feature_id = defaultdict()
+        self.gene_accession_by_feature_id = defaultdict()
+        self.transcript_accession_by_feature_id = defaultdict()
         self.hgnc_pattern = re.compile(r".*\[Source:HGNC.*Acc:(HGNC:)?(\d+)\]")
 
     def handle_feature(self, feature):
@@ -371,64 +389,59 @@ class GFF3Parser(GFFParser):
         # RefSeq genes are always one of GFF3_GENES, Ensembl has lots of different types (lincRNA_gene etc)
         # Ensembl treats pseudogene as a transcript (has parent)
         if parent_id is None and (feature.type in self.GFF3_GENES or "gene_id" in feature.attr):
-            gene_id = feature.attr.get("gene_id")
+            gene_accession = self._get_gene_accession(feature)
             dbxref = self._get_dbxref(feature)
-            if not gene_id:
-                gene_id = dbxref.get("GeneID")
-            if not gene_id:
-                raise ValueError("Could not obtain 'gene_id', tried 'gene_id' and 'Dbxref[GeneID]'")
+            if not gene_accession:
+                gene_accession = dbxref.get("GeneID")  # RefSeq no versions
+                if not gene_accession:
+                    raise ValueError("Could not obtain 'gene_id', even using 'Dbxref[GeneID]'")
 
-            gene_name = feature.attr.get("Name")
             # Gene can have multiple loci, thus entries in GFF, keep original so all transcripts are added
-            gene = self.genes_by_id.get(gene_id)
-            if gene is None:
-                gene = self._create_gene(gene_name, feature)
+            gene_data = self.gene_data_by_accession.get(gene_accession)
+            if gene_data is None:
+                gene_data = self._create_gene(feature, gene_accession)
                 # If a gene already exists - then need to merge it...
-                self.genes_by_id[gene_id] = gene
+                self.gene_data_by_accession[gene_accession] = gene_data
 
             # RefSeq stores HGNC in dbxref
             if hgnc := dbxref.get("HGNC"):
                 # Might have HGNC: (5 characters) at start of it
                 if hgnc.startswith("HGNC"):
                     hgnc = hgnc[5:]
-                gene["hgnc"] = hgnc
-            elif description := gene.get("description"):
+                gene_data["hgnc"] = hgnc
+            elif description := gene_data.get("description"):
                 # Ensembl stores HGNC in description comment. Sometimes has "HGNC:" prefix eg:
                 # Can be either "[Source:HGNC Symbol%3BAcc:HGNC:8907]" or "[Source:HGNC Symbol%3BAcc:37102]"
                 if m := self.hgnc_pattern.match(description):
-                    gene["hgnc"] = m.group(2)
+                    gene_data["hgnc"] = m.group(2)
 
-            self.gene_id_by_feature_id[feature.attr["ID"]] = gene_id
+            self.gene_accession_by_feature_id[feature.attr["ID"]] = gene_accession
         else:
             if feature.type in self.GFF3_TRANSCRIPTS_DATA:
                 if feature.type == 'cDNA_match':
                     target = feature.attr["Target"]
-                    transcript_id = target.split()[0]
+                    transcript_accession = target.split()[0]
                 else:
                     # Some exons etc may be for miRNAs that have no transcript ID, so skip those (won't have parent)
                     if parent_id:
-                        transcript_id = self.transcript_id_by_feature_id.get(parent_id)
+                        transcript_accession = self.transcript_accession_by_feature_id.get(parent_id)
                     else:
                         logging.warning("Transcript data has no parent: %s" % feature.get_gff_line())
-                        transcript_id = None
+                        transcript_accession = None
 
-                if transcript_id:
-                    transcript = self.transcripts_by_id[transcript_id]
-                    self._handle_transcript_data(transcript_id, transcript, feature)
+                if transcript_accession:
+                    transcript = self.transcript_data_by_accession[transcript_accession]
+                    self._handle_transcript_data(transcript_accession, transcript, feature)
             else:
                 # There are so many different transcript ontology terms just taking everything that
                 # has a transcript_id and is child of gene (ie skip miRNA etc that is child of primary_transcript)
-                transcript_id = feature.attr.get("transcript_id")
-                if transcript_id:
-                    transcript_version = feature.attr.get("version")
-                    if transcript_version:
-                        transcript_id += "." + transcript_version
+                if transcript_accession := self._get_transcript_accession(feature, version_key="version"):
                     assert parent_id is not None
-                    gene_id = self.gene_id_by_feature_id.get(parent_id)
-                    if not gene_id:
+                    gene_accession = self.gene_accession_by_feature_id.get(parent_id)
+                    if not gene_accession:
                         raise ValueError("Don't know how to handle feature type %s (not child of gene)" % feature.type)
-                    gene = self.genes_by_id[gene_id]
-                    self._handle_transcript(gene, transcript_id, gene_id, feature)
+                    gene_data = self.gene_data_by_accession[gene_accession]
+                    self._handle_transcript(gene_data, transcript_accession, feature)
 
     @staticmethod
     def _get_dbxref(feature):
@@ -439,20 +452,19 @@ class GFF3Parser(GFFParser):
             dbxref = dict(d.split(":", 1) for d in dbxref_str.split(","))
         return dbxref
 
-    def _handle_transcript(self, gene, transcript_id, gene_id, feature):
+    def _handle_transcript(self, gene_data, transcript_accession, feature):
         """ Sometimes we can get multiple transcripts in the same file - just taking 1st """
-        if transcript_id not in self.transcripts_by_id:
+        if transcript_accession not in self.transcript_data_by_accession:
             # print("_handle_transcript(%s, %s)" % (gene, feature))
-            transcript = self._create_transcript(feature, transcript_id, gene_id, gene["gene_symbol"])
-            biotype = self._get_biotype_from_transcript_id(transcript_id)
-            if biotype:
-                gene["biotype"].add(biotype)
-                transcript["biotype"].add(biotype)
-            partial = feature.attr.get("partial")
-            if partial:
-                transcript["partial"] = 1
-            self.transcripts_by_id[transcript_id] = transcript
-        self.transcript_id_by_feature_id[feature.attr["ID"]] = transcript_id
+            transcript_data = self._create_transcript(feature, transcript_accession, gene_data)
+            if biotype := self._get_biotype_from_transcript_accession(transcript_accession):
+                gene_data["biotype"].add(biotype)
+                transcript_data["biotype"].add(biotype)
 
-    def _handle_transcript_data(self, transcript_id, transcript, feature):
-        self._add_transcript_data(transcript_id, transcript, feature)
+            if feature.attr.get("partial"):
+                transcript_data["partial"] = 1
+            self.transcript_data_by_accession[transcript_accession] = transcript_data
+        self.transcript_accession_by_feature_id[feature.attr["ID"]] = transcript_accession
+
+    def _handle_transcript_data(self, transcript_accession, transcript, feature):
+        self._add_transcript_data(transcript_accession, transcript, feature)

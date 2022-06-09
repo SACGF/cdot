@@ -28,8 +28,17 @@ class Test(unittest.TestCase):
     def test_ensembl_gtf(self):
         genome_build = "GRCh38"
         parser = GTFParser(self.ENSEMBL_GTF_FILENAME, genome_build, self.FAKE_URL)
-        _, transcripts = parser.get_genes_and_transcripts()
+        genes, transcripts = parser.get_genes_and_transcripts()
         self._test_exon_length(transcripts, genome_build, "ENST00000357654.9", 7088)
+
+        # Ensure that geneID was inserted with a version
+        expected_gene_version = "ENSG00000012048.23"
+
+        transcript = transcripts["ENST00000357654.9"]
+        transcript_gene_version = transcript["gene_version"]
+        self.assertEquals(expected_gene_version, transcript_gene_version, "Transcript gene has version")
+
+        self.assertTrue(expected_gene_version in genes, f"{expected_gene_version=} in genes")
 
     def test_refseq_gff3(self):
         genome_build = "GRCh38"
