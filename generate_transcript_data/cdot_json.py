@@ -144,16 +144,21 @@ def _convert_uta_exons(exon_starts, exon_ends, cigars):
 
 def _cigar_to_gap_and_length(cigar):
     """
-            gap = 'M196 I1 M61 I1 M181'
-            CIGAR = '194=1D60=1D184='
+        UTA performs their own alignment, and stores a CIGAR string of alignments
+
+        We need to convert to the GFF3 gap attribute, see:
+
+        But UTA/GFF3 has to/from sequences inverted, so insertion is a deletion
+
+        Example input:  CIGAR = '194=1D60=1D184='
+        Example output:   gap = 'M194 I1 M60 I1 M184'
     """
 
-    # This has to/from sequences inverted, so insertion is a deletion
     OP_CONVERSION = {
         "=": "M",
         "D": "I",
         "I": "D",
-        "X": "=",  # TODO: This is probably wrong! check if GTF gap has mismatch?
+        "X": "M",  # X=mismatch, GTF gap doesn't have mismatch, so count as match
     }
 
     cigar_pattern = re.compile(r"(\d+)([" + "".join(OP_CONVERSION.keys()) + "])")
