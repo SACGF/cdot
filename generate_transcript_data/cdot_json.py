@@ -34,6 +34,7 @@ def handle_args():
     parser_uta = subparsers.add_parser("uta_to_json", help="Convert UTA to JSON")
     parser_uta.add_argument("uta_csv_filename", help="UTA SQL CSV to convert to JSON")
     parser_uta.add_argument('--url', required=True, help='UTA URL to store in "reference_gtf.url"')
+    parser_uta.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
 
     parser_historical = subparsers.add_parser("merge_historical", help="Merge multiple JSON files (keeping latest)")
     parser_historical.add_argument('json_filenames', nargs="+", action="extend",
@@ -88,38 +89,40 @@ def uta_to_json(args):
         transcript_accession = data["ac"]
         if "/" in transcript_accession:
             continue  # transcript accession looks strange eg "NM_001202404.1/111..1620"
-        gene_name = data["hgnc"]
+        gene_symbol = data["hgnc"]
 
         # PyReference expects a gene versions etc - we don't know these so will make a fake one.
         # Anything starting with "_" is not copied over
-        fake_gene_version = "_" + gene_name
+        fake_gene_version = "_" + gene_symbol
         gene = genes_by_id.get(fake_gene_version)
         if gene is None:
             genes_by_id[fake_gene_version] = {
-                "name": gene_name,
+                "gene_symbol": gene_symbol,
                 "transcripts": [transcript_accession],
             }
         elif transcript_accession not in gene["transcripts"]:
             gene["transcripts"].append(transcript_accession)
 
-        transcript_version = {
+        genome_build_coordinates = {
+            "url": args.url,
             "contig": contig,
             "strand": "+" if data["strand"] == "1" else "-",
-            "gene_version": fake_gene_version,
             "exons": _convert_uta_exons(data["exon_starts"], data["exon_ends"], data["cigars"]),
+        }
+        transcript_data = {
+            "id": transcript_accession,
+            "gene_name": gene_symbol,
+            "gene_version": fake_gene_version,
         }
         cds_start_i = data["cds_start_i"]
         if cds_start_i:
-            transcript_version["start_codon"] = int(cds_start_i)
-            transcript_version["stop_codon"] = int(data["cds_end_i"])
+            transcript_data["start_codon"] = int(cds_start_i)
+            transcript_data["stop_codon"] = int(data["cds_end_i"])
 
-        transcripts_by_id[transcript_accession] = transcript_version
+        transcript_data["genome_builds"] = {args.genome_build: genome_build_coordinates}
+        transcripts_by_id[transcript_accession] = transcript_data
 
     print("Writing UTA to cdot JSON.gz")
-    data = {
-        "genes_by_id": genes_by_id,
-        "transcripts_by_id": transcripts_by_id,
-    }
     write_cdot_json(args.output, genes_by_id, transcripts_by_id, [args.genome_build])
 
 
@@ -164,16 +167,31 @@ def _cigar_to_gap_and_length(cigar):
     cigar_pattern = re.compile(r"(\d+)([" + "".join(OP_CONVERSION.keys()) + "])")
     gap_ops = []
     exon_length = 0
+
+    # Attempt to simplify gap - if there are 2 matches together, we can join them
+    # If it's all matches, we can just return None
+    m = 0  # Merge adjacent matches
     for (length_str, cigar_code) in cigar_pattern.findall(cigar):
-        exon_length += int(length_str)  # This shouldn't include one of the indels?
-        gap_ops.append(OP_CONVERSION[cigar_code] + length_str)
+        length = int(length_str)
+        # Cigar code D = deletion in transcript (insertion in reference) so don't count that for exon length
+        if cigar_code != 'D':
+            exon_length += length
+        op = OP_CONVERSION[cigar_code]
+        if op == 'M':
+            m += length
+        else:
+            if m:
+                gap_ops.append('M' + str(m))
+                m = 0
+            gap_ops.append(op + length_str)
+
+    if m:  # Leftovers
+        if gap_ops:
+            gap_ops.append('M' + str(m))
+        else:
+            return None, exon_length  # All matches
 
     gap = " ".join(gap_ops)
-    if len(gap_ops) == 1:
-        gap_op = gap_ops[0]
-        if gap_op.startswith("M"):
-            gap = None
-
     return gap, exon_length
 
 
@@ -209,13 +227,13 @@ def merge_historical(args):
             for transcript_accession, historical_transcript_version in ijson.kvitems(f, "transcripts"):
                 gene_accession = historical_transcript_version["gene_version"]
                 gene_version = gene_versions[gene_accession]
-                gene_symbol = gene_version["gene_symbol"]
 
                 if gene_accession.startswith("_"):  # Not real - fake UTA so try and grab old one
                     fixed_ga = None
                     if previous_tv := transcript_versions.get(transcript_accession):
                         fixed_ga = previous_tv.get("gene_version")
                     if not fixed_ga:
+                        gene_symbol = gene_version["gene_symbol"]
                         if potential_ga := gene_accessions_for_symbol.get(gene_symbol):
                             if len(potential_ga):
                                 fixed_ga = next(iter(potential_ga))
@@ -260,8 +278,8 @@ def combine_builds(args):
 
         f.seek(0)  # Reset for next ijson call
         for transcript_id, build_transcript in ijson.kvitems(f, "transcripts"):
-            existing_transcript = transcripts.get(transcript_id)
             genome_builds = {}
+            existing_transcript = transcripts.get(transcript_id)
             if existing_transcript:
                 genome_builds = existing_transcript["genome_builds"]
                 # Latest always used, but check existing - if codons are different old versions are wrong so remove

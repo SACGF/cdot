@@ -1,15 +1,19 @@
 ## Unreleased [unreleased]
 
+## [0.2.7] - 2022-05-19
+
 ### Added
 
-- Latest RefSeq GRCh37 (105) transcripts
+- Add transcripts from latest RefSeq GRCh37 (105) and RefSeq GRCh38 (110)
 
 ### Changed
 
 - Fixed default arguments bug where PyHGVS only worked on SACGF fork
 - gtf_to_json now goes straight to cdot format (without intermediary PyReference format)
+- UTA is not included in generation scripts by default, to enable, set environment variable UTA_TRANSCRIPTS=True
+- Handle mismatches in UTA CIGAR alignments (convert to match (no indels) as GFF format has no support for mismatch)
 
-## [0.2.5] - 2022-05-19
+## [0.2.6] - 2022-05-19
 
 ### Changed
 

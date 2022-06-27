@@ -4,8 +4,13 @@ set -e
 
 BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
-GENOME_BUILD=grch37
 UTA_VERSION=20210129
+
+if [[ -z ${UTA_TRANSCRIPTS} ]]; then
+  echo "Not including UTA transcripts. Set environment variable UTA_TRANSCRIPTS=True to do so"
+else
+  echo "Retrieving / storing UTA transcripts"
+fi
 
 # Having troubles with corrupted files downloading via FTP from NCBI via IPv6, http works ok
 # NOTE: RefSeq transcripts in GRCh37 before p13 did not have alignment gap information
@@ -47,12 +52,14 @@ if [[ ! -e ${cdot_file} ]]; then
 fi
 merge_args+=(${cdot_file})
 
-# UTA transcripts have gaps, so they should overwrite the earlier refseq transcripts (without gaps)
-# But will be overwritten by newer (post p13) official transcripts
-cdot_file="cdot.uta_${UTA_VERSION}.${GENOME_BUILD}.json.gz"
-${BASE_DIR}/uta_transcripts.sh ${UTA_VERSION} ${GENOME_BUILD}
-merge_args+=(${cdot_file})
 
+if [[ ! -z ${UTA_TRANSCRIPTS} ]]; then
+  # UTA transcripts have gaps, so they should overwrite the earlier refseq transcripts (without gaps)
+  # But will be overwritten by newer (post p13) official transcripts
+  cdot_file="cdot.uta_${UTA_VERSION}.GRCh37.json.gz"
+  ${BASE_DIR}/uta_transcripts.sh ${UTA_VERSION} GRCh37
+  merge_args+=(${cdot_file})
+fi
 
 filename=ref_GRCh37.p13_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.105/GFF/${filename}

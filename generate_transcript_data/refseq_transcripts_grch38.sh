@@ -4,18 +4,25 @@ set -e
 
 BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
-GENOME_BUILD=grch38
 UTA_VERSION=20210129
 
 # Having troubles with corrupted files downloading via FTP from NCBI via IPv6, http works ok
 
+if [[ -z ${UTA_TRANSCRIPTS} ]]; then
+  echo "Not including UTA transcripts. Set environment variable UTA_TRANSCRIPTS=True to do so"
+else
+  echo "Retrieving / storing UTA transcripts"
+fi
+
+
 merge_args=()
 
-# All GRCh38 transcripts have alignments gaps, so use UTA first (and override with official releases)
-uta_cdot_file="cdot.uta_${UTA_VERSION}.${GENOME_BUILD}.json.gz"
-${BASE_DIR}/uta_transcripts.sh ${UTA_VERSION} ${GENOME_BUILD}
-merge_args+=(${uta_cdot_file})
-
+if [[ ! -z ${UTA_TRANSCRIPTS} ]]; then
+  # All GRCh38 transcripts have alignments gaps, so use UTA first (and override with official releases)
+  uta_cdot_file="cdot.uta_${UTA_VERSION}.GRCh38.json.gz"
+  ${BASE_DIR}/uta_transcripts.sh ${UTA_VERSION} GRCh38
+  merge_args+=(${uta_cdot_file})
+fi
 
 filename=ref_GRCh38_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.106/GFF/${filename}
