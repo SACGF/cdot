@@ -25,7 +25,7 @@ pip install cdot
 from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider
 
 hdp = RESTDataProvider()  # Uses API server at cdot.cc
-# hdp = JSONDataProvider(["./cdot-0.2.6.refseq.grch38.json.gz"])  # Uses local JSON file
+# hdp = JSONDataProvider(["./cdot-0.2.7.refseq.grch38.json.gz"])  # Uses local JSON file
 
 am = AssemblyMapper(hdp,
                     assembly_name='GRCh37',
@@ -42,7 +42,7 @@ am.c_to_g(var_c)
 from cdot.pyhgvs.pyhgvs_transcript import JSONPyHGVSTranscriptFactory, RESTPyHGVSTranscriptFactory
 
 factory = RESTPyHGVSTranscriptFactory()
-# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.6.refseq.grch38.json.gz"])  # Uses local JSON file
+# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.7.refseq.grch38.json.gz"])  # Uses local JSON file
 pyhgvs.parse_hgvs_name(hgvs_c, genome, get_transcript=factory.get_transcript_grch37)
 
 ```
@@ -55,8 +55,8 @@ pyhgvs.parse_hgvs_name(hgvs_c, genome, get_transcript=factory.get_transcript_grc
 
 ## Q. Where can I download the JSON.gz files?
 
-[RefSeq 37+38](https://cdot.cc/download/cdot-0.2.6.refseq.grch37_grch38.json.gz) - 70Mb
-[Ensembl 37+38](https://cdot.cc/download/cdot-0.2.6.ensembl.grch37_grch38.json.gz) - 53Mb
+[RefSeq 37+38](https://cdot.cc/download/cdot-0.2.7.refseq.grch37_grch38.json.gz) - 70Mb
+[Ensembl 37+38](https://cdot.cc/download/cdot-0.2.7.ensembl.grch37_grch38.json.gz) - 53Mb
 
 See also [Download JSON.gz files](https://github.com/SACGF/cdot/wiki/Download-JSON.gz-files) if you only want individual builds.
 
