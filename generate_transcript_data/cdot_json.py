@@ -99,6 +99,7 @@ def uta_to_json(args):
             genes_by_id[fake_gene_version] = {
                 "gene_symbol": gene_symbol,
                 "transcripts": [transcript_accession],
+                "url": args.url,
             }
         elif transcript_accession not in gene["transcripts"]:
             gene["transcripts"].append(transcript_accession)
