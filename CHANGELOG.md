@@ -1,5 +1,9 @@
 ## Unreleased [unreleased]
 
+### Added
+
+- Implemented get_tx_for_region for local JSON data
+
 ## [0.2.7] - 2022-05-19
 
 ### Added

@@ -4,9 +4,12 @@ import json
 import os
 import requests
 
+from collections import defaultdict
+from lazy import lazy
 from bioutils.assemblies import make_ac_name_map
 from hgvs.dataproviders.interface import Interface
 from hgvs.dataproviders.seqfetcher import SeqFetcher
+from intervaltree import IntervalTree
 
 
 class AbstractJSONDataProvider(Interface):
@@ -200,6 +203,7 @@ class AbstractJSONDataProvider(Interface):
 
 
 class JSONDataProvider(AbstractJSONDataProvider):
+    """ Local JSON file """
     def _get_transcript(self, tx_ac):
         return self.transcripts.get(tx_ac)
 
@@ -218,6 +222,62 @@ class JSONDataProvider(AbstractJSONDataProvider):
             assemblies.update(data["genome_builds"])
             self.transcripts.update(data["transcripts"])
         super().__init__(assemblies=assemblies, mode=mode, cache=cache)
+
+    def get_tx_for_gene(self, gene):
+        """ return transcript info records for supplied gene, in order of decreasing length """
+        tx_by_gene, _ = self._tx_by_gene_and_intervals
+
+        tx_list = []
+        for (transcript_id, contig, length, cds_start_i, cds_end_i) in tx_by_gene[gene]:
+            tx_list.append({
+                "hgnc": gene,
+                "cds_start_i": cds_start_i,
+                "cds_end_i": cds_end_i,
+                "tx_ac": transcript_id,
+                "alt_ac": contig,
+                "alt_aln_method": self.NCBI_ALN_METHOD,
+                "length": length,  # For our sorting
+            })
+
+        # Sort by length
+        tx_list.sort(key=lambda x: x["length"], reverse=True)
+        return tx_list
+
+    def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
+        """ return transcripts that overlap given region """
+
+        tx_list = []
+        if alt_aln_method == self.NCBI_ALN_METHOD:
+            _, tx_intervals = self._tx_by_gene_and_intervals
+            for (transcript_id, start, end, strand) in tx_intervals[alt_ac][start_i:end_i]:
+                tx_list.append({
+                    "alt_ac": alt_ac,
+                    "alt_aln_method": self.NCBI_ALN_METHOD,
+                    "alt_strand": strand,
+                    "start_i": start,
+                    "end_i": end,
+                    "tx_ac": transcript_id,
+                })
+        return tx_list
+
+    @lazy
+    def _tx_by_gene_and_intervals(self):
+        tx_by_gene = defaultdict(set)
+        tx_intervals = defaultdict(IntervalTree)
+        for transcript_id, transcript_data in self.transcripts.items():
+            cds_start_i = transcript_data.get("start_codon")
+            cds_end_i = transcript_data.get("stop_codon")
+
+            for build_data in transcript_data["genome_builds"].values():
+                contig = build_data["contig"]
+                strand = 1 if build_data["strand"] == "+" else -1
+                start = build_data["exons"][0][0]
+                end = build_data["exons"][-1][1]
+                if gene_name := transcript_data['gene_name']:
+                    length = end - start
+                    tx_by_gene[gene_name].add((transcript_id, contig, length, cds_start_i, cds_end_i))
+                tx_intervals[contig][start:end] = (transcript_id, start, end, strand)
+        return tx_by_gene, tx_intervals
 
 
 class RESTDataProvider(AbstractJSONDataProvider):
