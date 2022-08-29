@@ -38,6 +38,13 @@ class AbstractJSONDataProvider(Interface):
 
         return transcript["genome_builds"].get(assembly)
 
+    def _get_contig_start_end_strand(self, build_data):
+        contig = build_data["contig"]
+        strand = 1 if build_data["strand"] == "+" else -1
+        start = build_data["exons"][0][0]
+        end = build_data["exons"][-1][1]
+        return contig, start, end, strand
+
     def data_version(self):
         return self.required_version
 
@@ -61,8 +68,7 @@ class AbstractJSONDataProvider(Interface):
             return seqrepo_dir
         elif seqrepo_url:
             return seqrepo_url
-        else:
-            return "seqfetcher"
+        return "seqfetcher"
 
     def get_seq(self, ac, start_i=None, end_i=None):
         return self.seqfetcher.fetch_seq(ac, start_i, end_i)
@@ -193,14 +199,6 @@ class AbstractJSONDataProvider(Interface):
     def get_similar_transcripts(self, tx_ac):
         raise NotImplementedError()
 
-    def get_tx_for_gene(self, gene):
-        # TODO: We could build this from JSON pretty easily
-        raise NotImplementedError()
-
-    def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
-        # TODO: This would be hard to do in Redis but we could do via HTSeq
-        raise NotImplementedError()
-
 
 class JSONDataProvider(AbstractJSONDataProvider):
     """ Local JSON file """
@@ -227,21 +225,17 @@ class JSONDataProvider(AbstractJSONDataProvider):
         """ return transcript info records for supplied gene, in order of decreasing length """
         tx_by_gene, _ = self._tx_by_gene_and_intervals
 
-        tx_list = []
-        for (transcript_id, contig, length, cds_start_i, cds_end_i) in tx_by_gene[gene]:
-            tx_list.append({
-                "hgnc": gene,
-                "cds_start_i": cds_start_i,
-                "cds_end_i": cds_end_i,
-                "tx_ac": transcript_id,
-                "alt_ac": contig,
-                "alt_aln_method": self.NCBI_ALN_METHOD,
-                "length": length,  # For our sorting
-            })
+        tx_list = []  # Store in tuples with length, so we can sort before returning
+        for transcript_id in tx_by_gene[gene]:
+            transcript_data = self._get_transcript(transcript_id)
+            cds_start_i = transcript_data.get("start_codon")
+            cds_end_i = transcript_data.get("stop_codon")
+            for build_data in transcript_data["genome_builds"].values():
+                contig, tx_start, tx_end, _ = self._get_contig_start_end_strand(build_data)
+                length = tx_end - tx_start
+                tx_list.append((length, [gene, cds_start_i, cds_end_i, transcript_id, contig, self.NCBI_ALN_METHOD]))
 
-        # Sort by length
-        tx_list.sort(key=lambda x: x["length"], reverse=True)
-        return tx_list
+        return [x[1] for x in sorted(tx_list, key=lambda x: x[0], reverse=True)]
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
         """ return transcripts that overlap given region """
@@ -249,34 +243,34 @@ class JSONDataProvider(AbstractJSONDataProvider):
         tx_list = []
         if alt_aln_method == self.NCBI_ALN_METHOD:
             _, tx_intervals = self._tx_by_gene_and_intervals
-            for (transcript_id, start, end, strand) in tx_intervals[alt_ac][start_i:end_i]:
-                tx_list.append({
-                    "alt_ac": alt_ac,
-                    "alt_aln_method": self.NCBI_ALN_METHOD,
-                    "alt_strand": strand,
-                    "start_i": start,
-                    "end_i": end,
-                    "tx_ac": transcript_id,
-                })
+            for interval in tx_intervals[alt_ac][start_i:end_i]:
+                transcript_id = interval.data
+                transcript_data = self._get_transcript(transcript_id)
+                build_data = self._get_transcript_coordinates_for_contig(transcript_data, alt_ac)
+                contig, tx_start, tx_end, strand = self._get_contig_start_end_strand(build_data)
+                if contig == alt_ac:
+                    for exon in build_data["exons"]:
+                        if exon[0] < start_i and end_i <= exon[1]:
+                            tx_list.append([transcript_id, alt_ac, strand, self.NCBI_ALN_METHOD, tx_start, tx_end])
+                            break
         return tx_list
 
     @lazy
     def _tx_by_gene_and_intervals(self):
+        # The region query works on exons, but storing all of these makes the interval tree huge
+        # So we just store the start/end of each transcript ID, then look up the exons at retrieval time
+
         tx_by_gene = defaultdict(set)
         tx_intervals = defaultdict(IntervalTree)
         for transcript_id, transcript_data in self.transcripts.items():
-            cds_start_i = transcript_data.get("start_codon")
-            cds_end_i = transcript_data.get("stop_codon")
-
             for build_data in transcript_data["genome_builds"].values():
                 contig = build_data["contig"]
-                strand = 1 if build_data["strand"] == "+" else -1
-                start = build_data["exons"][0][0]
-                end = build_data["exons"][-1][1]
+                tx_start = build_data["exons"][0][0]
+                tx_end = build_data["exons"][-1][1]
+
                 if gene_name := transcript_data['gene_name']:
-                    length = end - start
-                    tx_by_gene[gene_name].add((transcript_id, contig, length, cds_start_i, cds_end_i))
-                tx_intervals[contig][start:end] = (transcript_id, start, end, strand)
+                    tx_by_gene[gene_name].add(transcript_id)
+                tx_intervals[contig][tx_start:tx_end] = transcript_id
         return tx_by_gene, tx_intervals
 
 
@@ -309,3 +303,10 @@ class RESTDataProvider(AbstractJSONDataProvider):
                 url = "http://cdot.cc"
         self.url = url
         self.transcripts = {}
+
+    def get_tx_for_gene(self, gene):
+        # This is implemented
+        raise NotImplementedError()
+
+    def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
+        raise NotImplementedError()

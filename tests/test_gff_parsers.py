@@ -17,7 +17,7 @@ class Test(unittest.TestCase):
         transcript = transcripts[transcript_id]
         exons = transcript["genome_builds"][genome_build]["exons"]
         length = sum([exon[1] - exon[0] for exon in exons])
-        self.assertEquals(expected_length, length, "%s exons sum" % transcript_id)
+        self.assertEqual(expected_length, length, "%s exons sum" % transcript_id)
 
     def test_ucsc_gtf(self):
         genome_build = "GRCh37"
@@ -36,7 +36,7 @@ class Test(unittest.TestCase):
 
         transcript = transcripts["ENST00000357654.9"]
         transcript_gene_version = transcript["gene_version"]
-        self.assertEquals(expected_gene_version, transcript_gene_version, "Transcript gene has version")
+        self.assertEqual(expected_gene_version, transcript_gene_version, "Transcript gene has version")
 
         self.assertTrue(expected_gene_version in genes, f"{expected_gene_version=} in genes")
 
@@ -59,7 +59,7 @@ class Test(unittest.TestCase):
         parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME, genome_build, self.FAKE_URL)
         _, transcripts = parser.get_genes_and_transcripts()
         transcript = transcripts["NM_007294.4"]
-        self.assertEquals(transcript.get("hgnc"), "1100", f"{transcript} has HGNC:1100")
+        self.assertEqual(transcript.get("hgnc"), "1100", f"{transcript} has HGNC:1100")
         exons = transcript["genome_builds"][genome_build]["exons"]
         first_exon = exons[0]
         last_exon = exons[-1]
