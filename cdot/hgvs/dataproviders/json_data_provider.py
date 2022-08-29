@@ -318,7 +318,6 @@ class RESTDataProvider(AbstractJSONDataProvider):
         self.transcripts = {}
 
     def get_tx_for_gene(self, gene):
-        # This is implemented
         raise NotImplementedError()
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
