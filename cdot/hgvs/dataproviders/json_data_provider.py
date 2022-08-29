@@ -222,7 +222,17 @@ class JSONDataProvider(AbstractJSONDataProvider):
             data = json.load(f)
             assemblies.update(data["genome_builds"])
             self.transcripts.update(data["transcripts"])
+            self.cdot_data_version = tuple(int(v) for v in data["cdot_version"].split("."))
+
         super().__init__(assemblies=assemblies, mode=mode, cache=cache)
+
+    def get_pro_ac_for_tx_ac(self, tx_ac):
+        if self.cdot_data_version < (0, 2, 8):
+            cdot_version = '.'.join(str(v) for v in self.cdot_data_version)
+            msg = f"ProteinID not in your JSON data version '{cdot_version}'. " \
+                  "Please use data generated from cdot >= 0.2.8"
+            raise NotImplementedError(msg)
+        return super().get_pro_ac_for_tx_ac(tx_ac)
 
     def get_tx_for_gene(self, gene):
         """ return transcript info records for supplied gene, in order of decreasing length """
