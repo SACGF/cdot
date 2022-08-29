@@ -194,7 +194,10 @@ class AbstractJSONDataProvider(Interface):
         raise NotImplementedError()
 
     def get_pro_ac_for_tx_ac(self, tx_ac):
-        raise NotImplementedError()
+        pro_ac = None
+        if transcript := self._get_transcript(tx_ac):
+            pro_ac = transcript.get("protein")
+        return pro_ac
 
     def get_similar_transcripts(self, tx_ac):
         raise NotImplementedError()

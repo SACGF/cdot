@@ -40,11 +40,18 @@ class Test(unittest.TestCase):
 
         self.assertTrue(expected_gene_version in genes, f"{expected_gene_version=} in genes")
 
+        protein = transcript.get("protein")
+        self.assertEqual(protein, "ENSP00000350283.3")
+
     def test_refseq_gff3(self):
         genome_build = "GRCh38"
         parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME, genome_build, self.FAKE_URL)
         _, transcripts = parser.get_genes_and_transcripts()
         self._test_exon_length(transcripts, genome_build, "NM_007294.4", 7088)
+
+        transcript = transcripts["NM_015120.4"]
+        protein = transcript.get("protein")
+        self.assertEqual(protein, "NP_055935.4")
 
     def test_exons_in_genomic_order(self):
         genome_build = "GRCh38"

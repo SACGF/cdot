@@ -28,6 +28,7 @@ class GFFParser(abc.ABC):
         self.discarded_contigs = Counter()
         self.gene_data_by_accession = {}
         self.transcript_data_by_accession = {}
+        self.transcript_proteins = {}
         # Store features in separate dict as we don't need to write all as JSON
         self.transcript_features_by_type = defaultdict(lambda: defaultdict(list))
         self.name_ac_map = make_name_ac_map(genome_build)
@@ -66,7 +67,10 @@ class GFFParser(abc.ABC):
 
         # At the moment the transcript dict is flat - need to move it into "genome_builds" dict
         GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms"]
-        for transcript_data in self.transcript_data_by_accession.values():
+        for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
+            if protein := self.transcript_proteins.get(transcript_accession):
+                transcript_data["protein"] = protein
+
             genome_build_coordinates = {
                 "url": self.url,
             }
@@ -318,7 +322,6 @@ class GFFParser(abc.ABC):
                 gene_accession = gene_id
         return gene_accession
 
-
     def get_genes_and_transcripts(self):
         self._parse()
         self._finish()
@@ -367,6 +370,13 @@ class GTFParser(GFFParser):
             if biotype:
                 gene_data["biotype"].add(biotype)
                 transcript["biotype"].add(biotype)
+
+            if feature.type == "CDS":
+                if protein := feature.attr.get("protein_id"):
+                    if protein_version := feature.attr.get("protein_version"):
+                        protein = f"{protein}.{protein_version}"
+                    self.transcript_proteins[transcript_accession] = protein
+
 
 
 class GFF3Parser(GFFParser):
@@ -431,6 +441,11 @@ class GFF3Parser(GFFParser):
                     else:
                         logging.warning("Transcript data has no parent: %s" % feature.get_gff_line())
                         transcript_accession = None
+
+                    if feature.type == "CDS":
+                        dbxref = self._get_dbxref(feature)
+                        if genbank := dbxref.get("Genbank"):
+                            self.transcript_proteins[transcript_accession] = genbank
 
                 if transcript_accession:
                     transcript = self.transcript_data_by_accession[transcript_accession]

@@ -9,6 +9,7 @@
       "biotype": [
         "protein_coding"
       ],
+      "protein": "NP_001628.1",
       "genome_builds": {
         "GRCh37": {
           "cds_end": 36763753,

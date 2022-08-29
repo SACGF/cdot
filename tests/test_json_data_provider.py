@@ -54,6 +54,9 @@ class TestJSONDataProvider(unittest.TestCase):
                 continue
         self.assertTrue(found)
 
+    def test_get_pro_ac_for_tx_ac(self):
+        pro_ac = self.json_data_provider.get_pro_ac_for_tx_ac("NM_001637.3")
+        self.assertEqual(pro_ac, "NP_001628.1")
 
 
 if __name__ == '__main__':
