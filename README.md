@@ -11,6 +11,10 @@ It works by:
 
 We currently support ~893k transcripts (vs ~141k in UTA v.20210129)
 
+## New in 0.2.8 - 2022-08-29
+
+* Support for c_to_p - see [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
+
 ## Install
 
 ```
