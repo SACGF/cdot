@@ -11,9 +11,9 @@ GENOME_BUILD=${2}
 BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 export PGPASSWORD=anonymous
 
-uta_csv_filename=uta_${UTA_VERSION}_${GENOME_BUILD}.csv
+uta_csv_filename=uta_${UTA_VERSION}_${GENOME_BUILD,,}.csv
 if [[ ! -e ${uta_csv_filename} ]]; then
-  SQL=${BASE_DIR}/uta_${UTA_VERSION}_${GENOME_BUILD}.sql
+  SQL=${BASE_DIR}/uta_${UTA_VERSION}_${GENOME_BUILD,,}.sql  # Lowercase filename
 
   # can't have newlines in \copy command
   cat ${SQL} | tr -s '\n' ' ' | psql -h uta.invitae.com -U anonymous -d uta

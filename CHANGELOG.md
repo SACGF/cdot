@@ -1,8 +1,9 @@
-## Unreleased [unreleased]
+## [0.2.8] - 2022-08-29
 
 ### Added
 
-- Implemented get_tx_for_region for local JSON data
+- [Implemented get_pro_ac_for_tx_ac](https://github.com/SACGF/cdot/issues/14) (c_to_p can now generate p.HGVS)
+- [Implemented get_tx_for_region](https://github.com/SACGF/cdot/issues/18) for local JSON data only
 
 ## [0.2.7] - 2022-05-19
 
@@ -73,7 +74,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.7...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.8...HEAD
+[0.2.8]: https://github.com/SACGF/cdot/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/SACGF/cdot/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/SACGF/cdot/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/SACGF/cdot/compare/v0.2.4...v0.2.5

@@ -115,10 +115,13 @@ def uta_to_json(args):
             "gene_name": gene_symbol,
             "gene_version": fake_gene_version,
         }
-        cds_start_i = data["cds_start_i"]
-        if cds_start_i:
+        if cds_start_i := data["cds_start_i"]:
             transcript_data["start_codon"] = int(cds_start_i)
             transcript_data["stop_codon"] = int(data["cds_end_i"])
+
+        if protein := data["protein"]:
+            protein = protein.split(",")[0]  # only want 1
+            transcript_data["protein"] = protein
 
         transcript_data["genome_builds"] = {args.genome_build: genome_build_coordinates}
         transcripts_by_id[transcript_accession] = transcript_data
