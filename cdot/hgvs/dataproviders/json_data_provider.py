@@ -200,6 +200,8 @@ class AbstractJSONDataProvider(Interface):
         return pro_ac
 
     def get_similar_transcripts(self, tx_ac):
+        """ UTA specific functionality that uses tx_similarity_v table
+            This is not used by the HGVS library """
         raise NotImplementedError()
 
 

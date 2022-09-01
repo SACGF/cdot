@@ -97,4 +97,3 @@ We are working on it. The remaining functionality is:
 | get_tx_for_region       | Local JSON file only | [REST API for get_tx_for_region](https://github.com/SACGF/cdot_rest/issues/4) |
 | get_acs_for_protein_seq | Not implemented      | [Implement get_acs_for_protein_seq](https://github.com/SACGF/cdot/issues/19)  |
 | get_gene_info           | Not implemented      | [Implement get_gene_info](https://github.com/SACGF/cdot/issues/20)            |
-| get_similar_transcripts | Not implemented      | [Implement get_similar_transcripts](https://github.com/SACGF/cdot/issues/21)  |
