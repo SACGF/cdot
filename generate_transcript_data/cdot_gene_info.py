@@ -64,15 +64,16 @@ def main():
                 if gi["Symbol_from_nomenclature_authority"] != '-':
                     entrez_ids.append(gi['GeneID'])
 
-            for gene_summary in _get_entrez_gene_summary(entrez_ids):
-                gene_symbol = gene_summary["NomenclatureSymbol"]
-                gene_info[gene_symbol] = {
-                    "map_location": gene_summary["MapLocation"],
-                    "description": gene_summary["NomenclatureName"],
-                    # "added": record["date_name_changed"],
-                    "aliases": gene_summary["OtherAliases"],
-                    "summary": gene_summary["Summary"],
-                }
+            if entrez_ids:
+                for gene_summary in _get_entrez_gene_summary(entrez_ids):
+                    gene_symbol = gene_summary["NomenclatureSymbol"]
+                    gene_info[gene_symbol] = {
+                        "map_location": gene_summary["MapLocation"],
+                        "description": gene_summary["NomenclatureName"],
+                        # "added": record["date_name_changed"],
+                        "aliases": gene_summary["OtherAliases"],
+                        "summary": gene_summary["Summary"],
+                    }
 
             print(f"Processed {len(gene_info)} records")
 
