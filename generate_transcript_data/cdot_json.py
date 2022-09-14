@@ -13,6 +13,7 @@ from csv import DictReader
 import cdot
 import ijson
 from cdot.gff.gff_parser import GTFParser, GFF3Parser
+from cdot.json_encoders import SortedSetEncoder
 
 
 def handle_args():
@@ -53,15 +54,6 @@ def handle_args():
 
     args = parser.parse_args()
     return args
-
-
-class SortedSetEncoder(json.JSONEncoder):
-    """ Dump set as list, from: https://stackoverflow.com/a/8230505/295724 """
-
-    def default(self, obj):
-        if isinstance(obj, set):
-            return list(sorted(obj))
-        return json.JSONEncoder.default(self, obj)
 
 
 def gtf_to_json(args):
