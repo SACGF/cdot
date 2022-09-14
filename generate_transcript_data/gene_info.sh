@@ -16,4 +16,4 @@ if [[ ! -e ${filename} ]]; then
 fi
 
 out_json=gene_summary-${CDOT_VERSION}-${TODAY}.json.gz
-${BASE_DIR}/cdot_gene_info.py --gene-info ${filename} --output  --email ${email}
+${BASE_DIR}/cdot_gene_info.py --gene-info ${filename} --output ${out_json} --email ${EMAIL}
