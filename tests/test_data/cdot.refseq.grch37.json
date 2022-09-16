@@ -193,6 +193,6 @@
       }
     }
   },
-  "cdot_version": "0.2.1",
+  "cdot_version": "0.2.8",
   "genome_builds": ["GRCh37"]
 }

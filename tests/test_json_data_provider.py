@@ -34,10 +34,10 @@ class TestJSONDataProvider(unittest.TestCase):
         found = False
         expected_transcript = "NM_001637.3"
         for tx_data in self.json_data_provider.get_tx_for_gene("AOAH"):
-            (_gene, _cds_start_i, _cds_end_i, transcript_id, contig, _method) = tx_data
-            if transcript_id == expected_transcript:
+            print(tx_data)
+            if tx_data["tx_ac"] == expected_transcript:
                 found = True
-                self.assertEqual(contig, "NC_000007.13")
+                self.assertEqual(tx_data["alt_ac"], "NC_000007.13")
                 continue
         self.assertTrue(found)
 
@@ -45,12 +45,11 @@ class TestJSONDataProvider(unittest.TestCase):
         found = False
         expected_transcript = "NM_001637.3"
         for tx_data in self.json_data_provider.get_tx_for_region("NC_000007.13", "splign", 36570024, 36570025):
-            (transcript_id, _alt_ac, strand, _method, tx_start, tx_end) = tx_data
-            if transcript_id == expected_transcript:
+            if tx_data["tx_ac"] == expected_transcript:
                 found = True
-                self.assertEqual(strand, -1)
-                self.assertEqual(tx_start, 36552548)
-                self.assertEqual(tx_end, 36764154)
+                self.assertEqual(tx_data["alt_strand"], -1)
+                self.assertEqual(tx_data["start_i"], 36552548)
+                self.assertEqual(tx_data["end_i"], 36764154)
                 continue
         self.assertTrue(found)
 
