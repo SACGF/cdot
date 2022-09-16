@@ -31,6 +31,7 @@ def handle_args():
         p.add_argument("--discard-contigs-with-underscores", action='store_true', default=True)
         p.add_argument('--url', required=True, help='URL (source of GFF) to store in "reference_gtf.url"')
         p.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
+        p.add_argument('--gene-info-json', help="'JSON of gene info, produced by cdot_gene_info.py")
 
     parser_uta = subparsers.add_parser("uta_to_json", help="Convert UTA to JSON")
     parser_uta.add_argument("uta_csv_filename", help="UTA SQL CSV to convert to JSON")
