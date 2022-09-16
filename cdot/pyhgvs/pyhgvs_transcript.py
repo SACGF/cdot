@@ -2,6 +2,7 @@ import abc
 import gzip
 import json
 from importlib import metadata
+from typing import Dict, Tuple
 
 import requests
 
@@ -9,7 +10,6 @@ from pyhgvs.utils import make_transcript
 
 
 class AbstractPyHGVSTranscriptFactory(abc.ABC):
-    GENERATE_CDS_START_END_KEY = "generate_cds_start_end"
 
     def __init__(self):
         pass
@@ -26,17 +26,19 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
 
     def get_transcript(self, transcript_id, genome_build, sacgf_pyhgvs_fork=False):
         transcript = None
-        if pyhgvs_data := self.get_pyhgvs_data(transcript_id, genome_build, sacgf_pyhgvs_fork=sacgf_pyhgvs_fork):
+        pyhgvs_data, generate_cds_start_end = self._get_pyhgvs_data(transcript_id, genome_build,
+                                                                    sacgf_pyhgvs_fork=sacgf_pyhgvs_fork)
+        if pyhgvs_data:
             transcript = make_transcript(pyhgvs_data)
-            if self.GENERATE_CDS_START_END_KEY in pyhgvs_data:
+            if generate_cds_start_end:
                 self._replace_cds_start_end(transcript)
         return transcript
 
-    def get_pyhgvs_data(self, transcript_id, genome_build, sacgf_pyhgvs_fork=False):
+    def _get_pyhgvs_data(self, transcript_id, genome_build, sacgf_pyhgvs_fork=False) -> Tuple[Dict, bool]:
         transcript_json = self._get_transcript(transcript_id)
         build_coords = transcript_json["genome_builds"].get(genome_build)
         if build_coords is None:
-            return {}
+            return {}, False
 
         exons = build_coords['exons']
         start = exons[0][0]
@@ -69,17 +71,14 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
         pyhgvs_data["exons"] = exons
 
         # UTA data doesn't have cds_start/cds_end which we need for PyHGVS
-        if "start_codon" in transcript_json and "cds_start" not in build_coords:
-            pyhgvs_data[self.GENERATE_CDS_START_END_KEY] = True
-
-        return pyhgvs_data
+        generate_cds_start_end = "start_codon" in transcript_json and "cds_start" not in build_coords
+        return pyhgvs_data, generate_cds_start_end
 
     @staticmethod
     def _replace_cds_start_end(transcript):
         """ Replace cds_start/cds_end with values generated from start/stop codons
             This is because some data sources (eg UTA) do not provide cds_start/cds_end """
 
-        print("FIXING _replace_cds_start_end")
         start_codon = CDNACoord(coord=transcript._start_codon_transcript_pos)
         stop_codon = CDNACoord(coord=transcript._stop_codon_transcript_pos)
         cds_start = transcript.cdna_to_genomic_coord(start_codon)
