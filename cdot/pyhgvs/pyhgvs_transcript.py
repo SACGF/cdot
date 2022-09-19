@@ -26,15 +26,11 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
 
     def get_transcript(self, transcript_id, genome_build, sacgf_pyhgvs_fork=False):
         transcript = None
-        pyhgvs_data, generate_cds_start_end = self._get_pyhgvs_data(transcript_id, genome_build,
-                                                                    sacgf_pyhgvs_fork=sacgf_pyhgvs_fork)
-        if pyhgvs_data:
+        if pyhgvs_data := self.get_pyhgvs_data(transcript_id, genome_build, sacgf_pyhgvs_fork=sacgf_pyhgvs_fork):
             transcript = make_transcript(pyhgvs_data)
-            if generate_cds_start_end:
-                self._replace_cds_start_end(transcript)
         return transcript
 
-    def _get_pyhgvs_data(self, transcript_id, genome_build, sacgf_pyhgvs_fork=False) -> Tuple[Dict, bool]:
+    def get_pyhgvs_data(self, transcript_id, genome_build, sacgf_pyhgvs_fork=False) -> Tuple[Dict, bool]:
         transcript_json = self._get_transcript(transcript_id)
         build_coords = transcript_json["genome_builds"].get(genome_build)
         if build_coords is None:
@@ -69,25 +65,7 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
             exons = [e[:2] for e in exons]
 
         pyhgvs_data["exons"] = exons
-
-        # UTA data doesn't have cds_start/cds_end which we need for PyHGVS
-        generate_cds_start_end = "start_codon" in transcript_json and "cds_start" not in build_coords
-        return pyhgvs_data, generate_cds_start_end
-
-    @staticmethod
-    def _replace_cds_start_end(transcript):
-        """ Replace cds_start/cds_end with values generated from start/stop codons
-            This is because some data sources (eg UTA) do not provide cds_start/cds_end """
-
-        start_codon = CDNACoord(coord=transcript._start_codon_transcript_pos)
-        stop_codon = CDNACoord(coord=transcript._stop_codon_transcript_pos)
-        cds_start = transcript.cdna_to_genomic_coord(start_codon)
-        cds_end = transcript.cdna_to_genomic_coord(stop_codon)
-        # In pyhgvs they are always in genomic order
-        if transcript.strand == '-':
-            (cds_start, cds_end) = (cds_end, cds_start)
-        transcript.chrom_start = cds_start
-        transcript.chrom_stop = cds_stop
+        return pyhgvs_data
 
 
 class PyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):

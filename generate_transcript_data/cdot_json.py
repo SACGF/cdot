@@ -12,8 +12,10 @@ from csv import DictReader
 
 import cdot
 import ijson
+from cdot.pyhgvs.pyhgvs_transcript import PyHGVSTranscriptFactory
 from cdot.gff.gff_parser import GTFParser, GFF3Parser
 from cdot.json_encoders import SortedSetEncoder
+from pyhgvs import CDNACoord
 
 
 def handle_args():
@@ -103,6 +105,26 @@ def gff3_to_json(args):
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
 
+def _add_cds_start_end(genome_build, transcript_data):
+    """ Replace cds_start/cds_end with values generated from start/stop codons
+        as some data sources (eg UTA) do not provide cds_start/cds_end """
+
+    transcript_id = transcript_data["id"]
+    tf = PyHGVSTranscriptFactory(transcripts={transcript_id: transcript_data})
+    transcript = tf.get_transcript(transcript_id, genome_build, sacgf_pyhgvs_fork=True)
+
+    start_codon = CDNACoord(coord=transcript._start_codon_transcript_pos)
+    stop_codon = CDNACoord(coord=transcript._stop_codon_transcript_pos)
+    cds_start = transcript.cdna_to_genomic_coord(start_codon)
+    cds_end = transcript.cdna_to_genomic_coord(stop_codon)
+    # In pyhgvs they are always in genomic order
+    if transcript.strand == '-':
+        (cds_start, cds_end) = (cds_end, cds_start)
+
+    transcript_data["genome_builds"][genome_build]["cds_start"] = cds_start
+    transcript_data["genome_builds"][genome_build]["cds_end"] = cds_end
+
+
 def uta_to_json(args):
     genes_by_id = {}
     transcripts_by_id = {}
@@ -149,6 +171,14 @@ def uta_to_json(args):
             transcript_data["protein"] = protein
 
         transcript_data["genome_builds"] = {args.genome_build: genome_build_coordinates}
+
+        if "start_codon" in transcript_data and "cds_start" not in genome_build_coordinates:
+            try:
+                _add_cds_start_end(args.genome_build, transcript_data)
+            except ValueError as ve:
+                print(f"Warning: Skipped {transcript_accession} due to exception: {ve}")
+                continue
+
         transcripts_by_id[transcript_accession] = transcript_data
 
     print("Writing UTA to cdot JSON.gz")
