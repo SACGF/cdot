@@ -1,5 +1,15 @@
 ## [unreleased]
 
+## [0.2.10] - 2022-09-19
+
+### Added
+
+- [Implement get_gene_info](https://github.com/SACGF/cdot/issues/20) - For local JSON data only
+
+### Changed
+
+- Fixed issue [#23 UTA transcripts for PyHGVS](https://github.com/SACGF/cdot/issues/23)
+
 ## [0.2.9] - 2022-09-01
 
 ### Changed
@@ -83,7 +93,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.9...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.10...HEAD
+[0.2.10]: https://github.com/SACGF/cdot/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/SACGF/cdot/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/SACGF/cdot/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/SACGF/cdot/compare/v0.2.6...v0.2.7
