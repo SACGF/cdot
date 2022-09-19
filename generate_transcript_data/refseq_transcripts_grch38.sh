@@ -6,6 +6,11 @@ BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 UTA_VERSION=20210129
 
+if [[ -z ${GENE_SUMMARY} ]]; then
+  echo "You need to set environment variable GENE_SUMMARY, pointing to the filename produced by cdot_gene_info.py"
+  exit 1
+fi
+
 # Having troubles with corrupted files downloading via FTP from NCBI via IPv6, http works ok
 
 if [[ -z ${UTA_TRANSCRIPTS} ]]; then
@@ -32,7 +37,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
 fi
 merge_args+=(${cdot_file})
 
@@ -45,7 +50,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
 fi
 merge_args+=(${cdot_file})
 
@@ -58,7 +63,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
 fi
 merge_args+=(${cdot_file})
 
@@ -71,7 +76,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
 fi
 merge_args+=(${cdot_file})
 
@@ -84,7 +89,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
 fi
 merge_args+=(${cdot_file})
 
@@ -99,7 +104,7 @@ for release in 109.20190607 109.20190905 109.20191205 109.20200228 109.20200522 
     wget ${url} --output-document=${filename}
   fi
   if [[ ! -e ${cdot_file} ]]; then
-    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}"
+    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
   fi
   merge_args+=(${cdot_file})
 done
@@ -113,7 +118,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
 fi
 merge_args+=(${cdot_file})
 

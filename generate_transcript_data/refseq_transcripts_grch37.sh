@@ -6,6 +6,11 @@ BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 UTA_VERSION=20210129
 
+if [[ -z ${GENE_SUMMARY} ]]; then
+  echo "You need to set environment variable GENE_SUMMARY, pointing to the filename produced by cdot_gene_info.py"
+  exit 1
+fi
+
 if [[ -z ${UTA_TRANSCRIPTS} ]]; then
   echo "Not including UTA transcripts. Set environment variable UTA_TRANSCRIPTS=True to do so"
 else
@@ -24,7 +29,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
 fi
 merge_args+=(${cdot_file})
 
@@ -36,7 +41,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
 fi
 merge_args+=(${cdot_file})
 
@@ -48,7 +53,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
 fi
 merge_args+=(${cdot_file})
 
@@ -68,7 +73,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
 fi
 merge_args+=(${cdot_file})
 
@@ -82,7 +87,7 @@ for release in 105.20190906 105.20201022 105.20220307; do
     wget ${url} --output-document=${filename}
   fi
   if [[ ! -e ${cdot_file} ]]; then
-    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}"
+    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
   fi
   merge_args+=(${cdot_file})
 done

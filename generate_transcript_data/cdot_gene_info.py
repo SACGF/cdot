@@ -50,6 +50,7 @@ def _get_entrez_gene_summary(id_list):
 def main():
     args = handle_args()
     Entrez.email = args.email  # Stop warning message
+    start_date = datetime.now().isoformat()
 
     # 10k limit of return data from NCBI
     NCBI_BATCH_SIZE = 2000
@@ -65,11 +66,13 @@ def main():
                     entrez_ids.append(gi['GeneID'])
 
             if entrez_ids:
+                # We should really store it under the gene Id so dupe symbols don't wipe
                 for gene_summary in _get_entrez_gene_summary(entrez_ids):
-                    gene_symbol = gene_summary["NomenclatureSymbol"]
-                    gene_info[gene_symbol] = {
+                    gene_id = gene_summary.attributes["uid"]
+                    gene_info[gene_id] = {
+                        "gene_symbol": gene_summary["NomenclatureSymbol"],
                         "map_location": gene_summary["MapLocation"],
-                        "description": gene_summary["NomenclatureName"],
+                        # "description": gene_summary["NomenclatureName"],  # We already have description for gene
                         # "added": record["date_name_changed"],
                         "aliases": gene_summary["OtherAliases"],
                         "summary": gene_summary["Summary"],
@@ -83,7 +86,7 @@ def main():
 
             data = {
                 "cdot_version": cdot.__version__,
-                "date": datetime.now().isoformat(),
+                "api_retrieval_date": start_date,
                 "gene_info_date": gene_info_file_dt.isoformat(),
                 "gene_info": gene_info,
             }

@@ -31,7 +31,7 @@ def handle_args():
         p.add_argument("--discard-contigs-with-underscores", action='store_true', default=True)
         p.add_argument('--url', required=True, help='URL (source of GFF) to store in "reference_gtf.url"')
         p.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
-        p.add_argument('--gene-info-json', help="'JSON of gene info, produced by cdot_gene_info.py")
+        p.add_argument('--gene-info-json', required=True, help="'JSON of gene info, produced by cdot_gene_info.py")
 
     parser_uta = subparsers.add_parser("uta_to_json", help="Convert UTA to JSON")
     parser_uta.add_argument("uta_csv_filename", help="UTA SQL CSV to convert to JSON")
@@ -41,10 +41,12 @@ def handle_args():
     parser_historical = subparsers.add_parser("merge_historical", help="Merge multiple JSON files (keeping latest)")
     parser_historical.add_argument('json_filenames', nargs="+", action="extend",
                                    help='cdot JSON.gz - list OLDEST to NEWEST (newest is kept)')
-    parser_historical.add_argument("--no-genes", action='store_true', help="Save <5% space by not storing gene/version information")
+    parser_historical.add_argument("--no-genes", action='store_true',
+                                   help="Save <5% space by not storing gene/version information")
     parser_historical.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
 
-    parser_builds = subparsers.add_parser("combine_builds", help="Merge multiple JSON files from different genome builds")
+    parser_builds = subparsers.add_parser("combine_builds",
+                                          help="Merge multiple JSON files from different genome builds")
 
     parser_builds.add_argument('--grch37', required=True, help='cdot JSON.gz for GRCh37')
     parser_builds.add_argument('--grch38', required=True, help='cdot JSON.gz for GRCh38')
@@ -57,18 +59,48 @@ def handle_args():
     return args
 
 
+def add_gene_info(gene_info_filename: str, genes):
+    """ The gene summary info is from RefSeq - and is stored under Entrez IDs
+        we'll look up the ID with RefSeq, but use Symbol for Ensembl """
+
+    refseq_gene_summary_api_retrieval_date = None
+    if genes:
+        with gzip.open(gene_info_filename) as gi_f:
+            gene_info_data = json.load(gi_f)
+            gene_info = gene_info_data["gene_info"]
+            refseq_gene_summary_api_retrieval_date = gene_info_data["api_retrieval_date"]
+            gene_info_by_symbol = {}
+            for gi in gene_info.values():
+                if gene_symbol := gi.pop("gene_symbol", None):  # Remove so that we don't copy via update
+                    gene_info_by_symbol[gene_symbol] = gi
+
+        for gene_id, gene in genes.items():
+            gi = gene_info.get(gene_id)
+            if not gi:
+                if gene_symbol := gene.get("gene_symbol"):
+                    gi = gene_info_by_symbol.get(gene_symbol)
+            if gi:
+                gene.update(gi)
+
+    return refseq_gene_summary_api_retrieval_date
+
+
 def gtf_to_json(args):
     parser = GTFParser(args.gtf_filename, args.genome_build, args.url,
                        discard_contigs_with_underscores=args.discard_contigs_with_underscores)
     genes, transcripts = parser.get_genes_and_transcripts()
-    write_cdot_json(args.output, genes, transcripts, [args.genome_build])
+    refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
+    write_cdot_json(args.output, genes, transcripts, [args.genome_build],
+                    refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
 
 def gff3_to_json(args):
     parser = GFF3Parser(args.gff3_filename, args.genome_build, args.url,
                         discard_contigs_with_underscores=args.discard_contigs_with_underscores)
     genes, transcripts = parser.get_genes_and_transcripts()
-    write_cdot_json(args.output, genes, transcripts, [args.genome_build])
+    refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
+    write_cdot_json(args.output, genes, transcripts, [args.genome_build],
+                    refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
 
 def uta_to_json(args):
@@ -192,7 +224,7 @@ def _cigar_to_gap_and_length(cigar):
     return gap, exon_length
 
 
-def write_cdot_json(filename, genes, transcript_versions, genome_builds):
+def write_cdot_json(filename, genes, transcript_versions, genome_builds, refseq_gene_summary_api_retrieval_date=None):
     print("Writing cdot data")
     data = {
         "cdot_version": cdot.__version__,
@@ -201,6 +233,8 @@ def write_cdot_json(filename, genes, transcript_versions, genome_builds):
     }
     if genes:
         data["genes"] = genes
+    if refseq_gene_summary_api_retrieval_date:
+        data["refseq_gene_summary_api_retrieval_date"] = refseq_gene_summary_api_retrieval_date
 
     with gzip.open(filename, 'wt') as outfile:
         json.dump(data, outfile, cls=SortedSetEncoder, sort_keys=True)  # Sort so diffs work

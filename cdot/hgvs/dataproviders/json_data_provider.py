@@ -217,6 +217,7 @@ class JSONDataProvider(AbstractJSONDataProvider):
     def __init__(self, file_or_filename_list, mode=None, cache=None):
         assemblies = set()
         self.transcripts = {}
+        self.genes = {}
         for file_or_filename in file_or_filename_list:
             if isinstance(file_or_filename, str):
                 if file_or_filename.endswith(".gz"):
@@ -228,6 +229,9 @@ class JSONDataProvider(AbstractJSONDataProvider):
             data = json.load(f)
             assemblies.update(data["genome_builds"])
             self.transcripts.update(data["transcripts"])
+            for g in data["genes"].values():
+                if gene_symbol := g.get("gene_symbol"):
+                    self.genes[gene_symbol] = g
             self.cdot_data_version = tuple(int(v) for v in data["cdot_version"].split("."))
 
         super().__init__(assemblies=assemblies, mode=mode, cache=cache)
@@ -306,6 +310,20 @@ class JSONDataProvider(AbstractJSONDataProvider):
                     tx_by_gene[gene_name].add(transcript_id)
                 tx_intervals[contig][tx_start:tx_end] = transcript_id
         return tx_by_gene, tx_intervals
+
+
+    def get_gene_info(self, gene):
+        gene_info = {}
+        if g := self.genes.get(gene):
+            gene_info = {
+                "hgnc": g["hgnc"],
+                "maploc": g["map_location"],
+                "descr": g["description"],
+                "summary": g["summary"],
+                "aliases": g["aliases"],
+                "added": '',  # Don't know where this is stored/comes from (hgnc?)
+            }
+        return gene_info
 
 
 class RESTDataProvider(AbstractJSONDataProvider):
