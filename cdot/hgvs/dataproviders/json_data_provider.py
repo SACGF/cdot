@@ -229,9 +229,10 @@ class JSONDataProvider(AbstractJSONDataProvider):
             data = json.load(f)
             assemblies.update(data["genome_builds"])
             self.transcripts.update(data["transcripts"])
-            for g in data["genes"].values():
-                if gene_symbol := g.get("gene_symbol"):
-                    self.genes[gene_symbol] = g
+            if genes := data.get("genes"):
+                for g in genes.values():
+                    if gene_symbol := g.get("gene_symbol"):
+                        self.genes[gene_symbol] = g
             self.cdot_data_version = tuple(int(v) for v in data["cdot_version"].split("."))
 
         super().__init__(assemblies=assemblies, mode=mode, cache=cache)
@@ -313,6 +314,12 @@ class JSONDataProvider(AbstractJSONDataProvider):
 
 
     def get_gene_info(self, gene):
+        if self.cdot_data_version < (0, 2, 10):
+            cdot_version = '.'.join(str(v) for v in self.cdot_data_version)
+            msg = f"Gene Info not in your JSON data version '{cdot_version}'. " \
+                  "Please use data generated from cdot >= 0.2.10"
+            raise NotImplementedError(msg)
+
         gene_info = {}
         if g := self.genes.get(gene):
             gene_info = {

@@ -300,6 +300,7 @@ def combine_builds(args):
     }
 
     urls_different_coding = defaultdict(list)
+    genes = {}
     transcripts = {}
     for genome_build, f in genome_build_file.items():
         # TODO: Check cdot versions
@@ -327,6 +328,11 @@ def combine_builds(args):
             # Use latest (with merged genome builds)
             build_transcript["genome_builds"] = genome_builds
             transcripts[transcript_id] = build_transcript
+
+        f.seek(0)  # Reset for next ijson call
+        for gene_id, gene_data in ijson.kvitems(f, "genes"):
+            genes[gene_id] = gene_data
+
         f.close()
 
     print("Writing cdot data")
@@ -336,6 +342,8 @@ def combine_builds(args):
             "cdot_version": cdot.__version__,
             "genome_builds": list(genome_build_file.keys()),
         }
+        if genes:
+            data["genes"] = genes
         json.dump(data, outfile)
 
     if urls_different_coding:
