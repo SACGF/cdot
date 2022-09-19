@@ -98,4 +98,4 @@ We are working on it. The remaining functionality is:
 |-------------------------|----------------------|-------------------------------------------------------------------------------|
 | get_tx_for_gene         | Local JSON file only | [REST API for get_tx_for_gene](https://github.com/SACGF/cdot_rest/issues/3)   |
 | get_tx_for_region       | Local JSON file only | [REST API for get_tx_for_region](https://github.com/SACGF/cdot_rest/issues/4) |
-| get_gene_info           | Local JSON file only | [Implement get_gene_info](https://github.com/SACGF/cdot/issues/20)            |
+| get_gene_info           | Local JSON file only | [REST API for get_gene_info](https://github.com/SACGF/cdot_rest/issues/5)            |
