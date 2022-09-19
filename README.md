@@ -11,9 +11,12 @@ It works by:
 
 We currently support ~893k transcripts (vs ~141k in UTA v.20210129)
 
-## New in 0.2.8 - 2022-08-29
+## New 
 
-* Support for c_to_p - see [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
+See [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
+
+* 2022-09-19 - 0.2.10 - Added get_gene_info 
+* 2022-08-29 - 0.2.8 - Support for c_to_p
 
 ## Install
 
@@ -31,7 +34,7 @@ from hgvs.assemblymapper import AssemblyMapper
 from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider
 
 hdp = RESTDataProvider()  # Uses API server at cdot.cc
-# hdp = JSONDataProvider(["./cdot-0.2.8.refseq.grch38.json.gz"])  # Uses local JSON file
+# hdp = JSONDataProvider(["./cdot-0.2.10.refseq.grch38.json.gz"])  # Uses local JSON file
 
 am = AssemblyMapper(hdp,
                     assembly_name='GRCh37',
@@ -48,7 +51,7 @@ am.c_to_g(var_c)
 from cdot.pyhgvs.pyhgvs_transcript import JSONPyHGVSTranscriptFactory, RESTPyHGVSTranscriptFactory
 
 factory = RESTPyHGVSTranscriptFactory()
-# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.8.refseq.grch38.json.gz"])  # Uses local JSON file
+# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.10.refseq.grch38.json.gz"])  # Uses local JSON file
 pyhgvs.parse_hgvs_name(hgvs_c, genome, get_transcript=factory.get_transcript_grch37)
 
 ```
@@ -61,8 +64,8 @@ pyhgvs.parse_hgvs_name(hgvs_c, genome, get_transcript=factory.get_transcript_grc
 
 ## Q. Where can I download the JSON.gz files?
 
-[RefSeq 37+38](https://cdot.cc/download/cdot-0.2.8.refseq.grch37_grch38.json.gz) - 70Mb
-[Ensembl 37+38](https://cdot.cc/download/cdot-0.2.8.ensembl.grch37_grch38.json.gz) - 53Mb
+[RefSeq 37+38](https://cdot.cc/download/cdot-0.2.10.refseq.grch37_grch38.json.gz) - 70Mb
+[Ensembl 37+38](https://cdot.cc/download/cdot-0.2.10.ensembl.grch37_grch38.json.gz) - 53Mb
 
 See also [Download JSON.gz files](https://github.com/SACGF/cdot/wiki/Download-JSON.gz-files) if you only want individual builds.
 
@@ -95,5 +98,4 @@ We are working on it. The remaining functionality is:
 |-------------------------|----------------------|-------------------------------------------------------------------------------|
 | get_tx_for_gene         | Local JSON file only | [REST API for get_tx_for_gene](https://github.com/SACGF/cdot_rest/issues/3)   |
 | get_tx_for_region       | Local JSON file only | [REST API for get_tx_for_region](https://github.com/SACGF/cdot_rest/issues/4) |
-| get_acs_for_protein_seq | Not implemented      | [Implement get_acs_for_protein_seq](https://github.com/SACGF/cdot/issues/19)  |
-| get_gene_info           | Not implemented      | [Implement get_gene_info](https://github.com/SACGF/cdot/issues/20)            |
+| get_gene_info           | Local JSON file only | [Implement get_gene_info](https://github.com/SACGF/cdot/issues/20)            |
