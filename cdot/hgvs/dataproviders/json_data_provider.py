@@ -209,14 +209,14 @@ class AbstractJSONDataProvider(Interface):
         if g := self._get_gene(gene):
             # UTA produces aliases that look like '{DCML,IMD21,MONOMAC,NFE1B}'
             uta_style_aliases = '{' + g["aliases"].replace(" ", "") + '}'
-            gene_info = [
-                g["gene_symbol"],
-                g["map_location"],
-                g["description"],
-                g["summary"],
-                uta_style_aliases,
-                None,
-            ]
+            gene_info = {
+                "hgnc": g["gene_symbol"],
+                "maploc": g["map_location"],
+                "descr": g["description"],
+                "summary": g["summary"],
+                "aliases": uta_style_aliases,
+                "added": None,  # Don't know where this is stored/comes from (hgnc?)
+            }
         return gene_info
 
     def get_pro_ac_for_tx_ac(self, tx_ac):
@@ -254,14 +254,14 @@ class LocalDataProvider(AbstractJSONDataProvider):
             for build_data in transcript_data["genome_builds"].values():
                 contig, tx_start, tx_end, _ = self._get_contig_start_end_strand(build_data)
                 length = tx_end - tx_start
-                tx_data = [
-                    gene,
-                    cds_start_i,
-                    cds_end_i,
-                    transcript_id,
-                    contig,
-                    self.NCBI_ALN_METHOD,
-                ]
+                tx_data = {
+                    "hgnc": gene,
+                    "cds_start_i": cds_start_i,
+                    "cds_end_i": cds_end_i,
+                    "tx_ac": transcript_id,
+                    "alt_ac": contig,
+                    "alt_aln_method": self.NCBI_ALN_METHOD,
+                }
                 tx_list.append((length, tx_data))
 
         return [x[1] for x in sorted(tx_list, key=lambda x: x[0], reverse=True)]
@@ -279,14 +279,14 @@ class LocalDataProvider(AbstractJSONDataProvider):
                 if contig == alt_ac:
                     for exon in build_data["exons"]:
                         if exon[0] < start_i and end_i <= exon[1]:
-                            tx_list.append([
-                                transcript_id,
-                                alt_ac,
-                                strand,
-                                self.NCBI_ALN_METHOD,
-                                tx_start,
-                                tx_end,
-                            ])
+                            tx_list.append({
+                                "alt_ac": alt_ac,
+                                "alt_aln_method": self.NCBI_ALN_METHOD,
+                                "alt_strand": strand,
+                                "start_i": tx_start,
+                                "end_i": tx_end,
+                                "tx_ac": transcript_id,
+                            })
                             break
         return tx_list
 

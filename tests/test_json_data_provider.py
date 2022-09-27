@@ -58,13 +58,17 @@ class TestJSONDataProvider(unittest.TestCase):
         self.assertEqual(pro_ac, "NP_001628.1")
 
     def test_get_gene_info(self):
-        hgnc, maploc, description, summary, aliases, updated = self.json_data_provider.get_gene_info("GATA2")
-        self.assertEqual(hgnc, "GATA2")
-        self.assertEqual(maploc, "3q21.3")
-        self.assertEqual(description, "GATA binding protein 2")
+        gene_info = self.json_data_provider.get_gene_info("GATA2")
+        summary = gene_info.pop("summary")
         self.assertTrue("zinc-finger transcription factors" in summary)
-        self.assertEqual(aliases, "{DCML,IMD21,MONOMAC,NFE1B}")
-
+        expected = {
+            "hgnc": "GATA2",
+            "maploc": "3q21.3",
+            "descr": "GATA binding protein 2",
+            "aliases": "{DCML,IMD21,MONOMAC,NFE1B}",
+            "added": None,
+        }
+        self.assertEqual(gene_info, expected)
 
 
 if __name__ == '__main__':
