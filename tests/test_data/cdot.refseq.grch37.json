@@ -193,6 +193,18 @@
       }
     }
   },
-  "cdot_version": "0.2.8",
+  "genes": {
+    "GATA2": {
+      "aliases": "DCML, IMD21, MONOMAC, NFE1B",
+      "biotype": "protein_coding",
+      "description": "GATA binding protein 2",
+      "gene_symbol": "GATA2",
+      "hgnc": "4171",
+      "map_location": "3q21.3",
+      "summary": "This gene encodes a member of the GATA family of zinc-finger transcription factors that are named for the consensus nucleotide sequence they bind in the promoter regions of target genes. The encoded protein plays an essential role in regulating transcription of genes involved in the development and proliferation of hematopoietic and endocrine cell lineages. Alternative splicing results in multiple transcript variants.[provided by RefSeq, Mar 2009]",
+      "url": "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/annotation_releases/110/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
+    }
+  },
+  "cdot_version": "0.2.10",
   "genome_builds": ["GRCh37"]
 }

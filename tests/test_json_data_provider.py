@@ -57,6 +57,15 @@ class TestJSONDataProvider(unittest.TestCase):
         pro_ac = self.json_data_provider.get_pro_ac_for_tx_ac("NM_001637.3")
         self.assertEqual(pro_ac, "NP_001628.1")
 
+    def test_get_gene_info(self):
+        hgnc, maploc, description, summary, aliases, updated = self.json_data_provider.get_gene_info("GATA2")
+        self.assertEqual(hgnc, "GATA2")
+        self.assertEqual(maploc, "3q21.3")
+        self.assertEqual(description, "GATA binding protein 2")
+        self.assertTrue("zinc-finger transcription factors" in summary)
+        self.assertEqual(aliases, "{DCML,IMD21,MONOMAC,NFE1B}")
+
+
 
 if __name__ == '__main__':
     unittest.main()

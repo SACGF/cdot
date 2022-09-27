@@ -10,13 +10,18 @@ from bioutils.assemblies import make_ac_name_map
 from hgvs.dataproviders.interface import Interface
 from hgvs.dataproviders.seqfetcher import SeqFetcher
 from intervaltree import IntervalTree
+from typing import List
 
 
 class AbstractJSONDataProvider(Interface):
     NCBI_ALN_METHOD = "splign"
     required_version = "1.1"
 
-    def __init__(self, assemblies, mode=None, cache=None):
+    def __init__(self, assemblies: List[str]=None, mode=None, cache=None):
+        """ assemblies: defaults to ["GRCh37", "GRCh38"] """
+        if assemblies is None:
+            assemblies = ["GRCh37", "GRCh38"]
+
         super().__init__(mode=mode, cache=cache)
         self.seqfetcher = SeqFetcher()
         self.assembly_maps = {}
@@ -30,6 +35,10 @@ class AbstractJSONDataProvider(Interface):
     def _get_transcript(self, tx_ac):
         pass
 
+    @abc.abstractmethod
+    def _get_gene(self, gene):
+        pass
+
     def _get_transcript_coordinates_for_contig(self, transcript, alt_ac):
         assembly = self.assembly_by_contig.get(alt_ac)
         if assembly is None:
@@ -38,7 +47,8 @@ class AbstractJSONDataProvider(Interface):
 
         return transcript["genome_builds"].get(assembly)
 
-    def _get_contig_start_end_strand(self, build_data):
+    @staticmethod
+    def _get_contig_start_end_strand(build_data):
         contig = build_data["contig"]
         strand = 1 if build_data["strand"] == "+" else -1
         start = build_data["exons"][0][0]
@@ -195,7 +205,19 @@ class AbstractJSONDataProvider(Interface):
         return None
 
     def get_gene_info(self, gene):
-        raise NotImplementedError()
+        gene_info = None
+        if g := self._get_gene(gene):
+            # UTA produces aliases that look like '{DCML,IMD21,MONOMAC,NFE1B}'
+            uta_style_aliases = '{' + g["aliases"].replace(" ", "") + '}'
+            gene_info = [
+                g["gene_symbol"],
+                g["map_location"],
+                g["description"],
+                g["summary"],
+                uta_style_aliases,
+                None,
+            ]
+        return gene_info
 
     def get_pro_ac_for_tx_ac(self, tx_ac):
         pro_ac = None
@@ -209,48 +231,23 @@ class AbstractJSONDataProvider(Interface):
         raise NotImplementedError()
 
 
-class JSONDataProvider(AbstractJSONDataProvider):
-    """ Local JSON file """
-    def _get_transcript(self, tx_ac):
-        return self.transcripts.get(tx_ac)
+class LocalDataProvider(AbstractJSONDataProvider):
+    """ For JSON and Redis providers (implemented in cdot_rest)
+        https://github.com/SACGF/cdot_rest - cdot_rest.redis_data_provider.RedisDataProvider """
 
-    def __init__(self, file_or_filename_list, mode=None, cache=None):
-        assemblies = set()
-        self.transcripts = {}
-        self.genes = {}
-        for file_or_filename in file_or_filename_list:
-            if isinstance(file_or_filename, str):
-                if file_or_filename.endswith(".gz"):
-                    f = gzip.open(file_or_filename)
-                else:
-                    f = open(file_or_filename)
-            else:
-                f = file_or_filename
-            data = json.load(f)
-            assemblies.update(data["genome_builds"])
-            self.transcripts.update(data["transcripts"])
-            if genes := data.get("genes"):
-                for g in genes.values():
-                    if gene_symbol := g.get("gene_symbol"):
-                        self.genes[gene_symbol] = g
-            self.cdot_data_version = tuple(int(v) for v in data["cdot_version"].split("."))
+    @abc.abstractmethod
+    def _get_transcript_ids_for_gene(self, gene):
+        pass
 
-        super().__init__(assemblies=assemblies, mode=mode, cache=cache)
-
-    def get_pro_ac_for_tx_ac(self, tx_ac):
-        if self.cdot_data_version < (0, 2, 8):
-            cdot_version = '.'.join(str(v) for v in self.cdot_data_version)
-            msg = f"ProteinID not in your JSON data version '{cdot_version}'. " \
-                  "Please use data generated from cdot >= 0.2.8"
-            raise NotImplementedError(msg)
-        return super().get_pro_ac_for_tx_ac(tx_ac)
+    @abc.abstractmethod
+    def _get_contig_interval_tree(self, alt_ac):
+        pass
 
     def get_tx_for_gene(self, gene):
         """ return transcript info records for supplied gene, in order of decreasing length """
-        tx_by_gene, _ = self._tx_by_gene_and_intervals
 
         tx_list = []  # Store in tuples with length, so we can sort before returning
-        for transcript_id in tx_by_gene[gene]:
+        for transcript_id in self._get_transcript_ids_for_gene(gene):
             transcript_data = self._get_transcript(transcript_id)
             cds_start_i = transcript_data.get("start_codon")
             cds_end_i = transcript_data.get("stop_codon")
@@ -274,8 +271,8 @@ class JSONDataProvider(AbstractJSONDataProvider):
 
         tx_list = []
         if alt_aln_method == self.NCBI_ALN_METHOD:
-            _, tx_intervals = self._tx_by_gene_and_intervals
-            for interval in tx_intervals[alt_ac][start_i:end_i+1]:
+            contig_iv_tree = self._get_contig_interval_tree(alt_ac)
+            for interval in contig_iv_tree[start_i:end_i+1]:
                 transcript_id = interval.data
                 transcript_data = self._get_transcript(transcript_id)
                 build_data = self._get_transcript_coordinates_for_contig(transcript_data, alt_ac)
@@ -294,24 +291,75 @@ class JSONDataProvider(AbstractJSONDataProvider):
                             break
         return tx_list
 
-    @lazy
-    def _tx_by_gene_and_intervals(self):
+    @staticmethod
+    def _get_tx_by_gene_and_intervals(transcript_iter_items):
         # The region query works on exons, but storing all of these makes the interval tree huge
         # So we just store the start/end of each transcript ID, then look up the exons at retrieval time
 
         tx_by_gene = defaultdict(set)
         tx_intervals = defaultdict(IntervalTree)
-        for transcript_id, transcript_data in self.transcripts.items():
+        for transcript_id, transcript_data in transcript_iter_items:
+            if gene_name := transcript_data['gene_name']:
+                tx_by_gene[gene_name].add(transcript_id)
+
             for build_data in transcript_data["genome_builds"].values():
                 contig = build_data["contig"]
                 tx_start = build_data["exons"][0][0]
                 tx_end = build_data["exons"][-1][1]
-
-                if gene_name := transcript_data['gene_name']:
-                    tx_by_gene[gene_name].add(transcript_id)
                 tx_intervals[contig][tx_start:tx_end] = transcript_id
         return tx_by_gene, tx_intervals
 
+
+class JSONDataProvider(LocalDataProvider):
+    """ Local JSON file """
+    def __init__(self, file_or_filename_list, mode=None, cache=None):
+        assemblies = set()
+        self.transcripts = {}
+        self.genes = {}
+        for file_or_filename in file_or_filename_list:
+            if isinstance(file_or_filename, str):
+                if file_or_filename.endswith(".gz"):
+                    f = gzip.open(file_or_filename)
+                else:
+                    f = open(file_or_filename)
+            else:
+                f = file_or_filename
+            data = json.load(f)
+            assemblies.update(data["genome_builds"])
+            self.transcripts.update(data["transcripts"])
+            if genes := data.get("genes"):
+                for g in genes.values():
+                    if gene_symbol := g.get("gene_symbol"):
+                        self.genes[gene_symbol] = g
+            self.cdot_data_version = tuple(int(v) for v in data["cdot_version"].split("."))
+
+        super().__init__(assemblies=assemblies, mode=mode, cache=cache)
+
+    def _get_transcript(self, tx_ac):
+        return self.transcripts.get(tx_ac)
+
+    def _get_gene(self, gene):
+        return self.genes.get(gene)
+
+    def _get_transcript_ids_for_gene(self, gene):
+        tx_by_gene, _ = self._tx_by_gene_and_intervals
+        return tx_by_gene[gene]
+
+    def _get_contig_interval_tree(self, alt_ac):
+        _, tx_intervals = self._tx_by_gene_and_intervals
+        return tx_intervals[alt_ac]
+
+    def get_pro_ac_for_tx_ac(self, tx_ac):
+        if self.cdot_data_version < (0, 2, 8):
+            cdot_version = '.'.join(str(v) for v in self.cdot_data_version)
+            msg = f"ProteinID not in your JSON data version '{cdot_version}'. " \
+                  "Please use data generated from cdot >= 0.2.8"
+            raise NotImplementedError(msg)
+        return super().get_pro_ac_for_tx_ac(tx_ac)
+
+    @lazy
+    def _tx_by_gene_and_intervals(self):
+        return self._get_tx_by_gene_and_intervals(self.transcripts.items())
 
     def get_gene_info(self, gene):
         if self.cdot_data_version < (0, 2, 10):
@@ -319,18 +367,7 @@ class JSONDataProvider(AbstractJSONDataProvider):
             msg = f"Gene Info not in your JSON data version '{cdot_version}'. " \
                   "Please use data generated from cdot >= 0.2.10"
             raise NotImplementedError(msg)
-
-        gene_info = {}
-        if g := self.genes.get(gene):
-            gene_info = {
-                "hgnc": g["hgnc"],
-                "maploc": g["map_location"],
-                "descr": g["description"],
-                "summary": g["summary"],
-                "aliases": g["aliases"],
-                "added": '',  # Don't know where this is stored/comes from (hgnc?)
-            }
-        return gene_info
+        return super().get_gene_info(gene)
 
 
 class RESTDataProvider(AbstractJSONDataProvider):
