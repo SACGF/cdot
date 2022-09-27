@@ -1,5 +1,15 @@
 ## [unreleased]
 
+## [0.2.11] - 2022-09-27
+
+### Added
+
+- Now support all methods (get_gene_info, get_tx_for_gene, get_tx_for_region) for REST
+
+### Changed
+
+- Ensembl gene info was missing "description"
+
 ## [0.2.10] - 2022-09-19
 
 ### Added
@@ -94,6 +104,8 @@
 - Initial commit
 
 [unreleased]: https://github.com/SACGF/cdot/compare/v0.2.10...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.10...HEAD
+[0.2.11]: https://github.com/SACGF/cdot/compare/v0.2.10...v0.2.11
 [0.2.10]: https://github.com/SACGF/cdot/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/SACGF/cdot/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/SACGF/cdot/compare/v0.2.7...v0.2.8

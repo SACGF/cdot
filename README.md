@@ -15,7 +15,7 @@ We currently support ~893k transcripts (vs ~141k in UTA v.20210129)
 
 See [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
 
-* 2022-09-19 - 0.2.10 - Added get_gene_info 
+* 2022-09-27 - 0.2.11 - Now support all methods (get_gene_info, get_tx_for_gene, get_tx_for_region) for REST and local JSON
 * 2022-08-29 - 0.2.8 - Support for c_to_p
 
 ## Install
@@ -89,13 +89,3 @@ We think a standard for JSON gene/transcript information would be a great thing,
 cdot, pronounced "see dot" stands for Complete Dict of Transcripts
 
 This was developed for the [Australian Genomics](https://www.australiangenomics.org.au/) [Shariant](https://shariant.org.au/) project, due to the need to load historical HGVS from lab archives.   
-
-## Q. Have you fully implemented the HGVS data provider interface?
-
-We are working on it. The remaining functionality is:
-
-| Method                  | Status               | Issue                                                                         |
-|-------------------------|----------------------|-------------------------------------------------------------------------------|
-| get_tx_for_gene         | Local JSON file only | [REST API for get_tx_for_gene](https://github.com/SACGF/cdot_rest/issues/3)   |
-| get_tx_for_region       | Local JSON file only | [REST API for get_tx_for_region](https://github.com/SACGF/cdot_rest/issues/4) |
-| get_gene_info           | Local JSON file only | [REST API for get_gene_info](https://github.com/SACGF/cdot_rest/issues/5)            |
