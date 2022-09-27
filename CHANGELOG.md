@@ -5,6 +5,7 @@
 ### Added
 
 - Now support all methods (get_gene_info, get_tx_for_gene, get_tx_for_region) for REST
+- Add Ensembl 107 GTF
 
 ### Changed
 
