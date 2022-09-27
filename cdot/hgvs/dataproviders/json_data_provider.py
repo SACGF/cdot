@@ -254,21 +254,20 @@ class LocalDataProvider(AbstractJSONDataProvider):
             for build_data in transcript_data["genome_builds"].values():
                 contig, tx_start, tx_end, _ = self._get_contig_start_end_strand(build_data)
                 length = tx_end - tx_start
-                tx_data = {
-                    "hgnc": gene,
-                    "cds_start_i": cds_start_i,
-                    "cds_end_i": cds_end_i,
-                    "tx_ac": transcript_id,
-                    "alt_ac": contig,
-                    "alt_aln_method": self.NCBI_ALN_METHOD,
-                }
+                tx_data = [
+                    gene,
+                    cds_start_i,
+                    cds_end_i,
+                    transcript_id,
+                    contig,
+                    self.NCBI_ALN_METHOD,
+                ]
                 tx_list.append((length, tx_data))
 
         return [x[1] for x in sorted(tx_list, key=lambda x: x[0], reverse=True)]
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
         """ return transcripts that overlap given region """
-
         tx_list = []
         if alt_aln_method == self.NCBI_ALN_METHOD:
             contig_iv_tree = self._get_contig_interval_tree(alt_ac)
@@ -280,14 +279,14 @@ class LocalDataProvider(AbstractJSONDataProvider):
                 if contig == alt_ac:
                     for exon in build_data["exons"]:
                         if exon[0] < start_i and end_i <= exon[1]:
-                            tx_list.append({
-                                "alt_ac": alt_ac,
-                                "alt_aln_method": self.NCBI_ALN_METHOD,
-                                "alt_strand": strand,
-                                "start_i": tx_start,
-                                "end_i": tx_end,
-                                "tx_ac": transcript_id,
-                            })
+                            tx_list.append([
+                                transcript_id,
+                                alt_ac,
+                                strand,
+                                self.NCBI_ALN_METHOD,
+                                tx_start,
+                                tx_end,
+                            ])
                             break
         return tx_list
 
@@ -372,23 +371,6 @@ class JSONDataProvider(LocalDataProvider):
 
 class RESTDataProvider(AbstractJSONDataProvider):
 
-    def _get_transcript(self, tx_ac):
-        # We store None for 404 on REST
-        if tx_ac in self.transcripts:
-            return self.transcripts[tx_ac]
-
-        transcript_url = self.url + "/transcript/" + tx_ac
-        response = requests.get(transcript_url)
-        if response.ok:
-            if 'application/json' in response.headers.get('Content-Type'):
-                transcript = response.json()
-            else:
-                raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % transcript_url)
-        else:
-            transcript = None
-        self.transcripts[tx_ac] = transcript
-        return transcript
-
     def __init__(self, url=None, secure=True, mode=None, cache=None):
         assemblies = ["GRCh37", "GRCh38"]
         super().__init__(assemblies=assemblies, mode=mode, cache=cache)
@@ -399,9 +381,45 @@ class RESTDataProvider(AbstractJSONDataProvider):
                 url = "http://cdot.cc"
         self.url = url
         self.transcripts = {}
+        self.genes = {}
 
-    def get_tx_for_gene(self, gene):
-        raise NotImplementedError()
+    def _get_from_url(self, url):
+        data = None
+        response = requests.get(url)
+        if response.ok:
+            if 'application/json' in response.headers.get('Content-Type'):
+                data = response.json()
+            else:
+                raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % transcript_url)
+        return data
+
+    def _get_transcript(self, tx_ac):
+        # We store None for 404 on REST
+        if tx_ac in self.transcripts:
+            return self.transcripts[tx_ac]
+
+        transcript = self._get_from_url(self.url + "/transcript/" + tx_ac)
+        self.transcripts[tx_ac] = transcript
+        return transcript
+
+    def _get_gene(self, gene_name):
+        # We store None for 404 on REST
+        if gene_name in self.genes:
+            return self.genes[gene_name]
+
+        gene = self._get_from_url(self.url + "/gene/" + gene_name)
+        self.genes[gene_name] = gene
+        return gene
+
+    def get_tx_for_gene(self, gene_name):
+        tx_list = []
+        if data := self._get_from_url(f"{self.url}/transcripts/gene/{gene_name}"):
+            tx_list = data["results"]
+        return tx_list
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
-        raise NotImplementedError()
+        tx_list = []
+        url = f"{self.url}/transcripts/region/{alt_ac}/{alt_aln_method}/{start_i}/{end_i}"
+        if data := self._get_from_url(url):
+            tx_list = data["results"]
+        return tx_list
