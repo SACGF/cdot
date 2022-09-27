@@ -30,10 +30,13 @@ ${BASE_DIR}/refseq_transcripts_grch38.sh
 cd ..
 
 # Combine genome builds (we're in refseq dir)
-${BASE_DIR}/cdot_json.py combine_builds \
-    --grch37 GRCh37/cdot-${CDOT_VERSION}.refseq.grch37.json.gz \
-    --grch38 GRCh38/cdot-${CDOT_VERSION}.refseq.grch38.json.gz \
-    --output cdot-${CDOT_VERSION}.refseq.grch37_grch38.json.gz
+REFSEQ_COMBO=cdot-${CDOT_VERSION}.refseq.grch37_grch38.json.gz
+if [[ ! -e ${REFSEQ_COMBO} ]]; then
+  ${BASE_DIR}/cdot_json.py combine_builds \
+      --grch37 GRCh37/cdot-${CDOT_VERSION}.refseq.grch37.json.gz \
+      --grch38 GRCh38/cdot-${CDOT_VERSION}.refseq.grch38.json.gz \
+      --output ${REFSEQ_COMBO}
+fi
 
 cd ..
 
@@ -52,9 +55,12 @@ ${BASE_DIR}/ensembl_transcripts_grch38.sh
 cd ..
 
 # Combine genome builds (we're in ensembl dir)
-${BASE_DIR}/cdot_json.py combine_builds \
-    --grch37 GRCh37/cdot-${CDOT_VERSION}.ensembl.grch37.json.gz \
-    --grch38 GRCh38/cdot-${CDOT_VERSION}.ensembl.grch38.json.gz \
-    --output cdot-${CDOT_VERSION}.ensembl.grch37_grch38.json.gz
+ENSEMBL_COMBO=cdot-${CDOT_VERSION}.ensembl.grch37_grch38.json.gz
+if [[ ! -e ${ENSEMBL_COMBO} ]]; then
+  ${BASE_DIR}/cdot_json.py combine_builds \
+      --grch37 GRCh37/cdot-${CDOT_VERSION}.ensembl.grch37.json.gz \
+      --grch38 GRCh38/cdot-${CDOT_VERSION}.ensembl.grch38.json.gz \
+      --output ${ENSEMBL_COMBO}
+fi
 
 cd ..
