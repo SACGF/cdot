@@ -72,7 +72,8 @@ def main():
                     gene_info[gene_id] = {
                         "gene_symbol": gene_summary["NomenclatureSymbol"],
                         "map_location": gene_summary["MapLocation"],
-                        # "description": gene_summary["NomenclatureName"],  # We already have description for gene
+                        # Already have description for RefSeq but not Ensembl (will just overwrite)
+                        "description": gene_summary["NomenclatureName"],
                         # "added": record["date_name_changed"],
                         "aliases": gene_summary["OtherAliases"],
                         "summary": gene_summary["Summary"],
