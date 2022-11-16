@@ -47,6 +47,11 @@ def _get_entrez_gene_summary(id_list):
     return document["DocumentSummarySet"]["DocumentSummary"]
 
 
+def iter_entrez_ids(reader):
+    for gi in reader:
+        if gi["Symbol_from_nomenclature_authority"] != '-':
+            yield gi['GeneID']
+
 def main():
     args = handle_args()
     Entrez.email = args.email  # Stop warning message
@@ -59,25 +64,19 @@ def main():
     with gzip.open(args.gene_info, "rt") as f:
         reader = csv.DictReader(f, dialect='excel-tab')
 
-        for batch in batch_iterator(reader, batch_size=NCBI_BATCH_SIZE):
-            entrez_ids = []
-            for gi in batch:
-                if gi["Symbol_from_nomenclature_authority"] != '-':
-                    entrez_ids.append(gi['GeneID'])
-
-            if entrez_ids:
-                # We should really store it under the gene Id so dupe symbols don't wipe
-                for gene_summary in _get_entrez_gene_summary(entrez_ids):
-                    gene_id = gene_summary.attributes["uid"]
-                    gene_info[gene_id] = {
-                        "gene_symbol": gene_summary["NomenclatureSymbol"],
-                        "map_location": gene_summary["MapLocation"],
-                        # Already have description for RefSeq but not Ensembl (will just overwrite)
-                        "description": gene_summary["NomenclatureName"],
-                        # "added": record["date_name_changed"],
-                        "aliases": gene_summary["OtherAliases"],
-                        "summary": gene_summary["Summary"],
-                    }
+        for entrez_ids in batch_iterator(iter_entrez_ids(reader), batch_size=NCBI_BATCH_SIZE):
+            # We should really store it under the gene Id so dupe symbols don't wipe
+            for gene_summary in _get_entrez_gene_summary(entrez_ids):
+                gene_id = gene_summary.attributes["uid"]
+                gene_info[gene_id] = {
+                    "gene_symbol": gene_summary["NomenclatureSymbol"],
+                    "map_location": gene_summary["MapLocation"],
+                    # Already have description for RefSeq but not Ensembl (will just overwrite)
+                    "description": gene_summary["NomenclatureName"],
+                    # "added": record["date_name_changed"],
+                    "aliases": gene_summary["OtherAliases"],
+                    "summary": gene_summary["Summary"],
+                }
 
             print(f"Processed {len(gene_info)} records")
 
