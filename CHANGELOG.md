@@ -1,5 +1,13 @@
 ## [unreleased]
 
+### Added
+
+- Add Ensembl 108 GTF
+
+### Changed
+
+- Fix for #25 -  GeneInfo currently fails for some records
+
 ## [0.2.11] - 2022-09-27
 
 ### Added

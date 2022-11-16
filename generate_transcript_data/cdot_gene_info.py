@@ -12,6 +12,8 @@ from typing import Iterable, Iterator, List, TypeVar
 import cdot
 from Bio import Entrez
 from cdot.json_encoders import SortedSetEncoder
+from io import BytesIO
+from lxml import etree
 
 T = TypeVar("T")
 
@@ -43,7 +45,21 @@ def _get_entrez_gene_summary(id_list):
     web_env = result["WebEnv"]
     query_key = result["QueryKey"]
     data = Entrez.esummary(db="gene", webenv=web_env, query_key=query_key)
-    document = Entrez.read(data)
+    # https://github.com/SACGF/cdot/issues/25 - sometimes we get "error: cannot get document summary" which causes
+    # the whole batch to fail - strip those out
+    root = etree.parse(data)
+    dss = root.find("DocumentSummarySet")
+    num_removed = 0
+    for ds in dss.findall("DocumentSummary"):
+        if ds.find("error") is not None:
+            dss.remove(ds)
+            num_removed += 1
+    if num_removed:
+        print(f"Warning: Removed {num_removed} gene records with 'error: cannot get document summary'")
+    bytes_io = BytesIO()
+    root.write(bytes_io, xml_declaration=True)
+    bytes_io.seek(0)
+    document = Entrez.read(bytes_io)
     return document["DocumentSummarySet"]["DocumentSummary"]
 
 
