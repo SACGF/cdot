@@ -46,7 +46,7 @@ def _get_entrez_gene_summary(id_list):
     query_key = result["QueryKey"]
     data = Entrez.esummary(db="gene", webenv=web_env, query_key=query_key)
     # https://github.com/SACGF/cdot/issues/25 - sometimes we get "error: cannot get document summary" which causes
-    # the whole batch to fail - strip those out
+    # the whole batch to fail - strip those out. TODO: Next biopython release fix with read(ignore_errors=True)
     root = etree.parse(data)
     dss = root.find("DocumentSummarySet")
     num_removed = 0
