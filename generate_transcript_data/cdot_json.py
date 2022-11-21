@@ -22,7 +22,7 @@ def handle_args():
     parser = ArgumentParser(description='cdot JSON manipulation tools')
     parser.add_argument('--version', action='store_true', help='show version number')
 
-    subparsers = parser.add_subparsers(dest='subcommand', help='TODO sub-command help')
+    subparsers = parser.add_subparsers(dest='subcommand', required=True, help='TODO sub-command help')
     parser_gtf = subparsers.add_parser("gtf_to_json", help="Convert GTF to JSON")
     parser_gtf.add_argument("gtf_filename", help="GTF to convert to JSON")
 
