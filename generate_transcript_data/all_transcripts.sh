@@ -7,13 +7,13 @@ BASE_DIR=$(dirname ${FULL_PATH_TO_SCRIPT})
 CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 
 # This needs to be passed to called bash scripts, so they are invoked with "." to use these variables
-export GENE_SUMMARY=$(pwd)/gene_summary-${CDOT_VERSION}.json.gz
+export GENE_INFO_JSON=$(pwd)/gene-info-${CDOT_VERSION}.json.gz
 
-if [[ ! -e ${GENE_SUMMARY} ]]; then
+if [[ ! -e ${GENE_INFO_JSON} ]]; then
   ${BASE_DIR}/gene_info.sh
 fi
 
-echo "Gene summary variable = ${GENE_SUMMARY}"
+echo "Gene summary variable = ${GENE_INFO_JSON}"
 
 # RefSeq
 mkdir -p refseq

@@ -5,8 +5,8 @@ set -e
 BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 
-if [[ -z ${GENE_SUMMARY} ]]; then
-  echo "You need to set environment variable GENE_SUMMARY, pointing to the filename produced by cdot_gene_info.py"
+if [[ -z ${GENE_INFO_JSON} ]]; then
+  echo "You need to set environment variable GENE_INFO_JSON, pointing to the filename produced by cdot_gene_info.py"
   exit 1
 fi
 
@@ -26,7 +26,7 @@ for release in 82 85 87; do
     wget ${url}
   fi
   if [[ ! -e ${cdot_file} ]]; then
-    ${BASE_DIR}/cdot_json.py gtf_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}" --gene-info-json="${GENE_SUMMARY}"
+    ${BASE_DIR}/cdot_json.py gtf_to_json "${filename}" --url "${url}" --genome-build=GRCh37 --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
   fi
   merge_args+=(${cdot_file})
 done

@@ -14,5 +14,5 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 
-out_json=gene_summary-${CDOT_VERSION}.json.gz
+out_json=gene-info-${CDOT_VERSION}.json.gz
 ${BASE_DIR}/cdot_gene_info.py --gene-info ${filename} --output ${out_json} --email ${EMAIL}
