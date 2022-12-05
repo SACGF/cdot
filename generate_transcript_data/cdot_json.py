@@ -18,11 +18,11 @@ from cdot.json_encoders import SortedSetEncoder
 from pyhgvs import CDNACoord
 
 
-def handle_args():
+def _setup_arg_parser():
     parser = ArgumentParser(description='cdot JSON manipulation tools')
     parser.add_argument('--version', action='store_true', help='show version number')
 
-    subparsers = parser.add_subparsers(dest='subcommand', required=True, help='TODO sub-command help')
+    subparsers = parser.add_subparsers(dest='subcommand', help='TODO sub-command help')
     parser_gtf = subparsers.add_parser("gtf_to_json", help="Convert GTF to JSON")
     parser_gtf.add_argument("gtf_filename", help="GTF to convert to JSON")
 
@@ -57,8 +57,7 @@ def handle_args():
     for p in [parser_gtf, parser_gff3, parser_uta, parser_historical, parser_builds]:
         p.add_argument('--output', required=True, help='Output filename')
 
-    args = parser.parse_args()
-    return args
+    return parser
 
 
 def add_gene_info(gene_info_filename: str, genes):
@@ -383,9 +382,14 @@ def combine_builds(args):
 
 
 def main():
-    args = handle_args()
+    parser = _setup_arg_parser()
+    args = parser.parse_args()
     if args.version:
         print(cdot.__version__)
+        sys.exit(0)
+
+    if args.subcommand is None:
+        parser.print_help()
         sys.exit(0)
 
     subcommands = {
