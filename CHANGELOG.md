@@ -1,12 +1,15 @@
-## [unreleased]
+## [0.2.12] - 2022-12-08
 
 ### Added
 
-- Add Ensembl 108 GTF
+- #30 - We now store "tag" attributes (eg "MANE Select", "RefSeq Select")
+- Switch to using Ensembl GFF3 (so we can get tags out)
+- Add Ensembl 108 GFF3
 
 ### Changed
 
 - Fix for #25 -  GeneInfo currently fails for some records
+- Fix for #27 -  Change URL for missing RefSeq GFFs
 
 ## [0.2.11] - 2022-09-27
 
@@ -112,8 +115,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.10...HEAD
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.10...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.11...HEAD
+[0.2.12]: https://github.com/SACGF/cdot/compare/v0.2.11...v0.2.12
 [0.2.11]: https://github.com/SACGF/cdot/compare/v0.2.10...v0.2.11
 [0.2.10]: https://github.com/SACGF/cdot/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/SACGF/cdot/compare/v0.2.8...v0.2.9

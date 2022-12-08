@@ -8,7 +8,8 @@ from cdot.gff.gff_parser import GTFParser, GFF3Parser
 class Test(unittest.TestCase):
     this_file_dir = os.path.dirname(os.path.abspath(getsourcefile(lambda: 0)))
     test_data_dir = os.path.join(this_file_dir, "test_data")
-    ENSEMBL_GTF_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.104.gtf")
+    ENSEMBL_104_GTF_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.104.gtf")
+    ENSEMBL_108_GFF3_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.108.gff3")
     REFSEQ_GFF3_FILENAME = os.path.join(test_data_dir, "refseq_test.GRCh38.p13_genomic.109.20210514.gff")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
     FAKE_URL = "http://fake.url"
@@ -27,7 +28,7 @@ class Test(unittest.TestCase):
 
     def test_ensembl_gtf(self):
         genome_build = "GRCh38"
-        parser = GTFParser(self.ENSEMBL_GTF_FILENAME, genome_build, self.FAKE_URL)
+        parser = GTFParser(self.ENSEMBL_104_GTF_FILENAME, genome_build, self.FAKE_URL)
         genes, transcripts = parser.get_genes_and_transcripts()
         self._test_exon_length(transcripts, genome_build, "ENST00000357654.9", 7088)
 
@@ -55,7 +56,7 @@ class Test(unittest.TestCase):
 
     def test_exons_in_genomic_order(self):
         genome_build = "GRCh38"
-        parser = GTFParser(self.ENSEMBL_GTF_FILENAME, genome_build, self.FAKE_URL)
+        parser = GTFParser(self.ENSEMBL_104_GTF_FILENAME, genome_build, self.FAKE_URL)
         _, transcripts = parser.get_genes_and_transcripts()
         transcript = transcripts["ENST00000357654.9"]
         exons = transcript["genome_builds"][genome_build]["exons"]
@@ -71,3 +72,14 @@ class Test(unittest.TestCase):
         first_exon = exons[0]
         last_exon = exons[-1]
         self.assertGreater(last_exon[0], first_exon[0])
+
+    def test_ensembl_gtf_tags(self):
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.ENSEMBL_108_GFF3_FILENAME, genome_build, self.FAKE_URL)
+        genes, transcripts = parser.get_genes_and_transcripts()
+        print(transcripts)
+        transcript = transcripts["ENST00000641515.2"]
+        tags = transcript.get("tag")
+        print(f"tags={tags}")
+        for tag in ["basic", "Ensembl_canonical", "MANE_Select"]:
+            self.assertIn(tag, tags)

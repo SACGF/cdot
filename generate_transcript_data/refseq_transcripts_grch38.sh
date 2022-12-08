@@ -24,14 +24,14 @@ merge_args=()
 
 if [[ ! -z ${UTA_TRANSCRIPTS} ]]; then
   # All GRCh38 transcripts have alignments gaps, so use UTA first (and override with official releases)
-  uta_cdot_file="cdot.uta_${UTA_VERSION}.GRCh38.json.gz"
+  uta_cdot_file="cdot-${CDOT_VERSION}.uta_${UTA_VERSION}.GRCh38.json.gz"
   ${BASE_DIR}/uta_transcripts.sh ${UTA_VERSION} GRCh38
   merge_args+=(${uta_cdot_file})
 fi
 
 filename=ref_GRCh38_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.106/GFF/${filename}
-cdot_file=$(basename $filename .gz).json.gz
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 
 if [[ ! -e ${filename} ]]; then
   wget ${url}
@@ -44,7 +44,7 @@ merge_args+=(${cdot_file})
 
 filename=ref_GRCh38.p2_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.107/GFF/${filename}
-cdot_file=$(basename $filename .gz).json.gz
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 
 if [[ ! -e ${filename} ]]; then
   wget ${url}
@@ -57,7 +57,7 @@ merge_args+=(${cdot_file})
 
 filename=ref_GRCh38.p7_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.108/GFF/${filename}
-cdot_file=$(basename $filename .gz).json.gz
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 
 if [[ ! -e ${filename} ]]; then
   wget ${url}
@@ -70,7 +70,7 @@ merge_args+=(${cdot_file})
 
 filename=ref_GRCh38.p12_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.109/GFF/${filename}
-cdot_file=$(basename $filename .gz).json.gz
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 
 if [[ ! -e ${filename} ]]; then
   wget ${url}
@@ -82,8 +82,8 @@ merge_args+=(${cdot_file})
 
 
 filename=GCF_000001405.38_GRCh38.p12_genomic.gff.gz
-url=http://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/annotation_releases/109/GCF_000001405.38_GRCh38.p12/${filename}
-cdot_file=$(basename $filename .gz).json.gz
+url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109/GCF_000001405.38_GRCh38.p12/${filename}
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 
 if [[ ! -e ${filename} ]]; then
   wget ${url}
@@ -98,8 +98,8 @@ merge_args+=(${cdot_file})
 for release in 109.20190607 109.20190905 109.20191205 109.20200228 109.20200522 109.20200815 109.20201120 109.20210226 109.20210514 109.20211119; do
   # These all have the same name, so rename them based on release ID
   filename=GCF_000001405.39_GRCh38.p13_genomic.${release}.gff.gz
-  url=http://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/annotation_releases/${release}/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz
-  cdot_file=$(basename $filename .gz).json.gz
+  url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/${release}/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz
+  cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
   if [[ ! -e ${filename} ]]; then
     wget ${url} --output-document=${filename}
   fi
@@ -111,8 +111,8 @@ done
 
 
 filename=GCF_000001405.40_GRCh38.p14_genomic.gff.gz
-url=https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/annotation_releases/110/GCF_000001405.40_GRCh38.p14/${filename}
-cdot_file=$(basename $filename .gz).json.gz
+url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/110/GCF_000001405.40_GRCh38.p14/${filename}
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 
 if [[ ! -e ${filename} ]]; then
   wget ${url}

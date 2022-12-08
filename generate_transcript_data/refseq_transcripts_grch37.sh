@@ -24,7 +24,7 @@ merge_args=()
 
 filename=ref_GRCh37.p5_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/BUILD.37.3/GFF/${filename}
-cdot_file=$(basename $filename .gz).json.gz
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
@@ -36,7 +36,7 @@ merge_args+=(${cdot_file})
 
 filename=ref_GRCh37.p9_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.103/GFF/${filename}
-cdot_file=$(basename $filename .gz).json.gz
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
@@ -48,7 +48,7 @@ merge_args+=(${cdot_file})
 
 filename=ref_GRCh37.p10_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.104/GFF/${filename}
-cdot_file=$(basename $filename .gz).json.gz
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
@@ -61,14 +61,14 @@ merge_args+=(${cdot_file})
 if [[ ! -z ${UTA_TRANSCRIPTS} ]]; then
   # UTA transcripts have gaps, so they should overwrite the earlier refseq transcripts (without gaps)
   # But will be overwritten by newer (post p13) official transcripts
-  cdot_file="cdot.uta_${UTA_VERSION}.GRCh37.json.gz"
+  cdot_file="cdot-${CDOT_VERSION}.uta_${UTA_VERSION}.GRCh37.json.gz"
   ${BASE_DIR}/uta_transcripts.sh ${UTA_VERSION} GRCh37
   merge_args+=(${cdot_file})
 fi
 
 filename=ref_GRCh37.p13_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.105/GFF/${filename}
-cdot_file=$(basename $filename .gz).json.gz
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
@@ -81,8 +81,8 @@ merge_args+=(${cdot_file})
 # These all have the same name, so rename them based on release ID
 for release in 105.20190906 105.20201022 105.20220307; do
   filename=GCF_000001405.25_GRCh37.p13_genomic.${release}.gff.gz
-  url=http://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/annotation_releases/${release}/GCF_000001405.25_GRCh37.p13/GCF_000001405.25_GRCh37.p13_genomic.gff.gz
-  cdot_file=$(basename $filename .gz).json.gz
+  url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/${release}/GCF_000001405.25_GRCh37.p13/GCF_000001405.25_GRCh37.p13_genomic.gff.gz
+  cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
   if [[ ! -e ${filename} ]]; then
     wget ${url} --output-document=${filename}
   fi

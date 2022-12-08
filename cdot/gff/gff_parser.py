@@ -335,7 +335,7 @@ class GTFParser(GFFParser):
         GFF2 only has 2 levels of feature hierarchy, so we have to build or 3 levels of gene/transcript/exons ourselves
     """
     GTF_TRANSCRIPTS_DATA = GFFParser.CODING_FEATURES | {"exon"}
-    FEATURE_ALLOW_LIST = GTF_TRANSCRIPTS_DATA | {"gene"}
+    FEATURE_ALLOW_LIST = GTF_TRANSCRIPTS_DATA | {"gene", "transcript"}
 
     def __init__(self, *args, **kwargs):
         super(GTFParser, self).__init__(*args, **kwargs)
@@ -376,7 +376,9 @@ class GTFParser(GFFParser):
                     if protein_version := feature.attr.get("protein_version"):
                         protein = f"{protein}.{protein_version}"
                     self.transcript_proteins[transcript_accession] = protein
-
+            elif feature.type == "transcript":
+                if tag := feature.attr.get("tag"):
+                    transcript["tag"] = tag
 
 
 class GFF3Parser(GFFParser):
@@ -481,6 +483,10 @@ class GFF3Parser(GFFParser):
 
             if feature.attr.get("partial"):
                 transcript_data["partial"] = 1
+
+            if tag := feature.attr.get("tag"):
+                transcript_data["tag"] = tag
+
             self.transcript_data_by_accession[transcript_accession] = transcript_data
         self.transcript_accession_by_feature_id[feature.attr["ID"]] = transcript_accession
 
