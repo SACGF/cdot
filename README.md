@@ -15,8 +15,7 @@ We currently support ~893k transcripts (vs ~141k in UTA v.20210129)
 
 See [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
 
-* 2022-09-27 - 0.2.11 - Now support all methods (get_gene_info, get_tx_for_gene, get_tx_for_region) for REST and local JSON
-* 2022-08-29 - 0.2.8 - Support for c_to_p
+* 2023-02-23 - pyHGVS related bugfixes
 
 ## Install
 
