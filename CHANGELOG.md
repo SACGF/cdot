@@ -1,3 +1,10 @@
+## [0.2.13] - 2023-02-23
+
+### Changed
+
+- Fix for #25 - Pyhgvs data conversion - non-coding transcripts have bad cds start/end conversion
+- Fix for #32 - Signature of get_pyhgvs_data consistent for all return statements
+
 ## [0.2.12] - 2022-12-08
 
 ### Added
