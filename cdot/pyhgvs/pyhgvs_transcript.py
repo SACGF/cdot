@@ -46,8 +46,8 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
             "start": start,
             "end": end,
             "strand": build_coords["strand"],
-            # PyHGVS has cds_start/cds_end equal start/end if non-coding
-            "cds_start": build_coords.get('cds_start', start),
+            # PyHGVS has cds_start/cds_end equal end (so CDS length is 0) if non-coding
+            "cds_start": build_coords.get('cds_start', end),
             "cds_end": build_coords.get('cds_end', end),
             "gene_name": transcript_json['gene_name'],
         }

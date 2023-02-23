@@ -35,6 +35,21 @@ class TestPyHGVS(unittest.TestCase):
             expected = (name.chrom, name.start, name.ref_allele, name.alt_allele)
             self.assertEqual(result, expected)
 
+    def test_non_coding_transcript(self):
+        this_file_dir = os.path.dirname(abspath(getsourcefile(lambda: 0)))
+        test_json_file = os.path.join(this_file_dir, "test_data/cdot.refseq.grch37.json")
+        factory = JSONPyHGVSTranscriptFactory([test_json_file])
+
+        genome = MockGenomeTestFile(
+            db_filename='grch37.fa',
+            filename=os.path.join(this_file_dir, 'test_data/grch37.genome'),
+            create_data=False)
+
+        transcript_id = "NR_023343.1"
+        sacgf_pyhgvs_fork = is_sacgf_pyhgvs_fork()
+        pyhgvs_transcript = factory.get_transcript_grch37(transcript_id, sacgf_pyhgvs_fork=sacgf_pyhgvs_fork)
+        self.assertFalse(pyhgvs_transcript.is_coding, f"Transcript {transcript_id} is non-coding")
+
 
 if __name__ == '__main__':
     unittest.main()

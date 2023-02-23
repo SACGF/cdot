@@ -191,6 +191,32 @@
           "url": "http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.105/GFF/ref_GRCh37.p13_top_level.gff3.gz"
         }
       }
+    },
+    "NR_023343.1": {
+      "id": "NR_023343.1",
+      "cdot": "0.2.12",
+      "hgnc": "34016",
+      "biotype": [
+        "non_coding"
+      ],
+      "gene_name": "RNU4ATAC",
+      "genome_builds": {
+        "GRCh37": {
+          "url": "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/105.20220307/GCF_000001405.25_GRCh37.p13/GCF_000001405.25_GRCh37.p13_genomic.gff.gz",
+          "exons": [
+            [
+              122288455,
+              122288585,
+              0,
+              1,
+              130,
+              null
+            ]
+          ],
+          "contig": "NC_000002.11",
+          "strand": "+"
+        }
+      }
     }
   },
   "genes": {
@@ -206,5 +232,7 @@
     }
   },
   "cdot_version": "0.2.10",
-  "genome_builds": ["GRCh37"]
+  "genome_builds": [
+    "GRCh37"
+  ]
 }
