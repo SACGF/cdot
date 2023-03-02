@@ -31,8 +31,8 @@ class AbstractPyHGVSTranscriptFactory(abc.ABC):
         return transcript
 
     def get_pyhgvs_data(self, transcript_id, genome_build, sacgf_pyhgvs_fork=False) -> Dict:
-        transcript_json = self._get_transcript(transcript_id)
-        build_coords = transcript_json["genome_builds"].get(genome_build)
+        transcript_json = self._get_transcript(transcript_id) or {}
+        build_coords = transcript_json.get("genome_builds", {}).get(genome_build)
         if build_coords is None:
             return {}
 
