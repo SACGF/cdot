@@ -47,12 +47,14 @@ am.c_to_g(var_c)
 [PyHGVS](https://github.com/counsyl/hgvs) example:
 
 ```
+import pyhgvs
+from pysam.libcfaidx import FastaFile
 from cdot.pyhgvs.pyhgvs_transcript import JSONPyHGVSTranscriptFactory, RESTPyHGVSTranscriptFactory
 
+genome = FastaFile("/data/annotation/fasta/GCF_000001405.25_GRCh37.p13_genomic.fna.gz")
 factory = RESTPyHGVSTranscriptFactory()
-# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.12.refseq.grch38.json.gz"])  # Uses local JSON file
-pyhgvs.parse_hgvs_name(hgvs_c, genome, get_transcript=factory.get_transcript_grch37)
-
+# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.12.refseq.grch37.json.gz"])  # Uses local JSON file
+pyhgvs.parse_hgvs_name('NM_001637.3:c.1582G>A', genome, get_transcript=factory.get_transcript_grch37)
 ```
 
 ## Q. What's the performance like?
