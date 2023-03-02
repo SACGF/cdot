@@ -33,7 +33,7 @@ from hgvs.assemblymapper import AssemblyMapper
 from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider
 
 hdp = RESTDataProvider()  # Uses API server at cdot.cc
-# hdp = JSONDataProvider(["./cdot-0.2.10.refseq.grch38.json.gz"])  # Uses local JSON file
+# hdp = JSONDataProvider(["./cdot-0.2.10.refseq.grch37.json.gz"])  # Uses local JSON file
 
 am = AssemblyMapper(hdp,
                     assembly_name='GRCh37',
