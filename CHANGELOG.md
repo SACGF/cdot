@@ -1,3 +1,9 @@
+## [unreleased] - 2023-03-02
+
+### Changed
+
+- #34 - Stick to PyHGVS conventions so it throws ValueError: transcript is required on missing transcript
+
 ## [0.2.13] - 2023-02-23
 
 ### Changed
