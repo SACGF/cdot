@@ -66,7 +66,7 @@ class GFFParser(abc.ABC):
             gene_data["url"] = self.url
 
         # At the moment the transcript dict is flat - need to move it into "genome_builds" dict
-        GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms"]
+        GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms", "tag"]
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
             if protein := self.transcript_proteins.get(transcript_accession):
                 transcript_data["protein"] = protein

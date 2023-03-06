@@ -2,7 +2,7 @@
 import os
 from inspect import getsourcefile
 import unittest
-from cdot.gff.gff_parser import GTFParser, GFF3Parser
+from generate_transcript_data.gff_parser import GTFParser, GFF3Parser
 
 
 class Test(unittest.TestCase):
