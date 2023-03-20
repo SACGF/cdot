@@ -1,3 +1,5 @@
+import re
+
 from pysam.libcfaidx import FastaFile
 from hgvs.dataproviders.interface import Interface
 from bioutils.sequences import reverse_complement
@@ -12,6 +14,7 @@ class FastaSeqFetcher:
         self.hdp = None  # Set when passed to data provider (via set_data_provider)
         self.source = "Local Fasta file reference"
         self.contig_fastas = {}
+        self.cigar_pattern = re.compile(r"(\d+)([=DIX])")
         for fasta_filename in args:
             fasta_file = FastaFile(fasta_filename)
             for contig in fasta_file.references:
@@ -48,8 +51,24 @@ class FastaSeqFetcher:
         exon_sequences = []
         for exon in sorted(exons, key=lambda ex: ex["ord"]):
             seq = fasta_file.fetch(alt_ac, exon["alt_start_i"], exon["alt_end_i"])
+            seq = seq.upper()
+
+            # Cigar is mapping from transcript to genome.
+            # We are going from genome to transcript so operations are reversed
+            transcript_seq = []
+            start = 0
+            for (length_str, op) in self.cigar_pattern.findall(exon["cigar"]):
+                length = int(length_str)
+                if op == 'D':
+                    transcript_seq.append("N" * length)
+                elif op == 'I':
+                    pass  # leave out
+                else:
+                    transcript_seq.append(seq[start:start+length])
+                    start += length
+
+            seq = "".join(transcript_seq)
             if exon["alt_strand"] == -1:
                 seq = reverse_complement(seq)
             exon_sequences.append(seq)
-
         return "".join(exon_sequences)
