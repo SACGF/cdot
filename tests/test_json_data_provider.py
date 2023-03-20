@@ -44,6 +44,7 @@ class TestJSONDataProvider(unittest.TestCase):
     def test_get_tx_for_region(self):
         found = False
         expected_transcript = "NM_001637.3"
+        # Exonic coordinate
         for tx_data in self.json_data_provider.get_tx_for_region("NC_000007.13", "splign", 36570024, 36570025):
             if tx_data["tx_ac"] == expected_transcript:
                 found = True
@@ -52,6 +53,21 @@ class TestJSONDataProvider(unittest.TestCase):
                 self.assertEqual(tx_data["end_i"], 36764154)
                 continue
         self.assertTrue(found)
+
+    def test_get_tx_for_region_intron(self):
+        """ Test case for https://github.com/SACGF/cdot/issues/38 """
+        found = False
+        expected_transcript = "NM_001637.3"
+        # Coordinate below is intronic
+        for tx_data in self.json_data_provider.get_tx_for_region("NC_000007.13", "splign", 36743533, 36745648):
+            if tx_data["tx_ac"] == expected_transcript:
+                found = True
+                self.assertEqual(tx_data["alt_strand"], -1)
+                self.assertEqual(tx_data["start_i"], 36552548)
+                self.assertEqual(tx_data["end_i"], 36764154)
+                continue
+        self.assertTrue(found)
+
 
     def test_get_pro_ac_for_tx_ac(self):
         pro_ac = self.json_data_provider.get_pro_ac_for_tx_ac("NM_001637.3")
