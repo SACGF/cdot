@@ -79,7 +79,7 @@ class Test(unittest.TestCase):
         genes, transcripts = parser.get_genes_and_transcripts()
         print(transcripts)
         transcript = transcripts["ENST00000641515.2"]
-        tags = transcript.get("tag")
+        tags = transcript["genome_builds"][genome_build].get("tag")
         print(f"tags={tags}")
         for tag in ["basic", "Ensembl_canonical", "MANE_Select"]:
             self.assertIn(tag, tags)
