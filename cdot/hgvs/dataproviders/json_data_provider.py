@@ -277,17 +277,14 @@ class LocalDataProvider(AbstractJSONDataProvider):
                 build_data = self._get_transcript_coordinates_for_contig(transcript_data, alt_ac)
                 contig, tx_start, tx_end, strand = self._get_contig_start_end_strand(build_data)
                 if contig == alt_ac:
-                    for exon in build_data["exons"]:
-                        if exon[0] < start_i and end_i <= exon[1]:
-                            tx_list.append({
-                                "alt_ac": alt_ac,
-                                "alt_aln_method": self.NCBI_ALN_METHOD,
-                                "alt_strand": strand,
-                                "start_i": tx_start,
-                                "end_i": tx_end,
-                                "tx_ac": transcript_id,
-                            })
-                            break
+                    tx_list.append({
+                        "alt_ac": alt_ac,
+                        "alt_aln_method": self.NCBI_ALN_METHOD,
+                        "alt_strand": strand,
+                        "start_i": tx_start,
+                        "end_i": tx_end,
+                        "tx_ac": transcript_id,
+                    })
         return tx_list
 
     @staticmethod
