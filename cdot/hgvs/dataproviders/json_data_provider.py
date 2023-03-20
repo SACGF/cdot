@@ -17,13 +17,22 @@ class AbstractJSONDataProvider(Interface):
     NCBI_ALN_METHOD = "splign"
     required_version = "1.1"
 
-    def __init__(self, assemblies: List[str]=None, mode=None, cache=None):
-        """ assemblies: defaults to ["GRCh37", "GRCh38"] """
+    def __init__(self, assemblies: List[str] = None, mode=None, cache=None, seqfetcher=None):
+        """ assemblies: defaults to ["GRCh37", "GRCh38"]
+            seqfetcher defaults to biocommons SeqFetcher()
+        """
         if assemblies is None:
             assemblies = ["GRCh37", "GRCh38"]
 
         super().__init__(mode=mode, cache=cache)
-        self.seqfetcher = SeqFetcher()
+        if seqfetcher:
+            try:
+                seqfetcher.set_data_provider(self)
+            except AttributeError:
+                pass
+        else:
+            seqfetcher = SeqFetcher()
+        self.seqfetcher = seqfetcher
         self.assembly_maps = {}
         for assembly_name in assemblies:
             self.assembly_maps[assembly_name] = make_ac_name_map(assembly_name)
@@ -308,7 +317,7 @@ class LocalDataProvider(AbstractJSONDataProvider):
 
 class JSONDataProvider(LocalDataProvider):
     """ Local JSON file """
-    def __init__(self, file_or_filename_list, mode=None, cache=None):
+    def __init__(self, file_or_filename_list, mode=None, cache=None, seqfetcher=None):
         assemblies = set()
         self.transcripts = {}
         self.genes = {}
@@ -329,7 +338,7 @@ class JSONDataProvider(LocalDataProvider):
                         self.genes[gene_symbol] = g
             self.cdot_data_version = tuple(int(v) for v in data["cdot_version"].split("."))
 
-        super().__init__(assemblies=assemblies, mode=mode, cache=cache)
+        super().__init__(assemblies=assemblies, mode=mode, cache=cache, seqfetcher=seqfetcher)
 
     def _get_transcript(self, tx_ac):
         return self.transcripts.get(tx_ac)
@@ -368,9 +377,9 @@ class JSONDataProvider(LocalDataProvider):
 
 class RESTDataProvider(AbstractJSONDataProvider):
 
-    def __init__(self, url=None, secure=True, mode=None, cache=None):
+    def __init__(self, url=None, secure=True, mode=None, cache=None, seqfetcher=None):
         assemblies = ["GRCh37", "GRCh38"]
-        super().__init__(assemblies=assemblies, mode=mode, cache=cache)
+        super().__init__(assemblies=assemblies, mode=mode, cache=cache, seqfetcher=seqfetcher)
         if url is None:
             if secure:
                 url = "https://cdot.cc"
