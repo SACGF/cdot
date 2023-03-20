@@ -1,4 +1,7 @@
-## [unreleased] - 2023-03-02
+## [unreleased] - 2023-03-20
+
+- #38 - Differing implementation of get_tx_for_region to hgvs one (reported by Manuel Holtgrewe) 
+- #35 - Tags (ie MANE Select / RefSeq select etc) should be genome build specific 
 
 ### Changed
 
