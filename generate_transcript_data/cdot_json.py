@@ -13,7 +13,7 @@ from csv import DictReader
 import cdot
 import ijson
 from cdot.pyhgvs.pyhgvs_transcript import PyHGVSTranscriptFactory
-from .gff_parser import GTFParser, GFF3Parser
+from generate_transcript_data.gff_parser import GTFParser, GFF3Parser
 from cdot.json_encoders import SortedSetEncoder
 from pyhgvs import CDNACoord
 
