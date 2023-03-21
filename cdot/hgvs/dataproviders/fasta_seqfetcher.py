@@ -60,7 +60,7 @@ class FastaSeqFetcher:
 
     def fetch_seq(self, ac, start_i=None, end_i=None):
         if fasta_file := self.contig_fastas.get(ac):  # Contig
-            return fasta_file.fetch(ac, start_i, end_i)
+            return fasta_file.fetch(ac, start_i, end_i).upper()
 
         if self.hdp is None:
             raise HGVSDataNotAvailableError("You need to set set_data_provider() before calling fetch_seq()")
