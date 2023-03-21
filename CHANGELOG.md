@@ -3,6 +3,7 @@
 ### Added
 
 - #39 - Fasta file SeqFetcher implementation
+- Add Ensembl 109 GTF
 
 ### Changed
 
