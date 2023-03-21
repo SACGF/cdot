@@ -4,7 +4,12 @@ set -e
 
 FULL_PATH_TO_SCRIPT="$(realpath "${BASH_SOURCE[-1]}")"
 BASE_DIR=$(dirname ${FULL_PATH_TO_SCRIPT})
+
+# Python scripts will import via generate_transcript_data
+export PYTHONPATH=${BASE_DIR}/..
+
 CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
+
 
 # This needs to be passed to called bash scripts, so they are invoked with "." to use these variables
 export GENE_INFO_JSON=$(pwd)/gene-info-${CDOT_VERSION}.json.gz
