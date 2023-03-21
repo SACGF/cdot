@@ -13,7 +13,7 @@ import hgvs.dataproviders.uta
 from hgvs.assemblymapper import AssemblyMapper
 from hgvs.exceptions import HGVSDataNotAvailableError, HGVSInvalidVariantError
 
-from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider
+from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider, FastaSeqFetcher
 
 
 def handle_args():
@@ -24,6 +24,7 @@ def handle_args():
     group.add_argument('--rest', action='store_true')
     group.add_argument('--rest-insecure', action='store_true')
     parser.add_argument('--json', help='JSON file')
+    parser.add_argument('--fasta', help='Fasta file for local sequences')
     args = parser.parse_args()
     if not any([args.uta, args.rest, args.rest_insecure, args.json]):
         parser.error("You need to specify at least one of 'uta', 'rest', 'rest-insecure', 'json'")
@@ -41,17 +42,22 @@ def main():
     total = len(hgvs_g_c_list)
     print(f"Using {total} test records")
 
+    seqfetcher = None
+    if args.fasta:
+        seqfetcher = FastaSeqFetcher(args.fasta)
+
     if args.uta:
         hdp = hgvs.dataproviders.uta.connect()
     elif args.rest:
-        hdp = RESTDataProvider()  # Uses API server at cdot.cc
+        hdp = RESTDataProvider(seqfetcher=seqfetcher)  # Uses API server at cdot.cc
+    elif args.rest_insecure:
+        hdp = RESTDataProvider(secure=False, seqfetcher=seqfetcher)
     elif args.json:
-        hdp = JSONDataProvider([args.json])
-    elif args.json_insecure:
-        hdp = JSONDataProvider([args.json], secure=False)
+        hdp = JSONDataProvider([args.json], seqfetcher=seqfetcher)
     else:
         raise ValueError("Unknown data provider method!")
 
+    print("Starting benchmark...")
     am = AssemblyMapper(hdp,
                         assembly_name='GRCh38',
                         alt_aln_method='splign', replace_reference=True)
@@ -62,6 +68,7 @@ def main():
     correct = 0
     incorrect = 0
     no_data = 0
+    total_start = time.time()
     for hgvs_g, hgvs_c in hgvs_g_c_list:
         start = time.time()
         try:
@@ -90,9 +97,15 @@ def main():
         time_taken = end - start
         run_times.append(time_taken)
 
+    total_end = time.time()
+
     print(f"Total: {total}, correct: {correct}, incorrect: {incorrect}, no data: {no_data}")
     df = pd.DataFrame(run_times)
     print(df.describe())
+
+    total_time = total_end - total_start
+    num_per_second = 1/total_time * total
+    print(f"{total} in {total_time} = {num_per_second} per second")
 
 
 if __name__ == '__main__':

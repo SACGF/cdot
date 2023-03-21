@@ -12,7 +12,7 @@ class ChainedSeqFetcher:
 
         This is useful if you want to use FastaSeqFetcher (below) as a fallback if SeqFetcher fails
 
-        seq_fetcher = ChainedSeqFetcher(SeqFetcher(), FastaSeqFetcher(fasta_filename))
+        seqfetcher = ChainedSeqFetcher(SeqFetcher(), FastaSeqFetcher(fasta_filename))
     """
 
     def __init__(self, *args):
