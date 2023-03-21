@@ -110,7 +110,7 @@ class FastaSeqFetcher:
                     exon_seq_list.append("N" * length)
                 elif op == 'I':
                     pass  # leave out
-                else:
+                else:  # match/mismatch
                     exon_seq_list.append(exon_seq[start:start+length])
                     start += length
 
