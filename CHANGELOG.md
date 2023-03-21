@@ -1,4 +1,4 @@
-## [unreleased] - 2023-03-20
+## [0.2.14] - 2023-03-21
 
 ### Added
 
@@ -8,9 +8,6 @@
 
 - #38 - Differing implementation of get_tx_for_region to hgvs one (reported by Manuel Holtgrewe) 
 - #35 - Tags (ie MANE Select / RefSeq select etc) should be genome build specific 
-
-### Changed
-
 - #34 - Stick to PyHGVS conventions, throw ValueError: transcript is required on missing transcript
 
 ## [0.2.13] - 2023-02-23
@@ -137,7 +134,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.13...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.14...HEAD
+[0.2.14]: https://github.com/SACGF/cdot/compare/v0.2.12...v0.2.14
 [0.2.13]: https://github.com/SACGF/cdot/compare/v0.2.12...v0.2.13
 [0.2.12]: https://github.com/SACGF/cdot/compare/v0.2.11...v0.2.12
 [0.2.11]: https://github.com/SACGF/cdot/compare/v0.2.10...v0.2.11
