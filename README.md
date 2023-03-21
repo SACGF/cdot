@@ -15,7 +15,9 @@ We currently support ~905k transcripts (vs ~141k in UTA v.20210129)
 
 See [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
 
-* 2023-02-23 - pyHGVS related bugfixes
+2023-03-31:
+* #31 - Fasta file Biocommons HGVS SeqFetcher implementation
+* #38 - bugfix for Biocommons HGVS get_tx_for_region
 
 ## Install
 
@@ -33,7 +35,7 @@ from hgvs.assemblymapper import AssemblyMapper
 from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider
 
 hdp = RESTDataProvider()  # Uses API server at cdot.cc
-# hdp = JSONDataProvider(["./cdot-0.2.10.refseq.grch37.json.gz"])  # Uses local JSON file
+# hdp = JSONDataProvider(["./cdot-0.2.14.refseq.grch37.json.gz"])  # Uses local JSON file
 
 am = AssemblyMapper(hdp,
                     assembly_name='GRCh37',
@@ -44,6 +46,8 @@ var_c = hp.parse_hgvs_variant('NM_001637.3:c.1582G>A')
 am.c_to_g(var_c)
 ```
 
+[more Biocommons examples](https://github.com/SACGF/cdot/wiki/Biocommons-HGVS-example-code):
+
 [PyHGVS](https://github.com/counsyl/hgvs) example:
 
 ```
@@ -53,9 +57,11 @@ from cdot.pyhgvs.pyhgvs_transcript import JSONPyHGVSTranscriptFactory, RESTPyHGV
 
 genome = FastaFile("/data/annotation/fasta/GCF_000001405.25_GRCh37.p13_genomic.fna.gz")
 factory = RESTPyHGVSTranscriptFactory()
-# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.12.refseq.grch37.json.gz"])  # Uses local JSON file
+# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.14.refseq.grch37.json.gz"])  # Uses local JSON file
 pyhgvs.parse_hgvs_name('NM_001637.3:c.1582G>A', genome, get_transcript=factory.get_transcript_grch37)
 ```
+
+[more PyHGVS examples](https://github.com/SACGF/cdot/wiki/PyHGVS-example-code):
 
 ## Q. What's the performance like?
 
