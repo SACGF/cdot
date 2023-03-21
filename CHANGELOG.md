@@ -1,11 +1,17 @@
 ## [unreleased] - 2023-03-20
 
+### Added
+
+- #39 - Fasta file SeqFetcher implementation
+
+### Changed
+
 - #38 - Differing implementation of get_tx_for_region to hgvs one (reported by Manuel Holtgrewe) 
 - #35 - Tags (ie MANE Select / RefSeq select etc) should be genome build specific 
 
 ### Changed
 
-- #34 - Stick to PyHGVS conventions so it throws ValueError: transcript is required on missing transcript
+- #34 - Stick to PyHGVS conventions, throw ValueError: transcript is required on missing transcript
 
 ## [0.2.13] - 2023-02-23
 

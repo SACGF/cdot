@@ -79,15 +79,8 @@ class AbstractJSONDataProvider(Interface):
 
         return assembly_map
 
-    @staticmethod
-    def sequence_source():
-        seqrepo_dir = os.environ.get("HGVS_SEQREPO_DIR")
-        seqrepo_url = os.environ.get("HGVS_SEQREPO_URL")
-        if seqrepo_dir:
-            return seqrepo_dir
-        elif seqrepo_url:
-            return seqrepo_url
-        return "seqfetcher"
+    def sequence_source(self):
+        return self.seqfetcher.source
 
     def get_seq(self, ac, start_i=None, end_i=None):
         return self.seqfetcher.fetch_seq(ac, start_i, end_i)
