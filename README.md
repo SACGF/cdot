@@ -71,10 +71,7 @@ pyhgvs.parse_hgvs_name('NM_001637.3:c.1582G>A', genome, get_transcript=factory.g
 
 ## Q. Where can I download the JSON.gz files?
 
-[RefSeq 37+38](https://cdot.cc/download/0.2.12/cdot-0.2.12.refseq.grch37_grch38.json.gz) - 70Mb
-[Ensembl 37+38](https://cdot.cc/download/0.2.12/cdot-0.2.12.ensembl.grch37_grch38.json.gz) - 53Mb
-
-See also [Download JSON.gz files](https://github.com/SACGF/cdot/wiki/Download-JSON.gz-files) if you only want individual builds.
+[Download from GitHub releases](https://github.com/SACGF/cdot/releases) - RefSeq (37/38) - 72M, Ensembl (37/38) 61M
 
 ## Q. How does this compare to Universal Transcript Archive?
 
