@@ -73,6 +73,8 @@ pyhgvs.parse_hgvs_name('NM_001637.3:c.1582G>A', genome, get_transcript=factory.g
 
 [Download from GitHub releases](https://github.com/SACGF/cdot/releases) - RefSeq (37/38) - 72M, Ensembl (37/38) 61M
 
+Details on what the files contain [here](https://github.com/SACGF/cdot/wiki/GitHub-release-file-details)
+
 ## Q. How does this compare to Universal Transcript Archive?
 
 Both projects have similar goals of providing transcripts for loading HGVS, but they approach it from different ways
