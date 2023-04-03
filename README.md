@@ -15,6 +15,9 @@ We currently support ~905k transcripts (vs ~141k in UTA v.20210129)
 
 See [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
 
+2023-04-03:
+* #41 - Support for T2T CHM13v2.0 [example code](https://github.com/SACGF/cdot/wiki/Biocommons-T2T-CHM13v2.0-example-code)
+
 2023-03-31:
 * #31 - Fasta file Biocommons HGVS SeqFetcher implementation
 * #38 - bugfix for Biocommons HGVS get_tx_for_region
