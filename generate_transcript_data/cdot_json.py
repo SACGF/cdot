@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from __future__ import print_function, absolute_import
-
 import gzip
 import json
 import re

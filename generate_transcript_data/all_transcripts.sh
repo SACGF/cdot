@@ -43,9 +43,14 @@ if [[ ! -e ${REFSEQ_COMBO} ]]; then
       --output ${REFSEQ_COMBO}
 fi
 
+mkdir -p CHM13v2.0
+cd CHM13v2.0
+${BASE_DIR}/refseq_transcripts_chm13v2.sh
 cd ..
 
-# RefSeq
+cd ..
+
+# Ensembl
 mkdir -p ensembl
 cd ensembl
 

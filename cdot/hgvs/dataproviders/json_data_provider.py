@@ -6,12 +6,12 @@ import requests
 
 from collections import defaultdict
 from lazy import lazy
-from bioutils.assemblies import make_ac_name_map
 from hgvs.dataproviders.interface import Interface
 from hgvs.dataproviders.seqfetcher import SeqFetcher
 from intervaltree import IntervalTree
 from typing import List
 
+from cdot.assembly_helper import get_ac_name_map
 
 class AbstractJSONDataProvider(Interface):
     NCBI_ALN_METHOD = "splign"
@@ -35,7 +35,7 @@ class AbstractJSONDataProvider(Interface):
         self.seqfetcher = seqfetcher
         self.assembly_maps = {}
         for assembly_name in assemblies:
-            self.assembly_maps[assembly_name] = make_ac_name_map(assembly_name)
+            self.assembly_maps[assembly_name] = get_ac_name_map(assembly_name)
         self.assembly_by_contig = {}
         for assembly_name, contig_map in self.assembly_maps.items():
             self.assembly_by_contig.update({contig: assembly_name for contig in contig_map.keys()})
