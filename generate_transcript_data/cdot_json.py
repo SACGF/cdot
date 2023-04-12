@@ -252,7 +252,7 @@ def _cigar_to_gap_and_length(cigar):
 
 
 def write_cdot_json(filename, genes, transcript_versions, genome_builds, refseq_gene_summary_api_retrieval_date=None):
-    print("Writing cdot data")
+    print(f"Writing cdot file: '{filename}'")
     data = {
         "cdot_version": cdot.__version__,
         "genome_builds": genome_builds,

@@ -1,3 +1,10 @@
+## [0.2.16] - 2023-04-12
+
+### Added
+
+- Added historical release 110 (2022-04-12) for T2T CHM13v2.0
+- Added latest GRCh38.p14 release (2023-03-21)
+
 ## [0.2.15] - 2023-04-03
 
 ### Added
@@ -141,7 +148,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.15...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.16...HEAD
+[0.2.16]: https://github.com/SACGF/cdot/compare/v0.2.15...v0.2.16
 [0.2.15]: https://github.com/SACGF/cdot/compare/v0.2.14...v0.2.15
 [0.2.14]: https://github.com/SACGF/cdot/compare/v0.2.13...v0.2.14
 [0.2.13]: https://github.com/SACGF/cdot/compare/v0.2.12...v0.2.13

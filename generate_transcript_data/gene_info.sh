@@ -11,8 +11,12 @@ CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 filename=Homo_sapiens.gene_info.gz
 url=https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/${filename}
 if [[ ! -e ${filename} ]]; then
+  echo "Downloading ${url}"
   wget ${url}
 fi
 
 out_json=gene-info-${CDOT_VERSION}.json.gz
-${BASE_DIR}/cdot_gene_info.py --gene-info ${filename} --output ${out_json} --email ${EMAIL}
+if [[ ! -e ${out_json} ]]; then
+  echo "Processing gene info file..."
+  ${BASE_DIR}/cdot_gene_info.py --gene-info ${filename} --output ${out_json} --email ${EMAIL}
+fi

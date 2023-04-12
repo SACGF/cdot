@@ -109,13 +109,27 @@ for release in 109.20190607 109.20190905 109.20191205 109.20200228 109.20200522 
   merge_args+=(${cdot_file})
 done
 
-
-filename=GCF_000001405.40_GRCh38.p14_genomic.gff.gz
-url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/110/GCF_000001405.40_GRCh38.p14/${filename}
+# GRCh38.p14
+# These have same filenames (but in diff directory structures) so need to rename them
+filename=GCF_000001405.40_GRCh38.p14_genomic.110.gff.gz
+url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/110/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gff.gz
 cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 
 if [[ ! -e ${filename} ]]; then
-  wget ${url}
+  wget ${url} --output-document=${filename}
+fi
+if [[ ! -e ${cdot_file} ]]; then
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
+fi
+merge_args+=(${cdot_file})
+
+
+filename=GCF_000001405.40_GRCh38.p14_genomic.RS_2023_03.gff.gz
+url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_03/GCF_000001405.40_GRCh38.p14_genomic.gff.gz
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
+
+if [[ ! -e ${filename} ]]; then
+  wget ${url} --output-document=${filename}
 fi
 if [[ ! -e ${cdot_file} ]]; then
   ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
