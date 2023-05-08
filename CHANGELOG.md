@@ -1,3 +1,13 @@
+## [0.2.17] - 2023-05-08
+
+### Added
+
+- #42 - Ensembl T2T CHM13v2.0
+
+### Changed
+
+- #43 - Contigs not converted to accession numbers properly (this was breaking local Biocommons HGVS conversion using 0.2.16 data)  
+
 ## [0.2.16] - 2023-04-12
 
 ### Added
@@ -148,7 +158,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.16...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.17...HEAD
+[0.2.17]: https://github.com/SACGF/cdot/compare/v0.2.16...v0.2.17
 [0.2.16]: https://github.com/SACGF/cdot/compare/v0.2.15...v0.2.16
 [0.2.15]: https://github.com/SACGF/cdot/compare/v0.2.14...v0.2.15
 [0.2.14]: https://github.com/SACGF/cdot/compare/v0.2.13...v0.2.14
