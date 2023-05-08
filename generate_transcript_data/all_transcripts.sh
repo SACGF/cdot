@@ -34,6 +34,11 @@ cd GRCh38
 ${BASE_DIR}/refseq_transcripts_grch38.sh
 cd ..
 
+mkdir -p CHM13v2.0
+cd CHM13v2.0
+${BASE_DIR}/refseq_transcripts_chm13v2.sh
+cd ..
+
 # Combine genome builds (we're in refseq dir)
 REFSEQ_COMBO=cdot-${CDOT_VERSION}.refseq.grch37_grch38.json.gz
 if [[ ! -e ${REFSEQ_COMBO} ]]; then
@@ -42,11 +47,6 @@ if [[ ! -e ${REFSEQ_COMBO} ]]; then
       --grch38 GRCh38/cdot-${CDOT_VERSION}.refseq.grch38.json.gz \
       --output ${REFSEQ_COMBO}
 fi
-
-mkdir -p CHM13v2.0
-cd CHM13v2.0
-${BASE_DIR}/refseq_transcripts_chm13v2.sh
-cd ..
 
 cd ..
 
@@ -63,6 +63,12 @@ mkdir -p GRCh38
 cd GRCh38
 ${BASE_DIR}/ensembl_transcripts_grch38.sh
 cd ..
+
+mkdir -p CHM13v2.0
+cd CHM13v2.0
+${BASE_DIR}/ensembl_transcripts_chm13v2.sh
+cd ..
+
 
 # Combine genome builds (we're in ensembl dir)
 ENSEMBL_COMBO=cdot-${CDOT_VERSION}.ensembl.grch37_grch38.json.gz
