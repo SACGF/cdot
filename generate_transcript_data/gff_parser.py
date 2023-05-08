@@ -7,7 +7,7 @@ from typing import Optional
 
 import HTSeq
 
-from cdot.assembly_helper import get_ac_name_map
+from cdot.assembly_helper import get_name_ac_map
 
 CONTIG = "contig"
 STRAND = "strand"
@@ -30,7 +30,7 @@ class GFFParser(abc.ABC):
         self.transcript_proteins = {}
         # Store features in separate dict as we don't need to write all as JSON
         self.transcript_features_by_type = defaultdict(lambda: defaultdict(list))
-        self.name_ac_map = get_ac_name_map(genome_build)
+        self.name_ac_map = get_name_ac_map(genome_build)
 
 
     @abc.abstractmethod

@@ -77,9 +77,18 @@ class Test(unittest.TestCase):
         genome_build = "GRCh38"
         parser = GFF3Parser(self.ENSEMBL_108_GFF3_FILENAME, genome_build, self.FAKE_URL)
         genes, transcripts = parser.get_genes_and_transcripts()
-        print(transcripts)
         transcript = transcripts["ENST00000641515.2"]
         tags = transcript["genome_builds"][genome_build].get("tag")
         print(f"tags={tags}")
         for tag in ["basic", "Ensembl_canonical", "MANE_Select"]:
             self.assertIn(tag, tags)
+
+    def test_chrom_contig_conversion(self):
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.ENSEMBL_108_GFF3_FILENAME, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        transcript = transcripts["ENST00000641515.2"]
+        contig = transcript["genome_builds"][genome_build].get("contig")
+        self.assertEqual(contig, "NC_000001.11")
+
+
