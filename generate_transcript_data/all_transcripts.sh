@@ -12,7 +12,7 @@ CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 
 
 # This needs to be passed to called bash scripts, so they are invoked with "." to use these variables
-export GENE_INFO_JSON=$(pwd)/gene-info-${CDOT_VERSION}.json.gz
+export GENE_INFO_JSON=$(pwd)/Homo_sapiens.gene-info-${CDOT_VERSION}.json.gz
 
 if [[ ! -e ${GENE_INFO_JSON} ]]; then
   ${BASE_DIR}/gene_info.sh

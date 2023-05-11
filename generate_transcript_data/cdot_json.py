@@ -2,6 +2,7 @@
 
 import gzip
 import json
+import logging
 import re
 import sys
 from argparse import ArgumentParser
@@ -28,7 +29,10 @@ def _setup_arg_parser():
     parser_gff3.add_argument("gff3_filename", help="GFF3 to convert to JSON")
 
     for p in [parser_gtf, parser_gff3]:
-        p.add_argument("--discard-contigs-with-underscores", action='store_true', default=True)
+        p.add_argument("--no-contig-conversion", action='store_true', default=False,
+                       help="Used for genome builds with no bioutils assembly available. "
+                            "Warning: Won't work with biocommons HGVS if set")
+        p.add_argument("--keep-contigs-with-underscores", action='store_true', default=False)
         p.add_argument('--url', required=True, help='URL (source of GFF) to store in "reference_gtf.url"')
         p.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
         p.add_argument('--gene-info-json', required=True, help="'JSON of gene info, produced by cdot_gene_info.py")
@@ -84,9 +88,16 @@ def add_gene_info(gene_info_filename: str, genes):
     return refseq_gene_summary_api_retrieval_date
 
 
+def _gff_arg_check(args):
+    if not args.no_contig_conversion:
+        logging.warning(f"Skipping chrom/contig conversion. File won't work with Biocommons HGVS")
+
+
 def gtf_to_json(args):
+    _gff_arg_check(args)
     parser = GTFParser(args.gtf_filename, args.genome_build, args.url,
-                       discard_contigs_with_underscores=args.discard_contigs_with_underscores)
+                       discard_contigs_with_underscores=not args.keep_contigs_with_underscores,
+                       no_contig_conversion=args.no_contig_conversion)
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     write_cdot_json(args.output, genes, transcripts, [args.genome_build],
@@ -94,8 +105,10 @@ def gtf_to_json(args):
 
 
 def gff3_to_json(args):
+    _gff_arg_check(args)
     parser = GFF3Parser(args.gff3_filename, args.genome_build, args.url,
-                        discard_contigs_with_underscores=args.discard_contigs_with_underscores)
+                        discard_contigs_with_underscores=not args.keep_contigs_with_underscores,
+                        no_contig_conversion=args.no_contig_conversion)
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     write_cdot_json(args.output, genes, transcripts, [args.genome_build],

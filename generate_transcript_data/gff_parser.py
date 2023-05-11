@@ -18,7 +18,8 @@ class GFFParser(abc.ABC):
     FEATURE_ALLOW_LIST = {}
     FEATURE_IGNORE_LIST = {"biological_region", "chromosome", "region", "scaffold", "supercontig"}
 
-    def __init__(self, filename, genome_build, url, discard_contigs_with_underscores=True):
+    def __init__(self, filename, genome_build, url,
+                 discard_contigs_with_underscores=True, no_contig_conversion=False):
         self.filename = filename
         self.genome_build = genome_build
         self.url = url
@@ -30,7 +31,16 @@ class GFFParser(abc.ABC):
         self.transcript_proteins = {}
         # Store features in separate dict as we don't need to write all as JSON
         self.transcript_features_by_type = defaultdict(lambda: defaultdict(list))
-        self.name_ac_map = get_name_ac_map(genome_build)
+
+        name_ac_map = {}
+        if not no_contig_conversion:
+            try:
+                name_ac_map = get_name_ac_map(genome_build)
+            except FileNotFoundError as e:
+                raise FileNotFoundError(f"Your genome build '{genome_build}' doesn't have an assembly in biocommons "
+                                        f"bioutils. You need this for Biocommons HGVS conversion but if you are using "
+                                        f"this for another purpose, you can try adding --no-contig-conversion") from e
+        self.name_ac_map = name_ac_map
 
 
     @abc.abstractmethod
