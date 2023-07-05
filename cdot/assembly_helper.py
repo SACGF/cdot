@@ -39,10 +39,14 @@ T2T_CHM13v2 = {
 def get_ac_name_map(assembly_name):
     if assembly_name == "CHM13v2.0":
         return T2T_CHM13v2
+    elif assembly_name == "GRCh37":
+        assembly_name = 'GRCh37.p13'  # Original build didn't have MT
     return make_ac_name_map(assembly_name)
 
 
 def get_name_ac_map(assembly_name):
     if assembly_name == "CHM13v2.0":
         return {name: ac for ac, name in T2T_CHM13v2.items()}
+    elif assembly_name == "GRCh37":
+        assembly_name = 'GRCh37.p13'  # Original build didn't have MT
     return make_name_ac_map(assembly_name)
