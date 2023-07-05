@@ -8,6 +8,7 @@ from collections import defaultdict
 from lazy import lazy
 from hgvs.dataproviders.interface import Interface
 from hgvs.dataproviders.seqfetcher import SeqFetcher
+from hgvs.exceptions import HGVSDataNotAvailableError
 from intervaltree import IntervalTree
 from typing import List
 
@@ -181,15 +182,19 @@ class AbstractJSONDataProvider(Interface):
     def get_tx_info(self, tx_ac, alt_ac, alt_aln_method):
         self._check_alt_aln_method(alt_aln_method)
 
-        transcript = self._get_transcript(tx_ac)
-        if not transcript:
-            return None
+        if transcript := self._get_transcript(tx_ac):
+            for build_data in transcript["genome_builds"].values():
+                print(f"BUILD DATA: {build_data}")
+                if alt_ac == build_data["contig"]:
+                    tx_info = self._get_transcript_info(transcript)
+                    tx_info["tx_ac"] = tx_ac
+                    tx_info["alt_ac"] = alt_ac
+                    tx_info["alt_aln_method"] = self.NCBI_ALN_METHOD
+                    return tx_info
 
-        tx_info = self._get_transcript_info(transcript)
-        tx_info["tx_ac"] = tx_ac
-        tx_info["alt_ac"] = alt_ac
-        tx_info["alt_aln_method"] = self.NCBI_ALN_METHOD
-        return tx_info
+        raise HGVSDataNotAvailableError(
+            f"No tx_info for (tx_ac={tx_ac},alt_ac={alt_ac},alt_aln_method={alt_aln_method})"
+        )
 
     def get_tx_mapping_options(self, tx_ac):
         mapping_options = []

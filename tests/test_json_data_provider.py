@@ -5,6 +5,7 @@ from os.path import abspath
 
 import hgvs
 from hgvs.assemblymapper import AssemblyMapper
+from hgvs.exceptions import HGVSDataNotAvailableError
 
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
 
@@ -85,6 +86,17 @@ class TestJSONDataProvider(unittest.TestCase):
             "added": None,
         }
         self.assertEqual(gene_info, expected)
+
+    def test_get_tx_info(self):
+        # We only have data for GRCh37 but none for 38
+
+        # Make sure 37 works
+        tx_info = self.json_data_provider.get_tx_info("NM_001637.3", "NC_000007.13", "splign")
+        print(tx_info)
+
+        # Make sure 38 fails
+        with self.assertRaises(HGVSDataNotAvailableError):
+            tx_info = self.json_data_provider.get_tx_info("NM_001637.3", "NC_000007.14", "splign")
 
 
 if __name__ == '__main__':
