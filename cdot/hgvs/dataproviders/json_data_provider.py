@@ -184,7 +184,6 @@ class AbstractJSONDataProvider(Interface):
 
         if transcript := self._get_transcript(tx_ac):
             for build_data in transcript["genome_builds"].values():
-                print(f"BUILD DATA: {build_data}")
                 if alt_ac == build_data["contig"]:
                     tx_info = self._get_transcript_info(transcript)
                     tx_info["tx_ac"] = tx_ac
