@@ -1,3 +1,14 @@
+## [0.2.18] - 2023-07-04
+
+### Added
+
+- #47 - Implement HGVS DataProvider get_alignments_for_region
+
+### Changed
+
+- #45 - FastaSeqFetcher - handle deletions correctly (had swapped HGVS cigar projections around)
+- #46 - HGVS DataProvider get_tx_info should properly handle alt_ac and alt_aln_method
+
 ## [0.2.17] - 2023-05-08
 
 ### Added
@@ -158,7 +169,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.17...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.18...HEAD
+[0.2.18]: https://github.com/SACGF/cdot/compare/v0.2.17...v0.2.18
 [0.2.17]: https://github.com/SACGF/cdot/compare/v0.2.16...v0.2.17
 [0.2.16]: https://github.com/SACGF/cdot/compare/v0.2.15...v0.2.16
 [0.2.15]: https://github.com/SACGF/cdot/compare/v0.2.14...v0.2.15
