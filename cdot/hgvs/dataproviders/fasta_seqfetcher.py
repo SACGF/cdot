@@ -96,20 +96,21 @@ class FastaSeqFetcher:
 
         exons = self.hdp.get_tx_exons(ac, alt_ac, alt_aln_method)
         exon_sequences = []
+        expected_transcript_length = 0
         for exon in sorted(exons, key=lambda ex: ex["ord"]):
             exon_seq = fasta_file.fetch(alt_ac, exon["alt_start_i"], exon["alt_end_i"])
             exon_seq = exon_seq.upper()
 
-            # Cigar is mapping from transcript to genome.
-            # We are going from genome to transcript so operations are reversed
             exon_seq_list = []
             start = 0
+            # We are using HGVS cigar
             for (length_str, op) in self.cigar_pattern.findall(exon["cigar"]):
                 length = int(length_str)
-                if op == 'D':
-                    exon_seq_list.append("N" * length)
-                elif op == 'I':
+                if op == 'D':  # Genome has bases that transcript doesn't
                     pass  # leave out
+                elif op == 'I':  # Transcript has bases that genome doesn't
+                    exon_seq_list.append("N" * length)
+                    pass
                 else:  # match/mismatch
                     exon_seq_list.append(exon_seq[start:start+length])
                     start += length
@@ -118,4 +119,10 @@ class FastaSeqFetcher:
             if exon["alt_strand"] == -1:
                 exon_seq = reverse_complement(exon_seq)
             exon_sequences.append(exon_seq)
-        return "".join(exon_sequences)
+            expected_transcript_length += exon["tx_end_i"] - exon["tx_start_i"]
+
+        transcript_sequence = "".join(exon_sequences)
+        if len(transcript_sequence) != expected_transcript_length:
+            raise ValueError(f"Error creating {ac} sequence from genome fasta ({alt_ac}): "
+                             f"{expected_transcript_length=} != {len(transcript_sequence)=}")
+        return transcript_sequence
