@@ -14,6 +14,7 @@ from typing import List
 from cdot.assembly_helper import get_ac_name_map
 
 class AbstractJSONDataProvider(Interface):
+    # All cdot data is 'splign', it's the method used in NCBI/Ensembl GTFs, and we also only pull out 'splign' from UTA
     NCBI_ALN_METHOD = "splign"
     required_version = "1.1"
 
@@ -109,6 +110,7 @@ class AbstractJSONDataProvider(Interface):
         return "".join(cigar_ops)
 
     def get_tx_exons(self, tx_ac, alt_ac, alt_aln_method):
+        self._check_alt_aln_method(alt_aln_method)
         transcript = self._get_transcript(tx_ac)
         if not transcript:
             return None
@@ -177,6 +179,8 @@ class AbstractJSONDataProvider(Interface):
         }
 
     def get_tx_info(self, tx_ac, alt_ac, alt_aln_method):
+        self._check_alt_aln_method(alt_aln_method)
+
         transcript = self._get_transcript(tx_ac)
         if not transcript:
             return None
@@ -184,7 +188,7 @@ class AbstractJSONDataProvider(Interface):
         tx_info = self._get_transcript_info(transcript)
         tx_info["tx_ac"] = tx_ac
         tx_info["alt_ac"] = alt_ac
-        tx_info["alt_aln_method"] = alt_aln_method
+        tx_info["alt_aln_method"] = self.NCBI_ALN_METHOD
         return tx_info
 
     def get_tx_mapping_options(self, tx_ac):
@@ -232,6 +236,25 @@ class AbstractJSONDataProvider(Interface):
             This is not used by the HGVS library """
         raise NotImplementedError()
 
+    def get_alignments_for_region(self, alt_ac, start_i, end_i, alt_aln_method=None):
+        """ Prefer to use get_tx_for_region as this may be removed/deprecated
+            This is never called externally, only used to implement get_tx_for_region in UTA data provider. """
+        if alt_aln_method is None:
+            alt_aln_method = self.NCBI_ALN_METHOD
+        return self.get_tx_for_region(alt_ac, alt_aln_method, start_i, end_i)
+
+    def _check_alt_aln_method(self, alt_aln_method):
+        if alt_aln_method != self.NCBI_ALN_METHOD:
+            raise HGVSDataNotAvailableError(f"cdot only supports alt_aln_method={self.NCBI_ALN_METHOD}")
+
+    @abc.abstractmethod
+    def get_tx_for_gene(self, gene):
+        pass
+
+    @abc.abstractmethod
+    def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
+        pass
+
 
 class LocalDataProvider(AbstractJSONDataProvider):
     """ For JSON and Redis providers (implemented in cdot_rest)
@@ -270,23 +293,25 @@ class LocalDataProvider(AbstractJSONDataProvider):
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
         """ return transcripts that overlap given region """
+
+        self._check_alt_aln_method(alt_aln_method)
+
         tx_list = []
-        if alt_aln_method == self.NCBI_ALN_METHOD:
-            contig_iv_tree = self._get_contig_interval_tree(alt_ac)
-            for interval in contig_iv_tree[start_i:end_i+1]:
-                transcript_id = interval.data
-                transcript_data = self._get_transcript(transcript_id)
-                build_data = self._get_transcript_coordinates_for_contig(transcript_data, alt_ac)
-                contig, tx_start, tx_end, strand = self._get_contig_start_end_strand(build_data)
-                if contig == alt_ac:
-                    tx_list.append({
-                        "alt_ac": alt_ac,
-                        "alt_aln_method": self.NCBI_ALN_METHOD,
-                        "alt_strand": strand,
-                        "start_i": tx_start,
-                        "end_i": tx_end,
-                        "tx_ac": transcript_id,
-                    })
+        contig_iv_tree = self._get_contig_interval_tree(alt_ac)
+        for interval in contig_iv_tree[start_i:end_i+1]:
+            transcript_id = interval.data
+            transcript_data = self._get_transcript(transcript_id)
+            build_data = self._get_transcript_coordinates_for_contig(transcript_data, alt_ac)
+            contig, tx_start, tx_end, strand = self._get_contig_start_end_strand(build_data)
+            if contig == alt_ac:
+                tx_list.append({
+                    "alt_ac": alt_ac,
+                    "alt_aln_method": self.NCBI_ALN_METHOD,
+                    "alt_strand": strand,
+                    "start_i": tx_start,
+                    "end_i": tx_end,
+                    "tx_ac": transcript_id,
+                })
         return tx_list
 
     @staticmethod
@@ -417,6 +442,8 @@ class RESTDataProvider(AbstractJSONDataProvider):
         return tx_list
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
+        self._check_alt_aln_method(alt_aln_method)
+
         tx_list = []
         url = f"{self.url}/transcripts/region/{alt_ac}/{alt_aln_method}/{start_i}/{end_i}"
         if data := self._get_from_url(url):
