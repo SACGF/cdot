@@ -17,6 +17,7 @@ See [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
 
 2023-07-05:
 * BioCommons HGVS DataProvider fixes
+* Support for mouse transcripts (Mus Musculus GRCm38 and GRCm39)
 
 2023-04-03:
 * #41 - Support for T2T CHM13v2.0 [example code](https://github.com/SACGF/cdot/wiki/Biocommons-T2T-CHM13v2.0-example-code)

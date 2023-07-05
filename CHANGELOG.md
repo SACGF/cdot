@@ -2,6 +2,7 @@
 
 ### Added
 
+- #44 - Support for mouse transcripts (Mus Musculus GRCm38 and GRCm39)
 - #47 - Implement HGVS DataProvider get_alignments_for_region
 
 ### Changed
