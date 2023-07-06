@@ -89,7 +89,7 @@ def add_gene_info(gene_info_filename: str, genes):
 
 
 def _gff_arg_check(args):
-    if not args.no_contig_conversion:
+    if args.no_contig_conversion:
         logging.warning(f"Skipping chrom/contig conversion. File won't work with Biocommons HGVS")
 
 

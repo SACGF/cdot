@@ -6,6 +6,8 @@ if [[ -z ${EMAIL} ]]; then
 fi
 
 BASE_DIR=$(dirname ${BASH_SOURCE[0]})
+# Python scripts will import via generate_transcript_data
+export PYTHONPATH=${BASE_DIR}/..
 CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 REFSEQ_DIR=${REFSEQ_DIR:-H_sapiens}
 SPECIES=${SPECIES:-Homo_sapiens}
