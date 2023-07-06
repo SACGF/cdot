@@ -1,3 +1,10 @@
+## [0.2.19] - 2023-07-06
+
+### Changed
+
+- #49 - MT not converted to contigs correctly (GRCh37/Ensembl only) #49 
+- Removed accidental logging
+
 ## [0.2.18] - 2023-07-05
 
 ### Added
@@ -170,7 +177,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.18...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.19...HEAD
+[0.2.19]: https://github.com/SACGF/cdot/compare/v0.2.18...v0.2.19
 [0.2.18]: https://github.com/SACGF/cdot/compare/v0.2.17...v0.2.18
 [0.2.17]: https://github.com/SACGF/cdot/compare/v0.2.16...v0.2.17
 [0.2.16]: https://github.com/SACGF/cdot/compare/v0.2.15...v0.2.16
