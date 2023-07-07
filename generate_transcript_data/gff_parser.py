@@ -11,6 +11,7 @@ from cdot.assembly_helper import get_name_ac_map
 
 CONTIG = "contig"
 STRAND = "strand"
+EXCLUDE_BIOTYPES = {"transcript"}  # feature.type we won't put into biotype
 
 
 class GFFParser(abc.ABC):
@@ -65,14 +66,11 @@ class GFFParser(abc.ABC):
                 raise e
 
     def _finish(self):
-        self._process_coding_features()
+        self._finish_process_features()
 
         for gene_data in self.gene_data_by_accession.values():
             # TODO: Can turn this back on if we want - just removing for diff
             gene_data.pop("id", None)
-            #############
-            # Turn set into comma sep string
-            gene_data["biotype"] = ",".join(sorted(gene_data["biotype"]))
             gene_data["url"] = self.url
 
         # At the moment the transcript dict is flat - need to move it into "genome_builds" dict
@@ -105,11 +103,11 @@ class GFFParser(abc.ABC):
         if feature.type in {"gene", "pseudogene"}:
             gene_name = feature.attr.get("Name")
             description = feature.attr.get("description")
-            biotype = feature.attr.get("biotype")
         else:
             gene_name = feature.attr.get("gene_name")
-            biotype = feature.attr.get("gene_biotype")
 
+        # RefSeq GRCh38 has gene.gene_biotype
+        biotype = feature.attr.get("gene_biotype") or feature.attr.get("biotype")
         if biotype:
             biotype_set.add(biotype)
 
@@ -141,17 +139,6 @@ class GFFParser(abc.ABC):
         other_chroms.add(feature.iv.chrom)
         data["other_chroms"] = other_chroms
 
-    @staticmethod
-    def _get_biotype_from_transcript_accession(transcript_accession):
-        biotypes_by_transcript_id_start = {"NM_": "protein_coding", "NR_": "non_coding"}
-        for (start, biotype) in biotypes_by_transcript_id_start.items():
-            if transcript_accession.startswith(start):
-                return biotype
-
-        if "tRNA" in transcript_accession:
-            return "tRNA"
-        return None
-
     def _add_transcript_data(self, transcript_accession, transcript, feature):
         if feature.iv.chrom != transcript[CONTIG]:
             self._store_other_chrom(transcript, feature)
@@ -173,7 +160,7 @@ class GFFParser(abc.ABC):
             features_by_type["coding_starts"].append(feature.iv.start)
             features_by_type["coding_ends"].append(feature.iv.end)
 
-    def _process_coding_features(self):
+    def _finish_process_features(self):
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
             features_by_type = self.transcript_features_by_type.get(transcript_accession)
 
@@ -221,6 +208,16 @@ class GFFParser(abc.ABC):
             if not forward_strand:
                 exons_genomic_order.reverse()
             transcript_data["exons"] = exons_genomic_order
+
+            if "cds_start" in transcript_data:
+                biotype = "mRNA"
+            else:
+                biotype = "ncRNA"
+            transcript_data["biotype"].add(biotype)
+
+            if gene_accession := transcript_data.get("gene_version"):
+                gene_data = self.gene_data_by_accession[gene_accession]
+                gene_data["biotype"].update(transcript_data["biotype"])
 
     @staticmethod
     def _create_perfect_exons(raw_exon_stranded_order):
@@ -374,8 +371,6 @@ class GTFParser(GFFParser):
             if biotype is None:
                 # Ensembl GTFs store biotype info under gene_type or transcript_type
                 biotype = feature.attr.get("gene_type")
-                if biotype is None:
-                    biotype = self._get_biotype_from_transcript_accession(transcript_accession)
 
             if biotype:
                 gene_data["biotype"].add(biotype)
@@ -472,6 +467,9 @@ class GFF3Parser(GFFParser):
                         raise ValueError("Don't know how to handle feature type %s (not child of gene)" % feature.type)
                     gene_data = self.gene_data_by_accession[gene_accession]
                     self._handle_transcript(gene_data, transcript_accession, feature)
+                    transcript = self.transcript_data_by_accession[transcript_accession]
+                    if feature.type not in EXCLUDE_BIOTYPES:
+                        transcript["biotype"].add(feature.type)
 
     @staticmethod
     def _get_dbxref(feature):
@@ -487,9 +485,6 @@ class GFF3Parser(GFFParser):
         if transcript_accession not in self.transcript_data_by_accession:
             # print("_handle_transcript(%s, %s)" % (gene, feature))
             transcript_data = self._create_transcript(feature, transcript_accession, gene_data)
-            if biotype := self._get_biotype_from_transcript_accession(transcript_accession):
-                gene_data["biotype"].add(biotype)
-                transcript_data["biotype"].add(biotype)
 
             if feature.attr.get("partial"):
                 transcript_data["partial"] = 1
