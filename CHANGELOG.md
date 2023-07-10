@@ -1,3 +1,9 @@
+## [0.2.20] - 2023-07-10
+
+### Changed
+
+- #50 - Biotype was missing in Ensembl transcripts 
+
 ## [0.2.19] - 2023-07-06
 
 ### Changed
@@ -177,7 +183,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.19...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.20...HEAD
+[0.2.20]: https://github.com/SACGF/cdot/compare/v0.2.19...v0.2.20
 [0.2.19]: https://github.com/SACGF/cdot/compare/v0.2.18...v0.2.19
 [0.2.18]: https://github.com/SACGF/cdot/compare/v0.2.17...v0.2.18
 [0.2.17]: https://github.com/SACGF/cdot/compare/v0.2.16...v0.2.17
