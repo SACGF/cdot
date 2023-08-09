@@ -123,8 +123,9 @@ class AbstractJSONDataProvider(Interface):
         alt_strand = 1 if assembly_coordinates["strand"] == "+" else -1
 
         for (alt_start_i, alt_end_i, exon_id, cds_start_i, cds_end_i, gap) in exons:
+            # cdot tx_start_i/tx_end_i is 1 based while UTA is 0 based
             tx_start_i = cds_start_i - 1
-            tx_end_i = cds_end_i
+            tx_end_i = cds_end_i - 1
             if gap is not None:
                 cigar = self._convert_gap_to_cigar(gap)
             else:

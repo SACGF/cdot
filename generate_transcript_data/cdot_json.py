@@ -202,7 +202,7 @@ def _convert_uta_exons(exon_starts, exon_ends, cigars):
     cigars = cigars.split(",")
     exons = []
     ex_ord = 0
-    ex_transcript_start = 1  # transcript coords are 1 based
+    ex_transcript_start = 1  # UTA tx start/end are 0 based, cdot = 1 based
     for ex_start, ex_end, ex_cigar in zip(exon_starts, exon_ends, cigars):
         gap, exon_length = _cigar_to_gap_and_length(ex_cigar)
         ex_transcript_end = ex_transcript_start + exon_length - 1
@@ -242,8 +242,8 @@ def _cigar_to_gap_and_length(cigar):
     m = 0  # Merge adjacent matches
     for (length_str, cigar_code) in cigar_pattern.findall(cigar):
         length = int(length_str)
-        # Cigar code D = deletion in transcript (insertion in reference) so don't count that for exon length
-        if cigar_code != 'D':
+        # Cigar code I = deletion in transcript (insertion in reference) so don't count that for exon length
+        if cigar_code != 'I':
             exon_length += length
         op = OP_CONVERSION[cigar_code]
         if op == 'M':

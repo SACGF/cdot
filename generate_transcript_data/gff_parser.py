@@ -145,9 +145,9 @@ class GFFParser(abc.ABC):
             return
 
         if feature.type == "cDNA_match":
-            target = feature.attr.get("Target")
+            target = feature.attr.get("Target")  # Target=NM_001304717.2 1 1110 +
             t_cols = target.split()
-            cdna_start = int(t_cols[1])
+            cdna_start = int(t_cols[1])  # These are 1-based (as per above)
             cdna_end = int(t_cols[2])
             gap = feature.attr.get("Gap")
             feature_tuple = (feature.iv.start, feature.iv.end, cdna_start, cdna_end, gap)

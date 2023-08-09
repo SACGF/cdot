@@ -33,7 +33,7 @@ class UTAConversionTestCase(unittest.TestCase):
         self.assertEqual(gap, expected_gap)
 
     def test_cigar_deletion_exon_length(self):
-        cigar = '100=50D100='  # 100 match, 50 deletion, 100 match = 200 exon length
+        cigar = '100=50I100='  # 100 match, 50 insertion (in ref, del in transcript), 100 match = 200 exon length
 
         _, exon_length = _cigar_to_gap_and_length(cigar)
         self.assertEqual(exon_length, 200)
