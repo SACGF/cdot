@@ -20,18 +20,22 @@ class GFFParser(abc.ABC):
     FEATURE_IGNORE_LIST = {"biological_region", "chromosome", "region", "scaffold", "supercontig"}
 
     def __init__(self, filename, genome_build, url,
-                 discard_contigs_with_underscores=True, no_contig_conversion=False):
+                 discard_contigs_with_underscores=True, no_contig_conversion=False,
+                 skip_missing_parents=False):
         self.filename = filename
         self.genome_build = genome_build
         self.url = url
         self.discard_contigs_with_underscores = discard_contigs_with_underscores
+        self.skip_missing_parents = skip_missing_parents
 
         self.discarded_contigs = Counter()
+        self.skipped_features_no_parents = Counter()  # if skip_missing_parents
         self.gene_data_by_accession = {}
         self.transcript_data_by_accession = {}
         self.transcript_proteins = {}
         # Store features in separate dict as we don't need to write all as JSON
         self.transcript_features_by_type = defaultdict(lambda: defaultdict(list))
+
 
         name_ac_map = {}
         if not no_contig_conversion:
@@ -93,6 +97,9 @@ class GFFParser(abc.ABC):
 
         if self.discarded_contigs:
             print("Discarded contigs: %s" % self.discarded_contigs)
+
+        if self.skipped_features_no_parents:
+            print("Skipped features w/o parents: %s" % self.skipped_features_no_parents)
 
     @staticmethod
     def _create_gene(feature, gene_accession):
@@ -464,7 +471,11 @@ class GFF3Parser(GFFParser):
                     assert parent_id is not None
                     gene_accession = self.gene_accession_by_feature_id.get(parent_id)
                     if not gene_accession:
-                        raise ValueError("Don't know how to handle feature type %s (not child of gene)" % feature.type)
+                        if self.skip_missing_parents:
+                            self.skipped_features_no_parents[feature.type] += 1
+                            return
+                        msg = f"Don't know how to handle feature type {feature.type} (couldn't find parent gene {parent_id})"
+                        raise ValueError(msg)
                     gene_data = self.gene_data_by_accession[gene_accession]
                     self._handle_transcript(gene_data, transcript_accession, feature)
                     transcript = self.transcript_data_by_accession[transcript_accession]

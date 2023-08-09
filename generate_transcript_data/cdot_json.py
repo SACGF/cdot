@@ -33,6 +33,7 @@ def _setup_arg_parser():
                        help="Used for genome builds with no bioutils assembly available. "
                             "Warning: Won't work with biocommons HGVS if set")
         p.add_argument("--keep-contigs-with-underscores", action='store_true', default=False)
+        p.add_argument("--skip-missing-parents", action='store_true', default=False)
         p.add_argument('--url', required=True, help='URL (source of GFF) to store in "reference_gtf.url"')
         p.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
         p.add_argument('--gene-info-json', required=True, help="'JSON of gene info, produced by cdot_gene_info.py")
@@ -97,7 +98,8 @@ def gtf_to_json(args):
     _gff_arg_check(args)
     parser = GTFParser(args.gtf_filename, args.genome_build, args.url,
                        discard_contigs_with_underscores=not args.keep_contigs_with_underscores,
-                       no_contig_conversion=args.no_contig_conversion)
+                       no_contig_conversion=args.no_contig_conversion,
+                       skip_missing_parents=args.skip_missing_parents)
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     write_cdot_json(args.output, genes, transcripts, [args.genome_build],
@@ -108,7 +110,8 @@ def gff3_to_json(args):
     _gff_arg_check(args)
     parser = GFF3Parser(args.gff3_filename, args.genome_build, args.url,
                         discard_contigs_with_underscores=not args.keep_contigs_with_underscores,
-                        no_contig_conversion=args.no_contig_conversion)
+                        no_contig_conversion=args.no_contig_conversion,
+                        skip_missing_parents=args.skip_missing_parents)
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     write_cdot_json(args.output, genes, transcripts, [args.genome_build],
