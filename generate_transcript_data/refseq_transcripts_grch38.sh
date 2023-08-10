@@ -36,7 +36,7 @@ if [[ ! -e ${annotation_filename} ]]; then
   wget ${url} --output-document=${annotation_filename}
 fi
 
-url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_03/RefSeq_historical_alignments/GCF_000001405.40-RS_2023_03_genomic.gff.gz
+url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_03/RefSeq_historical_alignments/GCF_000001405.40-RS_2023_03_knownrefseq_alns.gff.gz
 alignments_filename=$(basename $url)
 if [[ ! -e ${alignments_filename} ]]; then
   wget ${url} --output-document=${alignments_filename}

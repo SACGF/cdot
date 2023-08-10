@@ -462,7 +462,14 @@ class GFF3Parser(GFFParser):
                             self.transcript_proteins[transcript_accession] = genbank
 
                 if transcript_accession:
-                    transcript = self.transcript_data_by_accession[transcript_accession]
+                    transcript = self.transcript_data_by_accession.get(transcript_accession)
+                    if not transcript:
+                        msg = f"Couldn't find transcript data for accession '{transcript_accession}'"
+                        if self.skip_missing_parents:
+                            logging.warning(msg)
+                            self.skipped_features_no_parents[feature.type] += 1
+                            return
+                        raise ValueError(msg)
                     self._handle_transcript_data(transcript_accession, transcript, feature)
             else:
                 # There are so many different transcript ontology terms just taking everything that
