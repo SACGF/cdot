@@ -1,3 +1,15 @@
+## [0.2.21] - 2023-08-10
+
+### Added
+
+- #51 - Historical GRCh38 refseq (40k new transcripts)
+
+### Changed
+
+- #45 - FastaSeqFetcher - fix alignment gaps properly
+- #52 - Added transcripts from Ensembl 110 GRCh38 release
+- #53 - UTA to cdot transcript start/end conversion issue  
+
 ## [0.2.20] - 2023-07-10
 
 ### Changed
@@ -183,7 +195,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.20...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.21...HEAD
+[0.2.21]: https://github.com/SACGF/cdot/compare/v0.2.10...v0.2.21
 [0.2.20]: https://github.com/SACGF/cdot/compare/v0.2.19...v0.2.20
 [0.2.19]: https://github.com/SACGF/cdot/compare/v0.2.18...v0.2.19
 [0.2.18]: https://github.com/SACGF/cdot/compare/v0.2.17...v0.2.18
