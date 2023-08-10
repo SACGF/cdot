@@ -106,14 +106,13 @@ class FastaSeqFetcher:
             # We are using HGVS cigar
             for (length_str, op) in self.cigar_pattern.findall(exon["cigar"]):
                 length = int(length_str)
-                if op == 'D':  # Genome has bases that transcript doesn't
-                    pass  # leave out
-                elif op == 'I':  # Transcript has bases that genome doesn't
+                if op == 'D':    # Deletion in reference vs transcript
                     exon_seq_list.append("N" * length)
-                    pass
+                elif op == 'I':  # Insertion in reference vs transcript
+                    pass  # leave out
                 else:  # match/mismatch
                     exon_seq_list.append(exon_seq[start:start+length])
-                    start += length
+                start += length
 
             exon_seq = "".join(exon_seq_list)
             if exon["alt_strand"] == -1:
