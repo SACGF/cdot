@@ -97,7 +97,14 @@ class FastaSeqFetcher:
         exons = self.hdp.get_tx_exons(ac, alt_ac, alt_aln_method)
         exon_sequences = []
         expected_transcript_length = 0
-        for exon in sorted(exons, key=lambda ex: ex["ord"]):
+        sorted_exons = list(sorted(exons, key=lambda ex: ex["ord"]))
+        first_exon = sorted_exons[0]
+        transcript_start_offset = first_exon["tx_start_i"]  # HGVS/UTA starts w/0
+        if transcript_start_offset:
+            exon_sequences.append("N" * transcript_start_offset)
+            expected_transcript_length += transcript_start_offset
+
+        for exon in sorted_exons:
             exon_seq = fasta_file.fetch(alt_ac, exon["alt_start_i"], exon["alt_end_i"])
             exon_seq = exon_seq.upper()
 
@@ -108,11 +115,13 @@ class FastaSeqFetcher:
                 length = int(length_str)
                 if op == 'D':    # Deletion in reference vs transcript
                     exon_seq_list.append("N" * length)
+                    # Don't increment start (as we didn't move along genomic exon)
                 elif op == 'I':  # Insertion in reference vs transcript
-                    pass  # leave out
+                    # Leave out of exon_seq
+                    start += length  # We do increment through genomic sequence though
                 else:  # match/mismatch
                     exon_seq_list.append(exon_seq[start:start+length])
-                start += length
+                    start += length
 
             exon_seq = "".join(exon_seq_list)
             if exon["alt_strand"] == -1:
