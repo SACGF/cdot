@@ -1,9 +1,5 @@
 ## [unreleased] - 2023-08-10
 
-### Added
-
-- #51 - Historical GRCh38 refseq (40k new transcripts)
-
 ### Changed
 
 - #45 - FastaSeqFetcher - fix alignment gaps properly
