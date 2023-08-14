@@ -29,31 +29,35 @@ if [[ ! -z ${UTA_TRANSCRIPTS} ]]; then
   merge_args+=(${uta_cdot_file})
 fi
 
-# Historical - these are stored in separate files for annotation/alignments
-url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_03/RefSeq_historical_alignments/GCF_000001405.40-RS_2023_03_genomic.gff.gz
-annotation_filename=$(basename $url)
-if [[ ! -e ${annotation_filename} ]]; then
-  wget ${url} --output-document=${annotation_filename}
-fi
+if [[ -z ${GRCH38_REFSEQ_HISTORICAL} ]]; then
+  echo "Not including RefSeq GRCh38 historical transcripts. Set env variable GRCH38_REFSEQ_HISTORICAL=True to do so"
+else
+  echo "Adding RefSeq GRCh38 historical transcripts"
+  # Historical - these are stored in separate files for annotation/alignments
+  url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_03/RefSeq_historical_alignments/GCF_000001405.40-RS_2023_03_genomic.gff.gz
+  annotation_filename=$(basename $url)
+  if [[ ! -e ${annotation_filename} ]]; then
+    wget ${url} --output-document=${annotation_filename}
+  fi
 
-url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_03/RefSeq_historical_alignments/GCF_000001405.40-RS_2023_03_knownrefseq_alns.gff.gz
-alignments_filename=$(basename $url)
-if [[ ! -e ${alignments_filename} ]]; then
-  wget ${url} --output-document=${alignments_filename}
-fi
+  url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_03/RefSeq_historical_alignments/GCF_000001405.40-RS_2023_03_knownrefseq_alns.gff.gz
+  alignments_filename=$(basename $url)
+  if [[ ! -e ${alignments_filename} ]]; then
+    wget ${url} --output-document=${alignments_filename}
+  fi
 
-filename=GCF_000001405.40-RS_2023_03_combined_annotation_alignments.gff.gz
-cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
+  filename=GCF_000001405.40-RS_2023_03_combined_annotation_alignments.gff.gz
+  cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
 
-if [[ ! -e ${filename} ]]; then
-  echo "Combining historical annotations and alignments..."
-  cat ${annotation_filename} ${alignments_filename} > ${filename}
+  if [[ ! -e ${filename} ]]; then
+    echo "Combining historical annotations and alignments..."
+    cat ${annotation_filename} ${alignments_filename} > ${filename}
+  fi
+  if [[ ! -e ${cdot_file} ]]; then
+    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}" --skip-missing-parents
+  fi
+  merge_args+=(${cdot_file})
 fi
-if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}" --skip-missing-parents
-fi
-merge_args+=(${cdot_file})
-
 
 filename=ref_GRCh38_top_level.gff3.gz
 url=http://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.106/GFF/${filename}
