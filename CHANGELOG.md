@@ -1,4 +1,4 @@
-## [unreleased] - 2023-08-10
+## [unreleased] - 2023-08-14
 
 ### Changed
 
@@ -191,7 +191,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.20...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.21...HEAD
+[0.2.21]: https://github.com/SACGF/cdot/compare/v0.2.20...v0.2.21
 [0.2.20]: https://github.com/SACGF/cdot/compare/v0.2.19...v0.2.20
 [0.2.19]: https://github.com/SACGF/cdot/compare/v0.2.18...v0.2.19
 [0.2.18]: https://github.com/SACGF/cdot/compare/v0.2.17...v0.2.18
