@@ -1,4 +1,10 @@
-## [unreleased] - 2023-08-14
+## [unreleased]
+
+### Changed
+
+- #57 - Correctly handle retrieving genomic position and dealing w/indels in GFF (thanks ltnetcase for reporting)
+
+## [0.2.21] - 2023-08-14
 
 ### Changed
 
