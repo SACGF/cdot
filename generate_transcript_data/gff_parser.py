@@ -198,18 +198,23 @@ class GFFParser(abc.ABC):
                 transcript_data["cds_start"] = cds_min
                 transcript_data["cds_end"] = cds_max
 
+                (coding_left, coding_right) = ("start_codon", "stop_codon")
+                if not forward_strand:  # Switch
+                    (coding_left, coding_right) = (coding_right, coding_left)
+
                 try:
-                    (coding_left, coding_right) = ("start_codon", "stop_codon")
-                    if not forward_strand:  # Switch
-                        (coding_left, coding_right) = (coding_right, coding_left)
                     transcript_data[coding_left] = GFFParser._get_transcript_position(forward_strand,
                                                                                       exons_stranded_order,
                                                                                       cds_min)
+                except ValueError as e:
+                    logging.warning("Couldn't set %s transcript position from %s: %s", coding_left, cds_min, e)
+
+                try:
                     transcript_data[coding_right] = GFFParser._get_transcript_position(forward_strand,
                                                                                        exons_stranded_order,
                                                                                        cds_max)
-                except Exception as e:
-                    logging.warning("Couldn't set coding start/end transcript positions: %s", e)
+                except ValueError as e:
+                    logging.warning("Couldn't set %s transcript positions from %s: %s", coding_right, cds_max, e)
 
             exons_genomic_order = exons_stranded_order
             if not forward_strand:
@@ -274,9 +279,6 @@ class GFFParser(abc.ABC):
             if code == "M":
                 cdna_match_index += length
             elif code == "I":
-                if validate and position_1_based < cdna_match_index + length:
-                    raise ValueError(
-                        "Coordinate (%d) inside insertion (%s) - no mapping possible!" % (position_1_based, gap_op))
                 offset += length
             elif code == "D":
                 if validate and position < cdna_match_index + length:
