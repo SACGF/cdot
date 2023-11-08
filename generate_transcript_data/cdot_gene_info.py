@@ -60,7 +60,7 @@ def main():
     start_date = datetime.now().isoformat()
 
     # 10k limit of return data from NCBI
-    NCBI_BATCH_SIZE = 2000
+    NCBI_BATCH_SIZE = 10000
 
     gene_info = {}
     with gzip.open(args.gene_info, "rt") as f:
