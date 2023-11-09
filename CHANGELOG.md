@@ -3,6 +3,7 @@
 ### Changed
 
 - #57 - Correctly handle retrieving genomic position and dealing w/indels in GFF (thanks ltnetcase for reporting)
+- #60 - Fix for missing protein IDs due to Genbank / GenBank (thanks holtgrewe)
 
 ## [0.2.21] - 2023-08-14
 
