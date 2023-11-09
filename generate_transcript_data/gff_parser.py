@@ -460,7 +460,7 @@ class GFF3Parser(GFFParser):
 
                     if feature.type == "CDS":
                         dbxref = self._get_dbxref(feature)
-                        if genbank := dbxref.get("Genbank"):
+                        if genbank := (dbxref.get("Genbank") or dbxref.get("GenBank")):
                             self.transcript_proteins[transcript_accession] = genbank
 
                 if transcript_accession:

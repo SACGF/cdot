@@ -10,7 +10,10 @@ class Test(unittest.TestCase):
     test_data_dir = os.path.join(this_file_dir, "test_data")
     ENSEMBL_104_GTF_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.104.gtf")
     ENSEMBL_108_GFF3_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.108.gff3")
-    REFSEQ_GFF3_FILENAME = os.path.join(test_data_dir, "refseq_test.GRCh38.p13_genomic.109.20210514.gff")
+    # Older RefSeq, before Genbank => GenBank changed
+    REFSEQ_GFF3_FILENAME_2021 = os.path.join(test_data_dir, "refseq_test.GRCh38.p13_genomic.109.20210514.gff")
+    # Newer RefSeq, before Genbank => GenBank changed
+    REFSEQ_GFF3_FILENAME_2023 = os.path.join(test_data_dir, "refseq_test.GRCh38.p14_genomic.RS_2023_03.gff")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
     FAKE_URL = "http://fake.url"
 
@@ -44,9 +47,19 @@ class Test(unittest.TestCase):
         protein = transcript.get("protein")
         self.assertEqual(protein, "ENSP00000350283.3")
 
-    def test_refseq_gff3(self):
+    def test_refseq_gff3_2021(self):
         genome_build = "GRCh38"
-        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME, genome_build, self.FAKE_URL)
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_2021, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        self._test_exon_length(transcripts, genome_build, "NM_007294.4", 7088)
+
+        transcript = transcripts["NM_015120.4"]
+        protein = transcript.get("protein")
+        self.assertEqual(protein, "NP_055935.4")
+
+    def test_refseq_gff3_2023(self):
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_2023, genome_build, self.FAKE_URL)
         _, transcripts = parser.get_genes_and_transcripts()
         self._test_exon_length(transcripts, genome_build, "NM_007294.4", 7088)
 
@@ -64,7 +77,16 @@ class Test(unittest.TestCase):
         last_exon = exons[-1]
         self.assertGreater(last_exon[0], first_exon[0])
 
-        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME, genome_build, self.FAKE_URL)
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_2021, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        transcript = transcripts["NM_007294.4"]
+        self.assertEqual(transcript.get("hgnc"), "1100", f"{transcript} has HGNC:1100")
+        exons = transcript["genome_builds"][genome_build]["exons"]
+        first_exon = exons[0]
+        last_exon = exons[-1]
+        self.assertGreater(last_exon[0], first_exon[0])
+
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_2023, genome_build, self.FAKE_URL)
         _, transcripts = parser.get_genes_and_transcripts()
         transcript = transcripts["NM_007294.4"]
         self.assertEqual(transcript.get("hgnc"), "1100", f"{transcript} has HGNC:1100")
