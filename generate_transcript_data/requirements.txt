@@ -1,0 +1,8 @@
+biopython
+bioutils
+htseq
+ijson
+intervaltree
+lazy
+pyhgvs
+requests
