@@ -5,15 +5,12 @@ import gzip
 import json
 import os
 from argparse import ArgumentParser
-from csv import DictReader
 from datetime import datetime
 from typing import Iterable, Iterator, List, TypeVar
 
 import cdot
 from Bio import Entrez
-from cdot.json_encoders import SortedSetEncoder
-from io import BytesIO
-from lxml import etree
+from json_encoders import SortedSetEncoder
 
 T = TypeVar("T")
 
@@ -45,7 +42,7 @@ def _get_entrez_gene_summary(id_list):
     web_env = result["WebEnv"]
     query_key = result["QueryKey"]
     data = Entrez.esummary(db="gene", webenv=web_env, query_key=query_key)
-    document = Entrez.read(data, ignore_errors=True)  # Need recent BioPython
+    document = Entrez.read(data, ignore_errors=True, validate=False)  # Need recent BioPython
     return document["DocumentSummarySet"]["DocumentSummary"]
 
 

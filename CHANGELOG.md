@@ -1,9 +1,18 @@
 ## [unreleased]
 
+### Added
+
+- New GFFs: RefSeq RS_2023_10, Ensembl VEP110
+- #66 - We now store 'Note' field (thanks holtgrewe for suggestion)
+- Added requirements.txt for 'generate_transcript_data' sections
+- client / JSON data schema version compatability check
+
 ### Changed
 
 - #57 - Correctly handle retrieving genomic position and dealing w/indels in GFF (thanks ltnetcase for reporting)
 - #60 - Fix for missing protein IDs due to Genbank / GenBank (thanks holtgrewe)
+- #64 - Split code/data versions. json.gz are now labelled according to data schema version (thanks holtgrewe)
+- Renamed 'CHM13v2.0' to 'T2T-CHM13v2.0' so it could work with biocommons bioutils
 
 ## [0.2.21] - 2023-08-14
 

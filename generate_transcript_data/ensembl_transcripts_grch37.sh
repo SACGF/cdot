@@ -21,7 +21,7 @@ for release in 82 85 87; do
   # Switched to using GTFs as they contain protein version
   filename=Homo_sapiens.GRCh37.${release}.gff3.gz
   url=ftp://ftp.ensembl.org/pub/grch37/release-${release}/gff3/homo_sapiens/${filename}
-  cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
+  cdot_file=cdot-${CDOT_VERSION}.ensembl.$(basename $filename .gz).json.gz
   if [[ ! -e ${filename} ]]; then
     wget ${url}
   fi

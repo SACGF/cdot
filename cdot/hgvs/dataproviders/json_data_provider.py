@@ -12,7 +12,15 @@ from hgvs.exceptions import HGVSDataNotAvailableError
 from intervaltree import IntervalTree
 from typing import List
 
-from cdot.assembly_helper import get_ac_name_map
+from bioutils.assemblies import make_ac_name_map, make_name_ac_map
+
+from cdot import get_data_schema_int, __version__
+
+def get_ac_name_map(assembly_name):
+    if assembly_name == "GRCh37":
+        assembly_name = 'GRCh37.p13'  # Original build didn't have MT
+    return make_ac_name_map(assembly_name)
+
 
 class AbstractJSONDataProvider(Interface):
     # All cdot data is 'splign', it's the method used in NCBI/Ensembl GTFs, and we also only pull out 'splign' from UTA
@@ -41,6 +49,7 @@ class AbstractJSONDataProvider(Interface):
         self.assembly_by_contig = {}
         for assembly_name, contig_map in self.assembly_maps.items():
             self.assembly_by_contig.update({contig: assembly_name for contig in contig_map.keys()})
+
 
     @abc.abstractmethod
     def _get_transcript(self, tx_ac):
@@ -260,6 +269,12 @@ class AbstractJSONDataProvider(Interface):
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
         pass
 
+    def _validate_schema_compatability(self, json_schema_version: str):
+        """ Raise an error if versions out of sync """
+        cdot_client_data_schema_int = get_data_schema_int(__version__)
+        cdot_data_schema_version = get_data_schema_int(json_schema_version)
+        if cdot_client_data_schema_int < cdot_data_schema_version:
+            raise ValueError(f"This cdot client ({__version__}) cannot read {json_schema_version=} - please upgrade.")
 
 class LocalDataProvider(AbstractJSONDataProvider):
     """ For JSON and Redis providers (implemented in cdot_rest)
@@ -359,7 +374,9 @@ class JSONDataProvider(LocalDataProvider):
                 for g in genes.values():
                     if gene_symbol := g.get("gene_symbol"):
                         self.genes[gene_symbol] = g
-            self.cdot_data_version = tuple(int(v) for v in data["cdot_version"].split("."))
+            cdot_data_version_str = data["cdot_version"]
+            self._validate_schema_compatability(cdot_data_version_str)
+            self.cdot_data_version = tuple(int(v) for v in cdot_data_version_str.split("."))
 
         super().__init__(assemblies=assemblies, mode=mode, cache=cache, seqfetcher=seqfetcher)
 

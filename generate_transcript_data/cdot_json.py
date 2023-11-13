@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import gzip
+import ijson
 import json
 import logging
 import re
@@ -8,13 +9,12 @@ import sys
 from argparse import ArgumentParser
 from collections import defaultdict, Counter
 from csv import DictReader
+from pyhgvs import CDNACoord
 
-import cdot
-import ijson
 from cdot.pyhgvs.pyhgvs_transcript import PyHGVSTranscriptFactory
 from generate_transcript_data.gff_parser import GTFParser, GFF3Parser
-from cdot.json_encoders import SortedSetEncoder
-from pyhgvs import CDNACoord
+from generate_transcript_data.json_encoders import SortedSetEncoder
+from generate_transcript_data.json_schema_version import JSON_SCHEMA_VERSION
 
 
 def _setup_arg_parser():
@@ -270,7 +270,7 @@ def _cigar_to_gap_and_length(cigar):
 def write_cdot_json(filename, genes, transcript_versions, genome_builds, refseq_gene_summary_api_retrieval_date=None):
     print(f"Writing cdot file: '{filename}'")
     data = {
-        "cdot_version": cdot.__version__,
+        "cdot_version": JSON_SCHEMA_VERSION,
         "genome_builds": genome_builds,
         "transcripts": transcript_versions,
     }
@@ -382,7 +382,7 @@ def combine_builds(args):
     with gzip.open(args.output, 'wt') as outfile:
         data = {
             "transcripts": transcripts,
-            "cdot_version": cdot.__version__,
+            "cdot_version": JSON_SCHEMA_VERSION,
             "genome_builds": list(genome_build_file.keys()),
         }
         if genes:
@@ -399,7 +399,7 @@ def main():
     parser = _setup_arg_parser()
     args = parser.parse_args()
     if args.version:
-        print(cdot.__version__)
+        print(JSON_SCHEMA_VERSION)
         sys.exit(0)
 
     if args.subcommand is None:

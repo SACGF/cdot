@@ -4,6 +4,7 @@ set -e
 
 BASE_DIR=$(dirname ${BASH_SOURCE[0]})
 CDOT_VERSION=$(${BASE_DIR}/cdot_json.py --version)
+GENOME_BUILD=T2T-CHM13v2.0
 
 if [[ -z ${GENE_INFO_JSON} ]]; then
   echo "You need to set environment variable GENE_INFO_JSON, pointing to the filename produced by cdot_gene_info.py"
@@ -20,7 +21,7 @@ if [[ ! -e ${filename} ]]; then
   wget ${url} --output-document=${filename}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=CHM13v2.0 --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=${GENOME_BUILD} --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
 fi
 merge_args+=(${cdot_file})
 
@@ -33,12 +34,25 @@ if [[ ! -e ${filename} ]]; then
   wget ${url} --output-document=${filename}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=CHM13v2.0 --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=${GENOME_BUILD} --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
 fi
 merge_args+=(${cdot_file})
 
-merged_file="cdot-${CDOT_VERSION}.refseq.CHM13v2.0.json.gz"
+filename=GCF_009914755.1_T2T-CHM13v2.0_genomic.RS_2023_10.gff.gz
+url=https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_009914755.1-RS_2023_10/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz
+cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
+
+if [[ ! -e ${filename} ]]; then
+  wget ${url} --output-document=${filename}
+fi
+if [[ ! -e ${cdot_file} ]]; then
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=${GENOME_BUILD} --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
+fi
+merge_args+=(${cdot_file})
+
+
+merged_file="cdot-${CDOT_VERSION}.refseq.${GENOME_BUILD}.json.gz"
 if [[ ! -e ${merged_file} ]]; then
   echo "Creating ${merged_file}"
-  ${BASE_DIR}/cdot_json.py merge_historical ${merge_args[@]} --genome-build=CHM13v2.0 --output "${merged_file}"
+  ${BASE_DIR}/cdot_json.py merge_historical ${merge_args[@]} --genome-build=${GENOME_BUILD} --output "${merged_file}"
 fi

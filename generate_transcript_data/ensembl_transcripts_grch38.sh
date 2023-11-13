@@ -29,7 +29,7 @@ for release in 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 
   # Switched to using GTFs as they contain protein version
   filename=Homo_sapiens.GRCh38.${release}.gff3.gz
   url=ftp://ftp.ensembl.org/pub/release-${release}/gff3/homo_sapiens/${filename}
-  cdot_file=cdot-${CDOT_VERSION}.$(basename $filename .gz).json.gz
+  cdot_file=cdot-${CDOT_VERSION}.ensembl.$(basename $filename .gz).json.gz
 
   if [[ ! -e ${filename} ]]; then
     wget ${url}
