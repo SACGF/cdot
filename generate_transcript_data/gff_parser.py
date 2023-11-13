@@ -2,16 +2,21 @@ import abc
 import logging
 import operator
 import re
+from bioutils.assemblies import make_name_ac_map
 from collections import Counter, defaultdict
 from typing import Optional
 
 import HTSeq
 
-from cdot.assembly_helper import get_name_ac_map
-
 CONTIG = "contig"
 STRAND = "strand"
 EXCLUDE_BIOTYPES = {"transcript"}  # feature.type we won't put into biotype
+
+
+def get_name_ac_map(assembly_name):
+    if assembly_name == "GRCh37":
+        assembly_name = 'GRCh37.p13'  # Original build didn't have MT
+    return make_name_ac_map(assembly_name)
 
 
 class GFFParser(abc.ABC):
@@ -78,7 +83,7 @@ class GFFParser(abc.ABC):
             gene_data["url"] = self.url
 
         # At the moment the transcript dict is flat - need to move it into "genome_builds" dict
-        GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms", "tag"]
+        GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms", "tag", "note"]
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
             if protein := self.transcript_proteins.get(transcript_accession):
                 transcript_data["protein"] = protein
@@ -166,6 +171,10 @@ class GFFParser(abc.ABC):
         if feature.type in self.CODING_FEATURES:
             features_by_type["coding_starts"].append(feature.iv.start)
             features_by_type["coding_ends"].append(feature.iv.end)
+
+        if note := feature.attr.get("Note"):
+            transcript["note"] = note
+
 
     def _finish_process_features(self):
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
