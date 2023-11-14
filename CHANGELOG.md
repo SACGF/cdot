@@ -9,6 +9,7 @@
 
 ### Changed
 
+- #56 - Fix occasional UTA duplicated exons
 - #57 - Correctly handle retrieving genomic position and dealing w/indels in GFF (thanks ltnetcase for reporting)
 - #60 - Fix for missing protein IDs due to Genbank / GenBank (thanks holtgrewe)
 - #64 - Split code/data versions. json.gz are now labelled according to data schema version (thanks holtgrewe)
