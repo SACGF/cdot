@@ -2,7 +2,7 @@
 
 ### Added
 
-- New GFFs: RefSeq RS_2023_10, Ensembl VEP110
+- New GFFs: RefSeq RS_2023_10, Ensembl 110, 111
 - #66 - We now store 'Note' field (thanks holtgrewe for suggestion)
 - Added requirements.txt for 'generate_transcript_data' sections
 - client / JSON data schema version compatability check
