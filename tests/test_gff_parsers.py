@@ -10,6 +10,7 @@ class Test(unittest.TestCase):
     test_data_dir = os.path.join(this_file_dir, "test_data")
     ENSEMBL_104_GTF_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.104.gtf")
     ENSEMBL_108_GFF3_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.108.gff3")
+    ENSEMBL_110_GFF3_MT_TG_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.mt_tg.110.gff3")
     # Older RefSeq, before Genbank => GenBank changed
     REFSEQ_GFF3_FILENAME_2021 = os.path.join(test_data_dir, "refseq_test.GRCh38.p13_genomic.109.20210514.gff")
     # Newer RefSeq, before Genbank => GenBank changed
@@ -113,4 +114,11 @@ class Test(unittest.TestCase):
         contig = transcript["genome_builds"][genome_build].get("contig")
         self.assertEqual(contig, "NC_000001.11")
 
-
+    def test_ncrna_gene(self):
+        """ We were incorrectly missing ncRNA gene info @see https://github.com/SACGF/cdot/issues/72 """
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.ENSEMBL_110_GFF3_MT_TG_FILENAME, genome_build, self.FAKE_URL)
+        genes, transcripts = parser.get_genes_and_transcripts()
+        gene = genes["ENSG00000210156"]
+        gene_symbol = gene["gene_symbol"]
+        self.assertEqual(gene_symbol, "MT-TK2")

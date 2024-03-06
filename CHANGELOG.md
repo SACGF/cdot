@@ -14,6 +14,7 @@
 - #60 - Fix for missing protein IDs due to Genbank / GenBank (thanks holtgrewe)
 - #64 - Split code/data versions. json.gz are now labelled according to data schema version (thanks holtgrewe)
 - Renamed 'CHM13v2.0' to 'T2T-CHM13v2.0' so it could work with biocommons bioutils
+- #72 - Correctly handle ncRNA_gene genes (thanks holtgrewe for reporting)
 
 ## [0.2.21] - 2023-08-14
 

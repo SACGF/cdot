@@ -112,7 +112,7 @@ class GFFParser(abc.ABC):
         description = None
 
         # Non mandatory - Ensembl doesn't have some stuff on some RNAs
-        if feature.type in {"gene", "pseudogene"}:
+        if feature.type in {"gene", "pseudogene", "ncRNA_gene"}:
             gene_name = feature.attr.get("Name")
             description = feature.attr.get("description")
         else:
@@ -178,7 +178,7 @@ class GFFParser(abc.ABC):
 
     def _finish_process_features(self):
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
-            features_by_type = self.transcript_features_by_type.get(transcript_accession)
+            features_by_type = self.transcript_features_by_type.get(transcript_accession, {})
 
             # Store coding start/stop transcript positions
             # For RefSeq, we need to deal with alignment gaps, so easiest is to convert exons w/o gaps
@@ -194,7 +194,7 @@ class GFFParser(abc.ABC):
                 exons_stranded_order = self._create_cdna_exons(cdna_matches_stranded_order)
 
             else:
-                raw_exon_stranded_order = features_by_type["exon"]
+                raw_exon_stranded_order = features_by_type.get("exon", [])
                 raw_exon_stranded_order.sort(key=operator.itemgetter(0))
                 if not forward_strand:
                     raw_exon_stranded_order.reverse()
@@ -412,7 +412,7 @@ class GFF3Parser(GFFParser):
 
     """
 
-    GFF3_GENES = {"gene", "pseudogene"}
+    GFF3_GENES = {"gene", "pseudogene", "ncRNA_gene"}
     GFF3_TRANSCRIPTS_DATA = {"exon", "CDS", "cDNA_match", "five_prime_UTR", "three_prime_UTR"}
 
     def __init__(self, *args, **kwargs):
