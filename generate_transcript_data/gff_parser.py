@@ -112,7 +112,7 @@ class GFFParser(abc.ABC):
         description = None
 
         # Non mandatory - Ensembl doesn't have some stuff on some RNAs
-        if feature.type in {"gene", "pseudogene", "ncRNA_gene"}:
+        if feature.type in {"gene", "pseudogene", "ncRNA_gene", "mt_gene"}:
             gene_name = feature.attr.get("Name")
             description = feature.attr.get("description")
         else:
