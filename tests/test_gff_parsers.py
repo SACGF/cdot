@@ -121,4 +121,4 @@ class Test(unittest.TestCase):
         genes, transcripts = parser.get_genes_and_transcripts()
         gene = genes["ENSG00000210156"]
         gene_symbol = gene["gene_symbol"]
-        self.assertEqual(gene_symbol, "MT-TK2")
+        self.assertEqual(gene_symbol, "MT-TK")
