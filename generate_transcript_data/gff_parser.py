@@ -108,17 +108,10 @@ class GFFParser(abc.ABC):
 
     @staticmethod
     def _create_gene(feature, gene_accession):
+        gene_name = feature.attr.get("gene_name") or feature.attr.get("Name")
+        description = feature.attr.get("description")
+
         biotype_set = set()
-        description = None
-
-        # Non mandatory - Ensembl doesn't have some stuff on some RNAs
-        if feature.type in {"gene", "pseudogene", "ncRNA_gene", "mt_gene"}:
-            gene_name = feature.attr.get("Name")
-            description = feature.attr.get("description")
-        else:
-            gene_name = feature.attr.get("gene_name")
-
-        # RefSeq GRCh38 has gene.gene_biotype
         biotype = feature.attr.get("gene_biotype") or feature.attr.get("biotype")
         if biotype:
             biotype_set.add(biotype)
