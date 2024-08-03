@@ -37,14 +37,18 @@ def batch_iterator(iterable: Iterable[T], batch_size: int = 10) -> Iterator[List
 
 
 def _get_entrez_gene_summary(id_list):
-    request = Entrez.epost("gene", id=",".join(id_list))
-    result = Entrez.read(request)
-    web_env = result["WebEnv"]
-    query_key = result["QueryKey"]
-    data = Entrez.esummary(db="gene", webenv=web_env, query_key=query_key)
-    document = Entrez.read(data, ignore_errors=True, validate=False)  # Need recent BioPython
-    return document["DocumentSummarySet"]["DocumentSummary"]
-
+    for _ in range(3):
+        try:
+            request = Entrez.epost("gene", id=",".join(id_list))
+            result = Entrez.read(request)
+            web_env = result["WebEnv"]
+            query_key = result["QueryKey"]
+            data = Entrez.esummary(db="gene", webenv=web_env, query_key=query_key)
+            document = Entrez.read(data, ignore_errors=True, validate=False)  # Need recent BioPython
+            return document["DocumentSummarySet"]["DocumentSummary"]
+        except Exception as e:
+            logging.warning(e)
+            logging.warning("Trying again...")
 
 def iter_entrez_ids(reader):
     for gi in reader:
@@ -57,7 +61,8 @@ def main():
     start_date = datetime.now().isoformat()
 
     # 10k limit of return data from NCBI
-    NCBI_BATCH_SIZE = 10000
+    # NCBI_BATCH_SIZE = 10000
+    NCBI_BATCH_SIZE = 1000
 
     gene_info = {}
     with gzip.open(args.gene_info, "rt") as f:
