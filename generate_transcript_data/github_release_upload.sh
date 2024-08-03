@@ -24,7 +24,7 @@ gh release upload ${CDOT_RELEASE_NAME} \
   ${CDOT_DATA_DIR}/ensembl/GRCh37/cdot-${CDOT_DATA_VERSION}.ensembl.Homo_sapiens.GRCh37.87.gff3.json.gz \
   ${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.ensembl.grch38.json.gz \
   ${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.ensembl.Homo_sapiens.GRCh38.110.gff3.json.gz \
-  ${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.ensembl.Homo_sapiens.GRCh38.111.gff3.json.gz \
+  ${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.ensembl.Homo_sapiens.GRCh38.112.gff3.json.gz \
   ${CDOT_DATA_DIR}/ensembl/T2T-CHM13v2.0/cdot-${CDOT_DATA_VERSION}.ensembl.T2T-CHM13v2.0.json.gz \
   ${CDOT_DATA_DIR}/refseq/GRCh37/cdot-${CDOT_DATA_VERSION}.refseq.grch37.json.gz \
   ${CDOT_DATA_DIR}/refseq/GRCh37/cdot-${CDOT_DATA_VERSION}.GCF_000001405.25_GRCh37.p13_genomic.105.20201022.gff.json.gz \
