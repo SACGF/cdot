@@ -322,6 +322,11 @@ class GFFParser(abc.ABC):
             else:
                 # print(f"warning: Couldn't get out {version_key} from {feature.type=} {feature.attr=}")
                 transcript_accession = transcript_id
+        else:
+            # In RefSeq there are no transcript_ids for MT genes/mRNAs
+            # The proteins have "YP_" prefix (no corresp. NM_ transcript, so we will create fake ones
+            if feature.type == "mRNA":
+                transcript_accession = "fake-" + feature.attr.get("ID")
         return transcript_accession
 
     @staticmethod
