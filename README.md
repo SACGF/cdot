@@ -1,6 +1,7 @@
 # cdot
 
-[![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/)
+[![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/) [![DOI](https://zenodo.org/badge/448753921.svg)](https://zenodo.org/doi/10.5281/zenodo.13324621)
+
 
 cdot provides transcripts for the 2 most popular Python [HGVS](http://varnomen.hgvs.org/) libraries.
 
@@ -14,6 +15,11 @@ We currently support ~905k transcripts (vs ~141k in UTA v.20210129)
 ## New 
 
 See [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
+
+2024-08-15:
+
+* 'data_release' helper code
+* Many minor updates to data (see changelog)
 
 2023-07-05:
 * BioCommons HGVS DataProvider fixes
