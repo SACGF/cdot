@@ -1,4 +1,4 @@
-__version__ = "0.2.21"
+__version__ = "0.2.26"
 
 
 def get_data_schema_int(version: str) -> int:

@@ -1,8 +1,14 @@
-## [unreleased]
+## [0.2.26] 2024-08-15
+
+Bumped version to 0.2.26 to catch up with data release. Only new client functionality is #81 'data_release' helper functions
+
+All other changes in this release were for data (and contained in data_v0.2.26)
 
 ### Added
 
-- New GFFs: RefSeq RS_2023_10, Ensembl 110, 111
+- #81 New 'data_release' code eg 'get_latest_combo_file_urls' that looks on GitHub to find latest data
+- New GFFs: RefSeq RS_2023_10, Ensembl 111, 112
+- #79 - RefSeq MT transcripts
 - #66 - We now store 'Note' field (thanks holtgrewe for suggestion)
 - Added requirements.txt for 'generate_transcript_data' sections
 - client / JSON data schema version compatability check
@@ -15,6 +21,7 @@
 - #64 - Split code/data versions. json.gz are now labelled according to data schema version (thanks holtgrewe)
 - Renamed 'CHM13v2.0' to 'T2T-CHM13v2.0' so it could work with biocommons bioutils
 - #72 - Correctly handle ncRNA_gene genes (thanks holtgrewe for reporting)
+- #73 - HGNC ID was missing for some chrMT genes in Ensembl
 
 ## [0.2.21] - 2023-08-14
 
@@ -209,7 +216,8 @@
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.21...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.26...HEAD
+[0.2.26]: https://github.com/SACGF/cdot/compare/v0.2.21...v0.2.26
 [0.2.21]: https://github.com/SACGF/cdot/compare/v0.2.20...v0.2.21
 [0.2.20]: https://github.com/SACGF/cdot/compare/v0.2.19...v0.2.20
 [0.2.19]: https://github.com/SACGF/cdot/compare/v0.2.18...v0.2.19
