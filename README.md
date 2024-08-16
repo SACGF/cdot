@@ -10,7 +10,7 @@ It works by:
 * Converting RefSeq/Ensembl GTFs to JSON 
 * Providing loaders for the HGVS libraries, via JSON.gz files, or REST API via [cdot_rest](https://github.com/SACGF/cdot_rest))
 
-We currently support 1.5 million transcript/genome alignments (vs ~141k in UTA v.20210129)
+We currently support 1.58 million transcript/genome alignments (vs ~141k in UTA v.20210129)
 
 ## New 
 
