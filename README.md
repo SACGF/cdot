@@ -101,6 +101,6 @@ We think a standard for JSON gene/transcript information would be a great thing,
 
 ## Q. What does cdot stand for?
 
-cdot, pronounced "see dot" stands for Complete Dict of Transcripts
+cdot, pronounced "see dot" is a play on HGVS coding sequence ```:c.``` But if you want a backronym, it's "Complete Dict Of Transcripts"
 
 This was developed for the [Australian Genomics](https://www.australiangenomics.org.au/) [Shariant](https://shariant.org.au/) project, due to the need to load historical HGVS from lab archives.   
