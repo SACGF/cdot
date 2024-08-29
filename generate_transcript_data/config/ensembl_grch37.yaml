@@ -1,0 +1,12 @@
+genome_build: 'GRCh37'
+annotation_consortium: 'Ensembl'
+urls:
+# For Ensembl - we have to use GTFs as the GFF3s don't have protein versions in them
+# v81 (points to 75) and earlier at GTFs that don't have transcript versions - just skip them
+#82 is first GFF3 for GRCh37
+#83 has no data
+#84 is 82 again
+#86 is 85 again
+  - "http://ftp.ensembl.org/pub/grch37/release-82/gtf/homo_sapiens/Homo_sapiens.GRCh37.82.gtf.gz"
+  - "http://ftp.ensembl.org/pub/grch37/release-85/gtf/homo_sapiens/Homo_sapiens.GRCh37.85.gtf.gz"
+  - "http://ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz"
