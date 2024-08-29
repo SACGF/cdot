@@ -40,7 +40,7 @@ class GFFParser(abc.ABC):
         self.transcript_proteins = {}
         # Store features in separate dict as we don't need to write all as JSON
         self.transcript_features_by_type = defaultdict(lambda: defaultdict(list))
-
+        self._warned_about_htseq_tag_attributes = False
 
         name_ac_map = {}
         if not no_contig_conversion:
@@ -345,6 +345,40 @@ class GFFParser(abc.ABC):
                 gene_accession = gene_id
         return gene_accession
 
+    def _handle_protein_version(self, transcript_accession, feature):
+        # RefSeq GFF3: CDS protein_id = NP_001659.1
+        # RefSeq GTF:  CDS protein_id = NP_001659.1
+        # Ensembl GTF: CDS protein_id = ENSP00000477624 protein_version = 1
+        # Ensembl GTF: CDS protein_id = ENSP00000477624  <----- can't use this one as no version
+        if feature.type == "CDS":
+            if protein_accession := feature.attr.get("protein_id"):
+                if protein_version := feature.attr.get("protein_version"):
+                    protein_accession = f"{protein_accession}.{protein_version}"
+                if not "." in protein_accession:
+                    raise ValueError(f"Protein '{protein_accession}' missing version")
+                self.transcript_proteins[transcript_accession] = protein_accession
+
+    def _add_tags_to_transcript_data(self, transcript_data, feature):
+        # Ideally we only want to get this once per transcript
+        # So we want to pick something like mRNA or transcript not CDS or exon
+        if feature.type in ('mRNA', 'transcript'):
+            attr_tuples = getattr(feature, "attr_tuples", None)
+            if attr_tuples is None:
+                attr_tuples = feature.attr.items()
+                if not self._warned_about_htseq_tag_attributes:
+                    self._warned_about_htseq_tag_attributes = True
+                    htseq_version = importlib.metadata.version('HTSeq')
+                    logging.warning("Your version of HTSeq (%s) can not handle duplicated tags. Some will be lost "
+                                    "See https://github.com/htseq/htseq/issues/83", htseq_version)
+
+            attr_list_vals = defaultdict(list)
+            for tag, value in attr_tuples:
+                attr_list_vals[tag].append(value)
+
+            if tag_list := attr_list_vals.get("tag"):
+                transcript_data["tag"] = ",".join(tag_list)
+
+
     def get_genes_and_transcripts(self):
         self._parse()
         self._finish()
@@ -356,6 +390,9 @@ class GTFParser(GFFParser):
     """ GTF (GFF2) - used by Ensembl, @see http://gmod.org/wiki/GFF2
 
         GFF2 only has 2 levels of feature hierarchy, so we have to build or 3 levels of gene/transcript/exons ourselves
+
+        We *have* to use GTF as Ensembl GFF3s don't include the protein version (just the ID)
+
     """
     GTF_TRANSCRIPTS_DATA = GFFParser.CODING_FEATURES | {"exon"}
     FEATURE_ALLOW_LIST = GTF_TRANSCRIPTS_DATA | {"gene", "transcript"}
@@ -392,14 +429,8 @@ class GTFParser(GFFParser):
                 gene_data["biotype"].add(biotype)
                 transcript["biotype"].add(biotype)
 
-            if feature.type == "CDS":
-                if protein := feature.attr.get("protein_id"):
-                    if protein_version := feature.attr.get("protein_version"):
-                        protein = f"{protein}.{protein_version}"
-                    self.transcript_proteins[transcript_accession] = protein
-            elif feature.type == "transcript":
-                if tag := feature.attr.get("tag"):
-                    transcript["tag"] = tag
+            self._handle_protein_version(transcript_accession, feature)
+            self._add_tags_to_transcript_data(transcript, feature)
 
 
 class GFF3Parser(GFFParser):
@@ -461,14 +492,10 @@ class GFF3Parser(GFFParser):
                     # Some exons etc may be for miRNAs that have no transcript ID, so skip those (won't have parent)
                     if parent_id:
                         transcript_accession = self.transcript_accession_by_feature_id.get(parent_id)
+                        self._handle_protein_version(transcript_accession, feature)
                     else:
                         logging.warning("Transcript data has no parent: %s" % feature.get_gff_line())
                         transcript_accession = None
-
-                    if feature.type == "CDS":
-                        dbxref = self._get_dbxref(feature)
-                        if genbank := (dbxref.get("Genbank") or dbxref.get("GenBank")):
-                            self.transcript_proteins[transcript_accession] = genbank
 
                 if transcript_accession:
                     transcript = self.transcript_data_by_accession.get(transcript_accession)
@@ -516,8 +543,7 @@ class GFF3Parser(GFFParser):
             if feature.attr.get("partial"):
                 transcript_data["partial"] = 1
 
-            if tag := feature.attr.get("tag"):
-                transcript_data["tag"] = tag
+            self._add_tags_to_transcript_data(transcript_data, feature)
 
             self.transcript_data_by_accession[transcript_accession] = transcript_data
         self.transcript_accession_by_feature_id[feature.attr["ID"]] = transcript_accession

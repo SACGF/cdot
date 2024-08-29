@@ -26,16 +26,16 @@ fi
 #81 is first GFF3 for GRCh38
 merge_args=()
 for release in 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112; do
-  # Switched to using GTFs as they contain protein version
-  filename=Homo_sapiens.GRCh38.${release}.gff3.gz
-  url=ftp://ftp.ensembl.org/pub/release-${release}/gff3/homo_sapiens/${filename}
+  # Switched to using GTFs as they contain protein version while Ensembl GFF3s do not (required for c_to_p)
+  filename=Homo_sapiens.GRCh38.${release}.gtf.gz
+  url=ftp://ftp.ensembl.org/pub/release-${release}/gtf/homo_sapiens/${filename}
   cdot_file=cdot-${CDOT_VERSION}.ensembl.$(basename $filename .gz).json.gz
 
   if [[ ! -e ${filename} ]]; then
     wget ${url}
   fi
   if [[ ! -e ${cdot_file} ]]; then
-    ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
+    ${BASE_DIR}/cdot_json.py gtf_to_json "${filename}" --url "${url}" --genome-build=GRCh38 --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
   fi
   merge_args+=(${cdot_file})
 done
