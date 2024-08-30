@@ -7,6 +7,6 @@ urls:
 #83 has no data
 #84 is 82 again
 #86 is 85 again
-  - "http://ftp.ensembl.org/pub/grch37/release-82/gtf/homo_sapiens/Homo_sapiens.GRCh37.82.gtf.gz"
-  - "http://ftp.ensembl.org/pub/grch37/release-85/gtf/homo_sapiens/Homo_sapiens.GRCh37.85.gtf.gz"
-  - "http://ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz"
+  Homo_sapiens_GRCh37_Ensembl_82: "http://ftp.ensembl.org/pub/grch37/release-82/gtf/homo_sapiens/Homo_sapiens.GRCh37.82.gtf.gz"
+  Homo_sapiens_GRCh37_Ensembl_85: "http://ftp.ensembl.org/pub/grch37/release-85/gtf/homo_sapiens/Homo_sapiens.GRCh37.85.gtf.gz"
+  Homo_sapiens_GRCh37_Ensembl_87: "http://ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz"

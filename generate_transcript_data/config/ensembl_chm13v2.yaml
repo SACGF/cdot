@@ -2,5 +2,5 @@ genome_build: 'T2T-CHM13v2.0'
 annotation_consortium: 'Ensembl'
 urls:
 # For Ensembl - we have to use GTFs as the GFF3s don't have protein versions in them
- - "https://ftp.ensembl.org/pub/rapid-release/species/Homo_sapiens/GCA_009914755.4/ensembl/geneset/2022_06/Homo_sapiens-GCA_009914755.4-2022_06-genes.gff3.gz"
- - "https://ftp.ensembl.org/pub/rapid-release/species/Homo_sapiens/GCA_009914755.4/ensembl/geneset/2022_07/Homo_sapiens-GCA_009914755.4-2022_07-genes.gff3.gz"
+ Homo_sapiens_T2T-CHM13v2.0_Ensembl_2022_06: "https://ftp.ensembl.org/pub/rapid-release/species/Homo_sapiens/GCA_009914755.4/ensembl/geneset/2022_06/Homo_sapiens-GCA_009914755.4-2022_06-genes.gff3.gz"
+ Homo_sapiens_T2T-CHM13v2.0_Ensembl_2022_07: "https://ftp.ensembl.org/pub/rapid-release/species/Homo_sapiens/GCA_009914755.4/ensembl/geneset/2022_07/Homo_sapiens-GCA_009914755.4-2022_07-genes.gff3.gz"
