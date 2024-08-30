@@ -1,18 +1,11 @@
-import subprocess
+include: "cdot_utils.smk"
 
 annotation_consortium = config["annotation_consortium"]
 genome_build = config["genome_build"]
 urls = config["urls"]
 cdot_output_dir = os.path.join(annotation_consortium, genome_build)
-cdot_json = os.path.join(workflow.basedir, "cdot_json.py")
-cdot_dir = os.path.dirname(workflow.basedir)
-cdot_output_raw = subprocess.check_output(f"{cdot_json} --version", shell=True, env={"PYTHONPATH": cdot_dir})
-version = cdot_output_raw.decode().strip()
 
-# This needs to be made top level script
-gene_info_json = f"Homo_sapiens.gene-info-{version}.json.gz"
-
-cdot_file_template = "cdot-" + version + "-{name}.json.gz"
+cdot_file_template = "cdot-" + cdot_data_version + "-{name}.json.gz"
 
 def get_cdot_command(wildcards):
     url = urls[wildcards.name]
@@ -20,7 +13,7 @@ def get_cdot_command(wildcards):
     return cdot_command
 
 
-rule all:
+rule all_transcripts:
     input:
         expand(os.path.join(cdot_output_dir, cdot_file_template), name=urls.keys())
 
