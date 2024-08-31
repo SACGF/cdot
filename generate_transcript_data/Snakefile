@@ -90,7 +90,7 @@ rule process_gene_info_json:
     input:
         "downloads/gene_info/{gene_info_download_filename}"
     output:
-        protected("downloads/{gene_info_download_filename}")
+        protected("{gene_info_json}")
     shell:
         """
             PYTHONPATH={cdot_dir} \
