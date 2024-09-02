@@ -127,8 +127,8 @@ class GFFParser(abc.ABC):
     def _create_transcript(feature, transcript_accession, gene_data):
         transcript_data = {
             "id": transcript_accession,
-            "gene_name": gene_data["gene_symbol"],
-            "gene_version": gene_data["id"],
+            "gene_name": gene_data.get("gene_symbol"),
+            "gene_version": gene_data.get("id"),
             "exons": [],
             "biotype": set(),
             CONTIG: feature.iv.chrom,
@@ -402,10 +402,14 @@ class GTFParser(GFFParser):
 
     def handle_feature(self, feature):
         gene_accession = self._get_gene_accession(feature)
-        gene_data = self.gene_data_by_accession.get(gene_accession)
-        if gene_data is None:
-            gene_data = self._create_gene(feature, gene_accession)
-            self.gene_data_by_accession[gene_accession] = gene_data
+        if gene_accession is None:
+            gene_data = {}  # Empty
+            # logging.warning("Read gene accession = None for %s", feature)  # Think this may not happen now with GTFs
+        else:
+            gene_data = self.gene_data_by_accession.get(gene_accession)
+            if gene_data is None:
+                gene_data = self._create_gene(feature, gene_accession)
+                self.gene_data_by_accession[gene_accession] = gene_data
 
         if transcript_accession := self._get_transcript_accession(feature, version_key="transcript_version"):
             transcript = self.transcript_data_by_accession.get(transcript_accession)

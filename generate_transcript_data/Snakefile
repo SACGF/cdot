@@ -8,61 +8,91 @@ cdot_dir = os.path.dirname(workflow.basedir)
 cdot_output_raw = subprocess.check_output(f"{cdot_json} --version", shell=True, env={"PYTHONPATH": cdot_dir})
 cdot_data_version = cdot_output_raw.decode().strip()
 
+all_urls = {}
+annotation_consortium_list = []
+genome_build_list = []
+for annotation_consortium, builds in config["config"].items():
+    annotation_consortium_list.append(annotation_consortium)
+    for gb, urls_dict in builds.items():
+        genome_build_list.append(gb)
+        all_urls.update(urls_dict)
+
+#for name, url in urls.items():
+#    print(f"{name} : {url}")
+def get_url_from_name(wildcards):
+    #print(f"get_url_from_name")
+    #for key, value in wildcards.items():
+    #    print(f"{key}={value}")
+    return all_urls[wildcards.name]
+
+
+def get_urls(wildcards):
+    print(f"get_urls")
+    for key, value in wildcards.items():
+        print(f"{key}={value}")
+
+    return urls
+
+
 def get_cdot_command(wildcards):
-    url = urls[wildcards.name]
-    cdot_command = "gff_to_json" if url.endswith(".gff.gz") else "gtf_to_json"
+    #print(f"get_cdot_command: {wildcards}")
+    url = all_urls[wildcards.name]
+    # gffs can end with 'gff.gz' or 'gff3.gz', gtfs always end with 'gtf.gz'
+    cdot_command = "gtf_to_json" if url.endswith(".gtf.gz") else "gff3_to_json"
     return cdot_command
+
+def get_build_input_files(wildcards):
+    #print(f"get_build_input_files")
+    #for key, value in wildcards.items():
+    #    print(f"{key}={value}")
+
+    urls = config["config"][wildcards.annotation_consortium][wildcards.genome_build]
+    #print(f"urls: {urls}")
+    prefix = f"{wildcards.annotation_consortium}/{wildcards.genome_build}/cdot-{cdot_data_version}"
+    return expand(prefix + "-{name}.json.gz", name=urls)
+
 
 
 # Name it based on date as it may vary
 today = datetime.now().date().isoformat()
-gene_info_download_filename = f"Homo_sapiens.gene_info.{today}.gz"
-gene_info_json = f"Homo_sapiens.gene-info-{cdot_data_version}.json.gz"
+gene_info_download_filename = os.path.join("downloads/gene_info", f"Homo_sapiens.gene_info.{today}.gz")
+gene_info_json_filename = f"Homo_sapiens.gene-info-{cdot_data_version}.json.gz"
 
-genome_build_files = []
-for annotation_consortium, builds in config["config"].items():
-    for genome_build in builds:
-        filename = os.path.join(annotation_consortium, genome_build, f"cdot-{cdot_data_version}-{annotation_consortium}.{genome_build}.json.gz")
-        genome_build_files.append(filename)
 
 rule all:
     input:
-        gene_info_json,
-        # genome_build_files,
-        expand("{annotation_consortium}/{genome_build}/cdot-{cdot_data_version}-{annotation_consortium}.{genome_build}.json.gz",
-               annotation_consortium=["RefSeq", "Ensembl"],
-               genome_build=["GRCh37", "GRCh38", "T2T-CHM13v2.0"],
-               cdot_data_version=[cdot_data_version])
+        gene_info_json_filename,
+        expand("{annotation_consortium}/cdot-" + cdot_data_version + "-{annotation_consortium}-{genome_build}.json.gz",
+               annotation_consortium=annotation_consortium_list, # ["RefSeq", "Ensembl"],
+               genome_build=genome_build_list)
 
-rule cdot_build_json:
-    # Merges all GFFs per build
+
+rule cdot_merge_historical_json:
+    # Merges multiple files together for 1 build
     output:
-        "{annotation_consortium}/{genome_build}/cdot-{cdot_data_version}-{annotation_consortium}.{genome_build}.json.gz"
+        "{annotation_consortium}/cdot-" + cdot_data_version + "-{annotation_consortium}-{genome_build}.json.gz"
     input:
-        lambda wildcards: expand("{annotation_consortium}/{genome_build}/cdot-{cdot_data_version}-{name}.json.gz", name=wildcards.urls)
-    params:
-        urls = lambda wildcards: config[wildcards.annotation_consortium][wildcards.genome_build]
+        get_build_input_files,
     shell:
         """
             PYTHONPATH={cdot_dir} \
             {cdot_json} \
-                combine_builds \
+                merge_historical \
                 {input} \
-                #--grch37 GRCh37/cdot-${CDOT_DATA_VERSION}.refseq.grch37.json.gz \
-                #--grch38 GRCh38/cdot-${CDOT_DATA_VERSION}.refseq.grch38.json.gz \
-                --output ${output}
+                --genome-build={wildcards.genome_build} \
+                --output {output}
         """
 
 
 rule cdot_gff_json:
     # Individual GFF
     input:
-        gene_info_json=gene_info_json,
+        gene_info_json=gene_info_json_filename,
         gff_file="downloads/{name}.gz"
     output:
-        protected("{annotation_consortium}/{genome_build}/cdot-{cdot_data_version}-{name}.json.gz")
+        protected("{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "-{name}.json.gz")
     params:
-        url=lambda wildcards: urls[wildcards.name],
+        url=get_url_from_name,
         cdot_command=get_cdot_command
     shell:
         """
@@ -71,7 +101,7 @@ rule cdot_gff_json:
                 {params.cdot_command} \
                 "{input.gff_file}" \
                 --url "{params.url}" \
-                --genome-build="{genome_build}" \
+                --genome-build="{wildcards.genome_build}" \
                 --output "{output}" \
                 --gene-info-json="{input.gene_info_json}"
         """
@@ -81,16 +111,16 @@ rule download_gff_files:
         # Don't re-download if snakemake script changes
         protected("downloads/{name}.gz")
     params:
-        url=lambda wildcards: urls[wildcards.name]
+        url=lambda wildcards: all_urls[wildcards.name]
     shell:
         "curl -o {output} {params.url}"
 
 
 rule process_gene_info_json:
     input:
-        "downloads/gene_info/{gene_info_download_filename}"
+        gene_info_download_filename
     output:
-        protected("{gene_info_json}")
+        protected(gene_info_json_filename)
     shell:
         """
             PYTHONPATH={cdot_dir} \
@@ -102,7 +132,7 @@ rule process_gene_info_json:
 
 rule download_gene_info:
     output:
-        protected("downloads/gene_info/{gene_info_download_filename}")
+        protected(gene_info_download_filename)
     shell:
         "curl -o {output} https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/Homo_sapiens.gene_info.gz"
 
