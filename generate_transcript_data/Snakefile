@@ -22,12 +22,8 @@ for annotation_consortium, builds in config["config"].items():
         genome_build_list.append(gb)
         all_urls.update(urls_dict)
 
-#for name, url in urls.items():
-#    print(f"{name} : {url}")
+
 def get_url_from_name(wildcards):
-    #print(f"get_url_from_name")
-    #for key, value in wildcards.items():
-    #    print(f"{key}={value}")
     return all_urls[wildcards.name]
 
 
@@ -40,22 +36,16 @@ def get_urls(wildcards):
 
 
 def get_cdot_command(wildcards):
-    #print(f"get_cdot_command: {wildcards}")
     url = all_urls[wildcards.name]
     # gffs can end with 'gff.gz' or 'gff3.gz', gtfs always end with 'gtf.gz'
     cdot_command = "gtf_to_json" if url.endswith(".gtf.gz") else "gff3_to_json"
     return cdot_command
 
-def get_build_input_files(wildcards):
-    #print(f"get_build_input_files")
-    #for key, value in wildcards.items():
-    #    print(f"{key}={value}")
 
+def get_build_input_files(wildcards):
     urls = config["config"][wildcards.annotation_consortium][wildcards.genome_build]
-    #print(f"urls: {urls}")
     prefix = f"{wildcards.annotation_consortium}/{wildcards.genome_build}/cdot-{cdot_data_version}"
     return expand(prefix + "-{name}.json.gz", name=urls)
-
 
 
 rule all:
@@ -105,6 +95,7 @@ rule cdot_gff_json:
                 --gene-info-json="{input.gene_info_json}"
         """
 
+
 rule download_gff_files:
     output:
         # Don't re-download if snakemake script changes
@@ -128,6 +119,7 @@ rule process_gene_info_json:
                 --output {output} \
                 --email cdot@cdot.cc
         """
+
 
 rule download_gene_info:
     output:
