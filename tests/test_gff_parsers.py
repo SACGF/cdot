@@ -9,8 +9,7 @@ class Test(unittest.TestCase):
     this_file_dir = os.path.dirname(os.path.abspath(getsourcefile(lambda: 0)))
     test_data_dir = os.path.join(this_file_dir, "test_data")
     ENSEMBL_104_GTF_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.104.gtf")
-    ENSEMBL_108_GFF3_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.108.gff3")
-    ENSEMBL_110_GFF3_MT_TG_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.mt_tg.110.gff3")
+    ENSEMBL_111_GTF_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.111.gtf")
     # Older RefSeq, before Genbank => GenBank changed
     REFSEQ_GFF3_FILENAME_2021 = os.path.join(test_data_dir, "refseq_test.GRCh38.p13_genomic.109.20210514.gff")
     # Newer RefSeq, before Genbank => GenBank changed
@@ -98,17 +97,15 @@ class Test(unittest.TestCase):
 
     def test_ensembl_gtf_tags(self):
         genome_build = "GRCh38"
-        parser = GFF3Parser(self.ENSEMBL_108_GFF3_FILENAME, genome_build, self.FAKE_URL)
+        parser = GTFParser(self.ENSEMBL_111_GTF_FILENAME, genome_build, self.FAKE_URL)
         genes, transcripts = parser.get_genes_and_transcripts()
         transcript = transcripts["ENST00000641515.2"]
-        tags = transcript["genome_builds"][genome_build].get("tag")
-        print(f"tags={tags}")
-        for tag in ["basic", "Ensembl_canonical", "MANE_Select"]:
-            self.assertIn(tag, tags)
+        tag = transcript["genome_builds"][genome_build].get("tag")
+        self.assertEqual(tag, "MANE_Select")
 
     def test_chrom_contig_conversion(self):
         genome_build = "GRCh38"
-        parser = GFF3Parser(self.ENSEMBL_108_GFF3_FILENAME, genome_build, self.FAKE_URL)
+        parser = GTFParser(self.ENSEMBL_111_GTF_FILENAME, genome_build, self.FAKE_URL)
         _, transcripts = parser.get_genes_and_transcripts()
         transcript = transcripts["ENST00000641515.2"]
         contig = transcript["genome_builds"][genome_build].get("contig")
@@ -117,7 +114,7 @@ class Test(unittest.TestCase):
     def test_ncrna_gene(self):
         """ We were incorrectly missing ncRNA gene info @see https://github.com/SACGF/cdot/issues/72 """
         genome_build = "GRCh38"
-        parser = GFF3Parser(self.ENSEMBL_110_GFF3_MT_TG_FILENAME, genome_build, self.FAKE_URL)
+        parser = GTFParser(self.ENSEMBL_111_GTF_FILENAME, genome_build, self.FAKE_URL)
         genes, transcripts = parser.get_genes_and_transcripts()
         gene = genes["ENSG00000210156"]
         gene_symbol = gene["gene_symbol"]

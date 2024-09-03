@@ -1,2 +1,0 @@
-MT	insdc	ncRNA_gene	8295	8364	.	+	.	ID=gene:ENSG00000210156;Name=MT-TK;biotype=Mt_tRNA;description=mitochondrially encoded tRNA-Lys (AAA/G) [Source:HGNC Symbol%3BAcc:HGNC:7489];gene_id=ENSG00000210156;logic_name=mt_genbank_import_homo_sapiens;version=1
-MT	insdc	tRNA	8295	8364	.	+	.	ID=transcript:ENST00000387421;Parent=gene:ENSG00000210156;Name=MT-TK-201;biotype=Mt_tRNA;tag=basic,Ensembl_canonical;transcript_id=ENST00000387421;transcript_support_level=NA;version=1

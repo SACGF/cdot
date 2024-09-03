@@ -2,6 +2,7 @@ import abc
 import logging
 import operator
 import re
+import importlib
 from bioutils.assemblies import make_name_ac_map
 from collections import Counter, defaultdict
 from typing import Optional
