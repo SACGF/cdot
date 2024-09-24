@@ -1,7 +1,6 @@
 import abc
 import gzip
 import json
-import os
 import requests
 
 from collections import defaultdict
@@ -12,7 +11,7 @@ from hgvs.exceptions import HGVSDataNotAvailableError
 from intervaltree import IntervalTree
 from typing import List
 
-from bioutils.assemblies import make_ac_name_map, make_name_ac_map
+from bioutils.assemblies import make_ac_name_map
 
 from cdot import get_data_schema_int, __version__
 
@@ -436,7 +435,7 @@ class RESTDataProvider(AbstractJSONDataProvider):
             if 'application/json' in response.headers.get('Content-Type'):
                 data = response.json()
             else:
-                raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % transcript_url)
+                raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % url)
         return data
 
     def _get_transcript(self, tx_ac):
