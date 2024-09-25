@@ -11,7 +11,7 @@ from hgvs.exceptions import HGVSDataNotAvailableError
 from intervaltree import IntervalTree
 from typing import List
 
-from bioutils.assemblies import make_ac_name_map
+from bioutils.assemblies import make_ac_name_map, make_name_ac_map
 
 from cdot import get_data_schema_int, __version__
 
@@ -19,6 +19,12 @@ def get_ac_name_map(assembly_name):
     if assembly_name == "GRCh37":
         assembly_name = 'GRCh37.p13'  # Original build didn't have MT
     return make_ac_name_map(assembly_name)
+
+def get_name_ac_map(assembly_name):
+    if assembly_name == "GRCh37":
+        assembly_name = 'GRCh37.p13'  # Original build didn't have MT
+    return make_name_ac_map(assembly_name)
+
 
 
 class AbstractJSONDataProvider(Interface):

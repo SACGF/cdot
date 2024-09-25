@@ -3,7 +3,7 @@ import os
 import requests
 from hgvs.exceptions import HGVSDataNotAvailableError
 
-from cdot.hgvs.dataproviders import get_ac_name_map
+from cdot.hgvs.dataproviders import get_ac_name_map, get_name_ac_map
 from cdot.hgvs.dataproviders.seqfetcher import AbstractTranscriptSeqFetcher
 from hgvs.dataproviders.interface import Interface
 
@@ -26,16 +26,19 @@ class EnsemblTarkDataProvider(Interface):
         """
         self.base_url = "https://tark.ensembl.org/api"
         # Local caches
-        self.transcripts = {}
-        self.genes = {}
+        self.transcript_results = {}
 
         if assemblies is None:
             assemblies = ["GRCh37", "GRCh38"]
 
         super().__init__(mode=mode, cache=cache)
         self.assembly_maps = {}
+        self.name_to_assembly_maps = {}
+
         for assembly_name in assemblies:
             self.assembly_maps[assembly_name] = get_ac_name_map(assembly_name)
+            self.name_to_assembly_maps[assembly_name] = get_name_ac_map(assembly_name)
+
         self.assembly_by_contig = {}
         for assembly_name, contig_map in self.assembly_maps.items():
             self.assembly_by_contig.update({contig: assembly_name for contig in contig_map.keys()})
@@ -51,7 +54,7 @@ class EnsemblTarkDataProvider(Interface):
         return data
 
     @staticmethod
-    def get_transcript_id_and_version(transcript_accession: str):
+    def _get_transcript_id_and_version(transcript_accession: str):
         parts = transcript_accession.split(".")
         if len(parts) == 2:
             identifier = str(parts[0])
@@ -60,47 +63,38 @@ class EnsemblTarkDataProvider(Interface):
             identifier, version = transcript_accession, None
         return identifier, version
 
-    def _get_transcript(self, tx_ac):
-        # We store None for 404 on REST
-        if tx_ac in self.transcripts:
-            return self.transcripts[tx_ac]
+    def _get_transcript_results(self, tx_ac):
+        """ This can be a list of (1 per build) """
+
+        # We store None for 404 on REST - so return even if false
+        if tx_ac in self.transcript_results:
+            return self.transcript_results[tx_ac]
 
         url = os.path.join(self.base_url, "transcript/?")
-        stable_id, version = self.get_transcript_id_and_version(tx_ac)
+        stable_id, version = self._get_transcript_id_and_version(tx_ac)
         params = {
             "stable_id": stable_id,
             "stable_id_version": version,
             "expand_all": "true",
         }
         url += "&".join([f"{k}={v}" for k, v in params.items()])
-        transcript = self._get_from_url(url)
-        self.transcripts[tx_ac] = transcript
-        return transcript
+        data = self._get_from_url(url)
+        if results := data["results"]:
+            if len(results) >= 1:
+                self.transcript_results[tx_ac] = results
+                return results
+        raise HGVSDataNotAvailableError(f"Data for transcript='{tx_ac}' did not contain 'results': {data}")
 
-    def _get_gene(self, gene_name):
-        # We store None for 404 on REST
-        if gene_name in self.genes:
-            return self.genes[gene_name]
-
-        gene = self._get_from_url(self.url + "/gene/" + gene_name)
-        self.genes[gene_name] = gene
-        return gene
-
-    def _get_transcript_coordinates_for_contig(self, transcript, alt_ac):
+    def _get_transcript_for_contig(self, transcript_results, alt_ac):
         assembly = self.assembly_by_contig.get(alt_ac)
         if assembly is None:
             supported_assemblies = ", ".join(self.assembly_maps.keys())
             raise ValueError(f"Contig '{alt_ac}' not supported. Supported assemblies: {supported_assemblies}")
 
-        return transcript["genome_builds"].get(assembly)
-
-    @staticmethod
-    def _get_contig_start_end_strand(build_data):
-        contig = build_data["contig"]
-        strand = 1 if build_data["strand"] == "+" else -1
-        start = build_data["exons"][0][0]
-        end = build_data["exons"][-1][1]
-        return contig, start, end, strand
+        for transcript in transcript_results:
+            if transcript["assembly"]["assembly_name"] == assembly:
+                return transcript
+        return None
 
     def data_version(self):
         return self.required_version
@@ -123,42 +117,56 @@ class EnsemblTarkDataProvider(Interface):
     def get_seq(self, ac, start_i=None, end_i=None):
         return self.seqfetcher.fetch_seq(ac, start_i, end_i)
 
-    def get_transcript_seq(self, ac):
-        transcript = self.get_transcript(ac)
+    def get_transcript_sequence(self, ac):
+        seq = None
+        if results := self._get_transcript_results(ac):
+            transcript = results[0]  # any is fine
+            seq = transcript["sequence"]["sequence"]
+        return seq
+
+    @staticmethod
+    def _get_cds_start_end(transcript):
+        cds_start_i = None
+        cds_end_i = None
+        three_prime_utr_seq = transcript["three_prime_utr_seq"]
+        five_prime_utr_seq = transcript["five_prime_utr_seq"]
+        if three_prime_utr_seq and five_prime_utr_seq:
+            sequence_length = sum([ex["loc_end"] - ex["loc_start"] + 1 for ex in transcript["exons"]])
+            cds_start_i = len(five_prime_utr_seq)
+            cds_end_i = sequence_length - len(three_prime_utr_seq)
+        return cds_start_i, cds_end_i
 
     def get_tx_exons(self, tx_ac, alt_ac, alt_aln_method):
         self._check_alt_aln_method(alt_aln_method)
-        transcript = self._get_transcript(tx_ac)
-        if not transcript:
+        transcript_results = self._get_transcript_results(tx_ac)
+        if not transcript_results:
             return None
 
-        assembly_coordinates = self._get_transcript_coordinates_for_contig(transcript, alt_ac)
-
+        transcript = self._get_transcript_for_contig(transcript_results, alt_ac)
         tx_exons = []  # Genomic order
-        exons = assembly_coordinates["exons"]
-        alt_strand = 1 if assembly_coordinates["strand"] == "+" else -1
+        alt_strand = transcript["loc_strand"]
 
-        for (alt_start_i, alt_end_i, exon_id, cds_start_i, cds_end_i, gap) in exons:
-            # cdot tx_start_i/tx_end_i is 1 based while UTA is 0 based
-            tx_start_i = cds_start_i - 1
-            tx_end_i = cds_end_i
-            if gap is not None:
-                cigar = self._convert_gap_to_cigar(gap)
-            else:
-                length = alt_end_i - alt_start_i  # Will be same for both transcript/genomic
-                cigar = str(length) + "="
+        # TODO: I think I need to sort exons in genomic order?
 
+        exon_transcript_pos = 0
+        for exon in transcript["exons"]:
+            # TODO: Need to check all this stuff for off by 1 errors
+            length = exon["loc_end"] - exon["loc_start"]  # Will be same for both transcript/genomic
+            tx_start_i = exon_transcript_pos
+            tx_end_i = exon_transcript_pos + length
+
+            # UTA is 0 based
             exon_data = {
                 'tx_ac': tx_ac,
                 'alt_ac': alt_ac,
                 'alt_strand': alt_strand,
                 'alt_aln_method': alt_aln_method,
-                'ord': exon_id,
+                'ord': exon["exon_order"],
                 'tx_start_i': tx_start_i,
                 'tx_end_i': tx_end_i,
-                'alt_start_i': alt_start_i,
-                'alt_end_i': alt_end_i,
-                'cigar': cigar,
+                'alt_start_i': exon["loc_start"],
+                'alt_end_i': exon["loc_end"],
+                'cigar': str(length) + "=",  # Tark doesn't have alignment gaps
             }
             tx_exons.append(exon_data)
 
@@ -172,6 +180,7 @@ class EnsemblTarkDataProvider(Interface):
 
         tx_info = self._get_transcript_info(transcript)
 
+        # TODO: This is cdot code
         # Only using lengths (same in each build) not coordinates so grab anything
         exons = []
         for build_coordinates in transcript["genome_builds"].values():
@@ -187,9 +196,8 @@ class EnsemblTarkDataProvider(Interface):
 
     @staticmethod
     def _get_transcript_info(transcript):
-        gene_name = transcript["gene_name"]
-        cds_start_i = transcript.get("start_codon")
-        cds_end_i = transcript.get("stop_codon")
+        gene_name = transcript["genes"][0]["name"]
+        cds_start_i, cds_end_i = EnsemblTarkDataProvider._get_cds_start_end(transcript)
         return {
             "hgnc": gene_name,
             "cds_start_i": cds_start_i,
@@ -199,20 +207,20 @@ class EnsemblTarkDataProvider(Interface):
     def get_tx_info(self, tx_ac, alt_ac, alt_aln_method):
         self._check_alt_aln_method(alt_aln_method)
 
-        if transcript := self._get_transcript(tx_ac):
-            for build_data in transcript["genome_builds"].values():
-                if alt_ac == build_data["contig"]:
-                    tx_info = self._get_transcript_info(transcript)
-                    tx_info["tx_ac"] = tx_ac
-                    tx_info["alt_ac"] = alt_ac
-                    tx_info["alt_aln_method"] = self.NCBI_ALN_METHOD
-                    return tx_info
+        if transcript_results := self._get_transcript_results(tx_ac):
+            transcript = self._get_transcript_for_contig(transcript_results, alt_ac)
+            tx_info = self._get_transcript_info(transcript)
+            tx_info["tx_ac"] = tx_ac
+            tx_info["alt_ac"] = alt_ac
+            tx_info["alt_aln_method"] = self.NCBI_ALN_METHOD
+            return tx_info
 
         raise HGVSDataNotAvailableError(
             f"No tx_info for (tx_ac={tx_ac},alt_ac={alt_ac},alt_aln_method={alt_aln_method})"
         )
 
     def get_tx_mapping_options(self, tx_ac):
+        # TODO: This is cdot code
         mapping_options = []
         if transcript := self._get_transcript(tx_ac):
             for build_coordinates in transcript["genome_builds"].values():
@@ -232,24 +240,27 @@ class EnsemblTarkDataProvider(Interface):
         return None
 
     def get_gene_info(self, gene):
-        gene_info = None
-        if g := self._get_gene(gene):
-            # UTA produces aliases that look like '{DCML,IMD21,MONOMAC,NFE1B}'
-            uta_style_aliases = '{' + g["aliases"].replace(" ", "") + '}'
-            gene_info = {
-                "hgnc": g["gene_symbol"],
-                "maploc": g["map_location"],
-                "descr": g["description"],
-                "summary": g["summary"],
-                "aliases": uta_style_aliases,
+        """
+            This info is not available in TARK
+            return {
+                "hgnc": None,
+                "maploc": None,
+                "descr": None,
+                "summary": None,
+                "aliases": None, # UTA produces aliases that look like '{DCML,IMD21,MONOMAC,NFE1B}'
                 "added": None,  # Don't know where this is stored/comes from (hgnc?)
             }
-        return gene_info
+        """
+        raise NotImplementedError()
 
     def get_pro_ac_for_tx_ac(self, tx_ac):
         pro_ac = None
         if transcript := self._get_transcript(tx_ac):
-            pro_ac = transcript.get("protein")
+            if translations := transcript.get("translations"):
+                t = translations[0]
+                protein_id = t["stable_id"]
+                version = t["stable_id_version"]
+                pro_ac = f"{protein_id}.{version}"
         return pro_ac
 
     def get_similar_transcripts(self, tx_ac):
@@ -269,7 +280,35 @@ class EnsemblTarkDataProvider(Interface):
             raise HGVSDataNotAvailableError(f"cdot only supports alt_aln_method={self.NCBI_ALN_METHOD}")
 
     def get_tx_for_gene(self, gene):
-        raise NotImplementedError()
+        url = os.path.join(self.base_url, "transcript/search/?")
+        params = {
+            "identifier_field": gene,
+            "expand": "exons,genes,sequence",
+        }
+        url += "&".join([f"{k}={v}" for k, v in params.items()])
+
+        # TODO: We could cache the transcripts from these...
+        tx_list = []
+        if results := self._get_from_url(url):
+            for transcript in results:
+                cds_start_i, cds_end_i = self._get_cds_start_end(transcript)
+
+                name_to_ac_map = self.name_to_assembly_maps[transcript["assembly"]]
+                alt_ac = name_to_ac_map["loc_region"]
+
+                transcript_id = transcript["stable_id"]
+                version = transcript["stable_id_version"]
+                tx_ac = f"{transcript_id}.{version}"
+                tx_list.append({
+                    "hgnc": gene,
+                    "cds_start_i": cds_start_i,
+                    "cds_end_i": cds_end_i,
+                    "tx_ac": tx_ac,
+                    "alt_ac": alt_ac,
+                    "alt_aln_method": "splign"
+                })
+        return tx_list
+
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
         raise NotImplementedError()
