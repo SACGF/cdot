@@ -126,6 +126,7 @@ class EnsemblTarkDataProvider(Interface):
 
     @staticmethod
     def _get_cds_start_end(transcript):
+        # TODO: Could get this out of cds_info - three_prime_utr_length etc
         cds_start_i = None
         cds_end_i = None
         three_prime_utr_seq = transcript["three_prime_utr_seq"]
@@ -146,14 +147,12 @@ class EnsemblTarkDataProvider(Interface):
         tx_exons = []  # Genomic order
         alt_strand = transcript["loc_strand"]
 
-        # TODO: I think I need to sort exons in genomic order?
-
-        exon_transcript_pos = 0
+        tx_pos = 0
         for exon in transcript["exons"]:
-            # TODO: Need to check all this stuff for off by 1 errors
             length = exon["loc_end"] - exon["loc_start"]  # Will be same for both transcript/genomic
-            tx_start_i = exon_transcript_pos
-            tx_end_i = exon_transcript_pos + length
+            tx_start_i = tx_pos + 1
+            tx_end_i = tx_pos + length
+            tx_pos += length
 
             # UTA is 0 based
             exon_data = {
@@ -161,34 +160,33 @@ class EnsemblTarkDataProvider(Interface):
                 'alt_ac': alt_ac,
                 'alt_strand': alt_strand,
                 'alt_aln_method': alt_aln_method,
-                'ord': exon["exon_order"],
+                'ord': exon["exon_order"] - 1,  # tark is 1 based, UTA 0 based
                 'tx_start_i': tx_start_i,
                 'tx_end_i': tx_end_i,
-                'alt_start_i': exon["loc_start"],
+                'alt_start_i': exon["loc_start"] - 1,
                 'alt_end_i': exon["loc_end"],
                 'cigar': str(length) + "=",  # Tark doesn't have alignment gaps
             }
             tx_exons.append(exon_data)
 
+        # UTA wants exons in genomic order
+        if alt_strand == -1:
+            tx_exons.reverse()
+
         return tx_exons
 
     def get_tx_identity_info(self, tx_ac):
         # Get any transcript as it's assembly independent
-        transcript = self._get_transcript(tx_ac)
-        if not transcript:
+        transcript_results = self._get_transcript_results(tx_ac)
+        if not transcript_results:
             return None
 
+        transcript = transcript_results[0]  # Any will do
         tx_info = self._get_transcript_info(transcript)
 
-        # TODO: This is cdot code
         # Only using lengths (same in each build) not coordinates so grab anything
-        exons = []
-        for build_coordinates in transcript["genome_builds"].values():
-            exons = build_coordinates["exons"]
-            break
-
-        stranded_order_exons = sorted(exons, key=lambda e: e[2])  # sort by exon_id
-        tx_info["lengths"] = [ex[4] + 1 - ex[3] for ex in stranded_order_exons]
+        exons = transcript["exons"]
+        tx_info["lengths"] = [ex["loc_end"] + 1 - ex["loc_start"] for ex in exons]
         tx_info["tx_ac"] = tx_ac
         tx_info["alt_ac"] = tx_ac  # Same again
         tx_info["alt_aln_method"] = "transcript"
