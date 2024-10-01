@@ -32,6 +32,7 @@ class EnsemblTarkDataProvider(Interface):
             assemblies = ["GRCh37", "GRCh38"]
 
         super().__init__(mode=mode, cache=cache)
+        self.seqfetcher = seqfetcher
         self.assembly_maps = {}
         self.name_to_assembly_maps = {}
 
@@ -137,6 +138,29 @@ class EnsemblTarkDataProvider(Interface):
             cds_end_i = sequence_length - len(three_prime_utr_seq)
         return cds_start_i, cds_end_i
 
+    def _get_transcript_contig(self, transcript):
+        assembly = transcript["assembly"]
+        # Sometimes this can be expanded
+        if isinstance(assembly, str):
+            genome_build = assembly
+        else:
+            genome_build = assembly["assembly_name"]
+        name_to_ac_map = self.name_to_assembly_maps[genome_build]
+        name = transcript["loc_region"]
+        return name_to_ac_map[name]
+
+    @staticmethod
+    def _get_transcript_accession(transcript):
+        transcript_id = transcript["stable_id"]
+        version = transcript["stable_id_version"]
+        return f"{transcript_id}.{version}"
+
+    def _get_chrom_from_contig(self, alt_ac):
+        for ac_to_name_map in self.assembly_maps.values():
+            if name := ac_to_name_map.get(alt_ac):
+                return name
+        raise ValueError(f"'{alt_ac}': unknown contig")
+
     def get_tx_exons(self, tx_ac, alt_ac, alt_aln_method):
         self._check_alt_aln_method(alt_aln_method)
         transcript_results = self._get_transcript_results(tx_ac)
@@ -218,13 +242,13 @@ class EnsemblTarkDataProvider(Interface):
         )
 
     def get_tx_mapping_options(self, tx_ac):
-        # TODO: This is cdot code
         mapping_options = []
-        if transcript := self._get_transcript(tx_ac):
-            for build_coordinates in transcript["genome_builds"].values():
+        if transcript_results := self._get_transcript_results(tx_ac):
+            for transcript in transcript_results:
+                alt_ac = self._get_transcript_contig(transcript)
                 mo = {
                     "tx_ac": tx_ac,
-                    "alt_ac": build_coordinates["contig"],
+                    "alt_ac": alt_ac,
                     "alt_aln_method": self.NCBI_ALN_METHOD,
                 }
                 mapping_options.append(mo)
@@ -253,13 +277,15 @@ class EnsemblTarkDataProvider(Interface):
 
     def get_pro_ac_for_tx_ac(self, tx_ac):
         pro_ac = None
-        if transcript := self._get_transcript(tx_ac):
-            if translations := transcript.get("translations"):
-                t = translations[0]
-                protein_id = t["stable_id"]
-                version = t["stable_id_version"]
-                pro_ac = f"{protein_id}.{version}"
-        return pro_ac
+        if transcript_results := self._get_transcript_results(tx_ac):
+            for transcript in transcript_results:
+                if translations := transcript.get("translations"):
+                    t = translations[0]
+                    protein_id = t["stable_id"]
+                    version = t["stable_id_version"]
+                    pro_ac = f"{protein_id}.{version}"
+                    return pro_ac
+        return None
 
     def get_similar_transcripts(self, tx_ac):
         """ UTA specific functionality that uses tx_similarity_v table
@@ -290,13 +316,9 @@ class EnsemblTarkDataProvider(Interface):
         if results := self._get_from_url(url):
             for transcript in results:
                 cds_start_i, cds_end_i = self._get_cds_start_end(transcript)
+                alt_ac = self._get_transcript_contig(transcript)
 
-                name_to_ac_map = self.name_to_assembly_maps[transcript["assembly"]]
-                alt_ac = name_to_ac_map["loc_region"]
-
-                transcript_id = transcript["stable_id"]
-                version = transcript["stable_id_version"]
-                tx_ac = f"{transcript_id}.{version}"
+                tx_ac = self._get_transcript_accession(transcript)
                 tx_list.append({
                     "hgnc": gene,
                     "cds_start_i": cds_start_i,
@@ -309,4 +331,33 @@ class EnsemblTarkDataProvider(Interface):
 
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
-        raise NotImplementedError()
+        url = os.path.join(self.base_url, "transcript/?")
+        # TODO: Off by 1 errors?
+        # I think there is an issue for ensembl tark here about cross genomes
+        loc_region = self._get_chrom_from_contig(alt_ac)
+        params = {
+            "loc_region": loc_region,
+            "loc_start": start_i,
+            "loc_end": end_i,
+            # TODO: Expand all then store transcripts?
+            # "expand_all": "false",
+        }
+        url += "&".join([f"{k}={v}" for k, v in params.items()])
+        tx_list = []
+        if results := self._get_from_url(url):
+            for transcript in results:
+                contig = self._get_transcript_contig(transcript)
+                # TODO: Off by 1?
+                tx_start = transcript["loc_start"]
+                tx_end = transcript["loc_end"]
+                if contig == alt_ac:
+                    tx_ac = self._get_transcript_accession(transcript)
+                    tx_list.append({
+                        "alt_ac": alt_ac,
+                        "alt_aln_method": self.NCBI_ALN_METHOD,
+                        "alt_strand": transcript["strand"],
+                        "start_i": tx_start,
+                        "end_i": tx_end,
+                        "tx_ac": tx_ac,
+                    })
+        return tx_list
