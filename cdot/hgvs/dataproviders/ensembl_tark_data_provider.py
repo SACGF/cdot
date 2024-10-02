@@ -1,4 +1,6 @@
+import json
 import os
+import re
 
 import requests
 from hgvs.exceptions import HGVSDataNotAvailableError
@@ -45,14 +47,27 @@ class EnsemblTarkDataProvider(Interface):
             self.assembly_by_contig.update({contig: assembly_name for contig in contig_map.keys()})
 
     def _get_from_url(self, url):
-        data = None
         response = requests.get(url)
         if response.ok:
             if 'application/json' in response.headers.get('Content-Type'):
                 data = response.json()
+                filename = f"/tmp/{url.replace('/', '|')}.json"
+                with open(filename, "wt") as f:
+                    json.dump(data, f)
+                return data
             else:
                 raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % url)
-        return data
+        response.raise_for_status()
+
+    def _get_all_paginated_results(self, url):
+        results = []
+        while url:
+            # Next links are http
+            url = re.sub(r'^http://', 'https://', url)
+            data = self._get_from_url(url)
+            results.extend(data["results"])
+            url = data["next"]
+        return results
 
     @staticmethod
     def _get_transcript_id_and_version(transcript_accession: str):
@@ -79,12 +94,11 @@ class EnsemblTarkDataProvider(Interface):
             "expand_all": "true",
         }
         url += "&".join([f"{k}={v}" for k, v in params.items()])
-        data = self._get_from_url(url)
-        if results := data["results"]:
+        if results := self._get_all_paginated_results(url):
             if len(results) >= 1:
                 self.transcript_results[tx_ac] = results
                 return results
-        raise HGVSDataNotAvailableError(f"Data for transcript='{tx_ac}' did not contain 'results': {data}")
+        raise HGVSDataNotAvailableError(f"Data for transcript='{tx_ac}' did not contain 'results': {results}")
 
     def _get_transcript_for_contig(self, transcript_results, alt_ac):
         assembly = self.assembly_by_contig.get(alt_ac)
@@ -173,10 +187,11 @@ class EnsemblTarkDataProvider(Interface):
 
         tx_pos = 0
         for exon in transcript["exons"]:
-            length = exon["loc_end"] - exon["loc_start"]  # Will be same for both transcript/genomic
-            tx_start_i = tx_pos + 1
+            length = exon["loc_end"] - exon["loc_start"] + 1
+            # UTA tx is 0 based
+            tx_start_i = tx_pos
             tx_end_i = tx_pos + length
-            tx_pos += length
+            tx_pos = tx_end_i
 
             # UTA is 0 based
             exon_data = {
@@ -197,6 +212,11 @@ class EnsemblTarkDataProvider(Interface):
         if alt_strand == -1:
             tx_exons.reverse()
 
+        print("-" * 50)
+        print("Ensembl Tark")
+
+        for ex in tx_exons:
+            print(ex)
         return tx_exons
 
     def get_tx_identity_info(self, tx_ac):
@@ -218,7 +238,9 @@ class EnsemblTarkDataProvider(Interface):
 
     @staticmethod
     def _get_transcript_info(transcript):
-        gene_name = transcript["genes"][0]["name"]
+        gene_name = None
+        if gene := transcript.get("genes"):
+            gene_name = gene[0]["name"]
         cds_start_i, cds_end_i = EnsemblTarkDataProvider._get_cds_start_end(transcript)
         return {
             "hgnc": gene_name,
@@ -230,12 +252,12 @@ class EnsemblTarkDataProvider(Interface):
         self._check_alt_aln_method(alt_aln_method)
 
         if transcript_results := self._get_transcript_results(tx_ac):
-            transcript = self._get_transcript_for_contig(transcript_results, alt_ac)
-            tx_info = self._get_transcript_info(transcript)
-            tx_info["tx_ac"] = tx_ac
-            tx_info["alt_ac"] = alt_ac
-            tx_info["alt_aln_method"] = self.NCBI_ALN_METHOD
-            return tx_info
+            if transcript := self._get_transcript_for_contig(transcript_results, alt_ac):
+                tx_info = self._get_transcript_info(transcript)
+                tx_info["tx_ac"] = tx_ac
+                tx_info["alt_ac"] = alt_ac
+                tx_info["alt_aln_method"] = self.NCBI_ALN_METHOD
+                return tx_info
 
         raise HGVSDataNotAvailableError(
             f"No tx_info for (tx_ac={tx_ac},alt_ac={alt_ac},alt_aln_method={alt_aln_method})"
@@ -336,26 +358,25 @@ class EnsemblTarkDataProvider(Interface):
         # I think there is an issue for ensembl tark here about cross genomes
         loc_region = self._get_chrom_from_contig(alt_ac)
         params = {
+            "loc_end": end_i,
             "loc_region": loc_region,
             "loc_start": start_i,
-            "loc_end": end_i,
             # TODO: Expand all then store transcripts?
             # "expand_all": "false",
         }
         url += "&".join([f"{k}={v}" for k, v in params.items()])
         tx_list = []
-        if results := self._get_from_url(url):
+        if results := self._get_all_paginated_results(url):
             for transcript in results:
                 contig = self._get_transcript_contig(transcript)
-                # TODO: Off by 1?
-                tx_start = transcript["loc_start"]
+                tx_start = transcript["loc_start"] - 1
                 tx_end = transcript["loc_end"]
                 if contig == alt_ac:
                     tx_ac = self._get_transcript_accession(transcript)
                     tx_list.append({
                         "alt_ac": alt_ac,
                         "alt_aln_method": self.NCBI_ALN_METHOD,
-                        "alt_strand": transcript["strand"],
+                        "alt_strand": transcript["loc_strand"],
                         "start_i": tx_start,
                         "end_i": tx_end,
                         "tx_ac": tx_ac,

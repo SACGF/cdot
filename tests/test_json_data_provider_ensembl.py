@@ -1,5 +1,6 @@
 import os
 import unittest
+from abc import ABC, abstractmethod
 from inspect import getsourcefile
 from os.path import abspath
 
@@ -11,18 +12,14 @@ from hgvs.exceptions import HGVSDataNotAvailableError
 from cdot.hgvs.dataproviders import ChainedSeqFetcher
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
 from tests.mock_seqfetcher import MockSeqFetcher
+from tests.mock_ensembl_tark import MockEnsemblTarkDataProvider
 
 
-class TestJSONDataProvider(unittest.TestCase):
+class AbstractEnsemblTestCase(unittest.TestCase, ABC):
     @classmethod
     def setUpClass(cls):
-        this_file_dir = os.path.dirname(abspath(getsourcefile(lambda: 0)))
-        #        parent_dir = os.path.dirname(this_file_dir)
-        test_json_file = os.path.join(this_file_dir, "test_data/cdot.ensembl.grch38.json")
-        test_transcripts_file = os.path.join(this_file_dir, "test_data/transcript_sequences.json")
-        mock_seqfetcher = MockSeqFetcher(test_transcripts_file)
-        seqfetcher = ChainedSeqFetcher(mock_seqfetcher, SeqFetcher())
-        cls.json_data_provider = JSONDataProvider([test_json_file], seqfetcher=seqfetcher)
+        """ Subclasses need to override this """
+        raise unittest.SkipTest
 
     def test_transcript(self):
         am = AssemblyMapper(self.json_data_provider,
@@ -75,6 +72,31 @@ class TestJSONDataProvider(unittest.TestCase):
         # Make sure 38 works
         tx_info = self.json_data_provider.get_tx_info("ENST00000617537.5", "NC_000007.14", "splign")
         print(tx_info)
+
+
+class JsonDataProviderTestCase(AbstractEnsemblTestCase):
+    @classmethod
+    def setUpClass(cls):
+        this_file_dir = os.path.dirname(abspath(getsourcefile(lambda: 0)))
+        #        parent_dir = os.path.dirname(this_file_dir)
+        test_json_file = os.path.join(this_file_dir, "test_data/cdot.ensembl.grch38.json")
+        test_transcripts_file = os.path.join(this_file_dir, "test_data/transcript_sequences.json")
+        mock_seqfetcher = MockSeqFetcher(test_transcripts_file)
+        seqfetcher = ChainedSeqFetcher(mock_seqfetcher, SeqFetcher())
+        cls.json_data_provider = JSONDataProvider([test_json_file], seqfetcher=seqfetcher)
+
+
+class EnsemblTarkDataProviderTestCase(AbstractEnsemblTestCase):
+    @classmethod
+    def setUpClass(cls):
+        this_file_dir = os.path.dirname(abspath(getsourcefile(lambda: 0)))
+        #        parent_dir = os.path.dirname(this_file_dir)
+        test_json_file = os.path.join(this_file_dir, "test_data/cdot.ensembl.grch38.json")
+        test_transcripts_file = os.path.join(this_file_dir, "test_data/transcript_sequences.json")
+        mock_seqfetcher = MockSeqFetcher(test_transcripts_file)
+        seqfetcher = ChainedSeqFetcher(mock_seqfetcher, SeqFetcher())
+        cls.json_data_provider = MockEnsemblTarkDataProvider(seqfetcher=seqfetcher)
+
 
 
 if __name__ == '__main__':
