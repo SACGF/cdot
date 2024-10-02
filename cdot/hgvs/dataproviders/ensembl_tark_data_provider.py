@@ -11,8 +11,15 @@ from hgvs.dataproviders.interface import Interface
 
 
 class EnsemblTarkTranscriptSeqFetcher(AbstractTranscriptSeqFetcher):
-    def _get_transcript_seq(self, ac, alt_ac, alt_aln_method):
-        pass
+    def _get_transcript_seq(self, ac):
+        if ac.startswith("NC_"):
+            raise HGVSDataNotAvailableError()
+
+        return self.hdp.get_transcript_sequence(ac)
+
+    @property
+    def source(self):
+        return f"EnsemblTarkTranscriptSeqFetcher: hdp={self.hdp.source}"
 
 
 class EnsemblTarkDataProvider(Interface):
@@ -34,6 +41,11 @@ class EnsemblTarkDataProvider(Interface):
             assemblies = ["GRCh37", "GRCh38"]
 
         super().__init__(mode=mode, cache=cache)
+        if seqfetcher:
+            try:
+                seqfetcher.set_data_provider(self)
+            except AttributeError:
+                pass
         self.seqfetcher = seqfetcher
         self.assembly_maps = {}
         self.name_to_assembly_maps = {}

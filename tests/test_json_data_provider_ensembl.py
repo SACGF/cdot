@@ -10,6 +10,7 @@ from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError
 
 from cdot.hgvs.dataproviders import ChainedSeqFetcher
+from cdot.hgvs.dataproviders.ensembl_tark_data_provider import EnsemblTarkTranscriptSeqFetcher
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
 from tests.mock_seqfetcher import MockSeqFetcher
 from tests.mock_ensembl_tark import MockEnsemblTarkDataProvider
@@ -89,12 +90,7 @@ class JsonDataProviderTestCase(AbstractEnsemblTestCase):
 class EnsemblTarkDataProviderTestCase(AbstractEnsemblTestCase):
     @classmethod
     def setUpClass(cls):
-        this_file_dir = os.path.dirname(abspath(getsourcefile(lambda: 0)))
-        #        parent_dir = os.path.dirname(this_file_dir)
-        test_json_file = os.path.join(this_file_dir, "test_data/cdot.ensembl.grch38.json")
-        test_transcripts_file = os.path.join(this_file_dir, "test_data/transcript_sequences.json")
-        mock_seqfetcher = MockSeqFetcher(test_transcripts_file)
-        seqfetcher = ChainedSeqFetcher(mock_seqfetcher, SeqFetcher())
+        seqfetcher = ChainedSeqFetcher(EnsemblTarkTranscriptSeqFetcher(), SeqFetcher())
         cls.json_data_provider = MockEnsemblTarkDataProvider(seqfetcher=seqfetcher)
 
 

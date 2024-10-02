@@ -36,7 +36,6 @@ class ChainedSeqFetcher:
 
     def __init__(self, *args):
         self.seq_fetchers = list(args)
-        self.source = ", ".join(s.source for s in self.seq_fetchers)
 
     def set_data_provider(self, hdp: Interface):
         for seqfetcher in self.seq_fetchers:
@@ -55,6 +54,12 @@ class ChainedSeqFetcher:
 
         raise HGVSDataNotAvailableError(exceptions)
 
+    @property
+    def source(self):
+        # This needs to execute after set_data_provider is called
+        return ", ".join(s.source for s in self.seq_fetchers)
+
+
 
 class AbstractTranscriptSeqFetcher:
     def __init__(self, *args, cache=True):
@@ -63,7 +68,7 @@ class AbstractTranscriptSeqFetcher:
         self.hdp = None  # Set when passed to data provider (via set_data_provider)
 
     @abc.abstractmethod
-    def _get_transcript_seq(self, ac, alt_ac, alt_aln_method):
+    def _get_transcript_seq(self, ac):
         pass
 
     def get_transcript_seq(self, ac):
