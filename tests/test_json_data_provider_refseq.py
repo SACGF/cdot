@@ -5,9 +5,12 @@ from os.path import abspath
 
 import hgvs
 from hgvs.assemblymapper import AssemblyMapper
+from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError
 
+from cdot.hgvs.dataproviders import ChainedSeqFetcher
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
+from tests.mock_seqfetcher import MockSeqFetcher
 
 
 class TestJSONDataProvider(unittest.TestCase):
@@ -16,7 +19,10 @@ class TestJSONDataProvider(unittest.TestCase):
         this_file_dir = os.path.dirname(abspath(getsourcefile(lambda: 0)))
         #        parent_dir = os.path.dirname(this_file_dir)
         test_json_file = os.path.join(this_file_dir, "test_data/cdot.refseq.grch37.json")
-        cls.json_data_provider = JSONDataProvider([test_json_file])
+        test_transcripts_file = os.path.join(this_file_dir, "test_data/transcript_sequences.json")
+        mock_seqfetcher = MockSeqFetcher(test_transcripts_file)
+        seqfetcher = ChainedSeqFetcher(mock_seqfetcher, SeqFetcher())
+        cls.json_data_provider = JSONDataProvider([test_json_file], seqfetcher=seqfetcher)
 
     def test_transcript(self):
         am = AssemblyMapper(self.json_data_provider,
