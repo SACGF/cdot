@@ -1,0 +1,464 @@
+{
+  "count": 1,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "stable_id": "ENST00000617537",
+      "stable_id_version": 5,
+      "assembly": {
+        "assembly_id": 1,
+        "assembly_name": "GRCh38",
+        "genome": 1,
+        "session": 1
+      },
+      "loc_start": 36512941,
+      "loc_end": 36724494,
+      "loc_strand": -1,
+      "loc_region": "7",
+      "loc_checksum": "049673D48856D76AAA277E4DF50FDF3B31DAC89A",
+      "exon_set_checksum": "674C2E74E5750B1F7B0795262277FA48D0BABB6A",
+      "transcript_checksum": "B3D3C4767C6FB65A934633D253216B6935EF9E0E",
+      "sequence": {
+        "sequence": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAGATGCAGTCCCCCTGGAAAATCCTTACGGTGGCGCCTCTATTCTTGCTCCTGTCTCTTCAGTCCTCGGCCTCTCCAGCCAACGATGACCAGTCCAGGCCCAGCCTCTCGAATGGGCACACCTGTGTAGGGTGTGTGCTGGTGGTGTCTGTAATAGAACAGCTTGCTCAAGTTCACAACTCGACGGTCCAGGCCTCGATGGAGAGACTGTGCAGCTACCTGCCTGAAAAACTGTTCTTGAAAACCACCTGCTATTTAGTCATTGACAAGTTTGGATCAGACATCATAAAACTGCTTAGCGCAGATATGAATGCTGATGTGGTATGTCACACTCTGGAGTTTTGTAAACAGAACACTGGCCAACCATTGTGTCATCTCTACCCTCTTCCCAAGGAGACATGGAAATTTACACTACAGAAGGCAAGACAAATTGTCAAGAAGTCCCCGATTCTGAAATATTCTAGAAGTGGTTCTGACATTTGTTCACTCCCGGTTTTGGCCAAGATCTGCCAGAAAATTAAATTAGCTATGGAACAGTCTGTGCCATTCAAAGATGTGGATTCAGACAAATACAGCGTTTTCCCAACACTGCGGGGCTATCACTGGCGGGGGAGAGACTGTAATGACAGCGACGAGTCAGTGTACCCAGGTAGAAGGCCGAACAACTGGGATGTCCATCAGGATTCAAACTGTAATGGCATTTGGGGTGTCGATCCAAAAGATGGAGTTCCATATGAGAAGAAATTCTGTGAAGGTTCACAGCCCAGGGGAATCATTTTGCTGGGAGACTCAGCTGGGGCTCATTTTCACATCTCTCCTGAATGGATCACAGCGTCGCAGATGTCTTTGAACTCTTTCATCAATCTACCAACAGCCCTTACCAACGAGCTTGACTGGCCCCAACTCTCTGGTGCTACAGGATTTCTGGACTCCACTGTTGGAATTAAAGAAAAATCTATTTACCTTCGCTTATGGAAAAGAAACCACTGTAATCACAGGGACTACCAGAATATTTCAAGAAATGGTGCATCTTCCCGAAACCTGAAGAAATTTATAGAAAGCTTGTCTAGAAACAAGGTGTTGGACTATCCCGCCATCGTTATATATGCCATGATTGGAAATGATGTCTGCAGTGGGAAGAGTGACCCAGTCCCAGCCATGACCACTCCTGAGAAACTCTACTCCAACGTCATGCAGACTCTGAAGCATCTAAATTCCCACCTGCCCAATGGCAGCCATGTTATTTTGTATGGCTTACCAGATGGAACCTTTCTCTGGGATAATTTGCACAACAGATATCATCCTCTCGGCCAGCTAAATAAAGACATGACCTATGCGCAGTTGTACTCCTTCCTGAACTGCCTCCAGGTCAGCCCCTGCCACGGCTGGATGTCTTCCAACAAGACGTTGCGGACTCTCACTTCAGAGAGAGCAGAGCAACTCTCCAACACACTGAAAAAAATTGCAGCCAGTGAGAAATTTACAAACTTCAATCTTTTCTACATGGATTTTGCCTTCCATGAAATCATACAGGAGTGGCAGAAGAGAGGCGGACAGCCCTGGCAGCTCATCGAGCCCGTGGATGGATTCCACCCCAACGAGGTGGCTTTGCTGTTGTTGGCGGATCATTTCTGGAAAAAGGTGCAGCTCCAGTGGCCCCAAATCCTGGGAAAGGAGAATCCGTTCAACCCCCAGATTAAACAGGTGTTTGGAGACCAAGGCGGGCACTGAGCCTCTCAGGAGCATGCACCCCTGGGGAGCACAGGGAGGCAGAGGCTTGGGTAAACTCATTCCACAAACCCTATGGGGGCTGCCACGTCACAGGCCCAAAGGACTCTTCTTCAGCAGCATCTTTGCAAAATGTCTTTCTCTCAATGAAGAGCATATCTGGACGACTGTGCAATGCTGTGTGCTCCCGGGATCAGTAACCCTTCCGCTGTTCCTGAAATAACCTTTCATAAAGTGCTTTGGGTGCCATTCCAAACAAGAGAGTATCTGTGCCCTTTACAGCTAATTGTTCTAAAAGGAGTTTCTAAAAACAC",
+        "seq_checksum": "F525BB0F1BD499B52CE5B471C086AA54A70173F8"
+      },
+      "biotype": "protein_coding",
+      "three_prime_utr_start": 36513251,
+      "three_prime_utr_end": 36512941,
+      "three_prime_utr_seq": "GCCTCTCAGGAGCATGCACCCCTGGGGAGCACAGGGAGGCAGAGGCTTGGGTAAACTCATTCCACAAACCCTATGGGGGCTGCCACGTCACAGGCCCAAAGGACTCTTCTTCAGCAGCATCTTTGCAAAATGTCTTTCTCTCAATGAAGAGCATATCTGGACGACTGTGCAATGCTGTGTGCTCCCGGGATCAGTAACCCTTCCGCTGTTCCTGAAATAACCTTTCATAAAGTGCTTTGGGTGCCATTCCAAACAAGAGAGTATCTGTGCCCTTTACAGCTAATTGTTCTAAAAGGAGTTTCTAAAAACAC",
+      "three_prime_utr_checksum": "86565C0FC420603356739A604CD5F07E8A9686B1",
+      "five_prime_utr_start": 36724494,
+      "five_prime_utr_end": 36724149,
+      "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
+      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "98",
+          "description": "Ensembl release",
+          "release_date": "2019-09-30",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "99",
+          "description": "Ensembl release",
+          "release_date": "2020-01-20",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "100",
+          "description": "Ensembl release",
+          "release_date": "2020-04-12",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "101",
+          "description": "Ensembl release",
+          "release_date": "2020-08-06",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "102",
+          "description": "Ensembl release",
+          "release_date": "2020-10-12",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "103",
+          "description": "Ensembl release",
+          "release_date": "2021-02-22",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "104",
+          "description": "Ensembl release",
+          "release_date": "2021-05-22",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "105",
+          "description": "Ensembl release",
+          "release_date": "2021-12-28",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "106",
+          "description": "Ensembl release",
+          "release_date": "2022-04-07",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "107",
+          "description": "Ensembl release",
+          "release_date": "2022-07-05",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "108",
+          "description": "Ensembl release",
+          "release_date": "2022-10-18",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109",
+          "description": "Ensembl release",
+          "release_date": "2023-02-13",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "110",
+          "description": "Ensembl release",
+          "release_date": "2023-07-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "111",
+          "description": "Ensembl release",
+          "release_date": "2024-01-10",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "112",
+          "description": "Ensembl release",
+          "release_date": "2024-05-13",
+          "source": "Ensembl"
+        }
+      ],
+      "genes": [
+        {
+          "stable_id": "ENSG00000136250",
+          "stable_id_version": 12,
+          "assembly": "GRCh38",
+          "loc_start": 36512941,
+          "loc_end": 36724549,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "26025CFFB08C687A800EA02E9C7D199131208C48",
+          "name": "AOAH",
+          "gene_checksum": "6E66B7BD161A92C02FE18CEC49CD89AB91104C74"
+        }
+      ],
+      "translations": [
+        {
+          "stable_id": "ENSP00000483783",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36513252,
+          "loc_end": 36724148,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "66481DF00D92390F74B444B9A3E76BFA14E15298",
+          "translation_id": 46256,
+          "translation_checksum": "C0188B6ED3E54293384F748542493D5732F09952"
+        }
+      ],
+      "exons": [
+        {
+          "exon_id": 31443791,
+          "stable_id": "ENSE00003734236",
+          "stable_id_version": 2,
+          "assembly": "GRCh38",
+          "loc_start": 36724022,
+          "loc_end": 36724494,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "08E663AD1AB21F76585AB433DE52F4110944E6CF",
+          "exon_checksum": "6504E8AD4F23E84F5B7FFC3F80329838F761EE13",
+          "exon_order": 1
+        },
+        {
+          "exon_id": 571814,
+          "stable_id": "ENSE00003743741",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36686699,
+          "loc_end": 36686794,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "C4F3286BB0C76573172A4E263C17ACEA9A931DA8",
+          "exon_checksum": "8A615CF89E37FE386A59AEA491394079743374D6",
+          "exon_order": 2
+        },
+        {
+          "exon_id": 571833,
+          "stable_id": "ENSE00000832386",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36673943,
+          "loc_end": 36674009,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "F4DB3BC346EAD0297E724F464349FE7DCB4C4521",
+          "exon_checksum": "5E226FD386EB5FE4F9043BB042FCF0A61CB40FB2",
+          "exon_order": 3
+        },
+        {
+          "exon_id": 571856,
+          "stable_id": "ENSE00003582548",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36659166,
+          "loc_end": 36659265,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "D7DCDD0A282F5963A85ABA55C67DB742C8ABCBB7",
+          "exon_checksum": "2E432A0ACC4B4D74A3DC71AD1DEE4651E5B67A4C",
+          "exon_order": 4
+        },
+        {
+          "exon_id": 571885,
+          "stable_id": "ENSE00003734343",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36637851,
+          "loc_end": 36637910,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "12C96E7E91254B1A58332D5A018722065B21AF16",
+          "exon_checksum": "1EAF6D0A14F705798A696EA18474357CC5804039",
+          "exon_order": 5
+        },
+        {
+          "exon_id": 571908,
+          "stable_id": "ENSE00003718119",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36632036,
+          "loc_end": 36632106,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "02FDD238899677D9F7D751007CD3E07345DA7331",
+          "exon_checksum": "CEF4A4FF2DC7F8E3095DDB40C402C26E27D210DB",
+          "exon_order": 6
+        },
+        {
+          "exon_id": 571937,
+          "stable_id": "ENSE00003713925",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36623190,
+          "loc_end": 36623250,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "14F148886446B9734DA256E450F925011C1B47DB",
+          "exon_checksum": "880D73DA1D2C2C6F28B89E0B7EF2589A21B1560F",
+          "exon_order": 7
+        },
+        {
+          "exon_id": 571962,
+          "stable_id": "ENSE00003714379",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36621710,
+          "loc_end": 36621780,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "B93C1DCD7602EF7B2784969DE7E1EFF1247C1696",
+          "exon_checksum": "DC59B242F9FED054A49E889D54C8EA39C96995C5",
+          "exon_order": 8
+        },
+        {
+          "exon_id": 571986,
+          "stable_id": "ENSE00003738410",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36620781,
+          "loc_end": 36620829,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "2F34CB57D7C91FA077C0AB1B3F8683136884EC6B",
+          "exon_checksum": "97D780A76A35D84E1C796108B87D46F16DEB9CC9",
+          "exon_order": 9
+        },
+        {
+          "exon_id": 572011,
+          "stable_id": "ENSE00003714535",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36618297,
+          "loc_end": 36618345,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "D8C6BC627A81E2831869A136FB4BD800A7DDC887",
+          "exon_checksum": "73D705609F3593129C7B9EA159C6F7457E057091",
+          "exon_order": 10
+        },
+        {
+          "exon_id": 572042,
+          "stable_id": "ENSE00003750146",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36616380,
+          "loc_end": 36616474,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "4A8DDE3E58EC343FCD9D75D130B9D7A59E2DDE6B",
+          "exon_checksum": "C5408293F5CE130DF4B1C85A1D54CB0F493947D4",
+          "exon_order": 11
+        },
+        {
+          "exon_id": 572067,
+          "stable_id": "ENSE00003732255",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36594339,
+          "loc_end": 36594430,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "92079D53E3DFB742EE37CC74C2CC313D07EAD556",
+          "exon_checksum": "B668DFBFB933233A054F3189802E95BDFDCA53EC",
+          "exon_order": 12
+        },
+        {
+          "exon_id": 572092,
+          "stable_id": "ENSE00003716938",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36576574,
+          "loc_end": 36576656,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "2C8F440684EA7C9A842B6C7ABE64362186FC4B4E",
+          "exon_checksum": "4104F07B1E94CC4F03B52D730FE794AF26ECDF4B",
+          "exon_order": 13
+        },
+        {
+          "exon_id": 572124,
+          "stable_id": "ENSE00003740620",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36549439,
+          "loc_end": 36549475,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "78F65DA8614A56C784713EA7EE128A4029286210",
+          "exon_checksum": "80ABF7D57B59BC53A71D88339994E35735B9615B",
+          "exon_order": 14
+        },
+        {
+          "exon_id": 572146,
+          "stable_id": "ENSE00003715843",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36548612,
+          "loc_end": 36548686,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "4130D6FD2EAB1321378C9B2EC6931B3E26AA5F8B",
+          "exon_checksum": "B8C4CC5EDD3193C2B33A0F49309280905CDEB4DC",
+          "exon_order": 15
+        },
+        {
+          "exon_id": 572169,
+          "stable_id": "ENSE00003740291",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36540319,
+          "loc_end": 36540491,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "15E5DB6B6C6E1DE2985345F095AEE536BE0D72CC",
+          "exon_checksum": "6AC22FEF0D14C719D17ABB04DC6BBB4B291AAC31",
+          "exon_order": 16
+        },
+        {
+          "exon_id": 572186,
+          "stable_id": "ENSE00003746074",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36532286,
+          "loc_end": 36532344,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "CF332CA55D2DAE72BE9852DA447B1C0065E6508B",
+          "exon_checksum": "D62273522FEAF85D2B5B1B52EC44D019229F82F9",
+          "exon_order": 17
+        },
+        {
+          "exon_id": 572211,
+          "stable_id": "ENSE00003722906",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36532147,
+          "loc_end": 36532206,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "122EE207E54E734DB3B517AA079B59825BD183EB",
+          "exon_checksum": "799D29BF20F5C32EE35EF860B17AB681305B50C8",
+          "exon_order": 18
+        },
+        {
+          "exon_id": 572237,
+          "stable_id": "ENSE00003733539",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36530418,
+          "loc_end": 36530514,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "3037901A5D6EC186E304EDF1CCC6B6CB9079827C",
+          "exon_checksum": "2D759EA78E8594D46ADC590A779A5BBA1A74BE59",
+          "exon_order": 19
+        },
+        {
+          "exon_id": 572268,
+          "stable_id": "ENSE00003733565",
+          "stable_id_version": 1,
+          "assembly": "GRCh38",
+          "loc_start": 36522039,
+          "loc_end": 36522115,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "894FD75E4424049D0052A641D1ECA9AF5C977205",
+          "exon_checksum": "3766652C611F8D5CEF6D1E49503094ABEDAC3525",
+          "exon_order": 20
+        },
+        {
+          "exon_id": 31444163,
+          "stable_id": "ENSE00003711963",
+          "stable_id_version": 2,
+          "assembly": "GRCh38",
+          "loc_start": 36512941,
+          "loc_end": 36513380,
+          "loc_strand": -1,
+          "loc_region": "7",
+          "loc_checksum": "6F72AE8D5CDBB440483CD56558F3B307B2B8E849",
+          "exon_checksum": "9430578831E6F1A2B27D80708B317867F8D15BCF",
+          "exon_order": 21
+        }
+      ],
+      "mane_transcript": "NM_001637.4",
+      "mane_transcript_type": "MANE SELECT",
+      "cds_info": {
+        "translation_start": 36513252,
+        "translation_end": 36724148,
+        "three_prime_utr_start": 36513251,
+        "three_prime_utr_end": 36512941,
+        "three_prime_utr_seq": "GCCTCTCAGGAGCATGCACCCCTGGGGAGCACAGGGAGGCAGAGGCTTGGGTAAACTCATTCCACAAACCCTATGGGGGCTGCCACGTCACAGGCCCAAAGGACTCTTCTTCAGCAGCATCTTTGCAAAATGTCTTTCTCTCAATGAAGAGCATATCTGGACGACTGTGCAATGCTGTGTGCTCCCGGGATCAGTAACCCTTCCGCTGTTCCTGAAATAACCTTTCATAAAGTGCTTTGGGTGCCATTCCAAACAAGAGAGTATCTGTGCCCTTTACAGCTAATTGTTCTAAAAGGAGTTTCTAAAAACAC",
+        "three_prime_utr_length": 311,
+        "five_prime_utr_start": 36724494,
+        "five_prime_utr_end": 36724149,
+        "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
+        "five_prime_utr_length": 346,
+        "loc_region": "7",
+        "loc_strand": -1,
+        "cds_seq": "ATGCAGTCCCCCTGGAAAATCCTTACGGTGGCGCCTCTATTCTTGCTCCTGTCTCTTCAGTCCTCGGCCTCTCCAGCCAACGATGACCAGTCCAGGCCCAGCCTCTCGAATGGGCACACCTGTGTAGGGTGTGTGCTGGTGGTGTCTGTAATAGAACAGCTTGCTCAAGTTCACAACTCGACGGTCCAGGCCTCGATGGAGAGACTGTGCAGCTACCTGCCTGAAAAACTGTTCTTGAAAACCACCTGCTATTTAGTCATTGACAAGTTTGGATCAGACATCATAAAACTGCTTAGCGCAGATATGAATGCTGATGTGGTATGTCACACTCTGGAGTTTTGTAAACAGAACACTGGCCAACCATTGTGTCATCTCTACCCTCTTCCCAAGGAGACATGGAAATTTACACTACAGAAGGCAAGACAAATTGTCAAGAAGTCCCCGATTCTGAAATATTCTAGAAGTGGTTCTGACATTTGTTCACTCCCGGTTTTGGCCAAGATCTGCCAGAAAATTAAATTAGCTATGGAACAGTCTGTGCCATTCAAAGATGTGGATTCAGACAAATACAGCGTTTTCCCAACACTGCGGGGCTATCACTGGCGGGGGAGAGACTGTAATGACAGCGACGAGTCAGTGTACCCAGGTAGAAGGCCGAACAACTGGGATGTCCATCAGGATTCAAACTGTAATGGCATTTGGGGTGTCGATCCAAAAGATGGAGTTCCATATGAGAAGAAATTCTGTGAAGGTTCACAGCCCAGGGGAATCATTTTGCTGGGAGACTCAGCTGGGGCTCATTTTCACATCTCTCCTGAATGGATCACAGCGTCGCAGATGTCTTTGAACTCTTTCATCAATCTACCAACAGCCCTTACCAACGAGCTTGACTGGCCCCAACTCTCTGGTGCTACAGGATTTCTGGACTCCACTGTTGGAATTAAAGAAAAATCTATTTACCTTCGCTTATGGAAAAGAAACCACTGTAATCACAGGGACTACCAGAATATTTCAAGAAATGGTGCATCTTCCCGAAACCTGAAGAAATTTATAGAAAGCTTGTCTAGAAACAAGGTGTTGGACTATCCCGCCATCGTTATATATGCCATGATTGGAAATGATGTCTGCAGTGGGAAGAGTGACCCAGTCCCAGCCATGACCACTCCTGAGAAACTCTACTCCAACGTCATGCAGACTCTGAAGCATCTAAATTCCCACCTGCCCAATGGCAGCCATGTTATTTTGTATGGCTTACCAGATGGAACCTTTCTCTGGGATAATTTGCACAACAGATATCATCCTCTCGGCCAGCTAAATAAAGACATGACCTATGCGCAGTTGTACTCCTTCCTGAACTGCCTCCAGGTCAGCCCCTGCCACGGCTGGATGTCTTCCAACAAGACGTTGCGGACTCTCACTTCAGAGAGAGCAGAGCAACTCTCCAACACACTGAAAAAAATTGCAGCCAGTGAGAAATTTACAAACTTCAATCTTTTCTACATGGATTTTGCCTTCCATGAAATCATACAGGAGTGGCAGAAGAGAGGCGGACAGCCCTGGCAGCTCATCGAGCCCGTGGATGGATTCCACCCCAACGAGGTGGCTTTGCTGTTGTTGGCGGATCATTTCTGGAAAAAGGTGCAGCTCCAGTGGCCCCAAATCCTGGGAAAGGAGAATCCGTTCAACCCCCAGATTAAACAGGTGTTTGGAGACCAAGGCGGGCACTGA"
+      }
+    }
+  ]
+}

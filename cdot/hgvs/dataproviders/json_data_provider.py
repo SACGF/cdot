@@ -1,7 +1,6 @@
 import abc
 import gzip
 import json
-import os
 import requests
 
 from collections import defaultdict
@@ -20,6 +19,12 @@ def get_ac_name_map(assembly_name):
     if assembly_name == "GRCh37":
         assembly_name = 'GRCh37.p13'  # Original build didn't have MT
     return make_ac_name_map(assembly_name)
+
+def get_name_ac_map(assembly_name):
+    if assembly_name == "GRCh37":
+        assembly_name = 'GRCh37.p13'  # Original build didn't have MT
+    return make_name_ac_map(assembly_name)
+
 
 
 class AbstractJSONDataProvider(Interface):
@@ -436,7 +441,7 @@ class RESTDataProvider(AbstractJSONDataProvider):
             if 'application/json' in response.headers.get('Content-Type'):
                 data = response.json()
             else:
-                raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % transcript_url)
+                raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % url)
         return data
 
     def _get_transcript(self, tx_ac):
