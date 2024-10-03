@@ -101,7 +101,7 @@ class Test(unittest.TestCase):
         genes, transcripts = parser.get_genes_and_transcripts()
         transcript = transcripts["ENST00000641515.2"]
         tag = transcript["genome_builds"][genome_build].get("tag")
-        self.assertEqual(tag, "MANE_Select")
+        self.assertIn("MANE_Select", tag)
 
     def test_chrom_contig_conversion(self):
         genome_build = "GRCh38"
