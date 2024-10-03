@@ -45,6 +45,7 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
 
         if not self.contig_fastas:
             raise ValueError("Need to provide at least one of fasta file as argument")
+        super().__init__(*args, cache)
 
     def _get_transcript_seq(self, ac):
         possible_contigs = set()
@@ -110,9 +111,9 @@ class FastaSeqFetcher(PrefixSeqFetcher):
     """ Re-implementing using above - deprecated use """
 
     def __init__(self, *args, cache=True):
-        default_seq_fetcher = ExonsFromGenomeFastaSeqFetcher(*args, cache=True)
+        default_seqfetcher = ExonsFromGenomeFastaSeqFetcher(*args, cache=True)
 
-        super().__init__(default_seq_fetcher=default_seq_fetcher)
-        self.prefix_seq_fetchers.update({
+        super().__init__(default_seqfetcher=default_seqfetcher)
+        self.prefix_seqfetchers.update({
             "NC_": GenomeFastaSeqFetcher(*args),
         })

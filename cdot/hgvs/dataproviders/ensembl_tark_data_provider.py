@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from collections import defaultdict
 
 import requests
 from hgvs.exceptions import HGVSDataNotAvailableError
@@ -71,7 +72,7 @@ class EnsemblTarkDataProvider(Interface):
                 raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % url)
         response.raise_for_status()
 
-    def _get_all_paginated_results(self, url):
+    def _get_all_paginated_transcript_results(self, url):
         results = []
         while url:
             # Next links are http
@@ -79,7 +80,28 @@ class EnsemblTarkDataProvider(Interface):
             data = self._get_from_url(url)
             results.extend(data["results"])
             url = data["next"]
-        return results
+        return self._filter_dupes_take_most_recent(results)
+
+    @staticmethod
+    def _filter_dupes_take_most_recent(results):
+        # There can be multiple results for a transcript accession / Genome build, eg:
+        # https://tark.ensembl.org/web/transcript_details/NM_015120.4/NM_015120.4/?assembly_name=GRCh38
+        # We want to pick the one with the most recent 'transcript_release_set'
+        builds = defaultdict(list)
+        for r in results:
+            genome_build = r["assembly"]["assembly_name"]
+            builds[genome_build].append(r)
+        filtered_results = []
+        for genome_build, results in builds.items():
+            if len(results) > 1:
+                def _get_most_recent_release_date(r):
+                    trs = r["transcript_release_set"]
+                    return sorted([t["release_date"] for t in trs], reverse=True)[0]
+
+                results = sorted(results, key=_get_most_recent_release_date)
+                # print(f"{results=}")
+            filtered_results.append(results[0])
+        return filtered_results
 
     @staticmethod
     def _get_transcript_id_and_version(transcript_accession: str):
@@ -106,7 +128,7 @@ class EnsemblTarkDataProvider(Interface):
             "expand_all": "true",
         }
         url += "&".join([f"{k}={v}" for k, v in params.items()])
-        if results := self._get_all_paginated_results(url):
+        if results := self._get_all_paginated_transcript_results(url):
             if len(results) >= 1:
                 self.transcript_results[tx_ac] = results
                 return results
@@ -224,11 +246,6 @@ class EnsemblTarkDataProvider(Interface):
         if alt_strand == -1:
             tx_exons.reverse()
 
-        print("-" * 50)
-        print("Ensembl Tark")
-
-        for ex in tx_exons:
-            print(ex)
         return tx_exons
 
     def get_tx_identity_info(self, tx_ac):
@@ -378,7 +395,7 @@ class EnsemblTarkDataProvider(Interface):
         }
         url += "&".join([f"{k}={v}" for k, v in params.items()])
         tx_list = []
-        if results := self._get_all_paginated_results(url):
+        if results := self._get_all_paginated_transcript_results(url):
             for transcript in results:
                 contig = self._get_transcript_contig(transcript)
                 tx_start = transcript["loc_start"] - 1

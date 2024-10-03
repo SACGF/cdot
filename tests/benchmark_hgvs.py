@@ -3,7 +3,7 @@
 """
     See instructions at end of file on how to extract test HGVS from clinvar
 """
-
+import logging
 import time
 import pandas as pd
 from argparse import ArgumentParser
@@ -11,9 +11,12 @@ from argparse import ArgumentParser
 import hgvs
 import hgvs.dataproviders.uta
 from hgvs.assemblymapper import AssemblyMapper
+from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError, HGVSInvalidVariantError
+from pandas.conftest import cls
 
-from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider, FastaSeqFetcher
+from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider, FastaSeqFetcher, ChainedSeqFetcher
+from cdot.hgvs.dataproviders.ensembl_tark_data_provider import EnsemblTarkTranscriptSeqFetcher, EnsemblTarkDataProvider
 
 
 def handle_args():
@@ -23,10 +26,11 @@ def handle_args():
     group.add_argument('--uta', action='store_true')
     group.add_argument('--rest', action='store_true')
     group.add_argument('--rest-insecure', action='store_true')
+    group.add_argument('--ensembl-tark', action='store_true')
     parser.add_argument('--json', help='JSON file')
     parser.add_argument('--fasta', help='Fasta file for local sequences')
     args = parser.parse_args()
-    if not any([args.uta, args.rest, args.rest_insecure, args.json]):
+    if not any([args.uta, args.rest, args.rest_insecure, args.ensembl_tark, args.json]):
         parser.error("You need to specify at least one of 'uta', 'rest', 'rest-insecure', 'json'")
     return args
 
@@ -54,6 +58,12 @@ def main():
         hdp = RESTDataProvider(secure=False, seqfetcher=seqfetcher)
     elif args.json:
         hdp = JSONDataProvider([args.json], seqfetcher=seqfetcher)
+    elif args.ensembl_tark:
+        # Tark doesn't provide genomes so it needs a genome one...
+        if seqfetcher is None:
+            seqfetcher = SeqFetcher()
+        seqfetcher = ChainedSeqFetcher(EnsemblTarkTranscriptSeqFetcher(), seqfetcher)
+        hdp = EnsemblTarkDataProvider(seqfetcher=seqfetcher)
     else:
         raise ValueError("Unknown data provider method!")
 
@@ -78,6 +88,7 @@ def main():
             else:
                 converted_hgvs_g = str(am.n_to_g(var_c))
         except HGVSDataNotAvailableError:
+            # logging.warning(dne)
             no_data += 1
             continue
         except HGVSInvalidVariantError as ive:
