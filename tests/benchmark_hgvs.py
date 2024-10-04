@@ -124,9 +124,12 @@ if __name__ == '__main__':
 
 """
 
+How to make RefSeq test files:
+--------------------------------
+
 * Get a subset of rows from ClinVar VCF
     * zgrep "^#" clinvar.vcf.gz > header.txt
-    * zcat -v "^#" clinvar.vcf.gz | shuf -n 1000 > clinvar_1k_records.vcf
+    * zgrep -v "^#" clinvar.vcf.gz | shuf -n 1000 > clinvar_1k_records.vcf
     * cat header.txt clinvar_1k_rows.vcf | gzip > clinvar_1k.vcf.gz
 
 * Annotate the VCF to get MANE transcript (via --pick)
@@ -134,9 +137,6 @@ if __name__ == '__main__':
     vep -i clinvar_1k.vcf.gz -o clinvar_1k.vep_annotated.vcf.gz --cache --dir /data/annotation/VEP/vep_cache --fasta /data/annotation/fasta/GCF_000001405.39_GRCh38.p13_genomic.fna.gz --assembly GRCh38 --offline --use_given_ref --vcf --compress_output gzip --force_overwrite --pick --no_escape --hgvs --refseq --buffer_size 1000
 
 * Extract out the g.HGVS and c.HGVS
-
-
-
 
 def cyvcf2_header_types(cyvcf2_reader):
     header_types = defaultdict(dict)
@@ -165,6 +165,45 @@ for v in reader:
     c_hgvs = td.get("HGVSc")
     if g_hgvs and c_hgvs:
         hgvs.append((g_hgvs, c_hgvs))
+
+
+--------------------------
+How to make Ensembl files
+--------------------------
+
+* Import ClinVar subset into VariantGrid
+* As admin, on VCF page click "Populate ClinGen Alleles"
+* Should have enough with both ClinVar and MANE
+
+def get_38_ghgvs(cga):
+    for ga in cga.api_response["genomicAlleles"]:
+        if ga["referenceGenome"] == 'GRCh38':
+            for h in ga["hgvs"]:
+                if h.startswith("NC_"):
+                    return h
+    return None
+
+def get_ensembl_mane(cga):
+    for ta in cga.api_response["transcriptAlleles"]:
+        if mane := ta.get("MANE"):
+            if nt := mane.get("nucleotide"):
+                if e := nt.get("Ensembl"):
+                    if h := e.get("hgvs"):
+                        return h
+    return None
+
+g_and_c = []
+
+clingen_qs = ClinGenAllele.objects.filter(Q(api_response__icontains='ClinVarAlleles') & Q(api_response__icontains='MANE'))
+for cga in clingen_qs:
+    g_hgvs = get_38_ghgvs(cga)
+    c_hgvs = get_ensembl_mane(cga)
+    if g_hgvs and c_hgvs:
+        g_and_c.append((g_hgvs, c_hgvs))
+
+with open("/tmp/transcripts.txt", "wt") as f:
+    for x in g_and_c:
+        f.write("\t".join(x) + "\n")
 
 
 """
