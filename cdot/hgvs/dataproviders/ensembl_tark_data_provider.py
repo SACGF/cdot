@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 from collections import defaultdict
@@ -9,10 +10,11 @@ from hgvs.exceptions import HGVSDataNotAvailableError
 
 from cdot.hgvs.dataproviders import get_ac_name_map, get_name_ac_map, ExonsFromGenomeFastaSeqFetcher, \
     GenomeFastaSeqFetcher
-from cdot.hgvs.dataproviders.seqfetcher import AbstractTranscriptSeqFetcher, PrefixSeqFetcher, VerifyMultipleSeqFetcher, \
-    AlwaysFailSeqFetcher
+from cdot.hgvs.dataproviders.seqfetcher import AbstractTranscriptSeqFetcher, PrefixSeqFetcher, \
+    VerifyMultipleSeqFetcher, AlwaysFailSeqFetcher
 from hgvs.dataproviders.interface import Interface
 
+_REFSEQ_PREFIXES = {"NM_", "NR_"}
 
 class _EnsemblTarkTranscriptSeqFetcher(AbstractTranscriptSeqFetcher):
     """ This retrieves sequences from Tark - but doesn't handle genomes or check RefSeq
@@ -25,7 +27,7 @@ class _EnsemblTarkTranscriptSeqFetcher(AbstractTranscriptSeqFetcher):
 
     @property
     def source(self):
-        return f"EnsemblTarkTranscriptSeqFetcher: hdp={self.hdp.source}"
+        return f"EnsemblTarkTranscriptSeqFetcher: hdp={self.hdp}"
 
 
 class EnsemblTarkSeqFetcher(PrefixSeqFetcher):
@@ -33,15 +35,18 @@ class EnsemblTarkSeqFetcher(PrefixSeqFetcher):
         super().__init__()
         tark_seqfetcher = _EnsemblTarkTranscriptSeqFetcher()
         if fasta_files is not None:
-            print("Using genome fasta seq fetcher")
             fasta_seqfetcher = GenomeFastaSeqFetcher(*fasta_files)
 
             # For RefSeq - Tark doesn't have alignments, so can't check whether there are gaps
             # So we'll look up the genome reference, and if they don't match, throw an error
-            exons_seqfetcher = ExonsFromGenomeFastaSeqFetcher(*fasta_files, cache=True)
+            class NoValidationExonsFromGenomeFastaSeqFetcher(ExonsFromGenomeFastaSeqFetcher):
+                def get_mapping_options(self, ac):
+                    # Normal 'get_tx_mapping_options' has a check that causes recursion
+                    return self.hdp.get_tx_mapping_options_without_validation(ac)
+
+            exons_seqfetcher = NoValidationExonsFromGenomeFastaSeqFetcher(*fasta_files, cache=True)
             refseq_seqfetcher = VerifyMultipleSeqFetcher(tark_seqfetcher, exons_seqfetcher)
         else:
-            print("Using default HGVS SeqFetcher")
             fasta_seqfetcher = SeqFetcher()  # Default HGVS
             msg = "You need to provide 'fasta_files' to use RefSeq transcripts. RefSeq transcripts can align with " + \
                    "gaps, so need to compare transcript/genome sequences"
@@ -51,9 +56,7 @@ class EnsemblTarkSeqFetcher(PrefixSeqFetcher):
             "NC_": fasta_seqfetcher,
             "ENST": tark_seqfetcher,
         })
-
-        _refseq_prefixes = ["NM_", "NR_"]
-        self.prefix_seqfetchers.update({rp: refseq_seqfetcher for rp in _refseq_prefixes})
+        self.prefix_seqfetchers.update({rp: refseq_seqfetcher for rp in _REFSEQ_PREFIXES})
 
 
 class EnsemblTarkDataProvider(Interface):
@@ -113,9 +116,6 @@ class EnsemblTarkDataProvider(Interface):
             # Next links are http
             url = re.sub(r'^http://', 'https://', url)
             data = self._get_from_url(url)
-            print(f"--- URL {url} returned:")
-            print(data)
-            print("-----")
             results.extend(data["results"])
             url = data["next"]
         return self._filter_dupes_take_most_recent(results)
@@ -125,21 +125,22 @@ class EnsemblTarkDataProvider(Interface):
         # There can be multiple results for a transcript accession / Genome build, eg:
         # https://tark.ensembl.org/web/transcript_details/NM_015120.4/NM_015120.4/?assembly_name=GRCh38
         # We want to pick the one with the most recent 'transcript_release_set'
-        builds = defaultdict(list)
+        build_transcripts = defaultdict(lambda: defaultdict(list))
         for r in results:
             genome_build = EnsemblTarkDataProvider._get_genome_build(r)
-            builds[genome_build].append(r)
+            transcript_accession = EnsemblTarkDataProvider._get_transcript_accession(r)
+            build_transcripts[genome_build][transcript_accession].append(r)
 
         filtered_results = []
-        for genome_build, results in builds.items():
-            if len(results) > 1:
-                def _get_most_recent_release_date(result):
-                    trs = result["transcript_release_set"]
-                    return sorted([t["release_date"] for t in trs], reverse=True)[0]
+        for genome_build, transcript_results in build_transcripts.items():
+            for results in transcript_results.values():
+                if len(results) > 1:
+                    def _get_most_recent_release_date(result):
+                        trs = result["transcript_release_set"]
+                        return sorted([t["release_date"] for t in trs], reverse=True)[0]
 
-                print(f"{results=}")
-                results = sorted(results, key=_get_most_recent_release_date)
-            filtered_results.append(results[0])
+                    results = sorted(results, key=_get_most_recent_release_date)
+                filtered_results.append(results[0])
         return filtered_results
 
     @staticmethod
@@ -337,7 +338,8 @@ class EnsemblTarkDataProvider(Interface):
             f"No tx_info for (tx_ac={tx_ac},alt_ac={alt_ac},alt_aln_method={alt_aln_method})"
         )
 
-    def get_tx_mapping_options(self, tx_ac):
+    def get_tx_mapping_options_without_validation(self, tx_ac):
+        # We need to be able to call this from NoValidationExonsFromGenomeFastaSeqFetcher
         mapping_options = []
         if transcript_results := self._get_transcript_results(tx_ac):
             for transcript in transcript_results:
@@ -348,6 +350,16 @@ class EnsemblTarkDataProvider(Interface):
                     "alt_aln_method": self.NCBI_ALN_METHOD,
                 }
                 mapping_options.append(mo)
+        return mapping_options
+
+    def get_tx_mapping_options(self, tx_ac):
+        try:
+            self._verify_no_alignment_gaps(tx_ac)
+            mapping_options = self.get_tx_mapping_options_without_validation(tx_ac)
+        except HGVSDataNotAvailableError as e:
+            if "Inconsistent" in str(e):
+                logging.debug("'%s' transcript/genome sequence mismatch without alignment information - skipping.")
+            mapping_options = []  # Can't map
         return mapping_options
 
     def get_acs_for_protein_seq(self, seq):
@@ -398,6 +410,15 @@ class EnsemblTarkDataProvider(Interface):
     def _check_alt_aln_method(self, alt_aln_method):
         if alt_aln_method != self.NCBI_ALN_METHOD:
             raise HGVSDataNotAvailableError(f"cdot only supports alt_aln_method={self.NCBI_ALN_METHOD}")
+
+    def _verify_no_alignment_gaps(self, tx_ac):
+        # Tark doesn't have alignments, thus RefSeq could be wrong
+        # See https://github.com/Ensembl/tark/issues/81
+        for prefix in _REFSEQ_PREFIXES:
+            if tx_ac.startswith(prefix):
+                # see EnsemblTarkSeqFetcher - refseq gets seq from Tark and Exon fastas, die if not the same
+                self.get_seq(tx_ac)
+                break
 
     def get_tx_for_gene(self, gene):
         url = os.path.join(self.base_url, "transcript/search/?")

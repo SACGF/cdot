@@ -1,6 +1,6 @@
 {
   "count": 53,
-  "next": "http://tark.ensembl.org/api/transcript/?assembly_name=GRCh38&expand=transcript_release_set&loc_end=36530417&loc_region=7&loc_start=36530514&page=2",
+  "next": "http://tark.ensembl.org/api/transcript/?assembly_name=GRCh38&expand=transcript_release_set&loc_end=36530514&loc_region=7&loc_start=36530417&page=2",
   "previous": null,
   "results": [
     {

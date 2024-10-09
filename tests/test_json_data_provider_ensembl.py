@@ -56,7 +56,8 @@ class AbstractEnsemblTestCase(unittest.TestCase, ABC):
                 self.assertEqual(tx_data["alt_strand"], -1)
                 self.assertEqual(tx_data["start_i"], 36512940)
                 self.assertEqual(tx_data["end_i"], 36724494)
-                continue
+                break
+
         self.assertTrue(found)
 
     def test_get_pro_ac_for_tx_ac(self):

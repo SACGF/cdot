@@ -99,11 +99,8 @@ class VerifyMultipleSeqFetcher(MultiSeqFetcher):
             raise HGVSDataNotAvailableError(exceptions)
 
         values = list(results.values())
-        print(f"Multi-results: num results = {len(results)}")
         if not all_equal(values):
-            print("Were different!")
-            print(values)
-            raise HGVSDataNotAvailableError("Results were not consistent")
+            raise HGVSDataNotAvailableError(f"Inconsistent sequences for '{ac}'")
         return values[0]
 
 
