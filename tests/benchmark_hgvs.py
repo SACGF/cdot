@@ -13,7 +13,6 @@ import hgvs.dataproviders.uta
 from hgvs.assemblymapper import AssemblyMapper
 from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError, HGVSInvalidVariantError
-from pandas.conftest import cls
 
 from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider, FastaSeqFetcher, ChainedSeqFetcher
 from cdot.hgvs.dataproviders.ensembl_tark_data_provider import EnsemblTarkTranscriptSeqFetcher, EnsemblTarkDataProvider
@@ -21,6 +20,7 @@ from cdot.hgvs.dataproviders.ensembl_tark_data_provider import EnsemblTarkTransc
 
 def handle_args():
     parser = ArgumentParser(description='Benchmark cdot')
+    parser.add_argument("--debug", action="store_true")
     parser.add_argument("hgvs_file")
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--uta', action='store_true')
@@ -31,12 +31,14 @@ def handle_args():
     parser.add_argument('--fasta', help='Fasta file for local sequences')
     args = parser.parse_args()
     if not any([args.uta, args.rest, args.rest_insecure, args.ensembl_tark, args.json]):
-        parser.error("You need to specify at least one of 'uta', 'rest', 'rest-insecure', 'json'")
+        parser.error("You need to specify at least one of 'uta', 'rest', 'rest-insecure', 'ensembl-tark', 'json'")
     return args
 
 
 def main():
     args = handle_args()
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
 
     hgvs_g_c_list = []
     with open(args.hgvs_file) as f:
@@ -44,10 +46,12 @@ def main():
             hgvs_g_c_list.append(line.split())
 
     total = len(hgvs_g_c_list)
-    print(f"Using {total} test records")
+    logging.debug(f"Using {total} test records")
 
     seqfetcher = None
     if args.fasta:
+        if args.debug:
+            logging.debug("Using fasta: %s", args.fasta)
         seqfetcher = FastaSeqFetcher(args.fasta)
 
     if args.uta:
@@ -67,7 +71,8 @@ def main():
     else:
         raise ValueError("Unknown data provider method!")
 
-    print("Starting benchmark...")
+    if args.debug:
+        logging.debug("Starting benchmark...")
     am = AssemblyMapper(hdp,
                         assembly_name='GRCh38',
                         alt_aln_method='splign', replace_reference=True)
@@ -78,22 +83,42 @@ def main():
     correct = 0
     incorrect = 0
     no_data = 0
+    errors = 0
     total_start = time.time()
+
+    def _show_stats():
+        df = pd.DataFrame(run_times)
+        print(df.describe().T)
+        print(f"Correct: {correct}, incorrect: {incorrect}, no data: {no_data}, errors: {errors}")
+
+    last_notification = time.time()
     for hgvs_g, hgvs_c in hgvs_g_c_list:
+        if args.debug:
+            logging.debug("c.HGVS: %s", hgvs_c)
+
         start = time.time()
+        if start - last_notification > 5:
+            last_notification = start
+            _show_stats()
+            print("-" * 50)
+
         try:
             var_c = hp.parse_hgvs_variant(hgvs_c)
             if ":c." in hgvs_c:
                 converted_hgvs_g = str(am.c_to_g(var_c))
             else:
                 converted_hgvs_g = str(am.n_to_g(var_c))
-        except HGVSDataNotAvailableError:
-            # logging.warning(dne)
+        except HGVSDataNotAvailableError as dne:
+            logging.warning(dne)
             no_data += 1
             continue
         except HGVSInvalidVariantError as ive:
             print(f"{hgvs_c}: {ive}")
             incorrect += 1
+            continue
+        except Exception as e:
+            logging.error(e)
+            errors += 1
             continue
 
         if converted_hgvs_g == hgvs_g:
@@ -108,16 +133,11 @@ def main():
         time_taken = end - start
         run_times.append(time_taken)
 
+    _show_stats()
     total_end = time.time()
-
-    print(f"Total: {total}, correct: {correct}, incorrect: {incorrect}, no data: {no_data}")
-    df = pd.DataFrame(run_times)
-    print(df.describe())
-
     total_time = total_end - total_start
-    num_per_second = 1/total_time * total
+    num_per_second = 1 / total_time * total
     print(f"{total} in {total_time} = {num_per_second} per second")
-
 
 if __name__ == '__main__':
     main()
