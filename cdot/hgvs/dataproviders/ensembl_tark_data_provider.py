@@ -354,7 +354,7 @@ class EnsemblTarkDataProvider(Interface):
             self._verify_no_alignment_gaps(tx_ac)
             mapping_options = self.get_tx_mapping_options_without_validation(tx_ac)
         except HGVSDataNotAvailableError:
-            logging.debug("'%s' transcript/genome sequence mismatch without alignment information - skipping.")
+            logging.debug("'%s' transcript/genome sequence mismatch without alignment information - skipping.", tx_ac)
             mapping_options = []  # Can't map
         return mapping_options
 
