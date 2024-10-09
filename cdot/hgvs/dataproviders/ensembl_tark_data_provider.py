@@ -102,11 +102,7 @@ class EnsemblTarkDataProvider(Interface):
         response = requests.get(url)
         if response.ok:
             if 'application/json' in response.headers.get('Content-Type'):
-                data = response.json()
-                filename = f"/tmp/{url.replace('/', '|')}.json"
-                with open(filename, "wt") as f:
-                    json.dump(data, f)
-                return data
+                return response.json()
             else:
                 raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % url)
         response.raise_for_status()
