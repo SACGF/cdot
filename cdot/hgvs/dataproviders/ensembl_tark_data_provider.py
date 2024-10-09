@@ -454,13 +454,12 @@ class EnsemblTarkDataProvider(Interface):
         assembly = self.assembly_by_contig[alt_ac]
         loc_region = self._get_chrom_from_contig(alt_ac)
         params = {
-            # TODO: Off by 1 errors?
             "assembly_name": assembly,  # Restrict to genome build
             # TODO: Expand all then store transcripts?
             "expand": "transcript_release_set",  # We need this to filter dupes
             "loc_end": end_i,
             "loc_region": loc_region,
-            "loc_start": start_i,
+            "loc_start": start_i + 1,  # UTA is 0 based, Tark is 1-based
         }
         url += "&".join([f"{k}={v}" for k, v in params.items()])
         tx_list = []
