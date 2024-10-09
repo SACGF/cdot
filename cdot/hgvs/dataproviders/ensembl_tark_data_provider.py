@@ -17,8 +17,7 @@ from hgvs.dataproviders.interface import Interface
 _REFSEQ_PREFIXES = {"NM_", "NR_"}
 
 class _EnsemblTarkTranscriptSeqFetcher(AbstractTranscriptSeqFetcher):
-    """ This retrieves sequences from Tark - but doesn't handle genomes or check RefSeq
-        For that, you probably want """
+    """ This retrieves sequences from Tark (but not genome/RefSeq checks etc) """
     def _get_transcript_seq(self, ac):
         if ac.startswith("NC_"):
             raise HGVSDataNotAvailableError()
@@ -31,6 +30,8 @@ class _EnsemblTarkTranscriptSeqFetcher(AbstractTranscriptSeqFetcher):
 
 
 class EnsemblTarkSeqFetcher(PrefixSeqFetcher):
+    """ Default for EnsemblTarkDataProvider
+        You may need to instantiate your own copy to provide fasta_files """
     def __init__(self, *args, fasta_files=None):
         super().__init__()
         tark_seqfetcher = _EnsemblTarkTranscriptSeqFetcher()
@@ -356,9 +357,8 @@ class EnsemblTarkDataProvider(Interface):
         try:
             self._verify_no_alignment_gaps(tx_ac)
             mapping_options = self.get_tx_mapping_options_without_validation(tx_ac)
-        except HGVSDataNotAvailableError as e:
-            if "Inconsistent" in str(e):
-                logging.debug("'%s' transcript/genome sequence mismatch without alignment information - skipping.")
+        except HGVSDataNotAvailableError:
+            logging.debug("'%s' transcript/genome sequence mismatch without alignment information - skipping.")
             mapping_options = []  # Can't map
         return mapping_options
 
