@@ -11,11 +11,10 @@ from argparse import ArgumentParser
 import hgvs
 import hgvs.dataproviders.uta
 from hgvs.assemblymapper import AssemblyMapper
-from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError, HGVSInvalidVariantError
 
-from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider, FastaSeqFetcher, ChainedSeqFetcher
-from cdot.hgvs.dataproviders.ensembl_tark_data_provider import EnsemblTarkTranscriptSeqFetcher, EnsemblTarkDataProvider
+from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider, FastaSeqFetcher
+from cdot.hgvs.dataproviders.ensembl_tark_data_provider import EnsemblTarkDataProvider, EnsemblTarkSeqFetcher
 
 
 def handle_args():
@@ -64,9 +63,11 @@ def main():
         hdp = JSONDataProvider([args.json], seqfetcher=seqfetcher)
     elif args.ensembl_tark:
         # Tark doesn't provide genomes so it needs a genome one...
-        if seqfetcher is None:
-            seqfetcher = SeqFetcher()
-        seqfetcher = ChainedSeqFetcher(EnsemblTarkTranscriptSeqFetcher(), seqfetcher)
+        if args.fasta:
+            fasta_files = [args.fasta]
+        else:
+            fasta_files = None
+        seqfetcher = EnsemblTarkSeqFetcher(fasta_files=fasta_files)
         hdp = EnsemblTarkDataProvider(seqfetcher=seqfetcher)
     else:
         raise ValueError("Unknown data provider method!")

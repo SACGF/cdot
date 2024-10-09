@@ -10,7 +10,7 @@ from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError
 
 from cdot.hgvs.dataproviders import ChainedSeqFetcher
-from cdot.hgvs.dataproviders.ensembl_tark_data_provider import EnsemblTarkTranscriptSeqFetcher
+from cdot.hgvs.dataproviders.ensembl_tark_data_provider import EnsemblTarkSeqFetcher
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
 from tests.mock_seqfetcher import MockSeqFetcher
 from tests.mock_ensembl_tark import MockEnsemblTarkDataProvider
@@ -90,8 +90,7 @@ class JsonDataProviderTestCase(AbstractEnsemblTestCase):
 class EnsemblTarkDataProviderTestCase(AbstractEnsemblTestCase):
     @classmethod
     def setUpClass(cls):
-        seqfetcher = ChainedSeqFetcher(EnsemblTarkTranscriptSeqFetcher(), SeqFetcher())
-        cls.json_data_provider = MockEnsemblTarkDataProvider(seqfetcher=seqfetcher)
+        cls.json_data_provider = MockEnsemblTarkDataProvider()
 
 
 

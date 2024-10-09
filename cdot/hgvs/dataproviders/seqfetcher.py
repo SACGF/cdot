@@ -1,6 +1,6 @@
 import abc
 
-from pysam.libcfaidx import FastaFile
+from more_itertools import all_equal
 from hgvs.dataproviders.interface import Interface
 from hgvs.exceptions import HGVSDataNotAvailableError
 
@@ -39,15 +39,7 @@ class PrefixSeqFetcher:
         raise HGVSDataNotAvailableError(msg)
 
 
-class ChainedSeqFetcher:
-    """ This takes multiple SeqFetcher instances, and tries them in order if HGVSDataNotAvailableError
-        until one succeeds (or finally throws)
-
-        This is useful if you want to use FastaSeqFetcher (below) as a fallback if SeqFetcher fails
-
-        seqfetcher = ChainedSeqFetcher(SeqFetcher(), FastaSeqFetcher(fasta_filename))
-    """
-
+class MultiSeqFetcher(abc.ABC):
     def __init__(self, *args):
         self.seqfetchers = list(args)
 
@@ -58,6 +50,25 @@ class ChainedSeqFetcher:
             except AttributeError:
                 pass
 
+    @abc.abstractmethod
+    def fetch_seq(self, ac, start_i=None, end_i=None):
+        pass
+
+    @property
+    def source(self):
+        # This needs to execute after set_data_provider is called
+        return ", ".join(s.source for s in self.seqfetchers)
+
+
+
+class ChainedSeqFetcher(MultiSeqFetcher):
+    """ This takes multiple SeqFetcher instances, and tries them in order if HGVSDataNotAvailableError
+        until one succeeds (or finally throws)
+
+        This is useful if you want to use FastaSeqFetcher (below) as a fallback if SeqFetcher fails
+
+        seqfetcher = ChainedSeqFetcher(SeqFetcher(), FastaSeqFetcher(fasta_filename))
+    """
     def fetch_seq(self, ac, start_i=None, end_i=None):
         exceptions = []
         for sf in self.seqfetchers:
@@ -68,10 +79,41 @@ class ChainedSeqFetcher:
 
         raise HGVSDataNotAvailableError(exceptions)
 
-    @property
-    def source(self):
-        # This needs to execute after set_data_provider is called
-        return ", ".join(s.source for s in self.seqfetchers)
+
+class VerifyMultipleSeqFetcher(MultiSeqFetcher):
+    """ This takes multiple SeqFetcher instances, queries them both and checks the BOTH SUCCEED AND ARE IDENTICAL
+        - otherwise it fails with HGVSDataNotAvailableError
+
+        This is useful for eg verifying that RefSeq transcripts agree with the genome (otherwise there must be)
+    """
+    def fetch_seq(self, ac, start_i=None, end_i=None):
+        results = {}
+        exceptions = []
+        for sf in self.seqfetchers:
+            try:
+                seq = sf.fetch_seq(ac, start_i=start_i, end_i=end_i)
+                results[sf.source] = seq
+            except HGVSDataNotAvailableError as e:
+                exceptions.append(e)
+        if exceptions:
+            raise HGVSDataNotAvailableError(exceptions)
+
+        values = list(results.values())
+        print(f"Multi-results: num results = {len(results)}")
+        if not all_equal(values):
+            print("Were different!")
+            print(values)
+            raise HGVSDataNotAvailableError("Results were not consistent")
+        return values[0]
+
+
+class AlwaysFailSeqFetcher:
+    def __init__(self, message):
+        self.message = message
+        self.source = str(self.__class__.__name__)
+
+    def fetch_seq(self, ac, start_i=None, end_i=None):
+        raise HGVSDataNotAvailableError(self.message)
 
 
 

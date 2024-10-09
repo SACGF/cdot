@@ -4,14 +4,19 @@ import re
 from collections import defaultdict
 
 import requests
+from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError
 
-from cdot.hgvs.dataproviders import get_ac_name_map, get_name_ac_map
-from cdot.hgvs.dataproviders.seqfetcher import AbstractTranscriptSeqFetcher
+from cdot.hgvs.dataproviders import get_ac_name_map, get_name_ac_map, ExonsFromGenomeFastaSeqFetcher, \
+    GenomeFastaSeqFetcher
+from cdot.hgvs.dataproviders.seqfetcher import AbstractTranscriptSeqFetcher, PrefixSeqFetcher, VerifyMultipleSeqFetcher, \
+    AlwaysFailSeqFetcher
 from hgvs.dataproviders.interface import Interface
 
 
-class EnsemblTarkTranscriptSeqFetcher(AbstractTranscriptSeqFetcher):
+class _EnsemblTarkTranscriptSeqFetcher(AbstractTranscriptSeqFetcher):
+    """ This retrieves sequences from Tark - but doesn't handle genomes or check RefSeq
+        For that, you probably want """
     def _get_transcript_seq(self, ac):
         if ac.startswith("NC_"):
             raise HGVSDataNotAvailableError()
@@ -23,6 +28,34 @@ class EnsemblTarkTranscriptSeqFetcher(AbstractTranscriptSeqFetcher):
         return f"EnsemblTarkTranscriptSeqFetcher: hdp={self.hdp.source}"
 
 
+class EnsemblTarkSeqFetcher(PrefixSeqFetcher):
+    def __init__(self, *args, fasta_files=None):
+        super().__init__()
+        tark_seqfetcher = _EnsemblTarkTranscriptSeqFetcher()
+        if fasta_files is not None:
+            print("Using genome fasta seq fetcher")
+            fasta_seqfetcher = GenomeFastaSeqFetcher(*fasta_files)
+
+            # For RefSeq - Tark doesn't have alignments, so can't check whether there are gaps
+            # So we'll look up the genome reference, and if they don't match, throw an error
+            exons_seqfetcher = ExonsFromGenomeFastaSeqFetcher(*fasta_files, cache=True)
+            refseq_seqfetcher = VerifyMultipleSeqFetcher(tark_seqfetcher, exons_seqfetcher)
+        else:
+            print("Using default HGVS SeqFetcher")
+            fasta_seqfetcher = SeqFetcher()  # Default HGVS
+            msg = "You need to provide 'fasta_files' to use RefSeq transcripts. RefSeq transcripts can align with " + \
+                   "gaps, so need to compare transcript/genome sequences"
+            refseq_seqfetcher = AlwaysFailSeqFetcher(msg)
+
+        self.prefix_seqfetchers.update({
+            "NC_": fasta_seqfetcher,
+            "ENST": tark_seqfetcher,
+        })
+
+        _refseq_prefixes = ["NM_", "NR_"]
+        self.prefix_seqfetchers.update({rp: refseq_seqfetcher for rp in _refseq_prefixes})
+
+
 class EnsemblTarkDataProvider(Interface):
     """
         Tark - Transcript Archive - https://tark.ensembl.org/
@@ -32,7 +65,7 @@ class EnsemblTarkDataProvider(Interface):
 
     def __init__(self, assemblies: list[str] = None, mode=None, cache=None, seqfetcher=None):
         """ assemblies: defaults to ["GRCh37", "GRCh38"]
-            seqfetcher defaults to biocommons SeqFetcher()
+            seqfetcher defaults to EnsemblTarkSeqFetcher(), which uses hgvs SeqFetcher for fastas
         """
         self.base_url = "https://tark.ensembl.org/api"
         # Local caches
@@ -42,11 +75,13 @@ class EnsemblTarkDataProvider(Interface):
             assemblies = ["GRCh37", "GRCh38"]
 
         super().__init__(mode=mode, cache=cache)
-        if seqfetcher:
-            try:
-                seqfetcher.set_data_provider(self)
-            except AttributeError:
-                pass
+        if seqfetcher is None:
+            seqfetcher = EnsemblTarkSeqFetcher()
+
+        try:
+            seqfetcher.set_data_provider(self)
+        except AttributeError:
+            pass
         self.seqfetcher = seqfetcher
         self.assembly_maps = {}
         self.name_to_assembly_maps = {}
@@ -78,6 +113,9 @@ class EnsemblTarkDataProvider(Interface):
             # Next links are http
             url = re.sub(r'^http://', 'https://', url)
             data = self._get_from_url(url)
+            print(f"--- URL {url} returned:")
+            print(data)
+            print("-----")
             results.extend(data["results"])
             url = data["next"]
         return self._filter_dupes_take_most_recent(results)
@@ -89,17 +127,18 @@ class EnsemblTarkDataProvider(Interface):
         # We want to pick the one with the most recent 'transcript_release_set'
         builds = defaultdict(list)
         for r in results:
-            genome_build = r["assembly"]["assembly_name"]
+            genome_build = EnsemblTarkDataProvider._get_genome_build(r)
             builds[genome_build].append(r)
+
         filtered_results = []
         for genome_build, results in builds.items():
             if len(results) > 1:
-                def _get_most_recent_release_date(r):
-                    trs = r["transcript_release_set"]
+                def _get_most_recent_release_date(result):
+                    trs = result["transcript_release_set"]
                     return sorted([t["release_date"] for t in trs], reverse=True)[0]
 
+                print(f"{results=}")
                 results = sorted(results, key=_get_most_recent_release_date)
-                # print(f"{results=}")
             filtered_results.append(results[0])
         return filtered_results
 
@@ -141,7 +180,8 @@ class EnsemblTarkDataProvider(Interface):
             raise ValueError(f"Contig '{alt_ac}' not supported. Supported assemblies: {supported_assemblies}")
 
         for transcript in transcript_results:
-            if transcript["assembly"]["assembly_name"] == assembly:
+            genome_build = self._get_genome_build(transcript)
+            if genome_build == assembly:
                 return transcript
         return None
 
@@ -186,13 +226,18 @@ class EnsemblTarkDataProvider(Interface):
             cds_end_i = sequence_length - len(three_prime_utr_seq)
         return cds_start_i, cds_end_i
 
-    def _get_transcript_contig(self, transcript):
+    @staticmethod
+    def _get_genome_build(transcript):
         assembly = transcript["assembly"]
         # Sometimes this can be expanded
         if isinstance(assembly, str):
             genome_build = assembly
         else:
             genome_build = assembly["assembly_name"]
+        return genome_build
+
+    def _get_transcript_contig(self, transcript):
+        genome_build = self._get_genome_build(transcript)
         name_to_ac_map = self.name_to_assembly_maps[genome_build]
         name = transcript["loc_region"]
         return name_to_ac_map[name]
@@ -382,16 +427,19 @@ class EnsemblTarkDataProvider(Interface):
 
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
+        assert end_i >= start_i, f"{end_i=} must be greater or equal than {start_i=}"
+
         url = os.path.join(self.base_url, "transcript/?")
-        # TODO: Off by 1 errors?
-        # I think there is an issue for ensembl tark here about cross genomes
+        assembly = self.assembly_by_contig[alt_ac]
         loc_region = self._get_chrom_from_contig(alt_ac)
         params = {
+            # TODO: Off by 1 errors?
+            "assembly_name": assembly,  # Restrict to genome build
+            # TODO: Expand all then store transcripts?
+            "expand": "transcript_release_set",  # We need this to filter dupes
             "loc_end": end_i,
             "loc_region": loc_region,
             "loc_start": start_i,
-            # TODO: Expand all then store transcripts?
-            # "expand_all": "false",
         }
         url += "&".join([f"{k}={v}" for k, v in params.items()])
         tx_list = []
