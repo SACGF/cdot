@@ -1,6 +1,6 @@
 {
-  "count": 54,
-  "next": "http://tark.ensembl.org/api/transcript/?loc_end=36530514&loc_region=7&loc_start=36530417&page=2",
+  "count": 53,
+  "next": "http://tark.ensembl.org/api/transcript/?assembly_name=GRCh38&expand=transcript_release_set&loc_end=36530417&loc_region=7&loc_start=36530514&page=2",
   "previous": null,
   "results": [
     {
@@ -23,7 +23,16 @@
       "five_prime_utr_start": 36724548,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "E074CE489CBF5EC8BDDBBA1E06B097D3E03B5EFE"
+      "five_prime_utr_checksum": "E074CE489CBF5EC8BDDBBA1E06B097D3E03B5EFE",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "76",
+          "description": "Ensembl release",
+          "release_date": "2014-05-01",
+          "source": "Ensembl"
+        }
+      ]
     },
     {
       "stable_id": "ENST00000617267",
@@ -45,7 +54,16 @@
       "five_prime_utr_start": 36724449,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "TTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "250A438E0B180DF25C79F9A0BB6909B1FF06B2F6"
+      "five_prime_utr_checksum": "250A438E0B180DF25C79F9A0BB6909B1FF06B2F6",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "76",
+          "description": "Ensembl release",
+          "release_date": "2014-05-01",
+          "source": "Ensembl"
+        }
+      ]
     },
     {
       "stable_id": "ENST00000614254",
@@ -67,7 +85,261 @@
       "five_prime_utr_start": null,
       "five_prime_utr_end": null,
       "five_prime_utr_seq": null,
-      "five_prime_utr_checksum": null
+      "five_prime_utr_checksum": null,
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "76",
+          "description": "Ensembl release",
+          "release_date": "2014-05-01",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "77",
+          "description": "Ensembl release",
+          "release_date": "2014-10-01",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "78",
+          "description": "Ensembl release",
+          "release_date": "2014-12-01",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "79",
+          "description": "Ensembl release",
+          "release_date": "2015-03-01",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "80",
+          "description": "Ensembl release",
+          "release_date": "2015-05-20",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "81",
+          "description": "Ensembl release",
+          "release_date": "2015-07-16",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "82",
+          "description": "Ensembl release",
+          "release_date": "2015-09-30",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "83",
+          "description": "Ensembl release",
+          "release_date": "2015-12-08",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "84",
+          "description": "Ensembl release",
+          "release_date": "2016-03-10",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "85",
+          "description": "Ensembl release",
+          "release_date": "2016-07-25",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "86",
+          "description": "Ensembl release",
+          "release_date": "2016-10-08",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "87",
+          "description": "Ensembl release",
+          "release_date": "2016-12-07",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "88",
+          "description": "Ensembl release",
+          "release_date": "2017-03-28",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "89",
+          "description": "Ensembl release",
+          "release_date": "2017-05-31",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "90",
+          "description": "Ensembl release",
+          "release_date": "2017-08-15",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "91",
+          "description": "Ensembl release",
+          "release_date": "2017-12-06",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "92",
+          "description": "Ensembl release",
+          "release_date": "2018-04-05",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "93",
+          "description": "Ensembl release",
+          "release_date": "2018-06-27",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "94",
+          "description": "Ensembl release",
+          "release_date": "2018-10-02",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "95",
+          "description": "Ensembl release",
+          "release_date": "2019-01-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "96",
+          "description": "Ensembl release",
+          "release_date": "2019-04-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "97",
+          "description": "Ensembl release",
+          "release_date": "2019-07-29",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "98",
+          "description": "Ensembl release",
+          "release_date": "2019-09-30",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "99",
+          "description": "Ensembl release",
+          "release_date": "2020-01-20",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "100",
+          "description": "Ensembl release",
+          "release_date": "2020-04-12",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "101",
+          "description": "Ensembl release",
+          "release_date": "2020-08-06",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "102",
+          "description": "Ensembl release",
+          "release_date": "2020-10-12",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "103",
+          "description": "Ensembl release",
+          "release_date": "2021-02-22",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "104",
+          "description": "Ensembl release",
+          "release_date": "2021-05-22",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "105",
+          "description": "Ensembl release",
+          "release_date": "2021-12-28",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "106",
+          "description": "Ensembl release",
+          "release_date": "2022-04-07",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "107",
+          "description": "Ensembl release",
+          "release_date": "2022-07-05",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "108",
+          "description": "Ensembl release",
+          "release_date": "2022-10-18",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109",
+          "description": "Ensembl release",
+          "release_date": "2023-02-13",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "110",
+          "description": "Ensembl release",
+          "release_date": "2023-07-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "111",
+          "description": "Ensembl release",
+          "release_date": "2024-01-10",
+          "source": "Ensembl"
+        }
+      ]
     },
     {
       "stable_id": "ENST00000612871",
@@ -89,7 +361,16 @@
       "five_prime_utr_start": 36724549,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "AACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C"
+      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "76",
+          "description": "Ensembl release",
+          "release_date": "2014-05-01",
+          "source": "Ensembl"
+        }
+      ]
     },
     {
       "stable_id": "ENST00000617537",
@@ -111,7 +392,23 @@
       "five_prime_utr_start": 36724548,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "E074CE489CBF5EC8BDDBBA1E06B097D3E03B5EFE"
+      "five_prime_utr_checksum": "E074CE489CBF5EC8BDDBBA1E06B097D3E03B5EFE",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "77",
+          "description": "Ensembl release",
+          "release_date": "2014-10-01",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "78",
+          "description": "Ensembl release",
+          "release_date": "2014-12-01",
+          "source": "Ensembl"
+        }
+      ]
     },
     {
       "stable_id": "ENST00000617267",
@@ -133,7 +430,23 @@
       "five_prime_utr_start": 36724449,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "TTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "250A438E0B180DF25C79F9A0BB6909B1FF06B2F6"
+      "five_prime_utr_checksum": "250A438E0B180DF25C79F9A0BB6909B1FF06B2F6",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "77",
+          "description": "Ensembl release",
+          "release_date": "2014-10-01",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "78",
+          "description": "Ensembl release",
+          "release_date": "2014-12-01",
+          "source": "Ensembl"
+        }
+      ]
     },
     {
       "stable_id": "ENST00000612871",
@@ -155,29 +468,23 @@
       "five_prime_utr_start": 36724549,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "AACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C"
-    },
-    {
-      "stable_id": "ENST00000435254",
-      "stable_id_version": 1,
-      "assembly": "GRCh37",
-      "loc_start": 36502632,
-      "loc_end": 36544121,
-      "loc_strand": 1,
-      "loc_region": "7",
-      "loc_checksum": "78A09607EF47E137EA2B8621E5FF6C5436C4CAB5",
-      "exon_set_checksum": "0E08A4BDB91B5EBD81CC82E17E022916FAF6056C",
-      "transcript_checksum": "1585196C60790FB1D8899A90586081D930D2F589",
-      "sequence": "12A9A911B9A7042F9DA42845920B7C79257EC8C5",
-      "biotype": "antisense",
-      "three_prime_utr_start": null,
-      "three_prime_utr_end": null,
-      "three_prime_utr_seq": null,
-      "three_prime_utr_checksum": null,
-      "five_prime_utr_start": null,
-      "five_prime_utr_end": null,
-      "five_prime_utr_seq": null,
-      "five_prime_utr_checksum": null
+      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "77",
+          "description": "Ensembl release",
+          "release_date": "2014-10-01",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "78",
+          "description": "Ensembl release",
+          "release_date": "2014-12-01",
+          "source": "Ensembl"
+        }
+      ]
     },
     {
       "stable_id": "ENST00000617537",
@@ -199,7 +506,23 @@
       "five_prime_utr_start": 36724548,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "E074CE489CBF5EC8BDDBBA1E06B097D3E03B5EFE"
+      "five_prime_utr_checksum": "E074CE489CBF5EC8BDDBBA1E06B097D3E03B5EFE",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "79",
+          "description": "Ensembl release",
+          "release_date": "2015-03-01",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "80",
+          "description": "Ensembl release",
+          "release_date": "2015-05-20",
+          "source": "Ensembl"
+        }
+      ]
     },
     {
       "stable_id": "ENST00000617267",
@@ -221,7 +544,61 @@
       "five_prime_utr_start": 36724449,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "TTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "250A438E0B180DF25C79F9A0BB6909B1FF06B2F6"
+      "five_prime_utr_checksum": "250A438E0B180DF25C79F9A0BB6909B1FF06B2F6",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "79",
+          "description": "Ensembl release",
+          "release_date": "2015-03-01",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "80",
+          "description": "Ensembl release",
+          "release_date": "2015-05-20",
+          "source": "Ensembl"
+        }
+      ]
+    },
+    {
+      "stable_id": "ENST00000612871",
+      "stable_id_version": 3,
+      "assembly": "GRCh38",
+      "loc_start": 36512949,
+      "loc_end": 36724549,
+      "loc_strand": -1,
+      "loc_region": "7",
+      "loc_checksum": "C70F36A40AC320945EF14CC6717F83645A294FBE",
+      "exon_set_checksum": "817DC600403BED522354320F301AAFC17C0812D3",
+      "transcript_checksum": "0DC1A3E52E7489A80301BF6AC1A78408986EA40F",
+      "sequence": "FCBE0C489FFE490C61F2DC23D6171CD38C3C6C22",
+      "biotype": "protein_coding",
+      "three_prime_utr_start": 36513251,
+      "three_prime_utr_end": 36512949,
+      "three_prime_utr_seq": "GCCTCTCAGGAGCATGCACCCCTGGGGAGCACAGGGAGGCAGAGGCTTGGGTAAACTCATTCCACAAACCCTATGGGGGCTGCCACGTCACAGGCCCAAAGGACTCTTCTTCAGCAGCATCTTTGCAAAATGTCTTTCTCTCAATGAAGAGCATATCTGGACGACTGTGCAATGCTGTGTGCTCCCGGGATCAGTAACCCTTCCGCTGTTCCTGAAATAACCTTTCATAAAGTGCTTTGGGTGCCATTCCAAACAAGAGAGTATCTGTGCCCTTTACAGCTAATTGTTCTAAAAGGAGTTTCT",
+      "three_prime_utr_checksum": "44D68600A99A6F6D2F8443E87D21BB4DB9B4A177",
+      "five_prime_utr_start": 36724549,
+      "five_prime_utr_end": 36724149,
+      "five_prime_utr_seq": "AACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
+      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "79",
+          "description": "Ensembl release",
+          "release_date": "2015-03-01",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "80",
+          "description": "Ensembl release",
+          "release_date": "2015-05-20",
+          "source": "Ensembl"
+        }
+      ]
     }
   ]
 }

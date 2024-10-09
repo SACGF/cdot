@@ -1,30 +1,8 @@
 {
-  "count": 54,
-  "next": "http://tark.ensembl.org/api/transcript/?loc_end=36530514&loc_region=7&loc_start=36530417&page=3",
-  "previous": "http://tark.ensembl.org/api/transcript/?loc_end=36530514&loc_region=7&loc_start=36530417",
+  "count": 53,
+  "next": "http://tark.ensembl.org/api/transcript/?assembly_name=GRCh38&expand=transcript_release_set&loc_end=36530417&loc_region=7&loc_start=36530514&page=3",
+  "previous": "http://tark.ensembl.org/api/transcript/?assembly_name=GRCh38&expand=transcript_release_set&loc_end=36530417&loc_region=7&loc_start=36530514",
   "results": [
-    {
-      "stable_id": "ENST00000612871",
-      "stable_id_version": 3,
-      "assembly": "GRCh38",
-      "loc_start": 36512949,
-      "loc_end": 36724549,
-      "loc_strand": -1,
-      "loc_region": "7",
-      "loc_checksum": "C70F36A40AC320945EF14CC6717F83645A294FBE",
-      "exon_set_checksum": "817DC600403BED522354320F301AAFC17C0812D3",
-      "transcript_checksum": "0DC1A3E52E7489A80301BF6AC1A78408986EA40F",
-      "sequence": "FCBE0C489FFE490C61F2DC23D6171CD38C3C6C22",
-      "biotype": "protein_coding",
-      "three_prime_utr_start": 36513251,
-      "three_prime_utr_end": 36512949,
-      "three_prime_utr_seq": "GCCTCTCAGGAGCATGCACCCCTGGGGAGCACAGGGAGGCAGAGGCTTGGGTAAACTCATTCCACAAACCCTATGGGGGCTGCCACGTCACAGGCCCAAAGGACTCTTCTTCAGCAGCATCTTTGCAAAATGTCTTTCTCTCAATGAAGAGCATATCTGGACGACTGTGCAATGCTGTGTGCTCCCGGGATCAGTAACCCTTCCGCTGTTCCTGAAATAACCTTTCATAAAGTGCTTTGGGTGCCATTCCAAACAAGAGAGTATCTGTGCCCTTTACAGCTAATTGTTCTAAAAGGAGTTTCT",
-      "three_prime_utr_checksum": "44D68600A99A6F6D2F8443E87D21BB4DB9B4A177",
-      "five_prime_utr_start": 36724549,
-      "five_prime_utr_end": 36724149,
-      "five_prime_utr_seq": "AACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C"
-    },
     {
       "stable_id": "ENST00000617537",
       "stable_id_version": 4,
@@ -45,7 +23,128 @@
       "five_prime_utr_start": 36724548,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "E074CE489CBF5EC8BDDBBA1E06B097D3E03B5EFE"
+      "five_prime_utr_checksum": "E074CE489CBF5EC8BDDBBA1E06B097D3E03B5EFE",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "81",
+          "description": "Ensembl release",
+          "release_date": "2015-07-16",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "82",
+          "description": "Ensembl release",
+          "release_date": "2015-09-30",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "83",
+          "description": "Ensembl release",
+          "release_date": "2015-12-08",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "84",
+          "description": "Ensembl release",
+          "release_date": "2016-03-10",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "85",
+          "description": "Ensembl release",
+          "release_date": "2016-07-25",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "86",
+          "description": "Ensembl release",
+          "release_date": "2016-10-08",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "87",
+          "description": "Ensembl release",
+          "release_date": "2016-12-07",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "88",
+          "description": "Ensembl release",
+          "release_date": "2017-03-28",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "89",
+          "description": "Ensembl release",
+          "release_date": "2017-05-31",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "90",
+          "description": "Ensembl release",
+          "release_date": "2017-08-15",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "91",
+          "description": "Ensembl release",
+          "release_date": "2017-12-06",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "92",
+          "description": "Ensembl release",
+          "release_date": "2018-04-05",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "93",
+          "description": "Ensembl release",
+          "release_date": "2018-06-27",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "94",
+          "description": "Ensembl release",
+          "release_date": "2018-10-02",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "95",
+          "description": "Ensembl release",
+          "release_date": "2019-01-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "96",
+          "description": "Ensembl release",
+          "release_date": "2019-04-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "97",
+          "description": "Ensembl release",
+          "release_date": "2019-07-29",
+          "source": "Ensembl"
+        }
+      ]
     },
     {
       "stable_id": "ENST00000617267",
@@ -67,7 +166,226 @@
       "five_prime_utr_start": 36724449,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "TTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "250A438E0B180DF25C79F9A0BB6909B1FF06B2F6"
+      "five_prime_utr_checksum": "250A438E0B180DF25C79F9A0BB6909B1FF06B2F6",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "81",
+          "description": "Ensembl release",
+          "release_date": "2015-07-16",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "82",
+          "description": "Ensembl release",
+          "release_date": "2015-09-30",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "83",
+          "description": "Ensembl release",
+          "release_date": "2015-12-08",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "84",
+          "description": "Ensembl release",
+          "release_date": "2016-03-10",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "85",
+          "description": "Ensembl release",
+          "release_date": "2016-07-25",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "86",
+          "description": "Ensembl release",
+          "release_date": "2016-10-08",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "87",
+          "description": "Ensembl release",
+          "release_date": "2016-12-07",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "88",
+          "description": "Ensembl release",
+          "release_date": "2017-03-28",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "89",
+          "description": "Ensembl release",
+          "release_date": "2017-05-31",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "90",
+          "description": "Ensembl release",
+          "release_date": "2017-08-15",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "91",
+          "description": "Ensembl release",
+          "release_date": "2017-12-06",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "92",
+          "description": "Ensembl release",
+          "release_date": "2018-04-05",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "93",
+          "description": "Ensembl release",
+          "release_date": "2018-06-27",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "94",
+          "description": "Ensembl release",
+          "release_date": "2018-10-02",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "95",
+          "description": "Ensembl release",
+          "release_date": "2019-01-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "96",
+          "description": "Ensembl release",
+          "release_date": "2019-04-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "97",
+          "description": "Ensembl release",
+          "release_date": "2019-07-29",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "98",
+          "description": "Ensembl release",
+          "release_date": "2019-09-30",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "99",
+          "description": "Ensembl release",
+          "release_date": "2020-01-20",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "100",
+          "description": "Ensembl release",
+          "release_date": "2020-04-12",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "101",
+          "description": "Ensembl release",
+          "release_date": "2020-08-06",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "102",
+          "description": "Ensembl release",
+          "release_date": "2020-10-12",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "103",
+          "description": "Ensembl release",
+          "release_date": "2021-02-22",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "104",
+          "description": "Ensembl release",
+          "release_date": "2021-05-22",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "105",
+          "description": "Ensembl release",
+          "release_date": "2021-12-28",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "106",
+          "description": "Ensembl release",
+          "release_date": "2022-04-07",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "107",
+          "description": "Ensembl release",
+          "release_date": "2022-07-05",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "108",
+          "description": "Ensembl release",
+          "release_date": "2022-10-18",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109",
+          "description": "Ensembl release",
+          "release_date": "2023-02-13",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "110",
+          "description": "Ensembl release",
+          "release_date": "2023-07-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "111",
+          "description": "Ensembl release",
+          "release_date": "2024-01-10",
+          "source": "Ensembl"
+        }
+      ]
     },
     {
       "stable_id": "ENST00000612871",
@@ -89,7 +407,226 @@
       "five_prime_utr_start": 36724549,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "AACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C"
+      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "81",
+          "description": "Ensembl release",
+          "release_date": "2015-07-16",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "82",
+          "description": "Ensembl release",
+          "release_date": "2015-09-30",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "83",
+          "description": "Ensembl release",
+          "release_date": "2015-12-08",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "84",
+          "description": "Ensembl release",
+          "release_date": "2016-03-10",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "85",
+          "description": "Ensembl release",
+          "release_date": "2016-07-25",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "86",
+          "description": "Ensembl release",
+          "release_date": "2016-10-08",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "87",
+          "description": "Ensembl release",
+          "release_date": "2016-12-07",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "88",
+          "description": "Ensembl release",
+          "release_date": "2017-03-28",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "89",
+          "description": "Ensembl release",
+          "release_date": "2017-05-31",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "90",
+          "description": "Ensembl release",
+          "release_date": "2017-08-15",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "91",
+          "description": "Ensembl release",
+          "release_date": "2017-12-06",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "92",
+          "description": "Ensembl release",
+          "release_date": "2018-04-05",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "93",
+          "description": "Ensembl release",
+          "release_date": "2018-06-27",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "94",
+          "description": "Ensembl release",
+          "release_date": "2018-10-02",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "95",
+          "description": "Ensembl release",
+          "release_date": "2019-01-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "96",
+          "description": "Ensembl release",
+          "release_date": "2019-04-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "97",
+          "description": "Ensembl release",
+          "release_date": "2019-07-29",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "98",
+          "description": "Ensembl release",
+          "release_date": "2019-09-30",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "99",
+          "description": "Ensembl release",
+          "release_date": "2020-01-20",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "100",
+          "description": "Ensembl release",
+          "release_date": "2020-04-12",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "101",
+          "description": "Ensembl release",
+          "release_date": "2020-08-06",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "102",
+          "description": "Ensembl release",
+          "release_date": "2020-10-12",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "103",
+          "description": "Ensembl release",
+          "release_date": "2021-02-22",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "104",
+          "description": "Ensembl release",
+          "release_date": "2021-05-22",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "105",
+          "description": "Ensembl release",
+          "release_date": "2021-12-28",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "106",
+          "description": "Ensembl release",
+          "release_date": "2022-04-07",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "107",
+          "description": "Ensembl release",
+          "release_date": "2022-07-05",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "108",
+          "description": "Ensembl release",
+          "release_date": "2022-10-18",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109",
+          "description": "Ensembl release",
+          "release_date": "2023-02-13",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "110",
+          "description": "Ensembl release",
+          "release_date": "2023-07-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "111",
+          "description": "Ensembl release",
+          "release_date": "2024-01-10",
+          "source": "Ensembl"
+        }
+      ]
     },
     {
       "stable_id": "ENST00000617537",
@@ -112,6 +649,106 @@
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
       "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "98",
+          "description": "Ensembl release",
+          "release_date": "2019-09-30",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "99",
+          "description": "Ensembl release",
+          "release_date": "2020-01-20",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "100",
+          "description": "Ensembl release",
+          "release_date": "2020-04-12",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "101",
+          "description": "Ensembl release",
+          "release_date": "2020-08-06",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "102",
+          "description": "Ensembl release",
+          "release_date": "2020-10-12",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "103",
+          "description": "Ensembl release",
+          "release_date": "2021-02-22",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "104",
+          "description": "Ensembl release",
+          "release_date": "2021-05-22",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "105",
+          "description": "Ensembl release",
+          "release_date": "2021-12-28",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "106",
+          "description": "Ensembl release",
+          "release_date": "2022-04-07",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "107",
+          "description": "Ensembl release",
+          "release_date": "2022-07-05",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "108",
+          "description": "Ensembl release",
+          "release_date": "2022-10-18",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109",
+          "description": "Ensembl release",
+          "release_date": "2023-02-13",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "110",
+          "description": "Ensembl release",
+          "release_date": "2023-07-09",
+          "source": "Ensembl"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "111",
+          "description": "Ensembl release",
+          "release_date": "2024-01-10",
+          "source": "Ensembl"
+        }
+      ],
       "mane_transcript": "NM_001637.4",
       "mane_transcript_type": "MANE SELECT"
     },
@@ -135,7 +772,72 @@
       "five_prime_utr_start": 36724549,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "AACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C"
+      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "106_20140203",
+          "description": "Refseq Homo sapiens Annotation Release 106.20140203",
+          "release_date": "2014-02-03",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "107_20150312",
+          "description": "Refseq Homo sapiens Annotation Release 107.20150312",
+          "release_date": "2015-03-12",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "108_20160606",
+          "description": "Refseq Homo sapiens Annotation Release 108.20160606",
+          "release_date": "2016-06-06",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20180326",
+          "description": "Refseq Homo sapiens Annotation Release 109.20180326",
+          "release_date": "2018-03-26",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20190125",
+          "description": "Refseq Homo sapiens Annotation Release 109.20190125",
+          "release_date": "2019-01-25",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20190607",
+          "description": "Refseq Homo sapiens Annotation Release 109.20190607",
+          "release_date": "2019-06-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20190905",
+          "description": "Refseq Homo sapiens Annotation Release 109.20190905",
+          "release_date": "2019-09-05",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20200228",
+          "description": "Refseq Homo sapiens Annotation Release 109.20200228",
+          "release_date": "2020-02-28",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20200522",
+          "description": "Refseq Homo sapiens Annotation Release 109.20200522",
+          "release_date": "2020-05-22",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "NM_001637",
@@ -157,7 +859,44 @@
       "five_prime_utr_start": 36724549,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "AACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C"
+      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "106_20140203",
+          "description": "Refseq Homo sapiens Annotation Release 106.20140203",
+          "release_date": "2014-02-03",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "107_20150312",
+          "description": "Refseq Homo sapiens Annotation Release 107.20150312",
+          "release_date": "2015-03-12",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "108_20160606",
+          "description": "Refseq Homo sapiens Annotation Release 108.20160606",
+          "release_date": "2016-06-06",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20180326",
+          "description": "Refseq Homo sapiens Annotation Release 109.20180326",
+          "release_date": "2018-03-26",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20190125",
+          "description": "Refseq Homo sapiens Annotation Release 109.20190125",
+          "release_date": "2019-01-25",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "NM_001177506",
@@ -179,7 +918,72 @@
       "five_prime_utr_start": 36724549,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "AACAGATCAGTTCCGGCAAGCCTCGAGGCTCACGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C"
+      "five_prime_utr_checksum": "DCAA163813BAD34C59B4D19465B0EEC4A8DFB83C",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "106_20140203",
+          "description": "Refseq Homo sapiens Annotation Release 106.20140203",
+          "release_date": "2014-02-03",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "107_20150312",
+          "description": "Refseq Homo sapiens Annotation Release 107.20150312",
+          "release_date": "2015-03-12",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "108_20160606",
+          "description": "Refseq Homo sapiens Annotation Release 108.20160606",
+          "release_date": "2016-06-06",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20180326",
+          "description": "Refseq Homo sapiens Annotation Release 109.20180326",
+          "release_date": "2018-03-26",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20190125",
+          "description": "Refseq Homo sapiens Annotation Release 109.20190125",
+          "release_date": "2019-01-25",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20190607",
+          "description": "Refseq Homo sapiens Annotation Release 109.20190607",
+          "release_date": "2019-06-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20190905",
+          "description": "Refseq Homo sapiens Annotation Release 109.20190905",
+          "release_date": "2019-09-05",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20200228",
+          "description": "Refseq Homo sapiens Annotation Release 109.20200228",
+          "release_date": "2020-02-28",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20200522",
+          "description": "Refseq Homo sapiens Annotation Release 109.20200522",
+          "release_date": "2020-05-22",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "XM_011515334",
@@ -201,7 +1005,16 @@
       "five_prime_utr_start": 36724517,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "CGGGGTTTATGCACACTAACTTCACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "4FFF64375AFF07AB65C87B33112120E76234E75C"
+      "five_prime_utr_checksum": "4FFF64375AFF07AB65C87B33112120E76234E75C",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "107_20150312",
+          "description": "Refseq Homo sapiens Annotation Release 107.20150312",
+          "release_date": "2015-03-12",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "XM_011515333",
@@ -223,7 +1036,47 @@
       "five_prime_utr_start": 36724494,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0"
+      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "107_20150312",
+          "description": "Refseq Homo sapiens Annotation Release 107.20150312",
+          "release_date": "2015-03-12",
+          "source": "RefSeq"
+        }
+      ]
+    },
+    {
+      "stable_id": "XM_011515335",
+      "stable_id_version": 1,
+      "assembly": "GRCh38",
+      "loc_start": 36512992,
+      "loc_end": 36724474,
+      "loc_strand": -1,
+      "loc_region": "7",
+      "loc_checksum": "71D7409D864660E434107C677CE842DEFEDA1501",
+      "exon_set_checksum": "F5E56E427AA92C9A1649D2B93E6EFB19B04FABB6",
+      "transcript_checksum": "B877BD064482D44C4C715AEE4EBCC473C2AA8E4C",
+      "sequence": "AF5C775E182C600CC49FB719C3DBEFCCE903B94B",
+      "biotype": "predicted_protein_coding",
+      "three_prime_utr_start": 36513031,
+      "three_prime_utr_end": 36512992,
+      "three_prime_utr_seq": "CCTTTCATAAAGTGCTTTGGGTGCCATTCCAAACAAGAGA",
+      "three_prime_utr_checksum": "98F8CADB8A882990415F9ACD3E27FE851E93EFCB",
+      "five_prime_utr_start": 36724474,
+      "five_prime_utr_end": 36690101,
+      "five_prime_utr_seq": "AGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAGATGCAGTCCCCCTGGAAAATCCTTACGGTGGCGCCTCTATTCTTGCTCCTGTCTCTTCAGTCCTCGGCCTCTCCAGCCAACGATGACCAGTCCAGGCCCAGCCTCTCGAATGGGCACACCTGTGTAGCCAGCAGTGCTGAGAAGCCACAACTGTCATAAGAGTCCTTGATGGGATTTCTCTGAGTGAAATTCAGAAGAAAAGCCCAT",
+      "five_prime_utr_checksum": "13229BE8E097FC9107C969E8A744137D856482DA",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "107_20150312",
+          "description": "Refseq Homo sapiens Annotation Release 107.20150312",
+          "release_date": "2015-03-12",
+          "source": "RefSeq"
+        }
+      ]
     }
   ]
 }

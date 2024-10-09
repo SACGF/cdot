@@ -1,32 +1,8 @@
 {
-  "count": 54,
-  "next": "http://tark.ensembl.org/api/transcript/?loc_end=36530514&loc_region=7&loc_start=36530417&page=6",
-  "previous": "http://tark.ensembl.org/api/transcript/?loc_end=36530514&loc_region=7&loc_start=36530417&page=4",
+  "count": 53,
+  "next": "http://tark.ensembl.org/api/transcript/?assembly_name=GRCh38&expand=transcript_release_set&loc_end=36530417&loc_region=7&loc_start=36530514&page=6",
+  "previous": "http://tark.ensembl.org/api/transcript/?assembly_name=GRCh38&expand=transcript_release_set&loc_end=36530417&loc_region=7&loc_start=36530514&page=4",
   "results": [
-    {
-      "stable_id": "NM_001637",
-      "stable_id_version": 4,
-      "assembly": "GRCh38",
-      "loc_start": 36512941,
-      "loc_end": 36724494,
-      "loc_strand": -1,
-      "loc_region": "7",
-      "loc_checksum": "049673D48856D76AAA277E4DF50FDF3B31DAC89A",
-      "exon_set_checksum": "7FD9C5070DF83A72FE29A76E3AD8E9F3C15D418A",
-      "transcript_checksum": "DA831DA8FE51F5E905C8A124D7D92E986838EE5D",
-      "sequence": "F525BB0F1BD499B52CE5B471C086AA54A70173F8",
-      "biotype": "protein_coding",
-      "three_prime_utr_start": 36513251,
-      "three_prime_utr_end": 36512941,
-      "three_prime_utr_seq": "GCCTCTCAGGAGCATGCACCCCTGGGGAGCACAGGGAGGCAGAGGCTTGGGTAAACTCATTCCACAAACCCTATGGGGGCTGCCACGTCACAGGCCCAAAGGACTCTTCTTCAGCAGCATCTTTGCAAAATGTCTTTCTCTCAATGAAGAGCATATCTGGACGACTGTGCAATGCTGTGTGCTCCCGGGATCAGTAACCCTTCCGCTGTTCCTGAAATAACCTTTCATAAAGTGCTTTGGGTGCCATTCCAAACAAGAGAGTATCTGTGCCCTTTACAGCTAATTGTTCTAAAAGGAGTTTCTAAAAACAC",
-      "three_prime_utr_checksum": "86565C0FC420603356739A604CD5F07E8A9686B1",
-      "five_prime_utr_start": 36724494,
-      "five_prime_utr_end": 36724149,
-      "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0",
-      "mane_transcript": "ENST00000617537.5",
-      "mane_transcript_type": "MANE SELECT"
-    },
     {
       "stable_id": "NM_001177507",
       "stable_id_version": 2,
@@ -47,7 +23,72 @@
       "five_prime_utr_start": 36724494,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0"
+      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20200815",
+          "description": "Refseq Homo sapiens Annotation Release 109.20200815",
+          "release_date": "2020-08-15",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20201120",
+          "description": "Refseq Homo sapiens Annotation Release 109.20201120",
+          "release_date": "2020-11-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20210226",
+          "description": "Refseq Homo sapiens Annotation Release 109.20210226",
+          "release_date": "2021-02-26",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20210514",
+          "description": "Refseq Homo sapiens Annotation Release 109.20210514",
+          "release_date": "2021-05-14",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20211119",
+          "description": "Refseq Homo sapiens Annotation Release 109.20211119",
+          "release_date": "2021-11-19",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "110_20220707",
+          "description": "Refseq Homo sapiens Annotation Release 110.20220707",
+          "release_date": "2022-07-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20230320",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20230320",
+          "release_date": "2023-03-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20231007",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20231007",
+          "release_date": "2023-10-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20240827",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20240827",
+          "release_date": "2024-08-24",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "NM_001177506",
@@ -69,7 +110,72 @@
       "five_prime_utr_start": 36724494,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0"
+      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20200815",
+          "description": "Refseq Homo sapiens Annotation Release 109.20200815",
+          "release_date": "2020-08-15",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20201120",
+          "description": "Refseq Homo sapiens Annotation Release 109.20201120",
+          "release_date": "2020-11-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20210226",
+          "description": "Refseq Homo sapiens Annotation Release 109.20210226",
+          "release_date": "2021-02-26",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20210514",
+          "description": "Refseq Homo sapiens Annotation Release 109.20210514",
+          "release_date": "2021-05-14",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "109_20211119",
+          "description": "Refseq Homo sapiens Annotation Release 109.20211119",
+          "release_date": "2021-11-19",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "110_20220707",
+          "description": "Refseq Homo sapiens Annotation Release 110.20220707",
+          "release_date": "2022-07-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20230320",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20230320",
+          "release_date": "2023-03-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20231007",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20231007",
+          "release_date": "2023-10-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20240827",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20240827",
+          "release_date": "2024-08-24",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "XM_011515334",
@@ -91,7 +197,37 @@
       "five_prime_utr_start": 36724494,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0"
+      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "110_20220707",
+          "description": "Refseq Homo sapiens Annotation Release 110.20220707",
+          "release_date": "2022-07-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20230320",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20230320",
+          "release_date": "2023-03-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20231007",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20231007",
+          "release_date": "2023-10-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20240827",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20240827",
+          "release_date": "2024-08-24",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "XM_017012102",
@@ -113,7 +249,37 @@
       "five_prime_utr_start": 36724494,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0"
+      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "110_20220707",
+          "description": "Refseq Homo sapiens Annotation Release 110.20220707",
+          "release_date": "2022-07-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20230320",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20230320",
+          "release_date": "2023-03-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20231007",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20231007",
+          "release_date": "2023-10-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20240827",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20240827",
+          "release_date": "2024-08-24",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "XM_011515333",
@@ -135,7 +301,37 @@
       "five_prime_utr_start": 36724494,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0"
+      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "110_20220707",
+          "description": "Refseq Homo sapiens Annotation Release 110.20220707",
+          "release_date": "2022-07-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20230320",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20230320",
+          "release_date": "2023-03-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20231007",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20231007",
+          "release_date": "2023-10-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20240827",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20240827",
+          "release_date": "2024-08-24",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "XM_011515336",
@@ -157,7 +353,37 @@
       "five_prime_utr_start": 36724494,
       "five_prime_utr_end": 36724149,
       "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
-      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0"
+      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "110_20220707",
+          "description": "Refseq Homo sapiens Annotation Release 110.20220707",
+          "release_date": "2022-07-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20230320",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20230320",
+          "release_date": "2023-03-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20231007",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20231007",
+          "release_date": "2023-10-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20240827",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20240827",
+          "release_date": "2024-08-24",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "XM_011515335",
@@ -179,7 +405,37 @@
       "five_prime_utr_start": 36724494,
       "five_prime_utr_end": 36690101,
       "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAGATGCAGTCCCCCTGGAAAATCCTTACGGTGGCGCCTCTATTCTTGCTCCTGTCTCTTCAGTCCTCGGCCTCTCCAGCCAACGATGACCAGTCCAGGCCCAGCCTCTCGAATGGGCACACCTGTGTAGCCAGCAGTGCTGAGAAGCCACAACTGTCATAAGAGTCCTTGATGGGATTTCTCTGAGTGAAATTCAGAAGAAAAGCCCAT",
-      "five_prime_utr_checksum": "DC26DFA5D34C0AD497FBD0D60C76CC3EEB254083"
+      "five_prime_utr_checksum": "DC26DFA5D34C0AD497FBD0D60C76CC3EEB254083",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "110_20220707",
+          "description": "Refseq Homo sapiens Annotation Release 110.20220707",
+          "release_date": "2022-07-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20230320",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20230320",
+          "release_date": "2023-03-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20231007",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20231007",
+          "release_date": "2023-10-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20240827",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20240827",
+          "release_date": "2024-08-24",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "XM_017012105",
@@ -201,7 +457,37 @@
       "five_prime_utr_start": 36616464,
       "five_prime_utr_end": 36608410,
       "five_prime_utr_seq": "CAGGGGAATCATTTTGCTGGGAGACTCAGCTGGGGCTCATTTTCACATCTCTCCTGAATGGATCACAGCGTCGCAGATGTCTTTGCTAAGGCCTGAGACAATGTGGACAAATTATTCCCACCTTCCCACCACCAATATTTCTTCCAAGTGAAAG",
-      "five_prime_utr_checksum": "0FB2BF3975A7B14474FB3FA31EF2FB5224DD1139"
+      "five_prime_utr_checksum": "0FB2BF3975A7B14474FB3FA31EF2FB5224DD1139",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "110_20220707",
+          "description": "Refseq Homo sapiens Annotation Release 110.20220707",
+          "release_date": "2022-07-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20230320",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20230320",
+          "release_date": "2023-03-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20231007",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20231007",
+          "release_date": "2023-10-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20240827",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20240827",
+          "release_date": "2024-08-24",
+          "source": "RefSeq"
+        }
+      ]
     },
     {
       "stable_id": "XM_011515342",
@@ -223,7 +509,89 @@
       "five_prime_utr_start": 36597781,
       "five_prime_utr_end": 36597650,
       "five_prime_utr_seq": "GCTACAGAGGGTATGCCTATGCCTGCGTAGTTCTTGTCTAACTCCTTCCTGTGAAAGGGAGAGCAGTCCCAGACAGAATCAGAAACCTAGTTCCTCATCCAGTTTCCCAAGTCTGGAGTTGCCATTGCACGG",
-      "five_prime_utr_checksum": "AD3899A053D57A084CB74640D80A2D9BB9D2DBB7"
+      "five_prime_utr_checksum": "AD3899A053D57A084CB74640D80A2D9BB9D2DBB7",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "110_20220707",
+          "description": "Refseq Homo sapiens Annotation Release 110.20220707",
+          "release_date": "2022-07-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20230320",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20230320",
+          "release_date": "2023-03-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20231007",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20231007",
+          "release_date": "2023-10-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20240827",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20240827",
+          "release_date": "2024-08-24",
+          "source": "RefSeq"
+        }
+      ]
+    },
+    {
+      "stable_id": "XM_047420297",
+      "stable_id_version": 1,
+      "assembly": "GRCh38",
+      "loc_start": 36514472,
+      "loc_end": 36724494,
+      "loc_strand": -1,
+      "loc_region": "7",
+      "loc_checksum": "9952661D8CC3B44782861AA5D5F4C8F25B7FFFA3",
+      "exon_set_checksum": "A1E769A97519654C6ACDF0561C731BE8D89BB6A7",
+      "transcript_checksum": "D8A992F451C04621E2018D6BD0EEA81B743FBD14",
+      "sequence": "29804FCF06F987332697793CC8839AA5319F6E9A",
+      "biotype": "predicted_protein_coding",
+      "three_prime_utr_start": 36514605,
+      "three_prime_utr_end": 36514472,
+      "three_prime_utr_seq": "GGGCATTGTTTGCAGAGAAAGAGCATCCTCCTCAAAGGCATATTAATGACAAGCCAGACACTGGACAACCAAGAATGGACCCAGCTAACATCATGGATAAAGGGAAACCTGACATGCGACAGCAGAACCAGAGA",
+      "three_prime_utr_checksum": "0B00A5F4C77A0DFA66C99AEBCC6447CC15E4C9F5",
+      "five_prime_utr_start": 36724494,
+      "five_prime_utr_end": 36724149,
+      "five_prime_utr_seq": "ACTGAGCCAGGGAGCACGGAAGTTGTGCCACTGTGCAACTTGGGTTTTCTTTATCCTGCAGTCTTTACCTCAGCAGAACCGCACACCACAGACTCCCTCCAGCTCTTTGTGTGTGGCTCTCTCAGGGTCCAACAAGAGCAAGCTGTGGGTCTGTGAGTGTTTATGTGTGCTTTTATTCACTTCACACTTATTGAAAAGTGTGTATGTGAGAGGGTGGGGTGTGTGTGTCAAAGAGAGTGAGGAAGAGAAGGAGAGAGAGATCAATTGATTCTGCAGCCTCAGCTCCAGCATCCCTCAGTTGGGAGCTTCCAAAGCCGGGTGATCACTTGGGGTGCATAGCTCGGAG",
+      "five_prime_utr_checksum": "60878BA89AD674207714116AF20DB12EE2B653C0",
+      "transcript_release_set": [
+        {
+          "assembly": "GRCh38",
+          "shortname": "110_20220707",
+          "description": "Refseq Homo sapiens Annotation Release 110.20220707",
+          "release_date": "2022-07-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20230320",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20230320",
+          "release_date": "2023-03-20",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20231007",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20231007",
+          "release_date": "2023-10-07",
+          "source": "RefSeq"
+        },
+        {
+          "assembly": "GRCh38",
+          "shortname": "GCF_000001405_20240827",
+          "description": "Refseq Homo sapiens Annotation Release GCF_000001405.20240827",
+          "release_date": "2024-08-24",
+          "source": "RefSeq"
+        }
+      ]
     }
   ]
 }
