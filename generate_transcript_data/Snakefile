@@ -1,3 +1,4 @@
+import sys
 import subprocess
 from datetime import datetime
 
@@ -5,7 +6,7 @@ configfile: os.path.join(workflow.basedir, "cdot_transcripts.yaml")
 
 cdot_json = os.path.join(workflow.basedir, "cdot_json.py")
 cdot_dir = os.path.dirname(workflow.basedir)
-cdot_output_raw = subprocess.check_output(f"{cdot_json} --version", shell=True, env={"PYTHONPATH": cdot_dir})
+cdot_output_raw = subprocess.check_output(f"{sys.executable} {cdot_json} --version", shell=True, env={"PYTHONPATH": cdot_dir})
 cdot_data_version = cdot_output_raw.decode().strip()
 
 # Name it based on date as it may vary
@@ -97,13 +98,14 @@ rule cdot_gff_json:
 
 
 rule download_gff_files:
+    threads: 4  # We seem to sometimes get failures/booted if too many simultaneous connections to site
     output:
         # Don't re-download if snakemake script changes
         protected("downloads/{name}.gz")
     params:
         url=lambda wildcards: all_urls[wildcards.name]
     shell:
-        "curl -o {output} {params.url}"
+        "curl --fail --show-error -o {output} {params.url}"
 
 
 rule process_gene_info_json:
@@ -125,5 +127,5 @@ rule download_gene_info:
     output:
         protected(gene_info_download_filename)
     shell:
-        "curl -o {output} https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/Homo_sapiens.gene_info.gz"
+        "curl --fail --show-error -o {output} https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/Homo_sapiens.gene_info.gz"
 
