@@ -10,7 +10,6 @@ from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError
 
 from cdot.hgvs.dataproviders import ChainedSeqFetcher
-from cdot.hgvs.dataproviders.ensembl_tark_data_provider import EnsemblTarkSeqFetcher
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
 from tests.mock_seqfetcher import MockSeqFetcher
 from tests.mock_ensembl_tark import MockEnsemblTarkDataProvider
@@ -50,7 +49,7 @@ class AbstractEnsemblTestCase(unittest.TestCase, ABC):
         found = False
         expected_transcript = "ENST00000617537.5"
         # Exonic coordinate
-        for tx_data in self.json_data_provider.get_tx_for_region("NC_000007.14", "splign", 36530417, 36530514):
+        for tx_data in self.json_data_provider.get_tx_for_region("NC_000007.14", "splign", 36530416, 36530514):
             if tx_data["tx_ac"] == expected_transcript:
                 found = True
                 self.assertEqual(tx_data["alt_strand"], -1)
