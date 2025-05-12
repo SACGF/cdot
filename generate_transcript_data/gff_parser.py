@@ -323,11 +323,6 @@ class GFFParser(abc.ABC):
             else:
                 # print(f"warning: Couldn't get out {version_key} from {feature.type=} {feature.attr=}")
                 transcript_accession = transcript_id
-        else:
-            # In RefSeq there are no transcript_ids for MT genes/mRNAs
-            # The proteins have "YP_" prefix (no corresp. NM_ transcript, so we will create fake ones
-            if feature.type == "mRNA":
-                transcript_accession = "fake-" + feature.attr.get("ID")
         return transcript_accession
 
     @staticmethod
@@ -345,6 +340,35 @@ class GFFParser(abc.ABC):
             else:
                 gene_accession = gene_id
         return gene_accession
+
+    def _get_transcript_accession_and_parent(self, feature, version_key) -> Optional[tuple[str, Optional[str]]]:
+        if transcript_accession := self._get_transcript_accession(feature, version_key=version_key):
+            return transcript_accession, None
+
+        # In RefSeq there are no transcript_ids for MT genes/mRNAs
+        # The proteins have "YP_" prefix (no corresp. NM_ transcript, so we will create fake ones
+        # Some GFFs have 'mRNA' features, however some only have gene and CDS
+        MITO_CONTIG = "NC_012920.1"
+        if feature.iv.chrom == MITO_CONTIG:
+            if feature.type == "mRNA":
+                transcript_accession = "fake-" + feature.attr.get("ID")
+                return transcript_accession, None
+            elif feature.type == "CDS":
+                GENE_PREFIX = "gene-"
+                RNA_PREFIX = "rna-"
+                if parent := feature.attr.get("Parent"):
+                    if parent.startswith(GENE_PREFIX):
+                        rna_parent = parent.replace(GENE_PREFIX, RNA_PREFIX)
+                        transcript_accession = "fake-" + rna_parent
+
+                        # Chuck a fake exon in there
+                        feature_tuple = (feature.iv.start, feature.iv.end)
+                        features_by_type = self.transcript_features_by_type[transcript_accession]
+                        features_by_type["exon"].append(feature_tuple)
+
+                        return transcript_accession, parent
+
+        return None
 
     def _handle_protein_version(self, transcript_accession, feature):
         # RefSeq GFF3: CDS protein_id = NP_001659.1
@@ -478,7 +502,7 @@ class GFF3Parser(GFFParser):
             # RefSeq stores HGNC in dbxref
             if hgnc := dbxref.get("HGNC"):
                 # Might have HGNC: (5 characters) at start of it
-                if hgnc.startswith("HGNC"):
+                if hgnc.startswith("HGNC:"):
                     hgnc = hgnc[5:]
                 gene_data["hgnc"] = hgnc
             elif description := gene_data.get("description"):
@@ -489,6 +513,7 @@ class GFF3Parser(GFFParser):
 
             self.gene_accession_by_feature_id[feature.attr["ID"]] = gene_accession
         else:
+            transcript_accession = None
             if feature.type in self.GFF3_TRANSCRIPTS_DATA:
                 if feature.type == 'cDNA_match':
                     target = feature.attr["Target"]
@@ -500,7 +525,6 @@ class GFF3Parser(GFFParser):
                         self._handle_protein_version(transcript_accession, feature)
                     else:
                         logging.warning("Transcript data has no parent: %s" % feature.get_gff_line())
-                        transcript_accession = None
 
                 if transcript_accession:
                     transcript = self.transcript_data_by_accession.get(transcript_accession)
@@ -512,11 +536,17 @@ class GFF3Parser(GFFParser):
                             return
                         raise ValueError(msg)
                     self._handle_transcript_data(transcript_accession, transcript, feature)
-            else:
+
+            if transcript_accession is None:
                 # There are so many different transcript ontology terms just taking everything that
                 # has a transcript_id and is child of gene (ie skip miRNA etc that is child of primary_transcript)
-                if transcript_accession := self._get_transcript_accession(feature, version_key="version"):
-                    assert parent_id is not None
+
+
+                # We need to make a gff3 version that also returns the parent ID faking for cDS/Mito
+                if transcript_and_parent := self._get_transcript_accession_and_parent(feature, version_key="version"):
+                    transcript_accession, replaced_parent_id = transcript_and_parent
+                    if replaced_parent_id:
+                        parent_id = replaced_parent_id
                     gene_accession = self.gene_accession_by_feature_id.get(parent_id)
                     if not gene_accession:
                         if self.skip_missing_parents:
@@ -527,8 +557,14 @@ class GFF3Parser(GFFParser):
                     gene_data = self.gene_data_by_accession[gene_accession]
                     self._handle_transcript(gene_data, transcript_accession, feature)
                     transcript = self.transcript_data_by_accession[transcript_accession]
-                    if feature.type not in EXCLUDE_BIOTYPES:
+
+                    if feature.type == 'CDS':
+                        # We should only be here if transcript_id wasn't on it (chrM)
+                        self._handle_transcript_data(transcript_accession, transcript, feature)
+                    elif feature.type not in EXCLUDE_BIOTYPES:
                         transcript["biotype"].add(feature.type)
+
+
 
     @staticmethod
     def _get_dbxref(feature):

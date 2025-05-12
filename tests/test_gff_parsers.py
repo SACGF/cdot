@@ -14,8 +14,15 @@ class Test(unittest.TestCase):
     REFSEQ_GFF3_FILENAME_2021 = os.path.join(test_data_dir, "refseq_test.GRCh38.p13_genomic.109.20210514.gff")
     # Newer RefSeq, before Genbank => GenBank changed
     REFSEQ_GFF3_FILENAME_2023 = os.path.join(test_data_dir, "refseq_test.GRCh38.p14_genomic.RS_2023_03.gff")
+    REFSEQ_GFF3_FILENAME_GRCH37_MT = os.path.join(test_data_dir, "refseq_grch37_mt.gff")
+    REFSEQ_GFF3_FILENAME_GRCH38_MT = os.path.join(test_data_dir, "refseq_grch38.p14_mt.gff")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
     FAKE_URL = "http://fake.url"
+
+    FAKE_MT_TRANSCRIPTS = [
+        "fake-rna-ATP6", "fake-rna-ATP8", "fake-rna-COX1", "fake-rna-COX2", "fake-rna-COX3", "fake-rna-CYTB",
+        "fake-rna-ND1", "fake-rna-ND2", "fake-rna-ND3", "fake-rna-ND4", "fake-rna-ND4L", "fake-rna-ND5", "fake-rna-ND6"
+    ]
 
     def _test_exon_length(self, transcripts, genome_build, transcript_id, expected_length):
         transcript = transcripts[transcript_id]
@@ -119,3 +126,24 @@ class Test(unittest.TestCase):
         gene = genes["ENSG00000210156"]
         gene_symbol = gene["gene_symbol"]
         self.assertEqual(gene_symbol, "MT-TK")
+
+    def _test_mito(self, filename, genome_build):
+        parser = GFF3Parser(filename, genome_build, self.FAKE_URL)
+        genes, transcripts = parser.get_genes_and_transcripts()
+
+        for transcript_accession in self.FAKE_MT_TRANSCRIPTS:
+            self.assertIn(transcript_accession, transcripts)
+
+        transcript = transcripts["fake-rna-ATP6"]
+        exons = transcript["genome_builds"][genome_build]["exons"]
+        first_exon = exons[0]
+        self.assertEqual(first_exon[0], 8526)
+        self.assertEqual(first_exon[1], 9207)
+
+    def test_mito_mrna(self):
+        """ Need to make fake MT transcripts for RefSeq @see https://github.com/SACGF/cdot/issues/72 """
+        self._test_mito(self.REFSEQ_GFF3_FILENAME_GRCH38_MT, "GRCh38")
+
+    def test_mito_no_mrna(self):
+        """ Need to make fake MT transcripts for RefSeq @see https://github.com/SACGF/cdot/issues/72 """
+        self._test_mito(self.REFSEQ_GFF3_FILENAME_GRCH37_MT, "GRCh37")
