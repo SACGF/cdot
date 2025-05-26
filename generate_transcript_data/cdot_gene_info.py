@@ -3,6 +3,7 @@
 import csv
 import gzip
 import json
+import logging
 import os
 from argparse import ArgumentParser
 from datetime import datetime
@@ -72,6 +73,10 @@ def main():
             # We should really store it under the gene Id so dupe symbols don't wipe
             for gene_summary in _get_entrez_gene_summary(entrez_ids):
                 gene_id = gene_summary.attributes["uid"]
+                if error := gene_summary.get("error"):
+                    logging.warning("Skipping '%s' error: %s", gene_id, error)
+                    continue
+
                 gene_info[gene_id] = {
                     "gene_symbol": gene_summary["NomenclatureSymbol"],
                     "map_location": gene_summary["MapLocation"],
