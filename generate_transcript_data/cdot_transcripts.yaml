@@ -7,85 +7,162 @@ config:
       #83 has no data
       #84 is 82 again
       #86 is 85 again
-      Homo_sapiens_GRCh37_Ensembl_82.gtf: "https://ftp.ensembl.org/pub/grch37/release-82/gtf/homo_sapiens/Homo_sapiens.GRCh37.82.gtf.gz"
-      Homo_sapiens_GRCh37_Ensembl_85.gtf: "https://ftp.ensembl.org/pub/grch37/release-85/gtf/homo_sapiens/Homo_sapiens.GRCh37.85.gtf.gz"
-      Homo_sapiens_GRCh37_Ensembl_87.gtf: "https://ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz"
+      Homo_sapiens_GRCh37_Ensembl_82.gtf:
+        url: "https://ftp.ensembl.org/pub/grch37/release-82/gtf/homo_sapiens/Homo_sapiens.GRCh37.82.gtf.gz"
+      Homo_sapiens_GRCh37_Ensembl_85.gtf:
+        url: "https://ftp.ensembl.org/pub/grch37/release-85/gtf/homo_sapiens/Homo_sapiens.GRCh37.85.gtf.gz"
+      Homo_sapiens_GRCh37_Ensembl_87.gtf:
+        url: "https://ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz"
 
     GRCh38:
-       Homo_sapiens_GRCh38_Ensembl_81.gtf: "https://ftp.ensembl.org/pub/release-81/gtf/homo_sapiens/Homo_sapiens.GRCh38.81.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_82.gtf: "https://ftp.ensembl.org/pub/release-82/gtf/homo_sapiens/Homo_sapiens.GRCh38.82.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_83.gtf: "https://ftp.ensembl.org/pub/release-83/gtf/homo_sapiens/Homo_sapiens.GRCh38.83.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_84.gtf: "https://ftp.ensembl.org/pub/release-84/gtf/homo_sapiens/Homo_sapiens.GRCh38.84.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_85.gtf: "https://ftp.ensembl.org/pub/release-85/gtf/homo_sapiens/Homo_sapiens.GRCh38.85.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_86.gtf: "https://ftp.ensembl.org/pub/release-86/gtf/homo_sapiens/Homo_sapiens.GRCh38.86.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_87.gtf: "https://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh38.87.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_88.gtf: "https://ftp.ensembl.org/pub/release-88/gtf/homo_sapiens/Homo_sapiens.GRCh38.88.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_89.gtf: "https://ftp.ensembl.org/pub/release-89/gtf/homo_sapiens/Homo_sapiens.GRCh38.89.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_90.gtf: "https://ftp.ensembl.org/pub/release-90/gtf/homo_sapiens/Homo_sapiens.GRCh38.90.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_91.gtf: "https://ftp.ensembl.org/pub/release-91/gtf/homo_sapiens/Homo_sapiens.GRCh38.91.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_92.gtf: "https://ftp.ensembl.org/pub/release-92/gtf/homo_sapiens/Homo_sapiens.GRCh38.92.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_93.gtf: "https://ftp.ensembl.org/pub/release-93/gtf/homo_sapiens/Homo_sapiens.GRCh38.93.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_94.gtf: "https://ftp.ensembl.org/pub/release-94/gtf/homo_sapiens/Homo_sapiens.GRCh38.94.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_95.gtf: "https://ftp.ensembl.org/pub/release-95/gtf/homo_sapiens/Homo_sapiens.GRCh38.95.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_96.gtf: "https://ftp.ensembl.org/pub/release-96/gtf/homo_sapiens/Homo_sapiens.GRCh38.96.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_97.gtf: "https://ftp.ensembl.org/pub/release-97/gtf/homo_sapiens/Homo_sapiens.GRCh38.97.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_98.gtf: "https://ftp.ensembl.org/pub/release-98/gtf/homo_sapiens/Homo_sapiens.GRCh38.98.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_99.gtf: "https://ftp.ensembl.org/pub/release-99/gtf/homo_sapiens/Homo_sapiens.GRCh38.99.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_100.gtf: "https://ftp.ensembl.org/pub/release-100/gtf/homo_sapiens/Homo_sapiens.GRCh38.100.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_101.gtf: "https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_102.gtf: "https://ftp.ensembl.org/pub/release-102/gtf/homo_sapiens/Homo_sapiens.GRCh38.102.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_103.gtf: "https://ftp.ensembl.org/pub/release-103/gtf/homo_sapiens/Homo_sapiens.GRCh38.103.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_104.gtf: "https://ftp.ensembl.org/pub/release-104/gtf/homo_sapiens/Homo_sapiens.GRCh38.104.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_105.gtf: "https://ftp.ensembl.org/pub/release-105/gtf/homo_sapiens/Homo_sapiens.GRCh38.105.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_106.gtf: "https://ftp.ensembl.org/pub/release-106/gtf/homo_sapiens/Homo_sapiens.GRCh38.106.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_107.gtf: "https://ftp.ensembl.org/pub/release-107/gtf/homo_sapiens/Homo_sapiens.GRCh38.107.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_108.gtf: "https://ftp.ensembl.org/pub/release-108/gtf/homo_sapiens/Homo_sapiens.GRCh38.108.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_109.gtf: "https://ftp.ensembl.org/pub/release-109/gtf/homo_sapiens/Homo_sapiens.GRCh38.109.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_110.gtf: "https://ftp.ensembl.org/pub/release-110/gtf/homo_sapiens/Homo_sapiens.GRCh38.110.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_111.gtf: "https://ftp.ensembl.org/pub/release-111/gtf/homo_sapiens/Homo_sapiens.GRCh38.111.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_112.gtf: "https://ftp.ensembl.org/pub/release-112/gtf/homo_sapiens/Homo_sapiens.GRCh38.112.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_113.gtf: "https://ftp.ensembl.org/pub/release-113/gtf/homo_sapiens/Homo_sapiens.GRCh38.113.gtf.gz"
-       Homo_sapiens_GRCh38_Ensembl_114.gtf: "https://ftp.ensembl.org/pub/release-114/gtf/homo_sapiens/Homo_sapiens.GRCh38.114.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_81.gtf:
+        url: "https://ftp.ensembl.org/pub/release-81/gtf/homo_sapiens/Homo_sapiens.GRCh38.81.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_82.gtf:
+        url: "https://ftp.ensembl.org/pub/release-82/gtf/homo_sapiens/Homo_sapiens.GRCh38.82.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_83.gtf:
+        url: "https://ftp.ensembl.org/pub/release-83/gtf/homo_sapiens/Homo_sapiens.GRCh38.83.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_84.gtf:
+        url: "https://ftp.ensembl.org/pub/release-84/gtf/homo_sapiens/Homo_sapiens.GRCh38.84.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_85.gtf:
+        url: "https://ftp.ensembl.org/pub/release-85/gtf/homo_sapiens/Homo_sapiens.GRCh38.85.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_86.gtf:
+        url: "https://ftp.ensembl.org/pub/release-86/gtf/homo_sapiens/Homo_sapiens.GRCh38.86.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_87.gtf:
+        url: "https://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh38.87.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_88.gtf:
+        url: "https://ftp.ensembl.org/pub/release-88/gtf/homo_sapiens/Homo_sapiens.GRCh38.88.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_89.gtf:
+        url: "https://ftp.ensembl.org/pub/release-89/gtf/homo_sapiens/Homo_sapiens.GRCh38.89.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_90.gtf:
+        url: "https://ftp.ensembl.org/pub/release-90/gtf/homo_sapiens/Homo_sapiens.GRCh38.90.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_91.gtf:
+        url: "https://ftp.ensembl.org/pub/release-91/gtf/homo_sapiens/Homo_sapiens.GRCh38.91.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_92.gtf:
+        url: "https://ftp.ensembl.org/pub/release-92/gtf/homo_sapiens/Homo_sapiens.GRCh38.92.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_93.gtf:
+        url: "https://ftp.ensembl.org/pub/release-93/gtf/homo_sapiens/Homo_sapiens.GRCh38.93.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_94.gtf:
+        url: "https://ftp.ensembl.org/pub/release-94/gtf/homo_sapiens/Homo_sapiens.GRCh38.94.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_95.gtf:
+        url: "https://ftp.ensembl.org/pub/release-95/gtf/homo_sapiens/Homo_sapiens.GRCh38.95.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_96.gtf:
+        url: "https://ftp.ensembl.org/pub/release-96/gtf/homo_sapiens/Homo_sapiens.GRCh38.96.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_97.gtf:
+        url: "https://ftp.ensembl.org/pub/release-97/gtf/homo_sapiens/Homo_sapiens.GRCh38.97.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_98.gtf:
+        url: "https://ftp.ensembl.org/pub/release-98/gtf/homo_sapiens/Homo_sapiens.GRCh38.98.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_99.gtf:
+        url: "https://ftp.ensembl.org/pub/release-99/gtf/homo_sapiens/Homo_sapiens.GRCh38.99.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_100.gtf:
+        url: "https://ftp.ensembl.org/pub/release-100/gtf/homo_sapiens/Homo_sapiens.GRCh38.100.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_101.gtf:
+        url: "https://ftp.ensembl.org/pub/release-101/gtf/homo_sapiens/Homo_sapiens.GRCh38.101.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_102.gtf:
+        url: "https://ftp.ensembl.org/pub/release-102/gtf/homo_sapiens/Homo_sapiens.GRCh38.102.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_103.gtf:
+        url: "https://ftp.ensembl.org/pub/release-103/gtf/homo_sapiens/Homo_sapiens.GRCh38.103.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_104.gtf:
+        url: "https://ftp.ensembl.org/pub/release-104/gtf/homo_sapiens/Homo_sapiens.GRCh38.104.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_105.gtf:
+        url: "https://ftp.ensembl.org/pub/release-105/gtf/homo_sapiens/Homo_sapiens.GRCh38.105.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_106.gtf:
+        url: "https://ftp.ensembl.org/pub/release-106/gtf/homo_sapiens/Homo_sapiens.GRCh38.106.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_107.gtf:
+        url: "https://ftp.ensembl.org/pub/release-107/gtf/homo_sapiens/Homo_sapiens.GRCh38.107.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_108.gtf:
+        url: "https://ftp.ensembl.org/pub/release-108/gtf/homo_sapiens/Homo_sapiens.GRCh38.108.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_109.gtf:
+        url: "https://ftp.ensembl.org/pub/release-109/gtf/homo_sapiens/Homo_sapiens.GRCh38.109.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_110.gtf:
+        url: "https://ftp.ensembl.org/pub/release-110/gtf/homo_sapiens/Homo_sapiens.GRCh38.110.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_111.gtf:
+        url: "https://ftp.ensembl.org/pub/release-111/gtf/homo_sapiens/Homo_sapiens.GRCh38.111.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_112.gtf:
+        url: "https://ftp.ensembl.org/pub/release-112/gtf/homo_sapiens/Homo_sapiens.GRCh38.112.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_113.gtf:
+        url: "https://ftp.ensembl.org/pub/release-113/gtf/homo_sapiens/Homo_sapiens.GRCh38.113.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_114.gtf:
+        url: "https://ftp.ensembl.org/pub/release-114/gtf/homo_sapiens/Homo_sapiens.GRCh38.114.gtf.gz"
        # Gives me a 403 - reported to Ensembl
        # Homo_sapiens_GRCh38_Ensembl_115.gtf: "https://ftp.ensembl.org/pub/release-115/gtf/homo_sapiens/Homo_sapiens.GRCh38.115.gtf.gz"
 
     T2T-CHM13v2.0:
-      Homo_sapiens_T2T-CHM13v2.0_Ensembl_2022_06.gtf: "https://ftp.ensembl.org/pub/rapid-release/species/Homo_sapiens/GCA_009914755.4/ensembl/geneset/2022_06/Homo_sapiens-GCA_009914755.4-2022_06-genes.gtf.gz"
-      Homo_sapiens_T2T-CHM13v2.0_Ensembl_2022_07.gtf: "https://ftp.ensembl.org/pub/rapid-release/species/Homo_sapiens/GCA_009914755.4/ensembl/geneset/2022_07/Homo_sapiens-GCA_009914755.4-2022_07-genes.gtf.gz"
+      Homo_sapiens_T2T-CHM13v2.0_Ensembl_2022_06.gtf:
+        url: "https://ftp.ensembl.org/pub/rapid-release/species/Homo_sapiens/GCA_009914755.4/ensembl/geneset/2022_06/Homo_sapiens-GCA_009914755.4-2022_06-genes.gtf.gz"
+      Homo_sapiens_T2T-CHM13v2.0_Ensembl_2022_07.gtf:
+        url: "https://ftp.ensembl.org/pub/rapid-release/species/Homo_sapiens/GCA_009914755.4/ensembl/geneset/2022_07/Homo_sapiens-GCA_009914755.4-2022_07-genes.gtf.gz"
   RefSeq:
     GRCh37:
-      Homo_sapiens_GRCh37_RefSeq_p5.gff3: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/BUILD.37.3/GFF/ref_GRCh37.p5_top_level.gff3.gz"
-      Homo_sapiens_GRCh37_RefSeq_103.gff3: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.103/GFF/ref_GRCh37.p9_top_level.gff3.gz"
-      Homo_sapiens_GRCh37_RefSeq_104.gff3: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.104/GFF/ref_GRCh37.p10_top_level.gff3.gz"
-      Homo_sapiens_GRCh37_RefSeq_105.20190906.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/105.20190906/GCF_000001405.25_GRCh37.p13/GCF_000001405.25_GRCh37.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh37_RefSeq_105.20201022.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/105.20201022/GCF_000001405.25_GRCh37.p13/GCF_000001405.25_GRCh37.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh37_RefSeq_105.20220307.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/105.20220307/GCF_000001405.25_GRCh37.p13/GCF_000001405.25_GRCh37.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh37_RS_2024_09: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.25-RS_2024_09/GCF_000001405.25_GRCh37.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh37_UTA_20241220:
+        uta:
+          schema: "uta_20241220"
+          template: "uta_grch37.template"
+      Homo_sapiens_GRCh37_RefSeq_p5.gff3:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/BUILD.37.3/GFF/ref_GRCh37.p5_top_level.gff3.gz"
+      Homo_sapiens_GRCh37_RefSeq_103.gff3:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.103/GFF/ref_GRCh37.p9_top_level.gff3.gz"
+      Homo_sapiens_GRCh37_RefSeq_104.gff3:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.104/GFF/ref_GRCh37.p10_top_level.gff3.gz"
+      Homo_sapiens_GRCh37_RefSeq_105.20190906.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/105.20190906/GCF_000001405.25_GRCh37.p13/GCF_000001405.25_GRCh37.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh37_RefSeq_105.20201022.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/105.20201022/GCF_000001405.25_GRCh37.p13/GCF_000001405.25_GRCh37.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh37_RefSeq_105.20220307.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/105.20220307/GCF_000001405.25_GRCh37.p13/GCF_000001405.25_GRCh37.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh37_RS_2024_09:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.25-RS_2024_09/GCF_000001405.25_GRCh37.p13_genomic.gff.gz"
 
     GRCh38:
-      Homo_sapiens_GRCh38_RefSeq_106.gff3: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.106/GFF/ref_GRCh38_top_level.gff3.gz"
-      Homo_sapiens_GRCh38_RefSeq_107.gff3: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.106/GFF/ref_GRCh38_top_level.gff3.gz"
-      Homo_sapiens_GRCh38_RefSeq_108.gff3: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.108/GFF/ref_GRCh38.p7_top_level.gff3.gz"
-      Homo_sapiens_GRCh38_RefSeq_109.gff3: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.109/GFF/ref_GRCh38.p12_top_level.gff3.gz"
+      Homo_sapiens_GRCh38_UTA_20241220:
+        uta:
+          schema: "uta_20241220"
+          template: "uta_grch38.template"
+      Homo_sapiens_GRCh38_RefSeq_106.gff3:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.106/GFF/ref_GRCh38_top_level.gff3.gz"
+      Homo_sapiens_GRCh38_RefSeq_107.gff3:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.106/GFF/ref_GRCh38_top_level.gff3.gz"
+      Homo_sapiens_GRCh38_RefSeq_108.gff3:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.108/GFF/ref_GRCh38.p7_top_level.gff3.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.gff3:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.109/GFF/ref_GRCh38.p12_top_level.gff3.gz"
       # The date on this 109 version is 2020-2024 (after the other 109s below), not sure what's going on
-      Homo_sapiens_GRCh38_RefSeq_109.GCF.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109/GCF_000001405.38_GRCh38.p12/GCF_000001405.38_GRCh38.p12_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_109.20190607.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20190607/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_109.20190905.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20190905/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_109.20191205.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20191205/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_109.20200228.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20200228/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_109.20200522.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20200522/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_109.20200815.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20200815/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_109.20201120.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20201120/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_109.20210226.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20210226/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_109.20210514.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20210514/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_109.20211119.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20211119/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_110.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/110/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_RS_2023_03.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_03/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_RS_2023_10.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_10/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
-      Homo_sapiens_GRCh38_RefSeq_RS_2024_08.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2024_08/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.GCF.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109/GCF_000001405.38_GRCh38.p12/GCF_000001405.38_GRCh38.p12_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.20190607.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20190607/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.20190905.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20190905/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.20191205.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20191205/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.20200228.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20200228/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.20200522.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20200522/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.20200815.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20200815/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.20201120.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20201120/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.20210226.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20210226/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.20210514.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20210514/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_109.20211119.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/109.20211119/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_110.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/110/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_RS_2023_03.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_03/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_RS_2023_10.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_10/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_RS_2024_08.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2024_08/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
 
     T2T-CHM13v2.0:
-      Homo_sapiens_T2T-CHM13v2.0_RefSeq_110.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/110/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz"
-      Homo_sapiens_T2T-CHM13v2.0_RefSeq_RS_2023_03.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_009914755.1-RS_2023_03/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz"
-      Homo_sapiens_T2T-CHM13v2.0_RefSeq_RS_2023_10.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_009914755.1-RS_2023_10/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz"
-      Homo_sapiens_T2T-CHM13v2.0_RefSeq_RS_2024_08.gff: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_009914755.1-RS_2024_08/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz"
+      Homo_sapiens_T2T-CHM13v2.0_RefSeq_110.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/110/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz"
+      Homo_sapiens_T2T-CHM13v2.0_RefSeq_RS_2023_03.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_009914755.1-RS_2023_03/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz"
+      Homo_sapiens_T2T-CHM13v2.0_RefSeq_RS_2023_10.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_009914755.1-RS_2023_10/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz"
+      Homo_sapiens_T2T-CHM13v2.0_RefSeq_RS_2024_08.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_009914755.1-RS_2024_08/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz"

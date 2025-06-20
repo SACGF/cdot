@@ -1,6 +1,7 @@
 import sys
 import subprocess
 from datetime import datetime
+from pathlib import Path
 
 configfile: os.path.join(workflow.basedir, "cdot_transcripts.yaml")
 
@@ -15,25 +16,29 @@ gene_info_download_filename = os.path.join("downloads/gene_info", f"Homo_sapiens
 gene_info_json_filename = f"Homo_sapiens.gene-info-{cdot_data_version}.json.gz"
 
 all_urls = {}
+name_uta = {}
+
 annotation_consortium_list = []
 genome_build_list = []
 for annotation_consortium, builds in config["config"].items():
     annotation_consortium_list.append(annotation_consortium)
-    for gb, urls_dict in builds.items():
+    for gb, cdot_file_data in builds.items():
         genome_build_list.append(gb)
-        all_urls.update(urls_dict)
+        for name, data in cdot_file_data.items():
+            url = None
+            if uta := data.get("uta"):
+                name_uta[name] = uta
+                if schema := uta.get("schema"):
+                    url = f"postgresql://uta.biocommons.org/{schema}"
+            else:
+                url = data.get("url")
+
+            if url:
+                all_urls[name] = url
 
 
 def get_url_from_name(wildcards):
     return all_urls[wildcards.name]
-
-
-def get_urls(wildcards):
-    print(f"get_urls")
-    for key, value in wildcards.items():
-        print(f"{key}={value}")
-
-    return urls
 
 
 def get_cdot_command(wildcards):
@@ -44,9 +49,14 @@ def get_cdot_command(wildcards):
 
 
 def get_build_input_files(wildcards):
-    urls = config["config"][wildcards.annotation_consortium][wildcards.genome_build]
+    cdot_file_data = config["config"][wildcards.annotation_consortium][wildcards.genome_build]
     prefix = f"{wildcards.annotation_consortium}/{wildcards.genome_build}/cdot-{cdot_data_version}"
-    return expand(prefix + "-{name}.json.gz", name=urls)
+    url_names = [name for name, val in cdot_file_data.items() if 'url' in val]
+    uta_names = [name for name, val in cdot_file_data.items() if 'uta' in val]
+    # uta_names = [] # So we don't have to change anything
+
+    return expand(prefix + "-{name}.json.gz", name=url_names) + \
+     expand(prefix + "uta-{name}.json.gz", name=uta_names)
 
 
 rule all:
@@ -103,9 +113,49 @@ rule download_gff_files:
         # Don't re-download if snakemake script changes
         protected("downloads/{name}.gz")
     params:
-        url=lambda wildcards: all_urls[wildcards.name]
+        url=lambda wc: all_urls[wc.name]
     shell:
         "curl --fail --show-error -o {output} {params.url}"
+
+
+rule fetch_uta_from_db:
+    output:
+        protected("uta/{name}.csv")
+    params:
+        schema=lambda wc: name_uta[wc.name]["schema"],
+        template=lambda wc: name_uta[wc.name]["template"],
+    run:
+        template_file = os.path.join(workflow.basedir, params.template)
+        with open(template_file) as f:
+            template = f.read()
+        sql = template.format(schema=params.schema, output_file=output[0]).replace("\n", " ")
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".sql") as tf:
+            tf.write(sql)
+            tf.flush()
+            sql_path = Path(tf.name)
+            shell(f'psql -h uta.biocommons.org -U anonymous -d uta -f "{sql_path}"')
+
+
+rule cdot_uta_json:
+    input:
+        gene_info_json=gene_info_json_filename,
+        uta_file="uta/{name}.csv"
+    output:
+        protected("{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "uta-{name}.json.gz")
+    params:
+        url=get_url_from_name,
+    shell:
+        """
+            PYTHONPATH={cdot_dir} \
+            {cdot_json} \
+                uta_to_json \
+                "{input.uta_file}" \
+                --url "{params.url}" \
+                --genome-build="{wildcards.genome_build}" \
+                --output "{output}"
+                # --gene-info-json="{input.gene_info_json}"
+        """
 
 
 rule process_gene_info_json:
