@@ -49,14 +49,19 @@ def get_cdot_command(wildcards):
 
 
 def get_build_input_files(wildcards):
+    """ This needs to be in order of the YAML file (as we overwrite as we go) """
     cdot_file_data = config["config"][wildcards.annotation_consortium][wildcards.genome_build]
     prefix = f"{wildcards.annotation_consortium}/{wildcards.genome_build}/cdot-{cdot_data_version}"
-    url_names = [name for name, val in cdot_file_data.items() if 'url' in val]
-    uta_names = [name for name, val in cdot_file_data.items() if 'uta' in val]
-    # uta_names = [] # So we don't have to change anything
-
-    return expand(prefix + "-{name}.json.gz", name=url_names) + \
-     expand(prefix + "uta-{name}.json.gz", name=uta_names)
+    input_files = []
+    for name, val in cdot_file_data.items():
+        if 'url' in val:
+            filename = prefix + f"-{name}.json.gz"
+        elif 'uta' in val:
+            filename = prefix + f"_uta-{name}.json.gz"
+        else:
+            raise ValueError(f"Don't know how to handle {name}: {val}")
+        input_files.append(filename)
+    return input_files
 
 
 rule all:
@@ -142,7 +147,7 @@ rule cdot_uta_json:
         gene_info_json=gene_info_json_filename,
         uta_file="uta/{name}.csv"
     output:
-        protected("{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "uta-{name}.json.gz")
+        protected("{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "_uta-{name}.json.gz")
     params:
         url=get_url_from_name,
     shell:
