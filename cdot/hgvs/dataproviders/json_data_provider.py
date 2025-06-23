@@ -227,7 +227,7 @@ class AbstractJSONDataProvider(Interface):
             This is not implemented. The only caller has comment: 'TODO: drop get_acs_for_protein_seq'
             And is only ever called as a backup when get_pro_ac_for_tx_ac fails
         """
-        return None
+        return []
 
     def get_gene_info(self, gene):
         gene_info = None
