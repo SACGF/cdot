@@ -115,8 +115,13 @@ class FastaSeqFetcher(PrefixSeqFetcher):
 
     def __init__(self, *args, cache=True):
         default_seqfetcher = ExonsFromGenomeFastaSeqFetcher(*args, cache=True)
-
         super().__init__(default_seqfetcher=default_seqfetcher)
+        self.genome_fasta_seq_fetcher = GenomeFastaSeqFetcher(*args)
         self.prefix_seqfetchers.update({
-            "NC_": GenomeFastaSeqFetcher(*args),
+            "NC_": self.genome_fasta_seq_fetcher,
         })
+
+    @property
+    def contig_fastas(self):
+        """ For backwards compatibility """
+        return self.genome_fasta_seq_fetcher.contig_fastas
