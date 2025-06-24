@@ -13,7 +13,7 @@ cdot_data_version = cdot_output_raw.decode().strip()
 # Name it based on date as it may vary
 today = datetime.now().date().isoformat()
 gene_info_download_filename = os.path.join("downloads/gene_info", f"Homo_sapiens.gene_info.{today}.gz")
-gene_info_json_filename = f"Homo_sapiens.gene-info-{cdot_data_version}.json.gz"
+gene_info_json_filename = f"Homo_sapiens.gene-info-{cdot_data_version}.{today}.json.gz"
 
 all_urls = {}
 name_uta = {}
@@ -95,7 +95,7 @@ rule cdot_gff_json:
         gene_info_json=gene_info_json_filename,
         gff_file="downloads/{name}.gz"
     output:
-        protected("{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "-{name}.json.gz")
+        "{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "-{name}.json.gz"
     params:
         url=get_url_from_name,
         cdot_command=get_cdot_command
@@ -139,7 +139,8 @@ rule fetch_uta_from_db:
             tf.write(sql)
             tf.flush()
             sql_path = Path(tf.name)
-            shell(f'psql -h uta.biocommons.org -U anonymous -d uta -f "{sql_path}"')
+            env = {"PGPASSWORD": "anonymous"}
+            shell(f'psql -h uta.biocommons.org -U anonymous -d uta -f "{sql_path}"', env=env)
 
 
 rule cdot_uta_json:
@@ -147,7 +148,7 @@ rule cdot_uta_json:
         gene_info_json=gene_info_json_filename,
         uta_file="uta/{name}.csv"
     output:
-        protected("{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "_uta-{name}.json.gz")
+        "{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "_uta-{name}.json.gz"
     params:
         url=get_url_from_name,
     shell:
@@ -167,7 +168,7 @@ rule process_gene_info_json:
     input:
         gene_info_download_filename
     output:
-        protected(gene_info_json_filename)
+        gene_info_json_filename
     shell:
         """
             PYTHONPATH={cdot_dir} \
