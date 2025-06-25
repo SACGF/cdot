@@ -99,6 +99,8 @@ config:
         url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.103/GFF/ref_GRCh37.p9_top_level.gff3.gz"
       Homo_sapiens_GRCh37_RefSeq_104.gff3:
         url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.104/GFF/ref_GRCh37.p10_top_level.gff3.gz"
+      Homo_sapiens_GRCh37_RefSeq_105.gff3:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.105/GFF/ref_GRCh37.p13_top_level.gff3.gz"
       # UTA transcripts have gaps, so they should overwrite the earlier refseq transcripts (without gaps)
       # But will be overwritten by newer (post p13) official transcripts
       Homo_sapiens_GRCh37_UTA_20241220:
@@ -123,7 +125,7 @@ config:
       Homo_sapiens_GRCh38_RefSeq_106.gff3:
         url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.106/GFF/ref_GRCh38_top_level.gff3.gz"
       Homo_sapiens_GRCh38_RefSeq_107.gff3:
-        url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.106/GFF/ref_GRCh38_top_level.gff3.gz"
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.107/GFF/ref_GRCh38.p2_top_level.gff3.gz"
       Homo_sapiens_GRCh38_RefSeq_108.gff3:
         url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.108/GFF/ref_GRCh38.p7_top_level.gff3.gz"
       Homo_sapiens_GRCh38_RefSeq_109.gff3:
