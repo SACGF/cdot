@@ -1,3 +1,16 @@
+## [unreleased]
+
+### Added
+
+- #86 Ensembl Tark Data Provider implementation 
+- #70 Use Snakemake to build transcripts (only affects data not client code)
+
+### Changed
+
+- #88 get_acs_for_protein_seq should return list not None
+- #83 Ensembl files missing protein - breaking c_to_p (only affects data not client code)
+- #17 RefSeq missing MT transcripts (only affects data not client code)
+
 ## [0.2.26] 2024-08-15
 
 Bumped version to 0.2.26 to catch up with data release. Only new client functionality is #81 'data_release' helper functions
