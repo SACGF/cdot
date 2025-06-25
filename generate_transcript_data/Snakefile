@@ -11,7 +11,7 @@ cdot_output_raw = subprocess.check_output(f"{sys.executable} {cdot_json} --versi
 cdot_data_version = cdot_output_raw.decode().strip()
 
 # Name it based on date as it may vary
-today = "2025-06-24" # datetime.now().date().isoformat()
+today = datetime.now().date().isoformat()
 gene_info_download_filename = os.path.join("downloads/gene_info", f"Homo_sapiens.gene_info.{today}.gz")
 gene_info_json_filename = f"Homo_sapiens.gene-info-{cdot_data_version}.{today}.json.gz"
 
