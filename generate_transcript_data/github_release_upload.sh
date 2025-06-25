@@ -20,17 +20,21 @@ echo "For the rest of the script to work, it assumes you have tagged + pushed a 
 echo "then run: gh release create ${CDOT_RELEASE_NAME} --title=${CDOT_RELEASE_NAME} --notes 'release notes...'"
 
 gh release upload ${CDOT_RELEASE_NAME} \
-  ${CDOT_DATA_DIR}/ensembl/GRCh37/cdot-${CDOT_DATA_VERSION}.ensembl.grch37.json.gz \
-  ${CDOT_DATA_DIR}/ensembl/GRCh37/cdot-${CDOT_DATA_VERSION}.ensembl.Homo_sapiens.GRCh37.87.gtf.json.gz \
-  ${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.ensembl.grch38.json.gz \
-  ${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.ensembl.Homo_sapiens.GRCh38.110.gtf.json.gz \
-  ${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.ensembl.Homo_sapiens.GRCh38.112.gtf.json.gz \
-  ${CDOT_DATA_DIR}/ensembl/T2T-CHM13v2.0/cdot-${CDOT_DATA_VERSION}.ensembl.T2T-CHM13v2.0.json.gz \
-  ${CDOT_DATA_DIR}/refseq/GRCh37/cdot-${CDOT_DATA_VERSION}.refseq.grch37.json.gz \
-  ${CDOT_DATA_DIR}/refseq/GRCh37/cdot-${CDOT_DATA_VERSION}.GCF_000001405.25_GRCh37.p13_genomic.105.20201022.gff.json.gz \
-  ${CDOT_DATA_DIR}/refseq/GRCh37/cdot-${CDOT_DATA_VERSION}.GCF_000001405.25_GRCh37.p13_genomic.105.20220307.gff.json.gz \
-  ${CDOT_DATA_DIR}/refseq/GRCh38/cdot-${CDOT_DATA_VERSION}.refseq.grch38.json.gz \
-  ${CDOT_DATA_DIR}/refseq/GRCh38/cdot-${CDOT_DATA_VERSION}.GCF_000001405.40_GRCh38.p14_genomic.110.gff.json.gz \
-  ${CDOT_DATA_DIR}/refseq/GRCh38/cdot-${CDOT_DATA_VERSION}.GCF_000001405.40_GRCh38.p14_genomic.RS_2023_10.gff.json.gz \
-  ${CDOT_DATA_DIR}/refseq/T2T-CHM13v2.0/cdot-${CDOT_DATA_VERSION}.refseq.T2T-CHM13v2.0.json.gz
+  ${CDOT_DATA_DIR}/Ensembl/cdot-${CDOT_DATA_VERSION}-all-builds-Ensembl-grch37_grch38_t2t-chm13v2.0.json.gz \
+  ${CDOT_DATA_DIR}/Ensembl/cdot-${CDOT_DATA_VERSION}-Ensembl-merged-GRCh37.json.gz \
+  ${CDOT_DATA_DIR}/Ensembl/GRCh37/cdot-${CDOT_DATA_VERSION}-Homo_sapiens_GRCh37_Ensembl_87.gtf.json.gz \
+  ${CDOT_DATA_DIR}/Ensembl/cdot-${CDOT_DATA_VERSION}-Ensembl-merged-GRCh38.json.gz \
+  ${CDOT_DATA_DIR}/Ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}-Homo_sapiens_GRCh38_Ensembl_110.gtf.json.gz \
+  ${CDOT_DATA_DIR}/Ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}-Homo_sapiens_GRCh38_Ensembl_111.gtf.json.gz \
+  ${CDOT_DATA_DIR}/Ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}-Homo_sapiens_GRCh38_Ensembl_112.gtf.json.gz \
+  ${CDOT_DATA_DIR}/Ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}-Homo_sapiens_GRCh38_Ensembl_113.gtf.json.gz \
+  ${CDOT_DATA_DIR}/Ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}-Homo_sapiens_GRCh38_Ensembl_114.gtf.json.gz \
+  ${CDOT_DATA_DIR}/Ensembl/cdot-${CDOT_DATA_VERSION}-Ensembl-T2T-CHM13v2.0.json.gz \
+  ${CDOT_DATA_DIR}/RefSeq/cdot-${CDOT_DATA_VERSION}-RefSeq-merged-GRCh37.json.gz \
+  ${CDOT_DATA_DIR}/RefSeq/GRCh37/cdot-${CDOT_DATA_VERSION}-Homo_sapiens_GRCh37_RefSeq_105.20201022.gff.json.gz \
+  ${CDOT_DATA_DIR}/RefSeq/GRCh37/cdot-${CDOT_DATA_VERSION}-Homo_sapiens_GRCh37_RefSeq_105.20220307.gff.json.gz \
+  ${CDOT_DATA_DIR}/RefSeq/cdot-${CDOT_DATA_VERSION}-RefSeq-merged-GRCh38.json.gz \
+  ${CDOT_DATA_DIR}/RefSeq/GRCh38/cdot-${CDOT_DATA_VERSION}-Homo_sapiens_GRCh38_RefSeq_110.gff.json.gz \
+  ${CDOT_DATA_DIR}/RefSeq/GRCh38/cdot-${CDOT_DATA_VERSION}-Homo_sapiens_GRCh38_RefSeq_RS_2023_10.gff.json.gz \
+  ${CDOT_DATA_DIR}/RefSeq/cdot-${CDOT_DATA_VERSION}-RefSeq-T2T-CHM13v2.0.json.gz
 

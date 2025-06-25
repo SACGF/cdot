@@ -70,7 +70,10 @@ def get_build_input_files(wildcards):
 rule all:
     input:
         expand("{annotation_consortium}/cdot-" + cdot_data_version + "-all-builds-{annotation_consortium}" + f"-{merged_genome_build_label}.json.gz",
-               annotation_consortium=annotation_consortium_list)
+               annotation_consortium=annotation_consortium_list),
+        expand("{annotation_consortium}/cdot-" + cdot_data_version + "-{annotation_consortium}-merged-{genome_build}.json.gz",
+               annotation_consortium=annotation_consortium_list,
+               genome_build=genome_builds)
 
 
 rule cdot_merge_annotation_consortium:
