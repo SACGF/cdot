@@ -66,18 +66,39 @@ def get_build_input_files(wildcards):
 
 rule all:
     input:
-        gene_info_json_filename,
-        expand("{annotation_consortium}/cdot-" + cdot_data_version + "-{annotation_consortium}-{genome_build}.json.gz",
+        expand("{annotation_consortium}/cdot-" + cdot_data_version + "-all-builds-{annotation_consortium}-grch37_grch38_t2t-chm13v2.0.json.gz",
+               annotation_consortium=annotation_consortium_list)
+
+
+rule cdot_merge_annotation_consortium:
+    input:
+        expand("{annotation_consortium}/cdot-" + cdot_data_version + "-{annotation_consortium}-merged-{genome_build}.json.gz",
                annotation_consortium=annotation_consortium_list, # ["RefSeq", "Ensembl"],
                genome_build=genome_build_list)
+    output:
+        "{annotation_consortium}/cdot-" + cdot_data_version + "-all-builds-{annotation_consortium}-grch37_grch38_t2t-chm13v2.0.json.gz"
+    run:
+        build_params_and_match = {
+            "grch37": "GRCh37",
+            "grch38": "GRCh38",
+            "t2t_chm13v2": "T2T-CHM13v2.0",
+        }
+        build_files = {}
+        for input_file in input:
+            for build_param, build_match in build_params_and_match.items():
+                if build_match in input_file:
+                    build_files[build_param] = input_file
+        build_params = [f'--{build_param}="{input_file}"' for build_param, input_file in build_files.items()]
+        combine_build_cmd = f'PYTHONPATH={cdot_dir} {cdot_json} combine_builds --output "{output}" ' + ' '.join(build_params)
+        shell(combine_build_cmd)
 
 
 rule cdot_merge_historical_json:
     # Merges multiple files together for 1 build
-    output:
-        "{annotation_consortium}/cdot-" + cdot_data_version + "-{annotation_consortium}-{genome_build}.json.gz"
     input:
         get_build_input_files,
+    output:
+        "{annotation_consortium}/cdot-" + cdot_data_version + "-{annotation_consortium}-merged-{genome_build}.json.gz"
     shell:
         """
             PYTHONPATH={cdot_dir} \
@@ -139,8 +160,7 @@ rule fetch_uta_from_db:
             tf.write(sql)
             tf.flush()
             sql_path = Path(tf.name)
-            env = {"PGPASSWORD": "anonymous"}
-            shell(f'psql -h uta.biocommons.org -U anonymous -d uta -f "{sql_path}"', env=env)
+            shell(f'PGPASSWORD=anonymous psql -h uta.biocommons.org -U anonymous -d uta -f "{sql_path}"')
 
 
 rule cdot_uta_json:

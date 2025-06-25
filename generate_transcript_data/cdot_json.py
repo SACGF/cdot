@@ -55,6 +55,7 @@ def _setup_arg_parser():
 
     parser_builds.add_argument('--grch37', required=True, help='cdot JSON.gz for GRCh37')
     parser_builds.add_argument('--grch38', required=True, help='cdot JSON.gz for GRCh38')
+    parser_builds.add_argument('--t2t_chm13v2', required=True, help='cdot JSON.gz for t2t_chm13v2')
 
     # I want this to be subcommands rather than global (would need to be listed before subcommand)
     for p in [parser_gtf, parser_gff3, parser_uta, parser_historical, parser_builds]:
@@ -340,6 +341,7 @@ def combine_builds(args):
     genome_build_file = {
         "GRCh37": gzip.open(args.grch37),
         "GRCh38": gzip.open(args.grch38),
+        "T2T-CHM13v2.0": gzip.open(args.t2t_chm13v2),
     }
 
     urls_different_coding = defaultdict(list)
