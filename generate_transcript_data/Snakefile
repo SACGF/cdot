@@ -59,9 +59,9 @@ def get_build_input_files(wildcards):
     input_files = []
     for name, val in cdot_file_data.items():
         if 'url' in val:
-            filename = prefix + f"-{name}.json.gz"
+            filename = prefix + f".{name}.json.gz"
         elif 'uta' in val:
-            filename = prefix + f"_uta-{name}.json.gz"
+            filename = prefix + f"_uta.{name}.json.gz"
         else:
             raise ValueError(f"Don't know how to handle {name}: {val}")
         input_files.append(filename)
@@ -70,20 +70,20 @@ def get_build_input_files(wildcards):
 
 rule all:
     input:
-        expand("{annotation_consortium}/cdot-" + cdot_data_version + "-all-builds-{annotation_consortium}" + f"-{merged_genome_build_label}.json.gz",
+        expand("{annotation_consortium}/cdot-" + cdot_data_version + ".all-builds-{annotation_consortium}" + f"-{merged_genome_build_label}.json.gz",
                annotation_consortium=annotation_consortium_list),
-        expand("{annotation_consortium}/cdot-" + cdot_data_version + "-{annotation_consortium}-merged-{genome_build}.json.gz",
+        expand("{annotation_consortium}/cdot-" + cdot_data_version + ".{annotation_consortium}.{genome_build}.json.gz",
                annotation_consortium=annotation_consortium_list,
                genome_build=genome_builds)
 
 
 rule cdot_merge_annotation_consortium:
     input:
-        lambda wc: expand("{annotation_consortium}/cdot-" + cdot_data_version + "-{annotation_consortium}-merged-{genome_build}.json.gz",
-                          annotation_consortium=[wc.annotation_consortium],
-                          genome_build=genome_builds)
+        expand("{annotation_consortium}/cdot-" + cdot_data_version + ".{annotation_consortium}.{genome_build}.json.gz",
+               annotation_consortium=annotation_consortium_list,
+               genome_build=genome_builds)
     output:
-        "{annotation_consortium}/cdot-" + cdot_data_version + "-all-builds-{annotation_consortium}" + f"-{merged_genome_build_label}.json.gz"
+        "{annotation_consortium}/cdot-" + cdot_data_version + ".all-builds-{annotation_consortium}.{merged_genome_build_label}.json.gz"
     run:
         build_params_and_match = {
             "grch37": "GRCh37",
@@ -105,7 +105,7 @@ rule cdot_merge_historical_json:
     input:
         get_build_input_files,
     output:
-        "{annotation_consortium}/cdot-" + cdot_data_version + "-{annotation_consortium}-merged-{genome_build}.json.gz"
+        "{annotation_consortium}/cdot-" + cdot_data_version + ".{annotation_consortium}" + ".{genome_build}.json.gz"
     shell:
         """
             PYTHONPATH={cdot_dir} \
@@ -123,7 +123,7 @@ rule cdot_gff_json:
         gene_info_json=gene_info_json_filename,
         gff_file="downloads/{name}.gz"
     output:
-        "{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "-{name}.json.gz"
+        "{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + ".{name}.json.gz"
     params:
         url=get_url_from_name,
         cdot_command=get_cdot_command
@@ -175,7 +175,7 @@ rule cdot_uta_json:
         gene_info_json=gene_info_json_filename,
         uta_file="uta/{name}.csv"
     output:
-        "{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "_uta-{name}.json.gz"
+        "{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "_uta.{name}.json.gz"
     params:
         url=get_url_from_name,
     shell:
