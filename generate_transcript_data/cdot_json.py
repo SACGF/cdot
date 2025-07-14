@@ -37,6 +37,7 @@ def _setup_arg_parser():
         p.add_argument('--url', required=True, help='URL (source of GFF) to store in "reference_gtf.url"')
         p.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
         p.add_argument('--gene-info-json', required=True, help="'JSON of gene info, produced by cdot_gene_info.py")
+        p.add_argument('--gencode-hgnc-metadata', required=False, help="GENCODE HGNC metadata for adding HGNC to Ensembl")
 
     parser_uta = subparsers.add_parser("uta_to_json", help="Convert UTA to JSON")
     parser_uta.add_argument("uta_csv_filename", help="UTA SQL CSV to convert to JSON")
@@ -90,6 +91,47 @@ def add_gene_info(gene_info_filename: str, genes):
     return refseq_gene_summary_api_retrieval_date
 
 
+def add_gencode_hgnc(gencode_hgnc_filename: str, genes, transcripts):
+    """ Ensembl GTFs do not contain HGNC IDs like RefSeq does
+        We want genes and transcripts to have eg "hgnc": "14472"
+        GENCODE has this - https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/
+        And getting the right gencode from GENCODE -> HGNC mappings
+        https://www.gencodegenes.org/human/releases.html """
+
+    if gencode_hgnc_filename and genes and transcripts:
+        # the GENCODE metadata HGNC files is in transcripts
+        transcript_gene_versions = {}
+        for transcript_accession, tdata in transcripts.items():
+            if gene_version := tdata.get("gene_version"):
+                transcript_gene_versions[transcript_accession] = gene_version
+
+        num_gencode_transcripts = 0
+        num_gtf_transcripts = 0
+        with gzip.open(gencode_hgnc_filename) as gi_f:
+            # Line looks like: ENST00000624431.2	DDX11L17	HGNC:55080
+            for line in gi_f.readlines():
+                line = line.strip()
+                transcript_accession, hgnc_symbol, raw_hgnc = line.split("\t")
+                # Make sure final columns looks like "HGNC:55080"
+                prefix, hgnc_id = raw_hgnc.split(":", maxsplit=2)
+                if prefix != "HGNC":
+                    raise ValueError(f"Bad Gencode HGNC line: '{line}'")
+                num_gencode_transcripts += 1
+                if transcript_data := transcripts.get(transcript_accession):
+                    if gene_symbol := transcript_data.get("gene_symbol"):
+                        if gene_symbol != hgnc_symbol:
+                            logging.warning("%s: symbol '%s' does not match GTF symbol: '%s'. GTF/gencode mismatch?",
+                                            raw_hgnc, hgnc_symbol, gene_symbol)
+                    transcript_data["hgnc"] = hgnc_id
+                    num_gtf_transcripts += 1
+                    if gene_version := transcript_data.get("gene_version"):
+                        if gene_data := genes.get(gene_version):
+                            gene_data["hgnc"] = hgnc_id
+
+        logging.info("Read %d gencode HGNC records, updated %d GTF transcripts",
+                     num_gencode_transcripts, num_gtf_transcripts)
+
+
 def _gff_arg_check(args):
     if args.no_contig_conversion:
         logging.warning(f"Skipping chrom/contig conversion. File won't work with Biocommons HGVS")
@@ -103,6 +145,7 @@ def gtf_to_json(args):
                        skip_missing_parents=args.skip_missing_parents)
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
+    add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
     write_cdot_json(args.output, genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
@@ -115,6 +158,7 @@ def gff3_to_json(args):
                         skip_missing_parents=args.skip_missing_parents)
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
+    add_gencode_hgnc(args.gencode_hgnc_metadata, genes)
     write_cdot_json(args.output, genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
