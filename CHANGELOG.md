@@ -10,6 +10,8 @@
 - #88 get_acs_for_protein_seq should return list not None
 - #83 Ensembl files missing protein - breaking c_to_p (only affects data not client code)
 - #17 RefSeq missing MT transcripts (only affects data not client code)
+- #96 - All builds files now only contain 1 annotation consortium (RefSeq OR Ensembl not both)  
+- #97 - Ensembl now has HGNC codes (used Gencode lookup) to match RefSeq
 
 ## [0.2.26] 2024-08-15
 
