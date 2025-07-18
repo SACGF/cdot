@@ -107,11 +107,22 @@ def add_gencode_hgnc(gencode_hgnc_filename: str, genes, transcripts):
 
         num_gencode_transcripts = 0
         num_gtf_transcripts = 0
-        with gzip.open(gencode_hgnc_filename) as gi_f:
+        given_2_col_warning = False
+        with gzip.open(gencode_hgnc_filename, "rt") as gi_f:
             # Line looks like: ENST00000624431.2	DDX11L17	HGNC:55080
             for line in gi_f.readlines():
                 line = line.strip()
-                transcript_accession, hgnc_symbol, raw_hgnc = line.split("\t")
+                columns = line.split("\t")
+                num_columns = len(columns)
+                if num_columns == 3:
+                    transcript_accession, hgnc_symbol, raw_hgnc = columns
+                elif num_columns == 2:
+                    if not given_2_col_warning:
+                        logging.warning("Only 2 TSV columns in '%s'", line)
+                        given_2_col_warning = True
+                    continue
+                else:
+                    raise ValueError(f"Expected 2 or 3 TSV values in line: '{line}'")
                 # Make sure final columns looks like "HGNC:55080"
                 prefix, hgnc_id = raw_hgnc.split(":", maxsplit=2)
                 if prefix != "HGNC":
@@ -158,7 +169,7 @@ def gff3_to_json(args):
                         skip_missing_parents=args.skip_missing_parents)
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
-    add_gencode_hgnc(args.gencode_hgnc_metadata, genes)
+    add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
     write_cdot_json(args.output, genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 

@@ -1,3 +1,6 @@
+import csv
+import os
+import re
 import sys
 import subprocess
 import tempfile
@@ -10,6 +13,46 @@ cdot_json = os.path.join(workflow.basedir, "cdot_json.py")
 cdot_dir = os.path.dirname(workflow.basedir)
 cdot_output_raw = subprocess.check_output(f"{sys.executable} {cdot_json} --version", shell=True, env={"PYTHONPATH": cdot_dir})
 cdot_data_version = cdot_output_raw.decode().strip()
+
+# Load Ensembl -> GENCODE mapping CSV
+gencode_csv = os.path.join(workflow.basedir, "ensembl_gencode.csv")
+_gencode_map = {}
+with open(gencode_csv) as _fh:
+    _reader = csv.DictReader(_fh)
+    for _r in _reader:
+        _gencode_map[_r["Ensembl release"].strip()] = _r["GENCODE release"].strip()
+
+# Regex to pull Ensembl release number from a URL (handles release_XX or release-XX)
+_re_ensembl_rel = re.compile(r"release[_-](\d+)")
+
+def _ensembl_release_from_url(url: str):
+    m = _re_ensembl_rel.search(url)
+    return m.group(1) if m else None
+
+def _gencode_release_from_url(url: str):
+    erel = _ensembl_release_from_url(url)
+    if erel is None:
+        return None
+    return _gencode_map.get(erel)
+
+def _gencode_metadata_path(wc):
+    # Return path (string) if Ensembl; else [] so Snakemake ignores
+    if wc.annotation_consortium.lower() != "ensembl":
+        return []
+    grel = _gencode_release_from_url(all_urls[wc.name])
+    if grel is None:
+        print(f"[WARN] No Ensembl -> GENCODE mapping for {wc.name}; skipping GENCODE metadata", file=sys.stderr)
+        return []
+    return f"downloads/gencode_metadata/gencode.v{grel}.metadata.HGNC.gz"
+
+def _gencode_metadata_url(wc):
+    if wc.annotation_consortium.lower() != "ensembl":
+        return ""
+    grel = _gencode_release_from_url(all_urls[wc.name])
+    if grel is None:
+        return ""  # Skip download
+    return f"https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_{grel}/gencode.v{grel}.metadata.HGNC.gz"
+
 
 # Name it based on date as it may vary
 today = datetime.now().date().isoformat()
@@ -121,12 +164,18 @@ rule cdot_gff_json:
     # Individual GFF
     input:
         gene_info_json=gene_info_json_filename,
-        gff_file="downloads/{name}.gz"
+        gff_file="downloads/{name}.gz",
+        gencode_metadata=_gencode_metadata_path  # Optional, only used for Ensembl
     output:
         "{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + ".{name}.json.gz"
     params:
         url=get_url_from_name,
-        cdot_command=get_cdot_command
+        cdot_command=get_cdot_command,
+        gencode_param=lambda wc: (
+            (f'--gencode-hgnc-metadata "{_gencode_metadata_path(wc)}"')
+            if (wc.annotation_consortium.lower() == "ensembl" and _gencode_release_from_url(all_urls[wc.name]) is not None)
+            else ""
+        )
     shell:
         """
             PYTHONPATH={cdot_dir} \
@@ -136,7 +185,8 @@ rule cdot_gff_json:
                 --url "{params.url}" \
                 --genome-build="{wildcards.genome_build}" \
                 --output "{output}" \
-                --gene-info-json="{input.gene_info_json}"
+                --gene-info-json="{input.gene_info_json}" \
+                {params.gencode_param}
         """
 
 
@@ -144,9 +194,20 @@ rule download_gff_files:
     threads: 4  # We seem to sometimes get failures/booted if too many simultaneous connections to site
     output:
         # Don't re-download if snakemake script changes
-        protected("downloads/{name}.gz")
+        protected("downloads/{name,[^/]+}.gz")
     params:
         url=lambda wc: all_urls[wc.name]
+    shell:
+        "curl --fail --show-error -o {output} {params.url}"
+
+
+# Download GENCODE metadata (HGNC) for Ensembl builds (wildcarded by GENCODE release)
+# Triggered only when cdot_gff_json needs the file (i.e., Ensembl).
+rule download_gencode_metadata:
+    output:
+        protected("downloads/gencode_metadata/gencode.v{grel}.metadata.HGNC.gz")
+    params:
+        url=lambda wc: f"https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_{wc.grel}/gencode.v{wc.grel}.metadata.HGNC.gz"
     shell:
         "curl --fail --show-error -o {output} {params.url}"
 
@@ -156,7 +217,7 @@ rule fetch_uta_from_db:
         protected("uta/{name}.csv")
     params:
         schema=lambda wc: name_uta[wc.name]["schema"],
-        template=lambda wc: name_uta[wc.name]["template"],
+        template=lambda wc: name_uta[wc.name]["template"]
     run:
         template_file = os.path.join(workflow.basedir, params.template)
         with open(template_file) as f:
@@ -177,7 +238,7 @@ rule cdot_uta_json:
     output:
         "{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "_uta.{name}.json.gz"
     params:
-        url=get_url_from_name,
+        url=get_url_from_name
     shell:
         """
             PYTHONPATH={cdot_dir} \
@@ -211,4 +272,3 @@ rule download_gene_info:
         protected(gene_info_download_filename)
     shell:
         "curl --fail --show-error -o {output} https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/Homo_sapiens.gene_info.gz"
-
