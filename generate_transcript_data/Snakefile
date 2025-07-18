@@ -122,9 +122,9 @@ rule all:
 
 rule cdot_merge_annotation_consortium:
     input:
-        expand("{annotation_consortium}/cdot-" + cdot_data_version + ".{annotation_consortium}.{genome_build}.json.gz",
-               annotation_consortium=annotation_consortium_list,
-               genome_build=genome_builds)
+        lambda wc: expand("{annotation_consortium}/cdot-" + cdot_data_version + ".{annotation_consortium}.{genome_build}.json.gz",
+                          annotation_consortium=[wc.annotation_consortium],
+                          genome_build=genome_builds)  # only this consortium
     output:
         "{annotation_consortium}/cdot-" + cdot_data_version + ".all-builds-{annotation_consortium}" + f"-{merged_genome_build_label}.json.gz"
     run:
