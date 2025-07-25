@@ -144,7 +144,7 @@ def add_gencode_hgnc(gencode_hgnc_filename: str, genes, transcripts):
                      num_gencode_transcripts, num_gtf_transcripts)
 
 
-def add_canonical_transcripts(gene_canonical_transcripts_csv: str, transcripts):
+def add_canonical_transcripts(gene_canonical_transcripts_csv: str, genome_build: str, transcripts):
     """ Ensembl GRCh37 GTFs do not contain canonical transcripts info, so manually add.
         @see https://github.com/SACGF/cdot/issues/36 and ensembl_grch37_canonical_transcripts py / csv
     """
@@ -165,13 +165,13 @@ def add_canonical_transcripts(gene_canonical_transcripts_csv: str, transcripts):
                     if canonical_transcript := gene_canonical_transcripts.get(gene_version):
                         if transcript_accession == canonical_transcript:
                             # Add to tag, which is optional comma separated list at this point (made in gff_parser)
-                            if tag := tdata.get("tag"):
-                                tag_list = tag.split(",")
-                            else:
-                                tag_list = []
-                            tag_list.append("Ensembl_canonical")
-                            tdata["tag"] = ",".join(tag_list)
-
+                            if build_data := tdata["genome_builds"].get(genome_build):
+                                if tag := build_data.get("tag"):
+                                    tag_list = tag.split(",")
+                                else:
+                                    tag_list = []
+                                tag_list.append("Ensembl_canonical")
+                                build_data["tag"] = ",".join(tag_list)
 
 
 def _gff_arg_check(args):
@@ -188,7 +188,7 @@ def gtf_to_json(args):
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
-    add_canonical_transcripts(args.gene_canonical_transcripts_csv, transcripts)
+    add_canonical_transcripts(args.gene_canonical_transcripts_csv, args.genome_build, transcripts)
     write_cdot_json(args.output, genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
@@ -202,7 +202,7 @@ def gff3_to_json(args):
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
-    add_canonical_transcripts(args.gene_canonical_transcripts_csv, transcripts)
+    add_canonical_transcripts(args.gene_canonical_transcripts_csv, args.genome_build, transcripts)
     write_cdot_json(args.output, genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
