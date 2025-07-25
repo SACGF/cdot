@@ -30,6 +30,7 @@ gh release upload ${CDOT_RELEASE_NAME} \
   ${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.Homo_sapiens_GRCh38_Ensembl_113.gtf.json.gz \
   ${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.Homo_sapiens_GRCh38_Ensembl_114.gtf.json.gz \
   ${CDOT_DATA_DIR}/ensembl/cdot-${CDOT_DATA_VERSION}.ensembl.T2T-CHM13v2.0.json.gz \
+  ${CDOT_DATA_DIR}/refseq/cdot-${CDOT_DATA_VERSION}.all-builds-refseq-grch37_grch38_t2t-chm13v2.0.json.gz \
   ${CDOT_DATA_DIR}/refseq/cdot-${CDOT_DATA_VERSION}.refseq.GRCh37.json.gz \
   ${CDOT_DATA_DIR}/refseq/GRCh37/cdot-${CDOT_DATA_VERSION}.Homo_sapiens_GRCh37_RefSeq_105.20201022.gff.json.gz \
   ${CDOT_DATA_DIR}/refseq/GRCh37/cdot-${CDOT_DATA_VERSION}.Homo_sapiens_GRCh37_RefSeq_105.20220307.gff.json.gz \
