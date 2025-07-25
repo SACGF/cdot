@@ -22,6 +22,9 @@ with open(gencode_csv) as _fh:
     for _r in _reader:
         _gencode_map[_r["Ensembl release"].strip()] = _r["GENCODE release"].strip()
 
+# For manually adding canonical transcripts tags to Ensembl/GRCh37
+ensembl_grch37_canonical_transcripts_csv = os.path.join(workflow.basedir, "ensembl_grch37_canonical_transcripts.csv")
+
 # Regex to pull Ensembl release number from a URL (handles release_XX or release-XX)
 _re_ensembl_rel = re.compile(r"release[_-](\d+)")
 
@@ -175,6 +178,11 @@ rule cdot_gff_json:
             (f'--gencode-hgnc-metadata "{_gencode_metadata_path(wc)}"')
             if (wc.annotation_consortium.lower() == "ensembl" and _gencode_release_from_url(all_urls[wc.name]) is not None)
             else ""
+        ),
+        gene_canonical_transcripts_params=lambda wc: (
+            (f'--gene-canonical-transcripts-csv "{ensembl_grch37_canonical_transcripts_csv}"')
+            if (wc.annotation_consortium.lower() == "ensembl" and wc.genome_build == "GRCh37")
+            else ""
         )
     shell:
         """
@@ -186,7 +194,8 @@ rule cdot_gff_json:
                 --genome-build="{wildcards.genome_build}" \
                 --output "{output}" \
                 --gene-info-json="{input.gene_info_json}" \
-                {params.gencode_param}
+                {params.gencode_param} \
+                {params.gene_canonical_transcripts_params}
         """
 
 

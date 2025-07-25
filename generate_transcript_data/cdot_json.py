@@ -38,6 +38,7 @@ def _setup_arg_parser():
         p.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
         p.add_argument('--gene-info-json', required=True, help="'JSON of gene info, produced by cdot_gene_info.py")
         p.add_argument('--gencode-hgnc-metadata', required=False, help="GENCODE HGNC metadata for adding HGNC to Ensembl")
+        p.add_argument('--gene-canonical-transcripts-csv', required=False, help="Manually provide canonical transcripts (for Ensembl GRCh37)")
 
     parser_uta = subparsers.add_parser("uta_to_json", help="Convert UTA to JSON")
     parser_uta.add_argument("uta_csv_filename", help="UTA SQL CSV to convert to JSON")
@@ -143,6 +144,36 @@ def add_gencode_hgnc(gencode_hgnc_filename: str, genes, transcripts):
                      num_gencode_transcripts, num_gtf_transcripts)
 
 
+def add_canonical_transcripts(gene_canonical_transcripts_csv: str, transcripts):
+    """ Ensembl GRCh37 GTFs do not contain canonical transcripts info, so manually add.
+        @see https://github.com/SACGF/cdot/issues/36 and ensembl_grch37_canonical_transcripts py / csv
+    """
+
+    if gene_canonical_transcripts_csv and transcripts:
+        gene_canonical_transcripts = {}
+        with open(gene_canonical_transcripts_csv) as f:
+            header = f.readline().strip()
+            if header != "gene_id,canonical_transcript":
+                raise ValueError(f"file: '{gene_canonical_transcripts_csv}' had unexpected header line: '{header}'")
+            for line in f.readlines():
+                gene_id, canonical_transcript = line.strip().split(",")
+                gene_canonical_transcripts[gene_id] = canonical_transcript
+
+        if gene_canonical_transcripts:
+            for transcript_accession, tdata in transcripts.items():
+                if gene_version := tdata.get("gene_version"):
+                    if canonical_transcript := gene_canonical_transcripts.get(gene_version):
+                        if transcript_accession == canonical_transcript:
+                            # Add to tag, which is optional comma separated list at this point (made in gff_parser)
+                            if tag := tdata.get("tag"):
+                                tag_list = tag.split(",")
+                            else:
+                                tag_list = []
+                            tag_list.append("Ensembl_canonical")
+                            tdata["tag"] = ",".join(tag_list)
+
+
+
 def _gff_arg_check(args):
     if args.no_contig_conversion:
         logging.warning(f"Skipping chrom/contig conversion. File won't work with Biocommons HGVS")
@@ -157,6 +188,7 @@ def gtf_to_json(args):
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
+    add_canonical_transcripts(args.gene_canonical_transcripts_csv, transcripts)
     write_cdot_json(args.output, genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
@@ -170,6 +202,7 @@ def gff3_to_json(args):
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
+    add_canonical_transcripts(args.gene_canonical_transcripts_csv, transcripts)
     write_cdot_json(args.output, genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
