@@ -39,18 +39,23 @@ def get_latest_data_release():
         return release
     return {}
 
+
+def get_latest_browser_urls():
+    if latest_data_release := get_latest_data_release():
+        for asset in latest_data_release["assets"]:
+            yield asset["browser_download_url"]
+
+
 def get_latest_combo_file_urls(annotation_consortia, genome_builds):
     # lower case everything to be case insensitive
     annotation_consortia = {x.lower() for x in annotation_consortia}
     genome_builds = {x.lower() for x in genome_builds}
 
     file_urls = []
-    if latest_data_release := get_latest_data_release():
-        for asset in latest_data_release["assets"]:
-            browser_download_url = asset["browser_download_url"]
-            filename = browser_download_url.rsplit("/")[-1]
-            if m := re.match(r"cdot-(\d+\.\d+\.\d+)\.(refseq|ensembl)\.(.+)\.json\.gz", filename):
-                _version, annotation_consortium, genome_build = m.groups()
-                if annotation_consortium.lower() in annotation_consortia and genome_build.lower() in genome_builds:
-                    file_urls.append(browser_download_url)
+    for browser_download_url in get_latest_browser_urls():
+        filename = browser_download_url.rsplit("/")[-1]
+        if m := re.match(r"cdot-(\d+\.\d+\.\d+)\.(refseq|ensembl)\.(.+)\.json\.gz", filename):
+            _version, annotation_consortium, genome_build = m.groups()
+            if annotation_consortium.lower() in annotation_consortia and genome_build.lower() in genome_builds:
+                file_urls.append(browser_download_url)
     return file_urls
