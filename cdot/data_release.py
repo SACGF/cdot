@@ -1,4 +1,6 @@
 import re
+from typing import Optional
+
 import requests
 import cdot
 
@@ -20,7 +22,7 @@ def _get_version_from_tag_name(tag_name, data_version=False):
     return tag_name.lstrip(release_prefix)
 
 
-def get_latest_data_release():
+def get_latest_data_version_and_release() -> tuple[Optional[str], dict]:
     client_data_schema = get_data_schema_int(cdot.__version__)
 
     url = "https://api.github.com/repos/SACGF/cdot/releases"
@@ -36,8 +38,19 @@ def get_latest_data_release():
         data_schema = get_data_schema_int(data_version)
         if data_schema != client_data_schema:
             continue
-        return release
-    return {}
+        return data_version, release
+    return None, {}
+
+
+def get_latest_data_release():
+    _data_version, release = get_latest_data_version_and_release()
+    return release
+
+
+def get_latest_release_version() -> Optional[str]:
+    if latest_data_release := get_latest_data_release():
+        if release_name := latest_data_release["name"]:
+            data_version = _get_version_from_tag_name(tag_name, data_version=True)
 
 
 def get_latest_browser_urls():
