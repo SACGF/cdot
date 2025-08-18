@@ -5,5 +5,6 @@
 
 # 0.2.29 - Ensembl now has HGNC added from outside GTFs
 # 0.2.30 - Ensembl GRCh37 has canonical transcripts added from outside GTFs
+# 0.2.31 - Add 'metadata' - method/urls
 
-JSON_SCHEMA_VERSION = "0.2.30"
+JSON_SCHEMA_VERSION = "0.2.31"

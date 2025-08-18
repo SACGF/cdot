@@ -4,6 +4,7 @@ import gzip
 import ijson
 import json
 import logging
+import os
 import re
 import sys
 from argparse import ArgumentParser
@@ -58,6 +59,10 @@ def _setup_arg_parser():
     parser_builds.add_argument('--grch37', required=True, help='cdot JSON.gz for GRCh37')
     parser_builds.add_argument('--grch38', required=True, help='cdot JSON.gz for GRCh38')
     parser_builds.add_argument('--t2t_chm13v2', required=True, help='cdot JSON.gz for t2t_chm13v2')
+
+    parser_release_notes = subparsers.add_parser("release_notes", help="JSON file to retrieve release notes")
+    parser_release_notes.add_argument("json_filename", help="cdot JSON file")
+    parser_release_notes.add_argument("--show-urls", action='store_true', default=False)
 
     # I want this to be subcommands rather than global (would need to be listed before subcommand)
     for p in [parser_gtf, parser_gff3, parser_uta, parser_historical, parser_builds]:
@@ -189,7 +194,9 @@ def gtf_to_json(args):
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
     add_canonical_transcripts(args.gene_canonical_transcripts_csv, args.genome_build, transcripts)
-    write_cdot_json(args.output, genes, transcripts, [args.genome_build],
+    method = "Single GFF3 file"
+    write_cdot_json(args.output, method, [args.gtf_filename],
+                    genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
 
@@ -203,7 +210,9 @@ def gff3_to_json(args):
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
     add_canonical_transcripts(args.gene_canonical_transcripts_csv, args.genome_build, transcripts)
-    write_cdot_json(args.output, genes, transcripts, [args.genome_build],
+    method = "Single GFF3 file"
+    write_cdot_json(args.output, method, [args.gff3_filename],
+                    genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
 
@@ -284,7 +293,9 @@ def uta_to_json(args):
         transcripts_by_id[transcript_accession] = transcript_data
 
     print("Writing UTA to cdot JSON.gz")
-    write_cdot_json(args.output, genes_by_id, transcripts_by_id, [args.genome_build])
+    method = "Conversion of Universal Transcript Archive dump"
+    write_cdot_json(args.output, method, [args.uta_csv_filename],
+                    genes_by_id, transcripts_by_id, [args.genome_build])
 
 
 def _convert_uta_exons(exon_starts, exon_ends, cigars):
@@ -356,9 +367,11 @@ def _cigar_to_gap_and_length(cigar):
     return gap, exon_length
 
 
-def write_cdot_json(filename, genes, transcript_versions, genome_builds, refseq_gene_summary_api_retrieval_date=None):
+def write_cdot_json(filename: str, method: str, input_files, genes, transcript_versions, genome_builds,
+                    refseq_gene_summary_api_retrieval_date=None):
     print(f"Writing cdot file: '{filename}'")
     data = {
+        # We also write these in metadata now, but keep for legacy compatability
         "cdot_version": JSON_SCHEMA_VERSION,
         "genome_builds": genome_builds,
         "transcripts": transcript_versions,
@@ -367,6 +380,20 @@ def write_cdot_json(filename, genes, transcript_versions, genome_builds, refseq_
         data["genes"] = genes
     if refseq_gene_summary_api_retrieval_date:
         data["refseq_gene_summary_api_retrieval_date"] = refseq_gene_summary_api_retrieval_date
+
+    url_counts = Counter()
+    for tv in transcript_versions.values():
+        for build_coordinates in tv["genome_builds"].values():
+            url_counts[build_coordinates["url"]] += 1
+
+    data["metadata"] = {
+        "method": method,
+        "input_files": input_files,
+        "sys.argv": " ".join(sys.argv),
+        "url_counts": dict(url_counts.most_common()),
+        "cdot_version": JSON_SCHEMA_VERSION,
+        "genome_builds": genome_builds
+    }
 
     with gzip.open(filename, 'wt') as outfile:
         json.dump(data, outfile, cls=SortedSetEncoder, sort_keys=True)  # Sort so diffs work
@@ -405,75 +432,86 @@ def merge_historical(args):
                 historical_transcript_version["gene_version"] = gene_accession
                 transcript_versions[transcript_accession] = historical_transcript_version
 
-    genes = {}  # Only keep those that are used in transcript versions
-    # Summarise where it's from
-    transcript_urls = Counter()
+    genes = {}  # Only keep those that are used in kept transcript versions
     for tv in transcript_versions.values():
         if not args.no_genes:
             if gene_accession := tv.get("gene_version"):
                 genes[gene_accession] = gene_versions[gene_accession]
 
-        for build_coordinates in tv["genome_builds"].values():
-            transcript_urls[build_coordinates["url"]] += 1
-
-    total = sum(transcript_urls.values())
-    print(f"{total} transcript versions from:")
-    for url, count in transcript_urls.most_common():
-        print(f"{url}: {count} ({count*100 / total:.1f}%)")
-
-    write_cdot_json(args.output, genes, transcript_versions, [args.genome_build])
+    method = "Merge historical"
+    write_cdot_json(args.output, method, args.json_filenames,
+                    genes, transcript_versions, [args.genome_build])
 
 
 def combine_builds(args):
     print("combine_builds")
-    genome_build_file = {
-        "GRCh37": gzip.open(args.grch37),
-        "GRCh38": gzip.open(args.grch38),
-        "T2T-CHM13v2.0": gzip.open(args.t2t_chm13v2),
+    genome_build_filename = {
+        "GRCh37": args.grch37,
+        "GRCh38": args.grch38,
+        "T2T-CHM13v2.0": args.t2t_chm13v2,
     }
-
     urls_different_coding = defaultdict(list)
     genes = {}
     transcript_versions = {}
-    for genome_build, f in genome_build_file.items():
-        # TODO: Check cdot versions
-        json_builds = next(ijson.items(f, "genome_builds"))
-        if json_builds != [genome_build]:
-            raise ValueError(f"JSON file provided for {genome_build} needs to have only {genome_build} data (has {json_builds})")
+    for genome_build, filename in genome_build_filename.items():
+        with gzip.open(filename) as f:
+            # TODO: Check cdot versions
+            json_builds = next(ijson.items(f, "genome_builds"))
+            if json_builds != [genome_build]:
+                raise ValueError(f"JSON file provided for {genome_build} needs to have only {genome_build} "
+                                 f"data (has {json_builds})")
 
-        f.seek(0)  # Reset for next ijson call
-        for transcript_id, build_transcript in ijson.kvitems(f, "transcripts"):
-            genome_builds = {}
-            existing_transcript = transcript_versions.get(transcript_id)
-            if existing_transcript:
-                genome_builds = existing_transcript["genome_builds"]
-                # Latest always used, but check existing - if codons are different old versions are wrong so remove
-                for field in ["start_codon", "stop_codon"]:
-                    old = existing_transcript.get(field)
-                    new = build_transcript.get(field)
-                    if old != new:  # Old relied on different codons so is obsolete
-                        for build_coordinates in genome_builds.values():
-                            url = build_coordinates["url"]
-                            urls_different_coding[url].append(transcript_id)
-                        genome_builds = {}
+            f.seek(0)  # Reset for next ijson call
+            for transcript_id, build_transcript in ijson.kvitems(f, "transcripts"):
+                genome_builds = {}
+                existing_transcript = transcript_versions.get(transcript_id)
+                if existing_transcript:
+                    genome_builds = existing_transcript["genome_builds"]
+                    # Latest always used, but check existing - if codons are different old versions are wrong so remove
+                    for field in ["start_codon", "stop_codon"]:
+                        old = existing_transcript.get(field)
+                        new = build_transcript.get(field)
+                        if old != new:  # Old relied on different codons so is obsolete
+                            for build_coordinates in genome_builds.values():
+                                url = build_coordinates["url"]
+                                urls_different_coding[url].append(transcript_id)
+                            genome_builds = {}
 
-            genome_builds[genome_build] = build_transcript["genome_builds"][genome_build]
-            # Use latest (with merged genome builds)
-            build_transcript["genome_builds"] = genome_builds
-            transcript_versions[transcript_id] = build_transcript
+                genome_builds[genome_build] = build_transcript["genome_builds"][genome_build]
+                # Use latest (with merged genome builds)
+                build_transcript["genome_builds"] = genome_builds
+                transcript_versions[transcript_id] = build_transcript
 
-        f.seek(0)  # Reset for next ijson call
-        for gene_id, gene_data in ijson.kvitems(f, "genes"):
-            genes[gene_id] = gene_data
+            f.seek(0)  # Reset for next ijson call
+            for gene_id, gene_data in ijson.kvitems(f, "genes"):
+                genes[gene_id] = gene_data
 
-        f.close()
-
-    write_cdot_json(args.output, genes, transcript_versions, list(genome_build_file.keys()))
+    method = "Combine multiple genome builds"
+    write_cdot_json(args.output, method, list(genome_build_filename.values()),
+                    genes, transcript_versions, list(genome_build_filename.keys()))
 
     if urls_different_coding:
         print("Some transcripts were removed as they had different coding coordinates from latest")
         for url, transcript_ids in urls_different_coding.items():
             print(f"{url}: {','.join(transcript_ids)}")
+
+def release_notes(args):
+    with gzip.open(args.json_filename) as f:
+        metadata = next(ijson.items(f, "metadata"))
+        if metadata is None:
+            raise ValueError("No metadata in JSON (requires schema version >=0.2.31)")
+        print(f"### {os.path.basename(args.json_filename)}")
+        print(f"Method: {metadata['method']}")
+        print("Input files:")
+        for input_file in metadata["input_files"]:
+            print(f"- {input_file}")
+
+        if args.show_urls:
+            print("Urls:")
+            # Put in descending order
+            url_counts = Counter(metadata["url_counts"])
+            for url, count in url_counts.most_common():
+                print(f"- {url}: {count}")
 
 
 def main():
@@ -493,6 +531,7 @@ def main():
         "merge_historical": merge_historical,
         "combine_builds": combine_builds,
         "uta_to_json": uta_to_json,
+        "release_notes": release_notes,
     }
     subcommands[args.subcommand](args)
 
