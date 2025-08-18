@@ -51,7 +51,7 @@ else
   RELEASE_NOTES_FILENAME="/tmp/${CDOT_RELEASE_NAME}.txt"
   echo > ${RELEASE_NOTES_FILENAME} # Clear
   for f in "${files[@]}"; do
-    ${BASE_DIR}/cdot_json.py release_notes $f >> ${RELEASE_NOTES_FILENAME}
+    ${BASE_DIR}/cdot_json.py release_notes $f --show-urls >> ${RELEASE_NOTES_FILENAME}
     echo "" >> ${RELEASE_NOTES_FILENAME}  # New line
   done
   echo "Creating on GitHub"
