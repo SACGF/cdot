@@ -502,16 +502,17 @@ def release_notes(args):
             raise ValueError("No metadata in JSON (requires schema version >=0.2.31)")
         print(f"### {os.path.basename(args.json_filename)}")
         print(f"Method: {metadata['method']}")
-        print("Input files:")
-        for input_file in metadata["input_files"]:
-            print(f"- {input_file}")
-
         if args.show_urls:
             print("Urls:")
             # Put in descending order
             url_counts = Counter(metadata["url_counts"])
             for url, count in url_counts.most_common():
                 print(f"- {url}: {count}")
+        else:
+            print("Input files:")
+            for input_file in metadata["input_files"]:
+                print(f"- {input_file}")
+
 
 
 def main():
