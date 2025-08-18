@@ -434,7 +434,7 @@ def combine_builds(args):
 
     urls_different_coding = defaultdict(list)
     genes = {}
-    transcripts = {}
+    transcript_versions = {}
     for genome_build, f in genome_build_file.items():
         # TODO: Check cdot versions
         json_builds = next(ijson.items(f, "genome_builds"))
@@ -444,7 +444,7 @@ def combine_builds(args):
         f.seek(0)  # Reset for next ijson call
         for transcript_id, build_transcript in ijson.kvitems(f, "transcripts"):
             genome_builds = {}
-            existing_transcript = transcripts.get(transcript_id)
+            existing_transcript = transcript_versions.get(transcript_id)
             if existing_transcript:
                 genome_builds = existing_transcript["genome_builds"]
                 # Latest always used, but check existing - if codons are different old versions are wrong so remove
@@ -460,7 +460,7 @@ def combine_builds(args):
             genome_builds[genome_build] = build_transcript["genome_builds"][genome_build]
             # Use latest (with merged genome builds)
             build_transcript["genome_builds"] = genome_builds
-            transcripts[transcript_id] = build_transcript
+            transcript_versions[transcript_id] = build_transcript
 
         f.seek(0)  # Reset for next ijson call
         for gene_id, gene_data in ijson.kvitems(f, "genes"):
@@ -468,16 +468,7 @@ def combine_builds(args):
 
         f.close()
 
-    print("Writing cdot data")
-    with gzip.open(args.output, 'wt') as outfile:
-        data = {
-            "transcripts": transcripts,
-            "cdot_version": JSON_SCHEMA_VERSION,
-            "genome_builds": list(genome_build_file.keys()),
-        }
-        if genes:
-            data["genes"] = genes
-        json.dump(data, outfile)
+    write_cdot_json(args.output, genes, transcript_versions, list(genome_build_file.keys()))
 
     if urls_different_coding:
         print("Some transcripts were removed as they had different coding coordinates from latest")
