@@ -162,6 +162,8 @@ config:
         url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2023_10/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
       Homo_sapiens_GRCh38_RefSeq_RS_2024_08.gff:
         url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2024_08/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
+      Homo_sapiens_GRCh38_RefSeq_RS_2025_08.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_000001405.40-RS_2025_08/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
 
     T2T-CHM13v2.0:
       Homo_sapiens_T2T-CHM13v2.0_RefSeq_110.gff:
@@ -172,3 +174,5 @@ config:
         url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_009914755.1-RS_2023_10/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz"
       Homo_sapiens_T2T-CHM13v2.0_RefSeq_RS_2024_08.gff:
         url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_009914755.1-RS_2024_08/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz"
+      Homo_sapiens_T2T-CHM13v2.0_RefSeq_RS_2025_08.gff:
+        url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/GCF_009914755.1-RS_2025_08/GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.gz"
