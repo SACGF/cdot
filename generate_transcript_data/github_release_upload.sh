@@ -51,11 +51,11 @@ else
   RELEASE_NOTES_FILENAME="/tmp/${CDOT_RELEASE_NAME}.txt"
   echo > ${RELEASE_NOTES_FILENAME} # Clear
   for f in "${files[@]}"; do
-    ${BASE_DIR}/cdot_json.py release_notes --json-filename=$f >> ${RELEASE_NOTES_FILENAME}
+    ${BASE_DIR}/cdot_json.py release_notes $f >> ${RELEASE_NOTES_FILENAME}
+    echo "" >> ${RELEASE_NOTES_FILENAME}  # New line
   done
-  RELEASE_NOTES=$(cat ${RELEASE_NOTES_FILENAME})
   echo "Creating on GitHub"
-  gh release create ${CDOT_RELEASE_NAME} --title=${CDOT_RELEASE_NAME} --notes ${RELEASE_NOTES}
+  gh release create ${CDOT_RELEASE_NAME} --title=${CDOT_RELEASE_NAME} --notes-file="${RELEASE_NOTES_FILENAME}"
 fi
 
 gh release upload "${CDOT_RELEASE_NAME}" "${files[@]}"
