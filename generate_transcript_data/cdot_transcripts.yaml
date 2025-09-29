@@ -84,8 +84,8 @@ config:
         url: "https://ftp.ensembl.org/pub/release-113/gtf/homo_sapiens/Homo_sapiens.GRCh38.113.gtf.gz"
        Homo_sapiens_GRCh38_Ensembl_114.gtf:
         url: "https://ftp.ensembl.org/pub/release-114/gtf/homo_sapiens/Homo_sapiens.GRCh38.114.gtf.gz"
-       # Gives me a 403 - reported to Ensembl
-       # Homo_sapiens_GRCh38_Ensembl_115.gtf: "https://ftp.ensembl.org/pub/release-115/gtf/homo_sapiens/Homo_sapiens.GRCh38.115.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_115.gtf:
+        url: "https://ftp.ensembl.org/pub/release-115/gtf/homo_sapiens/Homo_sapiens.GRCh38.115.gtf.gz"
 
     T2T-CHM13v2.0:
       Homo_sapiens_T2T-CHM13v2.0_Ensembl_2022_06.gtf:
