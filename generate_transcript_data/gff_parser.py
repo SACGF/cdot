@@ -117,9 +117,14 @@ class GFFParser(abc.ABC):
         if biotype:
             biotype_set.add(biotype)
 
+        source_set = set()
+        if feature.source:
+            source_set.add(feature.source)
+
         return {
             "gene_symbol": gene_name,
             "biotype": biotype_set,
+            "source": source_set,
             "id": gene_accession,
             "description": description
         }
@@ -132,6 +137,7 @@ class GFFParser(abc.ABC):
             "gene_version": gene_data.get("id"),
             "exons": [],
             "biotype": set(),
+            "source": set(),
             CONTIG: feature.iv.chrom,
             STRAND: feature.iv.strand,
         }
@@ -168,7 +174,6 @@ class GFFParser(abc.ABC):
 
         if note := feature.attr.get("Note"):
             transcript["note"] = note
-
 
     def _finish_process_features(self):
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
@@ -458,6 +463,10 @@ class GTFParser(GFFParser):
                 gene_data["biotype"].add(biotype)
                 transcript["biotype"].add(biotype)
 
+            if feature.source:
+                gene_data["source"].add(feature.source)
+                transcript["source"].add(feature.source)
+
             self._handle_protein_version(transcript_accession, feature)
             self._add_tags_to_transcript_data(transcript, feature)
 
@@ -510,6 +519,9 @@ class GFF3Parser(GFFParser):
                 # Can be either "[Source:HGNC Symbol%3BAcc:HGNC:8907]" or "[Source:HGNC Symbol%3BAcc:37102]"
                 if m := self.hgnc_pattern.match(description):
                     gene_data["hgnc"] = m.group(2)
+
+            if feature.source:
+                gene_data["source"].add(feature.source)
 
             self.gene_accession_by_feature_id[feature.attr["ID"]] = gene_accession
         else:
@@ -564,6 +576,8 @@ class GFF3Parser(GFFParser):
                     elif feature.type not in EXCLUDE_BIOTYPES:
                         transcript["biotype"].add(feature.type)
 
+                    if feature.source:
+                        transcript["source"].add(feature.source)
 
 
     @staticmethod
