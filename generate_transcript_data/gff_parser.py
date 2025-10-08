@@ -84,7 +84,10 @@ class GFFParser(abc.ABC):
             gene_data["url"] = self.url
 
         # At the moment the transcript dict is flat - need to move it into "genome_builds" dict
-        GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms", "tag", "note"]
+        # These are fields that differ per transcript/genome build, anything NOT in here should be a property of
+        # the transcript across all builds
+        GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms", "source",
+                               "tag", "note", "ccds", "transcript_support_level"]
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
             if protein := self.transcript_proteins.get(transcript_accession):
                 transcript_data["protein"] = protein
@@ -417,7 +420,7 @@ class GFFParser(abc.ABC):
 
 
 class GTFParser(GFFParser):
-    """ GTF (GFF2) - used by Ensembl, @see http://gmod.org/wiki/GFF2
+    """ GTF (GFF2) - used by Ensembl, @see https://gmod.org/wiki/GFF2
 
         GFF2 only has 2 levels of feature hierarchy, so we have to build or 3 levels of gene/transcript/exons ourselves
 
@@ -452,7 +455,7 @@ class GTFParser(GFFParser):
 
             # No need to store chrom/strand for each feature, will use transcript
             if feature.type in self.GTF_TRANSCRIPTS_DATA:
-                self._add_transcript_data(transcript_accession, transcript, feature)
+                self._gtf_handle_transcript_data(transcript_accession, transcript, feature)
 
             biotype = feature.attr.get("gene_biotype")
             if biotype is None:
@@ -470,6 +473,16 @@ class GTFParser(GFFParser):
             self._handle_protein_version(transcript_accession, feature)
             self._add_tags_to_transcript_data(transcript, feature)
 
+    def _gtf_handle_transcript_data(self, transcript_accession, transcript, feature):
+        self._add_transcript_data(transcript_accession, transcript, feature)
+        # transcript_support_level - Ensembl only
+        if transcript_support_level := feature.attr.get("transcript_support_level"):
+            transcript["transcript_support_level"] = transcript_support_level
+
+        if ccds_id := feature.attr.get("ccds_id"):
+            transcript["ccds"] = ccds_id
+
+
 
 class GFF3Parser(GFFParser):
     """ GFF3 - @see https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md
@@ -486,7 +499,7 @@ class GFF3Parser(GFFParser):
         super(GFF3Parser, self).__init__(*args, **kwargs)
         self.gene_accession_by_feature_id = defaultdict()
         self.transcript_accession_by_feature_id = defaultdict()
-        self.hgnc_pattern = re.compile(r".*\[Source:HGNC.*Acc:(HGNC:)?(\d+)\]")
+        self.hgnc_pattern = re.compile(r".*\[Source:HGNC.*Acc:(HGNC:)?(\d+)]")
 
     def handle_feature(self, feature):
         parent_id = feature.attr.get("Parent")
@@ -494,6 +507,7 @@ class GFF3Parser(GFFParser):
         # RefSeq genes are always one of GFF3_GENES, Ensembl has lots of different types (lincRNA_gene etc)
         # Ensembl treats pseudogene as a transcript (has parent)
         if parent_id is None and (feature.type in self.GFF3_GENES or "gene_id" in feature.attr):
+            # Gene
             gene_accession = self._get_gene_accession(feature)
             dbxref = self._get_dbxref(feature)
             if not gene_accession:
@@ -525,6 +539,7 @@ class GFF3Parser(GFFParser):
 
             self.gene_accession_by_feature_id[feature.attr["ID"]] = gene_accession
         else:
+            # Transcripts
             transcript_accession = None
             if feature.type in self.GFF3_TRANSCRIPTS_DATA:
                 if feature.type == 'cDNA_match':
@@ -547,7 +562,8 @@ class GFF3Parser(GFFParser):
                             self.skipped_features_no_parents[feature.type] += 1
                             return
                         raise ValueError(msg)
-                    self._handle_transcript_data(transcript_accession, transcript, feature)
+                    self._gff_handle_transcript_data(transcript_accession, transcript, feature)
+
 
             if transcript_accession is None:
                 # There are so many different transcript ontology terms just taking everything that
@@ -572,7 +588,7 @@ class GFF3Parser(GFFParser):
 
                     if feature.type == 'CDS':
                         # We should only be here if transcript_id wasn't on it (chrM)
-                        self._handle_transcript_data(transcript_accession, transcript, feature)
+                        self._gff_handle_transcript_data(transcript_accession, transcript, feature)
                     elif feature.type not in EXCLUDE_BIOTYPES:
                         transcript["biotype"].add(feature.type)
 
@@ -603,5 +619,10 @@ class GFF3Parser(GFFParser):
             self.transcript_data_by_accession[transcript_accession] = transcript_data
         self.transcript_accession_by_feature_id[feature.attr["ID"]] = transcript_accession
 
-    def _handle_transcript_data(self, transcript_accession, transcript, feature):
+    def _gff_handle_transcript_data(self, transcript_accession, transcript, feature):
         self._add_transcript_data(transcript_accession, transcript, feature)
+
+        # RefSeq only
+        dbxref = self._get_dbxref(feature)
+        if ccds := dbxref.get("CCDS"):
+            transcript["ccds"] = ccds
