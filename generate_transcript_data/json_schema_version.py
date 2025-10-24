@@ -7,4 +7,5 @@
 # 0.2.30 - Ensembl GRCh37 has canonical transcripts added from outside GTFs
 # 0.2.31 - Add 'metadata' - method/urls
 # 0.2.32 - Add 'source' (GTF column #2) to build data
-JSON_SCHEMA_VERSION = "0.2.32"
+# 0.2.33 - Store "ccds", "transcript_support_level"
+JSON_SCHEMA_VERSION = "0.2.33"
