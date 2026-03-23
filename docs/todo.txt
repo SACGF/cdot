@@ -1,0 +1,22 @@
+HGVS cleaning - done in VariantGrid genes. There is a lot of code in VG that could possibly be extracted into a general HGVS utility library see https://github.com/SACGF/variantgrid/tree/master/genes/hgvs
+
+*LRG (in VG)
+* MANE transcript (eg if you are given GENE_NAME:c.XXX) - also in VG. HGVS Data provider could do this by also passing in a MANE file. Cdot could do this by getting genes for transcripts then searching them for tags. Q) Do we need to pass in the genome build???
+
+We should output a run summary statistics file from snakemake that eg shows number of transcripts etc. Basically stuff we want to put into the paper 
+
+
+-------
+
+
+===============
+
+
+Need to incorporate UTA into snakemake (done?)
+Grch37_grch38 files etc should also include T2T?
+Release to GitHub should also include grch37_grch38 and grch37_grch38_t2t  files (as that is for cdot rest)
+
+
+
+
+

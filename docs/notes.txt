@@ -1,0 +1,126 @@
+The Human Genome Variation Society (HGVS) nomenclature has become the defacto standard for describing sequence variants in clinical reports and publications. Conversion of HGVS to and from genomic coordinates is thus a crucial requirement for genomics.
+
+RefSeq and Ensembl transcripts are versioned (eg NM_153253.3 is version 3). Exon coordinates can change between versions, so to correctly convert historical HGVS data, you may need many different transcript versions.
+
+We provide a REST web API for retrieving RefSeq and Ensembl transcript version data https://github.com/SACGF/cdot_rest
+
+This is hosted here: http://cdot.cc/ - though we have obtained new url cdotlib.org - will move it there soon 
+
+And have written integration code for the two most popular Python HGVS libraries: BioCommons HGVS and Counsyl pyHGVS.
+
+This increases the number of transcript versions resolvable by Python from 141k to 1.3M (need to get exact figures)
+
+Also support Telomere to telomere HGVS resolution (is this a first?)
+
+
+--------------
+
+
+The idea of storing GTF/GFF gene data in JSON is generally useful not just for HGVS. Almost all libraries (eg Python) have highly optimised JSON loading code
+
+We have a tool that reads the cdot files, and uses it for general bioinformatics analysis:
+
+https://github.com/SACGF/pyreference
+
+A long time ago, someone wrote gtf-to-genes which used a binary file for rapid loading - but gzipped JSON is faster (and human readable). Discontinued. 
+
+—---------------
+
+The Human Genome Variation Society (HGVS) nomenclature [2016]
+
+Example of NM_000492.3(CFTR):c.1438G>T
+
+For many publications or clinical reports, HGVS coordinates is all that is provided.
+
+High throughput sequencing is typically done in genomic coordinates, making conversion to and from HGVS transcript coordinates 
+
+Python is one of the most popular languages in general and in bioinformatics. There are two 
+
+
+https://github.com/counsyl/hgvs 152 stars, 
+
+BioCommons origin 12 cites, 2018 update: 6 cites
+
+BioCommons HGVS previously obtained its transcript data from its sister project BioCommons Universal Transcript Archive (UTA).
+
+Local install requires a PostgreSQL installation
+
+Can retrieve transcript information over the internet, but does so by connecting to a PostgreSQL server
+
+Doesn’t support Ensembl transcript versions - https://github.com/biocommons/uta/issues/233 10 June 2021
+
+UTA has had plans to build a REST web API since 2014: https://github.com/biocommons/uta/issues/164 
+
+—----------
+
+Counsyl HGVS 
+
+Number of coordinate conversion bugs, and doesn’t support alignment gaps.
+
+
+
+RefSeq 
+
+
+
+
+, where high throughput sequencing is typically stored and analysed, is an important task in genomics.
+
+
+
+INTRO
+
+High throughput sequencing is typically done in genomic coordinates, so 
+
+Converting HGVS to and from genomic coordinates 
+
+Transcript version (NM_XXX.1) 
+
+Firewalls prevent making a postgres database connection 
+
+—------
+
+
+
+
+
+
+Being able to resolve HGVS to genomic coordinates is a common and important 
+
+
+
+uta=> select count(ac) from uta_20210129.transcript;
+ count  
+--------
+ 314227
+
+uta=> select count(ac) from uta_20210129.transcript where ac like '%.%';
+ count  
+--------
+ 141262
+
+
+VariantGrid: 788252 distinct transcript versions
+
+—----------------
+
+
+
+—--------
+
+Benchmark - resolve all the HGVS in ClinVar, check against the genomic coordinate in VCF
+
+
+—-------------
+
+HGVS Recommendations for the Description of SequenceVariants: 2016 Update
+
+https://onlinelibrary.wiley.com/doi/pdf/10.1002/humu.22981
+
+
+
+Wang M, Callenberg KM, Dalgleish R, Fedtsov A, Fox NK, Freeman PJ, Jacobs KB, Kaleta P, McMurry AJ, Prlić A, Rajaraman V, Hart RK. hgvs: A Python package for manipulating sequence variants using HGVS nomenclature: 2018 Update. Hum Mutat. 2018 Dec;39(12):1803-1813. doi: 10.1002/humu.23615. Epub 2018 Sep 5. PMID: 30129167; PMCID: PMC6282708.
+
+
+
+
