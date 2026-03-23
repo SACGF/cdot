@@ -511,6 +511,60 @@ When merging GRCh37 and GRCh38, if `start_codon`/`stop_codon` disagree between v
 
 ---
 
+## Project Context and Motivation (from docs/)
+
+### Why cdot exists
+
+- HGVS nomenclature (e.g. `NM_000492.3(CFTR):c.1438G>T`) is the de-facto standard for variant descriptions in clinical reports and publications.
+- High-throughput sequencing works in genomic coordinates, so HGVS↔genomic conversion is a fundamental requirement.
+- Transcripts are versioned (e.g. `NM_153253.3` = version 3); exon coordinates can change between versions, so historical HGVS resolution requires many transcript versions.
+
+### Limitations of prior art that cdot addresses
+
+| Tool | Problem |
+|------|---------|
+| **UTA (biocommons)** | Local install requires PostgreSQL; remote access connects to PostgreSQL (firewalls block this); no Ensembl transcript version support ([issue #233, June 2021](https://github.com/biocommons/uta/issues/233)); REST API planned since 2014 ([issue #164](https://github.com/biocommons/uta/issues/164)) but not delivered |
+| **Counsyl pyHGVS** | Coordinate conversion bugs; no alignment gap support |
+
+### Transcript count comparison
+
+- UTA `uta_20210129`: 314,227 total transcripts; **141,262 with versioned accessions** (those with a `.` in the accession).
+- VariantGrid (a related clinical platform): 788,252 distinct transcript versions.
+- cdot target: **1.3 million+** transcript versions (exact figures TBD for paper).
+
+### REST service URL
+
+- Currently hosted at `http://cdot.cc/`
+- New URL `cdotlib.org` has been obtained — migration planned.
+- REST server code: https://github.com/SACGF/cdot_rest
+
+### Related projects
+
+- **pyreference** (https://github.com/SACGF/pyreference) — uses cdot JSON files for general bioinformatics analysis (not HGVS-specific). Demonstrates the broader utility of the JSON format.
+- **gtf-to-genes** — discontinued predecessor that used a binary file format. cdot's gzipped JSON is faster and human-readable.
+- **VariantGrid** (https://github.com/SACGF/variantgrid) — clinical genomics platform that contains HGVS utility code (in `genes/hgvs/`) that could potentially be extracted into a standalone library.
+
+### Benchmark idea (from notes)
+
+Resolve all HGVS entries in ClinVar and validate against the genomic coordinates in the VCF — a meaningful real-world accuracy benchmark.
+
+### Key references
+
+- HGVS nomenclature standard: *HGVS Recommendations for the Description of Sequence Variants: 2016 Update* — https://onlinelibrary.wiley.com/doi/pdf/10.1002/humu.22981
+- biocommons hgvs library: Wang M et al. (2018), *Hum Mutat* 39(12):1803–1813, PMID 30129167
+
+---
+
+## Planned / In-Progress Work (from docs/todo.txt)
+
+- **LRG transcripts** — currently handled in VariantGrid; not yet in cdot.
+- **MANE transcript lookup by gene name** — e.g. resolving `GENENAME:c.XXX` by finding the MANE Select transcript. Could be implemented in the HGVS data provider by accepting a MANE file, or by searching transcript tags already stored in cdot JSON. Open question: does the genome build need to be passed in for this?
+- **Snakemake run summary statistics** — the data generation pipeline (Snakemake) should emit a summary file (transcript counts, etc.) for use in the paper.
+- **UTA in Snakemake** — UTA incorporation may already be done.
+- **Combined build release files** — GitHub releases should include `grch37_grch38` and `grch37_grch38_t2t` combined files (used by the cdot REST service). Question open on whether the GRCh37+GRCh38 combined files should also include T2T.
+
+---
+
 ## Key Algorithmic Notes
 
 ### Interval tree storage (memory optimization)
