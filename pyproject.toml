@@ -4,3 +4,44 @@ requires = [
     "wheel"
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "cdot"
+dynamic = ["version"]
+authors = [
+    {name = "Dave Lawrence", email = "davmlaw@gmail.com"}
+]
+description = "Transcripts for HGVS libraries"
+readme = "README.md"
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "requests",
+    "intervaltree",
+    "more_itertools",
+    "bioutils>=0.5.8",
+    "lazy",
+]
+
+[project.optional-dependencies]
+build = [
+    "HTSeq>=2.1.2",
+    "ijson",
+    "biopython",
+    "pyhgvs",
+]
+
+[project.urls]
+Homepage = "https://github.com/SACGF/cdot"
+"Bug Tracker" = "https://github.com/SACGF/cdot/issues"
+
+[tool.setuptools.dynamic]
+version = {attr = "cdot.__version__"}
+
+[tool.setuptools.packages.find]
+exclude = ["tests*", "generate_transcript_data*"]

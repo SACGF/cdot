@@ -4,15 +4,11 @@ Ranked by impact. "Impact" here means: fixes a real correctness problem, unblock
 
 ---
 
-## 1. Fix Python version declaration and split build dependencies (#104)
+## ~~1. Fix Python version declaration and split build dependencies (#104)~~ DONE
 
-**Why first:** Actively confusing contributors right now. The declared `python_requires = >=3.8` in `setup.cfg` is wrong — `generate_transcript_data/` uses type annotations that require 3.10+. Separately, the optional heavy build dependencies (`HTSeq`, `ijson`, `pyhgvs`, `biopython`) are entirely undocumented.
-
-**What to do:**
-- Bump `python_requires` in `setup.cfg` to the actual minimum (likely 3.10).
-- Migrate `setup.cfg` → `pyproject.toml` (already drafted in setup.cfg comments).
-- Add an `[project.optional-dependencies]` extras group (e.g. `cdot[build]`) for `HTSeq`, `ijson`, `biopython`, and `pyhgvs`. These should not be required for users just consuming JSON files.
-- Note: HTSeq 2.1.2 has been released and fixes the duplicated-tags warning (#104 comment).
+- Migrated `setup.cfg` → `pyproject.toml` (setup.cfg removed).
+- `python_requires` updated to `>=3.9` (actual minimum: PEP 585 generics used throughout).
+- Added `[project.optional-dependencies] build` group: `HTSeq>=2.1.2`, `ijson`, `biopython`, `pyhgvs`.
 
 ---
 
