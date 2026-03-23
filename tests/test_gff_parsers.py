@@ -1,7 +1,10 @@
 
+import gzip
 import os
+import tempfile
 from inspect import getsourcefile
 import unittest
+from generate_transcript_data.cdot_json import add_gencode_hgnc
 from generate_transcript_data.gff_parser import GTFParser, GFF3Parser
 
 
@@ -147,3 +150,39 @@ class Test(unittest.TestCase):
     def test_mito_no_mrna(self):
         """ Need to make fake MT transcripts for RefSeq @see https://github.com/SACGF/cdot/issues/72 """
         self._test_mito(self.REFSEQ_GFF3_FILENAME_GRCH37_MT, "GRCh37")
+
+    def test_ensembl_hgnc_injection(self):
+        """ Test that GENCODE HGNC metadata is properly injected into Ensembl GTF transcripts and genes.
+            @see https://github.com/SACGF/cdot/issues/97 """
+        genome_build = "GRCh38"
+        parser = GTFParser(self.ENSEMBL_111_GTF_FILENAME, genome_build, self.FAKE_URL)
+        genes, transcripts = parser.get_genes_and_transcripts()
+
+        # Verify no HGNC present before injection
+        self.assertIsNone(transcripts["ENST00000641515.2"].get("hgnc"))
+        self.assertIsNone(transcripts["ENST00000387421.1"].get("hgnc"))
+
+        # Create a minimal GENCODE HGNC metadata file matching the two transcripts in the test GTF
+        # OR4F5 = HGNC:14825, MT-TK = HGNC:7489 (confirmed from gencode.v45.metadata.HGNC.gz)
+        hgnc_content = (
+            "ENST00000641515.2\tOR4F5\tHGNC:14825\n"
+            "ENST00000387421.1\tMT-TK\tHGNC:7489\n"
+        )
+        with tempfile.NamedTemporaryFile(suffix=".gz", delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            with gzip.open(tmp_path, "wt") as f:
+                f.write(hgnc_content)
+            add_gencode_hgnc(tmp_path, genes, transcripts)
+        finally:
+            os.unlink(tmp_path)
+
+        # HGNC injected into transcripts
+        self.assertEqual(transcripts["ENST00000641515.2"]["hgnc"], "14825")
+        self.assertEqual(transcripts["ENST00000387421.1"]["hgnc"], "7489")
+
+        # HGNC injected into the gene entries (looked up via each transcript's gene_version key)
+        gene_version_or4f5 = transcripts["ENST00000641515.2"]["gene_version"]
+        gene_version_mttk = transcripts["ENST00000387421.1"]["gene_version"]
+        self.assertEqual(genes[gene_version_or4f5]["hgnc"], "14825")
+        self.assertEqual(genes[gene_version_mttk]["hgnc"], "7489")
