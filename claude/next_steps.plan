@@ -31,6 +31,8 @@ Ranked by impact. "Impact" here means: fixes a real correctness problem, unblock
 
 **Why:** `cdot.cc` is blocked by institutional firewalls (confirmed: SA Path). The new domain `cdotlib.org` is already registered. Every blocked user is a lost adoption.
 
+NEED TO WAIT: This requires Dave to deploy the REST server on that domain
+
 **What to do:**
 - Set up `cdotlib.org` pointing to the same server as `cdot.cc`.
 - Redirect `cdot.cc` → `cdotlib.org` (HTTP 301).
@@ -77,19 +79,7 @@ Ranked by impact. "Impact" here means: fixes a real correctness problem, unblock
 
 ---
 
-## 7. Move HGVSConverter abstraction from VariantGrid to cdot (#93)
-
-**Why:** VariantGrid has a well-tested abstraction layer that normalises the API differences between biocommons HGVS and PyHGVS. Extracting this would let other projects migrate between the two libraries incrementally without rewriting all call sites. This directly increases cdot's value as an ecosystem piece, not just a data file.
-
-**What to do:**
-- Port the `HGVSConverter` interface and its PyHGVS/biocommons implementations from `variantgrid/genes/hgvs/` into `cdot/hgvs/` (or a new `cdot/converter/` subpackage).
-- The abstraction should cover: `c_to_g`, `g_to_c`, `c_to_p`, normalisation, and error/warning surfaces.
-- Add tests using the existing mock infrastructure.
-- Document in README as a migration path for teams switching from PyHGVS to biocommons.
-
----
-
-## 8. HGVS string cleaning and warning framework (#27, #28)
+## 7. HGVS string cleaning and warning framework (#27, #28)
 
 **Why:** A large fraction of real-world HGVS strings (from clinical reports, search bars, literature) are malformed. VariantGrid has ad-hoc fixing code that every clinical genomics shop ends up reimplementing. Making this a first-class cdot feature would be high-value for downstream users.
 
@@ -102,7 +92,7 @@ Ranked by impact. "Impact" here means: fixes a real correctness problem, unblock
 
 ---
 
-## 9. Refactor GFF/GTF parser: split by source not format (#101)
+## 8. Refactor GFF/GTF parser: split by source not format (#101)
 
 **Why:** The current GTFParser/GFF3Parser split follows file format, but the real logic difference is RefSeq vs Ensembl. This means Ensembl GFF3 parsing is broken (protein versions not extracted), and Ensembl-specific and RefSeq-specific code is entangled inside format-based classes.
 
@@ -116,7 +106,7 @@ Ranked by impact. "Impact" here means: fixes a real correctness problem, unblock
 
 ---
 
-## 10. CDS phase / ribosomal frameshift support (#76)
+## 9. CDS phase / ribosomal frameshift support (#76)
 
 **Why correctness:** Genes with −1 ribosomal frameshifting (e.g. PEG10/`NM_015068.3`) cannot have their protein sequences correctly reconstructed from cdot data. This is a real gap for tools doing protein-level analysis.
 
@@ -130,7 +120,7 @@ Ranked by impact. "Impact" here means: fixes a real correctness problem, unblock
 
 ---
 
-## 11. Formal benchmarking script (#5)
+## 10. Formal benchmarking script (#5)
 
 **Why:** Needed for the paper. Informal results exist (cdot REST: 0.1 s/HGVS, 100% resolved; UTA: 1.84 s/HGVS, 17% resolved on 500 ClinVar entries) but were run ad-hoc. A reproducible script is needed to make the numbers citable.
 
@@ -155,8 +145,7 @@ Ranked by impact. "Impact" here means: fixes a real correctness problem, unblock
 | 4 | Canonical transcript API | Medium | biocommons recognition (#85) |
 | 5 | Source priority docs + pipeline stats | Medium | paper, user trust |
 | 6 | FastaSeqFetcher docs + mismatch detection | Medium | user correctness |
-| 7 | HGVSConverter abstraction from VG | Medium | ecosystem value |
-| 8 | HGVS string cleaning + warnings | High | broad user value |
-| 9 | GFF/GTF parser refactor | High | requires CI first |
-| 10 | CDS phase / ribosomal frameshift | Medium | correctness, paper |
-| 11 | Formal benchmarking script | Medium | paper |
+| 7 | HGVS string cleaning + warnings | High | broad user value |
+| 8 | GFF/GTF parser refactor | High | requires CI first |
+| 9 | CDS phase / ribosomal frameshift | Medium | correctness, paper |
+| 10 | Formal benchmarking script | Medium | paper |
