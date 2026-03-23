@@ -12,6 +12,8 @@ Performance comparison: UTA public DB ~1s/transcript vs cdot JSON.gz ~500-1000 t
 
 **Never run code against full datasets.** Processing full GTF/GFF3 files or complete JSON.gz data releases takes a very long time. Always use test data (in `tests/`) when verifying changes.
 
+**PyHGVS is abandoned — prefer biocommons HGVS.** The `cdot/pyhgvs/` integration exists for legacy compatibility but PyHGVS is no longer maintained. Do not write new features that require significant PyHGVS-specific work. Focus new development on the biocommons HGVS path (`cdot/hgvs/dataproviders/`). If a feature is straightforward to support in both libraries, fine; if it requires real effort for PyHGVS, skip it and biocommons-only is acceptable.
+
 ## Commands
 
 ```bash
@@ -70,3 +72,7 @@ Schema versioning (`cdot/__init__.py`) uses major.minor; clients validate compat
 ### Release Management
 
 `cdot/data_release.py` queries the GitHub API for the latest compatible data release (filtered by schema version), returning download URLs for RefSeq/Ensembl JSON.gz files across GRCh37, GRCh38, and T2T-CHM13v2.0.
+
+## GitHub Comments
+When writing any comment on a GitHub issue or pull request, always preface it with 🤖 Written by Claude.
+Do NOT close GitHub issues. Issues must go through a testing lifecycle before being closed by the user.
