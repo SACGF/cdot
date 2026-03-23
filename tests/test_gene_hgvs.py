@@ -3,15 +3,12 @@ Tests for cdot.hgvs.gene_hgvs — gene-symbol HGVS resolution via MANE/canonical
 
 Uses the Ensembl GRCh38 test data fixture which has a single gene (AOAH) with
 ENST00000617537.5 tagged as MANE_Select.
-
-Tests that require JSONDataProvider (which depends on biocommons hgvs) are skipped
-when that library is not installed.
 """
-import json
 import os
 import pytest
 
 from cdot.hgvs.clean import HGVSFixCode, HGVSFixSeverity, HGVSInputError
+from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
 from cdot.hgvs.gene_hgvs import (
     DEFAULT_TAG_PRIORITY,
     _parse_gene_only_hgvs,
@@ -28,45 +25,9 @@ W = HGVSFixSeverity.WARNING
 E = HGVSFixSeverity.ERROR
 
 
-# ---------------------------------------------------------------------------
-# Stub data provider — no biocommons dependency
-# ---------------------------------------------------------------------------
-
-class StubDataProvider:
-    """Minimal data provider stub for gene HGVS resolution tests.
-
-    Reads gene→transcript→tags directly from the cdot JSON, bypassing the
-    biocommons Interface requirement of JSONDataProvider.
-    """
-
-    def __init__(self, json_path: str):
-        with open(json_path) as f:
-            self._data = json.load(f)
-
-    def get_tx_ac_tags_for_gene(self, gene: str, genome_build: str):
-        tx_list = []
-        for tx_id, tx in self._data["transcripts"].items():
-            if tx.get("gene_name") != gene:
-                continue
-            build_data = tx.get("genome_builds", {}).get(genome_build)
-            if build_data is None:
-                continue
-            exon_starts = build_data.get("exon_starts", [])
-            exon_ends = build_data.get("exon_ends", [])
-            if exon_starts and exon_ends:
-                length = max(exon_ends) - min(exon_starts)
-            else:
-                length = 0
-            tag_str = build_data.get("tag", "")
-            tags = [t.strip() for t in tag_str.split(",") if t.strip()] if tag_str else []
-            tx_list.append((length, tx_id, tags))
-        tx_list.sort(key=lambda x: x[0], reverse=True)
-        return [(tx_id, tags) for _, tx_id, tags in tx_list]
-
-
 @pytest.fixture(scope="module")
 def ensembl_provider():
-    return StubDataProvider(ENSEMBL_JSON)
+    return JSONDataProvider([ENSEMBL_JSON])
 
 
 # ---------------------------------------------------------------------------

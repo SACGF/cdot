@@ -29,11 +29,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+hgvs = [
+    "hgvs",
+]
 build = [
     "HTSeq>=2.1.2",
     "ijson",
     "biopython",
     "pyhgvs",
+]
+test = [
+    "hgvs",
+    "pytest",
 ]
 
 [project.urls]
@@ -44,4 +51,4 @@ Homepage = "https://github.com/SACGF/cdot"
 version = {attr = "cdot.__version__"}
 
 [tool.setuptools.packages.find]
-exclude = ["tests*", "generate_transcript_data*"]
+exclude = ["tests*", "generate_transcript_data*", "scripts*"]
