@@ -43,7 +43,7 @@ class StubDataProvider:
         with open(json_path) as f:
             self._data = json.load(f)
 
-    def get_tx_for_gene_with_tags(self, gene: str, genome_build: str):
+    def get_tx_ac_tags_for_gene(self, gene: str, genome_build: str):
         tx_list = []
         for tx_id, tx in self._data["transcripts"].items():
             if tx.get("gene_name") != gene:

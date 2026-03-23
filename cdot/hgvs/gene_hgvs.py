@@ -61,7 +61,7 @@ def _rank_transcripts_by_tags(
 
     Transcripts whose tags include an earlier entry in tag_priority sort first.
     Transcripts with no matching priority tag sort last (preserving the
-    input order, which is longest-first from get_tx_for_gene_with_tags).
+    input order, which is longest-first from get_tx_ac_tags_for_gene).
     """
     def sort_key(item: tuple[str, list[str]]) -> int:
         _tx_ac, tags = item
@@ -120,7 +120,7 @@ def resolve_gene_hgvs(
     if gene_symbol is None:
         return hgvs_string, fixes  # already has transcript — nothing to do
 
-    tx_and_tags = data_provider.get_tx_for_gene_with_tags(gene_symbol, genome_build)
+    tx_and_tags = data_provider.get_tx_ac_tags_for_gene(gene_symbol, genome_build)
 
     if not tx_and_tags:
         fixes.append(HGVSFix(

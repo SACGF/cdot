@@ -316,7 +316,7 @@ class LocalDataProvider(AbstractJSONDataProvider):
 
         return [x[1] for x in sorted(tx_list, key=lambda x: x[0], reverse=True)]
 
-    def get_tx_for_gene_with_tags(self, gene: str, genome_build: str) -> list[tuple[str, list[str]]]:
+    def get_tx_ac_tags_for_gene(self, gene: str, genome_build: str) -> list[tuple[str, list[str]]]:
         """
         Return [(tx_ac, tags), ...] for all transcripts of the given gene in the
         given genome build, sorted by decreasing transcript length.
