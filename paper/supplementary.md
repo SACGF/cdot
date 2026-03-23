@@ -1,85 +1,58 @@
 # Supplementary Material
 
-*Supplementary data should be referenced in the abstract.*
-*Submit as a single PDF labelled "Supplementary Data" at the journal.*
+*Reference in abstract: "Supplementary data are available at Bioinformatics online."*
+*Submit as a single PDF labelled "Supplementary Data".*
 
 ---
 
 ## Supplementary Tables
 
-### Table S1 — RefSeq GFF3 annotation releases ingested by cdot
+### Table S1 — RefSeq GFF3 annotation releases
 
-| Genome build | Annotation release | Date | Transcripts |
-|-------------|-------------------|------|-------------|
-| GRCh37 | [earliest release] | [date] | [N] |
-| GRCh37 | ... | ... | ... |
-| GRCh38 | [earliest release] | [date] | [N] |
-| GRCh38 | ... | ... | ... |
-| T2T-CHM13v2.0 | [release] | [date] | [N] |
+| Genome build | Annotation release | Transcripts added |
+|-------------|-------------------|------------------|
+| GRCh37 | ... | ... |
+| GRCh38 | ... | ... |
+| T2T-CHM13v2.0 | ... | ... |
 
-*Source: Snakemake pipeline summary statistics (to be generated)*
+*Generated from Snakemake pipeline summary stats.*
 
-### Table S2 — Ensembl GTF releases ingested by cdot
+### Table S2 — Ensembl GTF releases
 
 | Genome build | Ensembl release | Transcript count |
 |-------------|-----------------|-----------------|
-| GRCh37 | 75 | [N] |
-| GRCh37 | ... | ... |
-| GRCh38 | 76 | [N] |
-| GRCh38 | ... | ... |
-| T2T-CHM13v2.0 | [release] | [N] |
+| GRCh37 | 75–81 | ... |
+| GRCh38 | 76–115 | ... |
+| T2T-CHM13v2.0 | ... | ... |
 
-### Table S3 — cdot JSON schema fields (v0.2.33)
+### Table S3 — JSON schema fields (v0.2.33)
 
-| Field | Level | Type | Description |
-|-------|-------|------|-------------|
-| `schema_version` | root | string | JSON schema version |
-| `transcripts` | root | dict | keyed by transcript accession |
-| `gene_name` | transcript | string | HGNC gene symbol |
-| `gene_version` | transcript | int | |
-| `hgnc` | transcript | string | HGNC ID |
-| `biotype` | transcript | string | e.g. "protein_coding" |
-| `genome_builds` | transcript | dict | keyed by build name (e.g. "GRCh38") |
-| `contig` | build | string | chromosome/contig name |
-| `strand` | build | int | +1 or -1 |
-| `exons` | build | list | list of 6-tuples |
-| `cds_start` | build | int | CDS start in genomic coords |
-| `cds_end` | build | int | CDS end in genomic coords |
-| `mane_select` | build | string | MANE Select accession (if applicable) |
-| `mane_plus_clinical` | build | string | MANE Plus Clinical accession (if applicable) |
-| `refseq_select` | build | bool | RefSeq Select flag |
-| `ensembl_canonical` | build | bool | Ensembl canonical flag |
+| Field | Level | Description |
+|-------|-------|-------------|
+| `schema_version` | root | Schema compatibility version |
+| `transcripts` | root | Dict keyed by transcript accession |
+| `gene_name` | transcript | HGNC gene symbol |
+| `biotype` | transcript | e.g. `"protein_coding"` |
+| `genome_builds` | transcript | Dict keyed by build name |
+| `contig` | build | Chromosome/contig accession |
+| `strand` | build | `+1` or `-1` |
+| `exons` | build | List of `[alt_start, alt_end, exon_id, cds_start, cds_end, gap]` |
+| `cds_start` / `cds_end` | build | CDS coordinates |
+| `mane_select` | build | MANE Select accession if applicable |
+| `mane_plus_clinical` | build | MANE Plus Clinical accession if applicable |
+| `refseq_select` | build | RefSeq Select flag |
+| `ensembl_canonical` | build | Ensembl canonical flag |
 
-*Exon 6-tuple format: `[alt_start, alt_end, exon_id, cds_start, cds_end, gap]` where gap is a GFF3 gap string.*
+### Table S4 — ClinVar benchmark details
 
-### Table S4 — ClinVar HGVS benchmark details
-
-*[Full breakdown of [N] ClinVar variants tested: counts by transcript source (RefSeq/Ensembl), genome build, failure reason (unknown transcript accession, unknown version, parse error). To be generated from benchmark script.]*
+Breakdown of [N] ClinVar HGVS variants tested: counts by resolution source (RefSeq GRCh38, Ensembl GRCh38, GRCh37, unresolved), and failure reason (unknown accession, unknown version, parse error).
 
 ---
 
 ## Supplementary Figures
 
-### Figure S1 — Transcript biotype distribution
+**Figure S1** — Speed benchmark: throughput (transcripts/second) for cdot local, cdot REST, UTA remote, UTA local. Log-scale bar chart.
 
-Bar chart showing transcript counts by biotype (protein_coding, lincRNA, miRNA, pseudogene, etc.) across cdot sources and genome builds.
+**Figure S2** — Cumulative unique NM_ accession versions by RefSeq annotation release year. Motivates ingestion of multiple historical releases.
 
-### Figure S2 — Historical RefSeq coverage by annotation release year
-
-Cumulative count of unique NM_ accession versions added per RefSeq GFF3 annotation release. Demonstrates the value of ingesting multiple historical releases for resolving older HGVS strings.
-
-### Figure S3 — T2T-CHM13v2.0 unique genes
-
-Venn diagram or table showing genes with transcripts in T2T-CHM13v2.0 that have no equivalent (by gene name) in GRCh37 or GRCh38. Includes gene names, biotypes, and chromosomal locations (particularly acrocentric chromosome short arms).
-
-### Figure S4 — cdot REST API response times
-
-Distribution of response times for transcript lookups via cdotlib.org REST API, measured from [location] under [load conditions].
-
----
-
-*Notes:*
-- *Tables S1 and S2 require Snakemake pipeline to output summary statistics*
-- *Table S3 should be verified against the actual JSON files before submission*
-- *Table S4 and Figure S2 require the ClinVar benchmark script (#5)*
-- *Reference supplementary material in the abstract ("Supplementary data are available at Bioinformatics online")*
+**Figure S3** — T2T-CHM13v2.0 unique transcripts: genes present in T2T but absent from GRCh37/GRCh38, annotated by chromosomal location.

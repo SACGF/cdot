@@ -1,29 +1,22 @@
 # Abstract
 
-*Bioinformatics structured abstract — Motivation / Results / Availability / Contact*
-*Target length: ~150–200 words*
+*Application Note abstract format: Summary / Availability and Implementation / Contact / Supplementary Information*
+*Target: ~150 words. One paragraph per heading — no sub-bullets.*
 
 ---
 
-**Motivation:**
+**Summary:**
 
-HGVS transcript nomenclature is the clinical and research standard for describing sequence variants, underpinning ACMG/AMP variant classification guidelines and the >3 million variants archived in ClinVar. Converting HGVS descriptions to genomic coordinates requires comprehensive, versioned transcript data, yet existing resources require database infrastructure (PostgreSQL), lack Ensembl support, and provide limited historical transcript coverage — leaving tools unable to resolve a substantial fraction of clinical HGVS strings.
-
-**Results:**
-
-cdot (Complete Dict Of Transcripts) provides a compact JSON format for transcript coordinate data, generated from all available RefSeq GFF3 and Ensembl GTF annotation releases across GRCh37, GRCh38, and T2T-CHM13v2.0. cdot covers [X] versioned transcript/genome alignments — [9]× more than the Universal Transcript Archive — with no database infrastructure required. Data can be loaded locally ([500–1000] transcripts/second) or accessed via a REST API. Python integrations are provided for both major HGVS libraries (biocommons/hgvs and PyHGVS). cdot stores MANE Select, MANE Plus Clinical, and Ensembl canonical tags, enabling programmatic canonical transcript selection. On a benchmark of [N] ClinVar HGVS variants, cdot resolves [X]% versus [Y]% for UTA.
+HGVS transcript notation is the clinical standard for variant description, underpinning >3 million ClinVar submissions and ACMG/AMP classification guidelines. Resolving HGVS to genomic coordinates requires versioned transcript data, yet the dominant resource (UTA) requires PostgreSQL infrastructure, lacks Ensembl support, and covers only ~141,000 transcript alignments. cdot (Complete Dict Of Transcripts) provides [X] versioned transcript/genome alignments from RefSeq and Ensembl across GRCh37, GRCh38, and T2T-CHM13v2.0 as compact JSON files loadable at [500–1000] transcripts/second — no database required. Python integrations are provided for both major HGVS libraries (biocommons/hgvs and PyHGVS). cdot stores MANE Select and Ensembl canonical tags enabling programmatic canonical transcript selection, and is the first HGVS resource to support the T2T-CHM13v2.0 assembly.
 
 **Availability and Implementation:**
 
-https://github.com/SACGF/cdot; `pip install cdot`; MIT licence. Data files available at [cdotlib.org / Zenodo DOI].
+https://github.com/SACGF/cdot; `pip install cdot`; MIT licence. Data files (JSON.gz) at cdotlib.org and [Zenodo DOI].
 
-**Contact:** [dave.lawrence@sa.gov.au or similar]
+**Contact:** [email]
 
 **Supplementary information:** Supplementary data are available at *Bioinformatics* online.
 
 ---
 
-*Notes for final draft:*
-- *Fill in bracketed numbers once benchmarks are run (see results.md)*
-- *Add Zenodo DOI once data files are archived*
-- *Confirm corresponding author contact*
+*Fill in: [X] transcript count, speed numbers, Zenodo DOI, contact email.*
