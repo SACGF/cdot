@@ -316,6 +316,29 @@ class LocalDataProvider(AbstractJSONDataProvider):
 
         return [x[1] for x in sorted(tx_list, key=lambda x: x[0], reverse=True)]
 
+    def get_tx_for_gene_with_tags(self, gene: str, genome_build: str) -> list[tuple[str, list[str]]]:
+        """
+        Return [(tx_ac, tags), ...] for all transcripts of the given gene in the
+        given genome build, sorted by decreasing transcript length.
+
+        tags is a list of tag strings (e.g. ['MANE_Select', 'basic']).
+        Empty list if the transcript has no tags for that build.
+        """
+        tx_list = []
+        for transcript_id in self._get_transcript_ids_for_gene(gene):
+            transcript_data = self._get_transcript(transcript_id)
+            build_data = transcript_data["genome_builds"].get(genome_build)
+            if build_data is None:
+                continue
+            contig, tx_start, tx_end, _ = self._get_contig_start_end_strand(build_data)
+            length = tx_end - tx_start
+            tag_str = build_data.get("tag", "")
+            tags = [t.strip() for t in tag_str.split(",") if t.strip()] if tag_str else []
+            tx_list.append((length, transcript_id, tags))
+
+        tx_list.sort(key=lambda x: x[0], reverse=True)
+        return [(tx_ac, tags) for _, tx_ac, tags in tx_list]
+
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
         """ return transcripts that overlap given region """
 

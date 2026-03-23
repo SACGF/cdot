@@ -53,6 +53,9 @@ class HGVSFixCode(Enum):
     UPPERCASED_HGVS_PREFIX       = "uppercased_hgvs_prefix"
     # Transcript version fallback (WARNING)
     USED_ADJACENT_VERSION        = "used_adjacent_version"
+    # Gene → transcript resolution (WARNING on success, ERROR on failure)
+    RESOLVED_GENE_TO_TRANSCRIPT  = "resolved_gene_to_transcript"
+    NO_TRANSCRIPT_FOR_GENE       = "no_transcript_for_gene"
     # Validation errors (ERROR)
     NO_COLON                     = "no_colon"
     MISSING_REFERENCE_SEQUENCE   = "missing_reference_sequence"

@@ -7,3 +7,8 @@ from cdot.hgvs.clean import (
     HGVSInputError,
     VersionStrategy,
 )
+from cdot.hgvs.gene_hgvs import (
+    DEFAULT_TAG_PRIORITY,
+    fix_hgvs,
+    resolve_gene_hgvs,
+)
