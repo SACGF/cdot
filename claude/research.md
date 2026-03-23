@@ -486,6 +486,58 @@ When merging GRCh37 and GRCh38, if `start_codon`/`stop_codon` disagree between v
 
 ---
 
+## Known Bugs / Correctness Gaps (from issues)
+
+### CDS phase and ribosomal frameshifting (#76)
+
+Some transcripts use −1 ribosomal frameshifting where one base is read twice, expressed in GFF3 as overlapping CDS exon coordinates, e.g. `NM_015068.3` (PEG10): `join(480..1436,1436..2605)`. cdot currently ignores this — it stores exon boundaries without the overlap, so the encoded protein cannot be correctly reconstructed from cdot data alone.
+
+The GFF3 spec's column 8 `phase` field is the correct mechanism to track this. Dave's proposed fix: add an optional `phasing` array to the JSON exon data (omit if all zeros to avoid bloating unaffected transcripts). Blocked in practice until biocommons HGVS adds phase support. Other affected transcripts include `NM_001172437.2`, `NM_001184961.1`, `NM_004152.3`, `NM_001301020.1`, `NM_002537.3`, `NM_001301302.1`.
+
+Note: GRCh38 GFF3 shows phase=0 for `NM_015068.3` even though the frameshift is well-established — the phasing may only appear in older GFF3 versions.
+
+### FastaSeqFetcher sequence mismatch vs RefSeq (#55)
+
+`NM_000399.3` (GRCh37 and GRCh38) has a CIGAR gap `M2190 D1 M282`. The RefSeq-stated sequence has a "T" at position 790, but the FASTA-reconstructed sequence has "A" at position 2697. Both sequences are the same total length. The RefSeq GFF3 flags the transcript with `gap_count=1` and a `Note` about a non-frameshifting indel vs the genomic sequence. Root cause unresolved — may be a RefSeq/genome divergence rather than a cdot bug.
+
+### Ensembl GFF3 protein version parsing is broken (#101)
+
+`GFF3Parser` does not correctly extract protein accession versions for Ensembl GFF3 files. Only `GTFParser` handles Ensembl protein IDs reliably. There are no explicit tests for the Ensembl GFF3 path, and the error message when it fails is not informative.
+
+### `gene_name` is `None` for symbol-less transcripts (#89)
+
+Some Ensembl transcripts (particularly those associated with BAC-derived or novel loci) have no gene symbol in the source GTF/GFF3. These are stored in cdot with `gene_name: None`. This is correct behaviour but can surprise users expecting a gene symbol. Transcripts like this exist because Ensembl stores `description=novel transcript` with no `Name` attribute on the gene.
+
+---
+
+## Transcript Source Priority
+
+Within a merged JSON file, sources are processed in order from `cdot_transcripts.yaml`. The general rule is: **UTA first (baseline), then official annotation releases override in chronological order, with later releases taking precedence**. This means:
+
+1. UTA (provides many historical transcript alignments)
+2. Older RefSeq/Ensembl GFF/GTF releases (overrides UTA)
+3. Newer RefSeq/Ensembl GFF/GTF releases (overrides older)
+
+A consequence: the same transcript accession (e.g. `NM_001017995.2`) may have different `cds_start`/`cds_end` values depending on which source "won". The UTA 20241220 vs older RefSeq GFFs differ by 1 base for some transcripts — this is a genuine alignment difference between sources, not a cdot bug (#95). Needs documentation in the data files and/or a summary statistics file from the pipeline.
+
+---
+
+## Proposed JSON Schema Changes (#78)
+
+If a breaking schema change is ever made (requiring a major version bump), the desired changes are:
+
+1. **Exons as dicts instead of fixed-length arrays** — current 6-tuple format forces positional parsing; dicts would allow adding new fields (e.g. `phase`) without breaking existing consumers.
+2. **Phasing support** — add per-exon phase as a new field (only possible cleanly once exons are dicts).
+3. A suggestion to rename `cds_start`/`cds_end` to `tx_start`/`tx_end` was raised externally but rejected — those fields *are* coding coordinates; transcript extents are recoverable from `exons[0][0]` / `exons[-1][1]`.
+
+---
+
+## VEP-Compatible Releases (#63)
+
+VEP (Variant Effect Predictor) uses specific annotation versions tied to Ensembl releases. It would be valuable to build and release VEP-compatible cdot JSON files from CI. The main constraint is memory; `orjson` was suggested as a more memory-efficient JSON library to support this. The VEP cache table at https://asia.ensembl.org/info/docs/tools/vep/script/vep_cache.html maps VEP versions to annotation sources and builds.
+
+---
+
 ## Dependencies
 
 ### Installed with package (`setup.cfg`)
