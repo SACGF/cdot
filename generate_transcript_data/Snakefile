@@ -11,7 +11,7 @@ configfile: os.path.join(workflow.basedir, "cdot_transcripts.yaml")
 
 cdot_json = os.path.join(workflow.basedir, "cdot_json.py")
 cdot_dir = os.path.dirname(workflow.basedir)
-cdot_output_raw = subprocess.check_output(f"{sys.executable} {cdot_json} --version", shell=True, env={"PYTHONPATH": cdot_dir})
+cdot_output_raw = subprocess.check_output(f"{sys.executable} {cdot_json} --version", shell=True, env={**os.environ, "PYTHONPATH": cdot_dir})
 cdot_data_version = cdot_output_raw.decode().strip()
 
 # Load Ensembl -> GENCODE mapping CSV
@@ -200,14 +200,15 @@ rule cdot_gff_json:
 
 
 rule download_gff_files:
-    threads: 4  # We seem to sometimes get failures/booted if too many simultaneous connections to site
+    resources:
+        connections=1  # We seem to sometimes get failures/booted if too many simultaneous connections to site
     output:
         # Don't re-download if snakemake script changes
         protected("downloads/{name,[^/]+}.gz")
     params:
         url=lambda wc: all_urls[wc.name]
     shell:
-        "curl --fail --show-error -o {output} {params.url}"
+        "curl --fail --show-error -L -o {output} {params.url}"
 
 
 # Download GENCODE metadata (HGNC) for Ensembl builds (wildcarded by GENCODE release)
@@ -218,7 +219,7 @@ rule download_gencode_metadata:
     params:
         url=lambda wc: f"https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_{wc.grel}/gencode.v{wc.grel}.metadata.HGNC.gz"
     shell:
-        "curl --fail --show-error -o {output} {params.url}"
+        "curl --fail --show-error -L -o {output} {params.url}"
 
 
 rule fetch_uta_from_db:
@@ -237,12 +238,14 @@ rule fetch_uta_from_db:
             tf.write(sql)
             tf.flush()
             sql_path = Path(tf.name)
+        try:
             shell(f'PGPASSWORD=anonymous psql -h uta.biocommons.org -U anonymous -d uta -f "{sql_path}"')
+        finally:
+            sql_path.unlink(missing_ok=True)
 
 
 rule cdot_uta_json:
     input:
-        gene_info_json=gene_info_json_filename,
         uta_file="uta/{name}.csv"
     output:
         "{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + "_uta.{name}.json.gz"
@@ -257,7 +260,6 @@ rule cdot_uta_json:
                 --url "{params.url}" \
                 --genome-build="{wildcards.genome_build}" \
                 --output "{output}"
-                # --gene-info-json="{input.gene_info_json}"
         """
 
 
@@ -280,4 +282,4 @@ rule download_gene_info:
     output:
         protected(gene_info_download_filename)
     shell:
-        "curl --fail --show-error -o {output} https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/Homo_sapiens.gene_info.gz"
+        "curl --fail --show-error -L -o {output} https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/Homo_sapiens.gene_info.gz"
