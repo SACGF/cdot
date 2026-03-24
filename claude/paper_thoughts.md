@@ -168,9 +168,9 @@ Structured as "classes of HGVS that previously couldn't resolve":
 
 The primary contribution of cdot is a **data generation pipeline + library integration toolkit**, not a web server or database. The REST service is a convenience wrapper around the JSON files. This matters for journal fit.
 
-**First choice: Human Mutation / Human Genetics and Genomics Advances** — where biocommons/hgvs [Wang 2018] and VariantValidator [Freeman 2018] published. The right audience reads this journal; reviewers will understand the problem domain without extensive background.
+**First choice: Bioinformatics (Oxford)** — cdot's users are developers integrating it into pipelines and tools; this is exactly the Bioinformatics readership. Full article gives room for benchmarks; Application Note (≤4 pages) is too tight given the breadth of the contribution.
 
-**Second choice: Bioinformatics (Oxford)** — natural home for tool papers. Full article gives room for benchmarks; Application Note (≤4 pages) is too tight.
+**Second choice: Human Mutation / Human Genetics and Genomics Advances** — where biocommons/hgvs [Wang 2018] and VariantValidator [Freeman 2018] published. Strong domain fit; reviewers will understand the problem without background. More clinical audience than cdot's primary users.
 
 **Third choice: Genome Medicine** — McCarthy 2014, Münz 2015 published here; bridges computational and clinical. Good fit for the resolution-rate framing.
 
