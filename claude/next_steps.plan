@@ -69,7 +69,27 @@ Organised around what's needed to publish in Bioinformatics. Items are grouped b
 - Matrix: Python 3.10, 3.11, 3.12.
 - No changes needed to the existing test suite — it already passes.
 
-### B7. Python version and build dependencies (#104)
+### B7. Documentation site (MkDocs + mkdocs-material)
+
+**Why:** The paper needs a citable docs URL. The GitHub wiki is not versioned with code and isn't citable. Developers integrating cdot expect discoverable, versioned docs.
+
+**What to do:**
+- Add `mkdocs.yml` and `docs/` to the repo; configure mkdocs-material theme.
+- Host on GitHub Pages (or Read the Docs) at a stable URL — ideally `docs.cdotlib.org` or `cdotlib.readthedocs.io`.
+- Migrate useful wiki content into the new structure.
+- Structure:
+  - `index.md` — what cdot is, one-minute install + example
+  - `quickstart.md` — biocommons/hgvs integration, PyHGVS integration, full working code
+  - `data-files.md` — how to get JSON.gz files (GitHub releases, `data_release.py`), what's in them
+  - `clean-hgvs.md` — `clean_hgvs()` and `get_best_transcript_version()` with real examples
+  - `canonical.md` — `CanonicalTranscriptSelector`, MANE, resolving gene-only HGVS
+  - `rest-api.md` — cdotlib.org endpoints, `RESTDataProvider`
+  - `data-format.md` — JSON schema, exon 6-tuple, gap encoding (for tool authors)
+  - `data-generation.md` — how to build your own JSON.gz files from RefSeq/Ensembl GTF/GFF3; Snakemake pipeline; source priority; adding a new genome build or species
+
+**Note:** `data-generation.md` is important — users with non-human organisms or custom assemblies need to know how to run the pipeline themselves. This is also where to document the merge strategy and source priority order (#95).
+
+### B8. Python version and build dependencies (#104)
 
 **Why:** Cannot publish a tool paper if `pip install cdot` is broken.
 
@@ -142,7 +162,8 @@ Genes with −1 frameshifting (e.g. `NM_015068.3` / PEG10) have incorrect protei
 | B4 | Snakemake pipeline summary stats | Medium | Yes — transcript count figures |
 | B5 | Domain migration to cdotlib.org | Low (infra) | Yes — URL stability |
 | B6 | CI for tests | Low | Yes — reviewer expectation |
-| B7 | Python/build dependencies | Low | Yes — installability |
+| B7 | Documentation site (MkDocs) | Medium | Yes — citable URL for paper |
+| B8 | Python/build dependencies | Low | Yes — installability |
 | S1 | T2T novelty verification | Low | No — but changes abstract claims |
 | S2 | BRCA2 gap support verification | Medium | No — but supports key claim |
 | S3 | Version fallback coverage analysis | Low | No — strengthens coverage argument |
