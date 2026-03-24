@@ -4,35 +4,177 @@
 
 > **cdot's goal is to resolve as many HGVS strings from the wild as possible.**
 
-Everything cdot does is in service of this. A HGVS string from a clinical report, a search box, or ClinVar can fail to resolve for several distinct reasons — cdot attacks each one:
+A HGVS string from a clinical report, a search box, or ClinVar can fail to resolve for several distinct reasons. cdot attacks each one:
 
 | Failure mode | cdot's answer |
 |---|---|
-| String is malformatted | `clean_hgvs()` — fixes whitespace, casing, missing colons, swapped gene/transcript, etc. |
-| Transcript version not in database | 1.3M+ versioned alignments; covers historical RefSeq + Ensembl releases |
+| String is malformatted | `clean_hgvs()` — fixes whitespace, casing, missing colons, swapped gene/transcript |
+| Transcript version not in database | 1.3M+ versioned alignments across all historical RefSeq + Ensembl releases |
 | Exact version missing, adjacent exists | `get_best_transcript_version()` — controlled fallback to nearest version |
 | Transcript only in one consortium | Both RefSeq and Ensembl; clinical reports use both |
 | Transcript on wrong build | GRCh37, GRCh38, T2T-CHM13v2.0 all supported |
 | Alignment gap not handled | CIGAR gap encoding; fixes the 32% BRCA2 accuracy problem [Münz 2015] |
+| Gene-only HGVS with no transcript | MANE/canonical tags enable programmatic transcript selection |
 | No database server available | Zero-dependency local JSON.gz; works offline, through firewalls |
 | Lookup too slow for bulk use | 500–1000× faster than UTA remote |
 
-This framing unifies what might otherwise look like a miscellaneous collection of features. The cleaner, the comprehensive transcript archive, the version fallback, the gap support, and the infrastructure choices are all expressions of the same goal.
+This framing unifies what might otherwise look like a miscellaneous collection of features. The cleaner, the transcript archive, the version fallback, the gap support, canonical lookup, and infrastructure choices are all expressions of the same goal.
 
-## The Core Contribution
+---
 
-The headline numbers frame the contribution:
-- **Coverage:** 1.3M+ versioned transcript alignments vs ~141k in UTA uta_20210129 (9× increase)
-- **Speed:** ~500–1000 transcripts/s local JSON vs ~1 transcript/s UTA remote (500–1000× faster)
-- **Infrastructure:** zero-dependency (no PostgreSQL, works through firewalls, works offline)
-- **Breadth:** GRCh37, GRCh38, T2T-CHM13v2.0; RefSeq + Ensembl; multi-species potential
-- **Robustness:** `clean_hgvs()` preprocessing + transcript version fallback
+## Title (candidates)
 
-### Why this matters — numbers from the literature
+- *cdot: maximising HGVS resolution across clinical and research genomics*
+- *cdot: a comprehensive transcript resource for resolving HGVS variant nomenclature*
+- *cdot: Complete Dict Of Transcripts for high-coverage HGVS resolution*
 
-The clinical scale of the problem is large. ClinVar now holds >3 million variants from >2,800 organisations [Landrum 2025], virtually all expressed in HGVS transcript notation. Mutalyzer processed 133 million HGVS descriptions over five years, finding ~50% contained errors [Lefter 2021] — many attributable to missing or misidentified transcript data. McCarthy et al. [2014] showed only 44% of putative loss-of-function variants agreed between RefSeq and Ensembl annotation sets using ANNOVAR; Park et al. [2022] found ~85% agreement between ANNOVAR and SnpEff on clinical variants. Most dramatically, Münz et al. [2015] found that most annotation tools correctly annotated only 32% of BRCA2 variants — the rest failed due to improper handling of alignment gaps or strand orientation.
+The title should contain "HGVS" and signal the breadth/resolution angle, not just "fast" or "database".
 
-These numbers motivate each layer of cdot: the 50% Mutalyzer error rate motivates the cleaner; the 9× coverage gap motivates the transcript archive; the 32% BRCA2 accuracy motivates gap support. It is not merely a *speed* problem — it is a **resolution rate** problem.
+---
+
+## Abstract
+
+**Problem:** HGVS variant nomenclature is the clinical standard [den Dunnen 2016] underpinning ACMG/AMP classification [Richards 2015] and ClinVar's >3 million variants [Landrum 2025]. Yet a large fraction of HGVS strings in the wild fail to resolve — due to formatting errors, missing transcript versions, absent Ensembl support, alignment gaps, or database infrastructure barriers. Mutalyzer found ~50% of 133 million submitted HGVS descriptions contained errors [Lefter 2021]; many tools correctly annotate only 32% of transcripts with alignment gaps [Münz 2015]; and the primary transcript archive (UTA) covers only ~141k versioned accessions and requires PostgreSQL.
+
+**Solution:** cdot is a toolkit for maximising HGVS resolution. It provides: (1) `clean_hgvs()`, a pure-string preprocessor that fixes the most common real-world formatting mistakes derived from analysis of clinical search logs; (2) a compact JSON transcript archive covering 1.3M+ versioned alignments from RefSeq and Ensembl across GRCh37, GRCh38, and T2T-CHM13v2.0, with full CIGAR gap encoding; (3) `get_best_transcript_version()` for controlled version fallback; and (4) MANE Select / Ensembl canonical tags for resolving gene-only HGVS. Data is accessible via local JSON.gz (500–1000 transcripts/s, no infrastructure required) or a public REST API.
+
+**Impact:** Resolves X% more ClinVar HGVS variants than UTA; [N]× faster for bulk processing; first HGVS tool with T2T-CHM13v2.0 support; integrated with the two major Python HGVS libraries (biocommons/hgvs, PyHGVS).
+
+---
+
+## Paper Structure
+
+### 1. Introduction
+
+Frame the problem as a **resolution rate** problem, not a speed or infrastructure problem:
+
+- HGVS as the clinical standard [den Dunnen 2016]; scale: ClinVar >3M variants [Landrum 2025], ACMG/AMP [Richards 2015]
+- The resolution problem has multiple independent causes:
+  - Formatting errors in the wild (Mutalyzer: 50% error rate [Lefter 2021]; our search-log analysis shows the specific error types)
+  - Missing transcript versions: UTA covers ~141k versioned accessions; clinical reports use historical versions
+  - Annotation disagreement: tool/transcript divergence [McCarthy 2014, Park 2022]
+  - Alignment gaps: 32% BRCA2 accuracy without gap support [Münz 2015]
+  - Infrastructure: UTA requires PostgreSQL, is firewall-blocked, lacks Ensembl
+  - MANE transition: labs must standardise on MANE transcripts [Wright 2023] — gene-only HGVS must be resolvable
+- cdot's approach: address all failure modes in one toolkit
+
+### 2. Methods — structured around the failure modes
+
+#### 2.1 String cleaning (`cdot/hgvs/clean.py`)
+
+`clean_hgvs()` is a pure-string preprocessing step requiring no data provider. Derived from analysis of real clinical search logs (Shariant, VariantGrid). Fix categories with real examples from the logs:
+
+| Fix | Example |
+|-----|---------|
+| Whitespace stripping | `"NM_205768 c.44A>G"` → `"NM_205768:c.44A>G"` |
+| Protein suffix removal | `"NM_000059.4:c.316G>A p.Arg106*"` → `"NM_000059.4:c.316G>A"` |
+| Double colon | `"NM_004245: :c.337G>T"` → `"NM_004245:c.337G>T"` |
+| Mutation type case | `"c.1126_1133DUP"` → `"c.1126_1133dup"` |
+| Unbalanced brackets | `"NM_001754.5):c.557T>A"` → `"NM_001754.5:c.557T>A"` |
+| Missing `c.`/`g.` | `"NM_001754.5:557T>A"` → `"NM_001754.5:c.557T>A"` |
+| Swapped gene/transcript | `"BRCA1(NM_000059.4):c.316G>A"` → `"NM_000059.4(BRCA1):c.316G>A"` |
+| Lowercase transcript | `"nm_000059.4:c.316G>A"` → `"NM_000059.4:c.316G>A"` |
+
+Pull actual percentages by error type from `analysis/HGVS cleaning.ipynb` — this is the key figure.
+
+#### 2.2 Transcript archive (coverage)
+
+- **Sources:** Ensembl GTF releases 81–115 (GRCh37/38/T2T); RefSeq GFF3 multiple historical releases; UTA CSV as baseline
+- **Why historical releases:** a clinical HGVS from 2015 may use a transcript version no longer in the current RefSeq annotation; cdot keeps every version from every release
+- **Format:** compact JSON.gz; exon 6-tuple with CIGAR gap encoding; shared vs build-specific fields
+- **Merge strategy:** UTA as baseline, annotation releases override chronologically (newer wins)
+- **Coverage:** 1.3M+ versioned alignments vs ~141k in UTA uta_20210129 (9×)
+
+#### 2.3 Transcript version fallback (`get_best_transcript_version()`)
+
+When the exact requested version is absent, fall back to the nearest available version. Three strategies: UP_THEN_DOWN (prefer higher versions first), CLOSEST (alternate ±1), LATEST. This is only meaningful when cdot's archive has adjacent versions — which UTA often cannot provide given its 9× coverage gap.
+
+#### 2.4 Alignment gap support
+
+Transcripts with insertion/deletion gaps relative to the genome (RefSeq `cDNA_match` features) are encoded in GFF3 gap format (`M196 I1 M61`) and converted to HGVS CIGAR on read. Without this, tools fail on a substantial fraction of clinically relevant transcripts — Münz et al. [2015] showed 32% accuracy on BRCA2-class variants without gap support.
+
+#### 2.5 Multi-build and multi-source coverage
+
+- Both RefSeq and Ensembl: clinical labs use both; some transcripts exist only in one consortium
+- GRCh37 + GRCh38: older clinical reports are on GRCh37
+- T2T-CHM13v2.0: first HGVS tool to support this assembly (verify claim against VariantValidator, VEP, TARK)
+
+#### 2.6 Canonical transcript selection (MANE)
+
+Clinical labs are moving to MANE transcripts [Wright 2023, Morales 2022]. cdot stores MANE Select, MANE Plus Clinical, RefSeq Select, and Ensembl canonical tags. A `CanonicalTranscriptSelector` API (issue #36) enables resolution of gene-only HGVS (e.g. `BRCA2:c.5946delT`) by selecting the appropriate canonical transcript — a failure mode that no other HGVS data provider currently addresses programmatically.
+
+**Must be implemented before submission** — it's a paper-ready feature.
+
+#### 2.7 Access methods
+
+- **Local JSON.gz:** primary use case; 500–1000 transcripts/s; no infrastructure; works offline
+- **REST API (cdotlib.org):** for users who cannot download 72–122 MB files; analogous to SeqRepo REST [Hart 2020] for sequences
+- **Client libraries:** biocommons/hgvs integration (`JSONDataProvider`); PyHGVS integration (`JSONPyHGVSTranscriptFactory`)
+- **FastaSeqFetcher:** offline sequence access from genome FASTA, handling gapped alignments
+
+### 3. Results / Benchmarks
+
+All benchmarks framed as: **how many more HGVS strings can be resolved, and how fast?**
+
+- **Resolution rate:** resolve all ClinVar HGVS strings; report % resolved with cdot vs UTA (the primary figure)
+- **Coverage:** transcript count by source, build, biotype (from Snakemake summary stats)
+- **Speed:** local JSON vs REST vs UTA PostgreSQL (scripted, reproducible; informal target: 500–1000×)
+- **Cleaning impact:** from search-log analysis, % of failed searches that `clean_hgvs()` would fix
+- **Version fallback impact:** % of "version not found" failures where an adjacent version exists in cdot
+- **Gap support:** reproduce the BRCA2 accuracy comparison with/without gap support
+- **T2T:** unique transcript count not in GRCh37/38; example HGVS resolvable only via T2T
+
+### 4. Use Cases
+
+Structured as "classes of HGVS that previously couldn't resolve":
+
+1. **Malformatted clinical reports:** `clean_hgvs()` preprocessing pipeline; show before/after on real examples from the search log
+2. **Historical HGVS:** old transcript version in a 2010 clinical report → resolved via cdot's historical archive
+3. **Gene-only HGVS:** `BRCA2:c.5946delT` → resolved via MANE Select canonical transcript
+4. **T2T variants:** transcript only annotated on T2T; unresolvable by any other tool
+5. **Bulk ClinVar resolution:** speed benchmark in context of real workload
+
+### 5. Discussion
+
+- **The resolution rate lens:** cdot is best understood not as "a database" but as a resolution-maximising toolkit; each component addresses an independent failure mode
+- **SeqRepo analogy:** cdot is to transcript coordinates what SeqRepo is to sequences — local, fast, offline-capable, part of the biocommons stack [Hart 2020]
+- **The shared data layer argument:** if tools like VEP, ANNOVAR, SnpEff all drew from a shared versioned transcript source, tool disagreement [McCarthy 2014, Park 2022] would be reduced; cdot's format is a candidate for this role
+- **Comparison with TARK:** no RefSeq, online-only, no gap support
+- **Comparison with VariantValidator [Freeman 2018]:** monolithic service vs embeddable data layer; cdot has no validation, only coordinate conversion
+- **Pangenome future [Liao 2023]:** multi-build architecture positions cdot for haplotype-level annotation
+- **Limitations:** CDS phase/ribosomal frameshift not modelled (#76); Ensembl GFF3 protein versions broken (#101); no validation layer (by design — validation is Mutalyzer/VariantValidator's job)
+- **Non-HGVS utility:** pyreference demonstrates the JSON format is broadly useful; one paragraph only
+
+---
+
+## Positioning vs Related Tools
+
+| Tool | What it is | How cdot differs |
+|------|-----------|-----------------|
+| **UTA** | PostgreSQL transcript archive | No DB required; 9× more transcripts; includes Ensembl; gap support; works offline |
+| **Ensembl TARK** | Ensembl transcript REST archive | RefSeq + Ensembl; offline; RefSeq gaps stored; T2T support |
+| **biocommons/hgvs** | HGVS parsing/conversion library | cdot is a *data provider* for it — the fuel, not the engine |
+| **SeqRepo** | Local sequence storage | Complementary: SeqRepo = sequences; cdot = transcript coordinates |
+| **Counsyl PyHGVS** | HGVS parsing library | cdot adds gap support + 9× more data; fixes 32% → ~100% on BRCA2-class |
+| **VariantValidator** | Web-based HGVS validator | cdot is offline/embeddable; no validation, just coordinate conversion |
+| **Mutalyzer** | HGVS syntax checker | Complementary: Mutalyzer validates syntax; cdot provides data |
+| **TransVar** | Multilevel variant annotator | TransVar bundles own annotation; no version management; cdot separates data from code |
+| **VEP / ANNOVAR / SnpEff** | Variant annotation tools | Bundle own transcripts; disagree on 15% of clinical variants [Park 2022]; cdot as shared layer would reduce this |
+| **CAVA / CSN** | Clinical annotation tool | CAVA achieves 100% on BRCA2 by correct gap handling — same correctness goal cdot enables for biocommons/hgvs |
+
+---
+
+## Journal Target
+
+The primary contribution of cdot is a **data generation pipeline + library integration toolkit**, not a web server or database. The REST service is a convenience wrapper around the JSON files. This matters for journal fit.
+
+**First choice: Human Mutation / Human Genetics and Genomics Advances** — where biocommons/hgvs [Wang 2018] and VariantValidator [Freeman 2018] published. The right audience reads this journal; reviewers will understand the problem domain without extensive background.
+
+**Second choice: Bioinformatics (Oxford)** — natural home for tool papers. Full article gives room for benchmarks; Application Note (≤4 pages) is too tight.
+
+**Third choice: Genome Medicine** — McCarthy 2014, Münz 2015 published here; bridges computational and clinical. Good fit for the resolution-rate framing.
+
+**NAR is a weak fit.** NAR Database issue is for curated biological databases (Ensembl, ClinVar, UniProt); the JSON.gz files are a derived resource, not an independently curated database. NAR Web Server issue requires the web server to be central — but cdot_rest is a minor convenience component, not the contribution. Submitting to NAR risks rejection on scope grounds.
 
 ---
 
@@ -41,231 +183,49 @@ These numbers motivate each layer of cdot: the 50% Mutalyzer error rate motivate
 ```
 cdot (JSON generation)          →  cdot_rest (REST delivery)
       ↓                                    ↓
-  JSON.gz files            HTTP endpoints at cdot.cc / cdotlib.org
+  JSON.gz files            HTTP endpoints at cdotlib.org
       ↓                                    ↓
 biocommons/hgvs client ←——————————————————→  PyHGVS client
       ↓
   pyreference (non-HGVS bioinformatics)
 ```
 
-### cdot (this repo)
-
-Three separable components:
-1. **Data generation** (`generate_transcript_data/`) — converts RefSeq/Ensembl GTF/GFF3 → JSON.gz
-2. **HGVS client** (`cdot/hgvs/dataproviders/`) — biocommons HGVS data provider
-3. **PyHGVS client** (`cdot/pyhgvs/`) — PyHGVS transcript factory
-
-### cdot_rest (https://github.com/SACGF/cdot_rest)
-
-REST API server that serves the JSON.gz data over HTTP. Users who don't want to download large files (72–122 MB each) can query transcripts on demand. Hosted at cdot.cc (migrating to cdotlib.org). This is the same data, different delivery mechanism — naturally the same paper.
-
-### pyreference (https://github.com/SACGF/pyreference)
-
-Uses cdot JSON for general bioinformatics (gene region queries, exon analysis) — not HGVS-specific. A separate use case that demonstrates the format's broader utility.
-
-### biocommons/hgvs (https://github.com/biocommons/hgvs)
-
-Community HGVS library that cdot integrates with as a data provider. cdot has made dozens of commits to this project. The relationship is: biocommons/hgvs is the engine; cdot is the fuel. Citing it extensively is appropriate.
+- `cdot/hgvs/clean.py` — string preprocessing; no data provider needed; ships with cdot
+- `cdot/hgvs/dataproviders/` — biocommons HGVS integration (`JSONDataProvider`, `RESTDataProvider`)
+- `cdot/pyhgvs/` — PyHGVS integration (legacy; PyHGVS abandoned)
+- `generate_transcript_data/` — data pipeline (not pip-distributed)
 
 ---
-
-
----
-
-## Question 3: What journal / scope to target?
-
-**Target journal options:**
-1. **Nucleic Acids Research** (Database/Web Server issue) — the JSON.gz files are a database, cdotlib.org is the web server, Python clients are the programmatic interface. Fits NAR's criteria exactly. Ensembl, RefSeq, GENCODE, and ClinVar all publish annual updates here. High visibility to the bioinformatics community.
-2. **Genome Medicine** — McCarthy 2014 (transcript choice), Richards 2015 (ACMG), Münz 2015 (CAVA) all published here. Bridges the gap between computational tools and clinical genomics. Good fit for the clinical framing.
-3. **Bioinformatics (Oxford)** — natural home for tool papers. Application Note (≤4 pages) is tight; full paper gives room for benchmarks.
-4. **GigaScience** — open data focus; good fit given data release emphasis and T2T novelty.
-5. **Human Mutation / Human Genetics and Genomics Advances** — Hart 2015 and Wang 2018 (biocommons/hgvs) and Freeman 2018 (VariantValidator) published here. Direct community relevance.
-
-**Recommendation:** Target **Nucleic Acids Research Database issue** as first choice. If the scope feels too narrow for NAR reviewers (since cdot is software + data rather than purely a database), **Genome Medicine** is the strongest alternative — it has published the key papers in this space (McCarthy 2014, Münz 2015) and has strong clinical genomics readership.
-
-**Human Mutation / HGGA** is worth considering specifically because it is where biocommons/hgvs and VariantValidator published — the paper would be read by exactly the right audience. The journal explicitly covers tools for variant handling.
-
----
-
-## Paper Angle and Structure
-
-### Title (candidates)
-
-- *cdot: A fast, comprehensive transcript database for HGVS variant annotation*
-- *cdot: Compact transcript annotation for high-performance HGVS coordinate conversion*
-- *Complete Dict Of Transcripts: A scalable resource for versioned human transcript coordinate data*
-
-### Abstract framing
-
-Problem: HGVS variant nomenclature is the clinical standard [den Dunnen 2016] underpinning ACMG/AMP variant classification [Richards 2015] and ClinVar's >3 million variant archive [Landrum 2025]. Converting HGVS to/from genomic coordinates requires comprehensive, versioned transcript data, yet existing resources (UTA) require database infrastructure, have limited transcript coverage, and lack Ensembl support. Annotation tools drawing on different transcript sets disagree on up to 56% of loss-of-function variants [McCarthy 2014].
-
-Solution: cdot generates compact JSON files from RefSeq and Ensembl GTF/GFF3 annotation sources, covering 1.3M+ versioned transcript alignments across GRCh37, GRCh38, and T2T-CHM13v2.0. Data is accessible via local files (500–1000 transcripts/s) or a REST API, with no database infrastructure required. Stores MANE Select, MANE Plus Clinical, and Ensembl canonical tags enabling programmatic canonical transcript selection.
-
-Impact: Integration libraries for the two major Python HGVS tools (biocommons/hgvs, PyHGVS); resolves HGVS variants from ClinVar at X× the coverage and Y× the speed of UTA; first HGVS tool with T2T-CHM13v2.0 support.
-
-### Key sections
-
-1. **Introduction**
-   - HGVS nomenclature as the clinical and research standard [den Dunnen 2016]
-   - Scale of demand: ClinVar >3M variants [Landrum 2025], ACMG/AMP guidelines [Richards 2015], Mutalyzer 133M descriptions with 50% error rate [Lefter 2021]
-   - The correctness problem: tool/transcript disagreement [McCarthy 2014, Park 2022]; 32% BRCA2 accuracy without gap support [Münz 2015]
-   - The infrastructure problem: UTA requires PostgreSQL, is firewall-blocked, lacks Ensembl, covers only ~141k transcript versions
-   - The MANE pressure: clinical labs now mandated to use MANE transcripts [Wright 2023] — tools must support canonical lookup
-   - cdot's approach: unified, versioned, multi-source data accessible without infrastructure
-
-2. **Data sources and generation**
-   - Ensembl GTF (releases 81–115, GRCh37/38/T2T)
-   - RefSeq GFF3 (multiple historical annotation releases — motivation: historical clinical HGVS strings)
-   - UTA CSV dumps as baseline (fills pre-GFF gaps)
-   - JSON format design: shared fields vs build-specific, exon 6-tuple, gap encoding (CIGAR)
-   - Merge strategy and source priority order
-   - MANE, RefSeq Select, Ensembl_canonical tag storage
-
-3. **Access methods**
-   - Local JSON.gz (primary use case)
-   - REST API (cdot.cc / cdotlib.org) — analogous to SeqRepo REST [Hart 2020] for sequence data
-   - Python clients: biocommons/hgvs integration, PyHGVS integration
-   - FastaSeqFetcher as an alternative to SeqRepo for offline sequence access
-
-4. **Benchmarks**
-   - Transcript coverage comparison (cdot vs UTA vs TARK; include Ensembl-only count)
-   - Speed: local JSON vs REST vs UTA PostgreSQL (informal: 500–1000× faster; formalise with script)
-   - Accuracy: resolve ClinVar HGVS, compare to known VCF genomic coordinates
-   - Coverage for historical strings: what fraction of ClinVar HGVS resolve with cdot vs UTA?
-   - T2T-CHM13v2.0: show unique transcripts not in GRCh37/38
-
-5. **Use cases**
-   - Clinical genomics: resolving historical HGVS from old reports (VariantGrid/Shariant example)
-   - Canonical transcript selection: `BRCA2:c.5946delT` resolved via MANE Select
-   - Non-HGVS use: pyreference as a brief example that the JSON format is broadly useful
-
-6. **Discussion**
-   - cdot as the transcript coordinate layer in the biocommons stack (analogous to SeqRepo for sequences)
-   - Comparison with TARK [Ensembl]: no RefSeq, online-only, no gap support for RefSeq transcripts
-   - Comparison with VariantValidator [Freeman 2018]: monolithic service vs embeddable data layer
-   - The pangenome future [Liao 2023]: cdot's multi-build architecture positions it for haplotype-level annotation
-   - Format extensibility: CDS phase (#76), exon dicts (#78), VEP-compatible releases (#63)
-   - Limitations: CDS phase/ribosomal frameshift not modelled; Ensembl GFF3 protein versions; no validation layer
-   - Non-HGVS utility: pyreference demonstrates that the JSON format is a generally useful annotation resource
-
----
-
-## Positioning vs Related Tools
-
-| Tool | What it is | How cdot differs |
-|------|-----------|-----------------|
-| **UTA** | PostgreSQL transcript archive | No DB required; 9× more transcripts; includes Ensembl; works through firewalls |
-| **Ensembl TARK** | Ensembl transcript REST archive | Multi-consortium (RefSeq + Ensembl); offline capable; RefSeq alignment gaps stored |
-| **biocommons/hgvs** | HGVS parsing/conversion library | cdot is a *data provider* for it, not a replacement; analogous role to SeqRepo for sequences |
-| **SeqRepo** | Local sequence storage | SeqRepo stores sequences; cdot stores transcript coordinates — complementary layers |
-| **Counsyl PyHGVS** | HGVS parsing library | cdot adds alignment gap support and data; gap support fixes 32% → ~100% on BRCA2-class problems |
-| **VariantValidator** | Web-based HGVS validator | cdot is embeddable/offline; no validation, just coordinate conversion; no server required |
-| **Mutalyzer** | HGVS syntax checker | cdot provides data; Mutalyzer provides syntax validation — complementary |
-| **TransVar** | Multilevel variant annotator | TransVar bundles own annotation; limited version management; cdot separates data from code |
-| **VEP** | Variant annotation tool | VEP uses its own annotation; cdot is a transcript *source* not an annotation tool |
-| **ANNOVAR / SnpEff** | Variant annotation tools | Bundle own transcripts; disagree on 15% of clinical variants [Park 2022]; cdot as shared layer would reduce this |
-| **CSN / CAVA** | Clinical annotation tool | CAVA achieves 100% on BRCA2 by correct gap handling — same correctness goal cdot enables for biocommons/hgvs |
-| **pyreference** | General annotation from cdot JSON | Non-HGVS use of same data format |
-
-### The "shared data layer" angle
-
-A secondary but powerful framing: if tools like VEP, ANNOVAR, TransVar, and biocommons/hgvs all drew transcript coordinate data from cdot, there would be one fewer source of annotation disagreement. The McCarthy 2014 and Park 2022 papers show tool disagreement is substantial; some of this stems from using different transcript versions. A shared, versioned, source-attributed data layer is a partial solution to this reproducibility problem.
-
----
-
-## The T2T Angle
-
-Supporting Telomere-to-Telomere (T2T-CHM13v2.0) assembly for HGVS is potentially a first. The T2T genome [Nurk 2022] adds ~200M bp of previously inaccessible sequence and corrects errors in GRCh38, including regions that contain real genes. Any HGVS string for a transcript annotated on T2T cannot be resolved by existing tools. If we can confirm no other HGVS coordinate conversion library supports T2T (check: VariantValidator, VEP, TARK), this is a strong novelty claim.
-
-## The MANE Canonical Transcript Angle
-
-This is more urgent than initially appreciated. The MANE Nature paper [Morales 2022] and the Wright 2023 editorial in Genetics in Medicine show that clinical labs are actively being called on to standardise on MANE transcripts. cdot already stores MANE tags (since v0.2.12). A `CanonicalTranscriptSelector` API (issue #36) that exposes these tags would make cdot the first HGVS data provider to offer programmatic canonical transcript lookup. This is a paper-ready feature that differentiates cdot from all other HGVS data sources and directly addresses a stated clinical need.
-
-**This should be implemented before submission and featured prominently** — it turns cdot from a passive data source into an active contributor to the MANE adoption problem.
-
-## The SeqRepo Analogy
-
-The literature review clarifies a clean positioning statement: **cdot is to transcript coordinates what SeqRepo is to biological sequences**. Both projects provide local, high-performance, offline-capable access to data that was previously only available from slow remote databases. SeqRepo achieves 1300× speedup over remote access [Hart 2020]; cdot achieves 500–1000× speedup over UTA remote. Both are part of the biocommons stack. Framing cdot explicitly this way in the paper will resonate with the biocommons community and make the contribution concrete for reviewers unfamiliar with the HGVS pipeline.
-
----
-
-## HGVS cleaning — already implemented, fits the paper
-
-### What exists
-
-`cdot/hgvs/clean.py` — already shipped. Two public functions:
-
-- **`clean_hgvs(hgvs_string)`** — pure string cleaning, no data provider needed. Returns `(cleaned, fixes)` where each fix has a severity (WARNING/ERROR) and a `HGVSFixCode`.
-- **`get_best_transcript_version(accession, requested_version, available_versions)`** — transcript version fallback, with configurable `VersionStrategy` (UP_THEN_DOWN / CLOSEST / LATEST).
-
-`analysis/clean_hgvs_search_csvs.py` + `analysis/HGVS cleaning.ipynb` — already ran the analysis on real search logs from three servers: shariant, vg-aws, vg3_upgrade.
-
-### Fix codes — derived from real search-log data
-
-The `HGVSFixCode` enum documents exactly what was found in the wild:
-
-| Code | Example of real input |
-|------|-----------------------|
-| `STRIPPED_WHITESPACE` | `"NM_205768 c.44A>G"` |
-| `STRIPPED_PROTEIN_SUFFIX` | `"NM_000059.4:c.316+5G>A p.Arg106*"` |
-| `FIXED_DOUBLE_COLON` | `"NM_004245: :c.337G>T"` |
-| `FIXED_DOUBLE_KIND` | `"NM_...:c.c.100A>G"` |
-| `ADDED_N_PREFIX` | `"M_001234:c.1A>G"` |
-| `LOWERCASED_MUTATION_TYPE` | `"NM_032638:c.1126_1133DUP"` |
-| `STRIPPED_UNBALANCED_BRACKETS` | `"NM_001754.5):c.557T>A"` |
-| `ADDED_TRANSCRIPT_UNDERSCORE` | `"NC000002.10g39139341C>T"` |
-| `ADDED_MISSING_KIND` | `"NM_001754.5:557T>A"` |
-| `SWAPPED_GENE_TRANSCRIPT` | `"BRCA1(NM_000059.4):c.316+5G>A"` |
-| `UPPERCASED_TRANSCRIPT` | `"nm_000059.4:c.316+5G>A"` |
-| `USED_ADJACENT_VERSION` | requested `.4`, used `.5` (fallback) |
-| `INS_WITH_INTEGER_LENGTH` | `"c.1246_2341ins23"` (unfixable) |
-
-### How this fits the paper
-
-This is a strong addition but needs careful framing. cdot is a data provider, not a validator — so the story is not "we fixed syntax errors" but rather:
-
-1. **Motivation (Introduction):** Real search-log data quantifies the categories and frequency of HGVS formatting errors in clinical practice. This is more granular than Lefter 2021 (Mutalyzer's 50% error rate), which doesn't break down *types* of errors.
-2. **Feature (Methods/Use Cases):** `clean_hgvs()` is a lightweight preprocessing layer — before invoking the HGVS parser or cdot's data provider, run the cleaner. The cleaner is pure-string, so it works before any transcript lookup.
-3. **The version fallback angle:** `get_best_transcript_version()` is the part that directly intersects with cdot's data. A caller can ask: "version 3 is in the search but my provider has versions 1, 2, 4 — use the closest." This requires cdot's comprehensive version coverage to have adjacent versions available, which UTA often cannot provide.
-
-### Key figure for the paper
-
-From the search-log analysis: what fraction of failures fell into each bucket? If "transcript version not found" or "fixable formatting error" are large buckets, that motivates both the cleaner and cdot's historical coverage. Retrieve actual percentages from `analysis/HGVS cleaning.ipynb`.
-
----
-
-## Scattered thoughts
-
-JSON has become the standard for data transfer. Almost all libraries can rapidly load it. Useful not just for Python
-Mention pyreference in the cdot paper as a one-paragraph demonstration that the JSON format has utility *beyond* HGVS (general bioinformatics, non-Python consumers, etc.). This strengthens the "format is generally useful" argument without making the paper unfocused. A separate pyreference bioRxiv preprint could follow.
 
 ## Author / Collaboration Strategy
 
 - Core authors: Dave Lawrence, Shariant team who helped debug HGVS issues
-- Consider inviting: a biocommons/hgvs maintainer (acknowledges the integration work and broadens the community reach)
-- Consider inviting: a clinical genomics collaborator who can provide a real-world case study (VariantGrid/Shariant usage)
+- Consider inviting: a biocommons/hgvs maintainer (acknowledges integration work; broadens community reach)
+- Consider inviting: a clinical genomics collaborator for the real-world case study
 - Acknowledgements: NCBI RefSeq team, Ensembl team, biocommons community
 
 ---
 
-## Pre-submission checklist
+## Pre-submission Checklist
 
 **Data / benchmarks**
 - [ ] Finalise transcript count figures (exact, reproducible from Snakemake summary stats)
-- [ ] Run formal ClinVar benchmark (#5) — resolve all ClinVar HGVS, report coverage and accuracy vs UTA
+- [ ] Run formal ClinVar benchmark — resolve all ClinVar HGVS, report % coverage vs UTA (the primary figure)
 - [ ] Speed benchmark: local JSON vs REST vs UTA PostgreSQL (scripted, reproducible)
 - [ ] T2T unique transcript count (not in GRCh37/GRCh38)
+- [ ] Search-log analysis: pull per-error-type percentages from `analysis/HGVS cleaning.ipynb`
+- [ ] Version fallback analysis: what % of "version not found" cases have an adjacent version in cdot?
 
 **Features that must exist before submission**
-- [ ] Canonical transcript API working (#36) — `CanonicalTranscriptSelector` with MANE + RefSeq Select + Ensembl canonical; needed as paper use case
+- [ ] Canonical transcript API (#36) — `CanonicalTranscriptSelector` with MANE + RefSeq Select + Ensembl canonical
 - [ ] Domain migrated to cdotlib.org (#100) — URL in paper must be stable
-- [ ] Snakemake pipeline summary statistics output (transcript counts by source, genome build, biotype)
+- [ ] Snakemake pipeline summary statistics (transcript counts by source, build, biotype)
 
 **Correctness / infrastructure**
-- [ ] Get cdot into CI with test suite (#62)
-- [ ] Python version bump + build dependencies (#104) — cannot publish with broken setup.cfg
+- [ ] cdot into CI with test suite (#62)
+- [ ] Python version bump + build dependencies (#104)
 
 **Verification**
 - [ ] Confirm T2T novelty claim — check VariantValidator, VEP, TARK, TransVar for T2T support
-- [ ] Confirm BRCA2 accuracy improvement is attributable to gap support (run with/without FastaSeqFetcher or gapped alignment handling)
-- [ ] Check pyreference paper status — include as 1 paragraph in Discussion or cite as companion resource
+- [ ] Confirm BRCA2 accuracy improvement is attributable to gap support
+- [ ] Check pyreference paper status — cite as companion or include as one Discussion paragraph
