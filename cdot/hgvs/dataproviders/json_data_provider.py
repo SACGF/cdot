@@ -316,6 +316,33 @@ class LocalDataProvider(AbstractJSONDataProvider):
 
         return [x[1] for x in sorted(tx_list, key=lambda x: x[0], reverse=True)]
 
+    def _get_transcript_tags(self, transcript_data: dict, genome_build: str) -> list[str]:
+        """
+        Return the tag list for a single transcript in the given genome build.
+
+        The default implementation reads the comma-separated ``tag`` field from
+        the cdot JSON (e.g. ``"MANE_Select,basic"`` → ``["MANE_Select", "basic"]``).
+
+        Override this method in a subclass to supplement or replace the cdot tag
+        data with information from an external source (e.g. a database table that
+        stores MANE/canonical status separately from the transcript JSON).  The
+        override receives the full transcript dict and the build name, so it can
+        fall back to the cdot data when the external source has no entry.
+
+        Example override (Django)::
+
+            def _get_transcript_tags(self, transcript_data, genome_build):
+                tags = super()._get_transcript_tags(transcript_data, genome_build)
+                if not tags:
+                    # supplement from DB MANE table
+                    tx_ac = transcript_data.get("id", "")
+                    tags = MyMANEModel.tags_for(tx_ac, genome_build)
+                return tags
+        """
+        build_data = transcript_data["genome_builds"].get(genome_build, {})
+        tag_str = build_data.get("tag", "")
+        return [t.strip() for t in tag_str.split(",") if t.strip()] if tag_str else []
+
     def get_tx_ac_tags_for_gene(self, gene: str, genome_build: str) -> list[tuple[str, list[str]]]:
         """
         Return [(tx_ac, tags), ...] for all transcripts of the given gene in the
@@ -323,6 +350,9 @@ class LocalDataProvider(AbstractJSONDataProvider):
 
         tags is a list of tag strings (e.g. ['MANE_Select', 'basic']).
         Empty list if the transcript has no tags for that build.
+
+        Tag data comes from :meth:`_get_transcript_tags`, which can be overridden
+        in subclasses to supplement the cdot JSON with an external source.
         """
         tx_list = []
         for transcript_id in self._get_transcript_ids_for_gene(gene):
@@ -332,8 +362,7 @@ class LocalDataProvider(AbstractJSONDataProvider):
                 continue
             contig, tx_start, tx_end, _ = self._get_contig_start_end_strand(build_data)
             length = tx_end - tx_start
-            tag_str = build_data.get("tag", "")
-            tags = [t.strip() for t in tag_str.split(",") if t.strip()] if tag_str else []
+            tags = self._get_transcript_tags(transcript_data, genome_build)
             tx_list.append((length, transcript_id, tags))
 
         tx_list.sort(key=lambda x: x[0], reverse=True)
