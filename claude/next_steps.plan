@@ -1,124 +1,151 @@
-# cdot — Next Steps Plan
+# cdot — Next Steps Plan (Bioinformatics paper target)
 
-Ranked by impact. "Impact" here means: fixes a real correctness problem, unblocks contributors, or moves the project toward a publishable/widely-adopted state.
-
----
-
-## 2. Add CI for tests (#62)
-
-**Why:** Tests already exist and pass locally. Not running them in CI means regressions go undetected. This is a prerequisite for doing any refactoring safely (#101) and for getting official recognition from biocommons (#85).
-
-**What to do:**
-- Add a GitHub Actions workflow that runs `python -m pytest tests/` on push/PR.
-- The existing test suite (unittest-based, runs under pytest) needs no changes to pass.
-- Consider matrix across Python 3.10/3.11/3.12.
+Organised around what's needed to publish in Bioinformatics. Items are grouped by whether they block submission.
 
 ---
 
-## 3. Migrate domain to cdotlib.org and update all hardcoded URLs (#100)
+## BLOCKING — must exist before submission
 
-**Why:** `cdot.cc` is blocked by institutional firewalls (confirmed: SA Path). The new domain `cdotlib.org` is already registered. Every blocked user is a lost adoption.
+### B1. ClinVar resolution rate benchmark (#5)
 
-NEED TO WAIT: This requires Dave to deploy the REST server on that domain
+**Why:** This is the primary figure of the paper. The whole "resolve as many HGVS from the wild as possible" argument lives or dies on this number.
 
 **What to do:**
-- Set up `cdotlib.org` pointing to the same server as `cdot.cc`.
-- Redirect `cdot.cc` → `cdotlib.org` (HTTP 301).
-- Update hardcoded `"https://cdot.cc"` in:
-  - `cdot/hgvs/dataproviders/json_data_provider.py` (RESTDataProvider default URL)
-  - `cdot/pyhgvs/pyhgvs_transcript.py` (RESTPyHGVSTranscriptFactory default URL)
-- Update README, wiki, and any other documentation references.
+- Download a fixed ClinVar VCF release (pin the version for reproducibility).
+- Extract all HGVS strings from the `CLNHGVS` field.
+- Attempt resolution via: (a) cdot local JSON, (b) UTA PostgreSQL.
+- Report: % resolved, % where cdot resolves but UTA does not, and the converse.
+- Separately report the effect of `clean_hgvs()` preprocessing: how many more resolve after cleaning vs raw input.
+- Time each method: report median and p95 latency.
+- Script must be reproducible from a single command with pinned inputs.
+
+### B2. Search-log cleaning analysis — produce paper figures
+
+**Why:** `analysis/HGVS cleaning.ipynb` already exists and has real data (Shariant, vg-aws, vg3_upgrade). Need to extract the numbers for the paper.
+
+**What to do:**
+- Pull per-error-type percentages from the notebook: what fraction of failed searches are fixable by `clean_hgvs()`?
+- Break down the unfixable remainder: what are they? (Not HGVS at all? Transcript genuinely absent? Unknown accession?)
+- Produce a table suitable for the paper: error type, count, % of total failures, example.
+- Check: what fraction of "transcript not found" failures have an adjacent version in cdot (version fallback coverage)?
+
+### B3. Canonical transcript API / CanonicalTranscriptSelector (#36)
+
+**Why:** Without this, gene-only HGVS (e.g. `BRCA2:c.5946delT`) cannot be resolved — one of the failure modes the paper claims cdot addresses. The data is already stored (MANE tags since v0.2.12, Ensembl canonical since v0.2.30).
+
+**What to do:**
+- Implement `CanonicalTranscriptSelector` in `cdot/hgvs/dataproviders/`.
+- Priority order: MANE Select > MANE Plus Clinical > RefSeq Select > Ensembl canonical.
+- Expose as `get_canonical_tx_for_gene(gene, genome_build)` on the data provider.
+- Add tests: at minimum one MANE Select (RefSeq) and one Ensembl canonical case.
+- Wire into `RESTDataProvider` so it works via cdotlib.org too.
+
+### B4. Pipeline summary statistics (Snakemake)
+
+**Why:** The paper needs exact, reproducible transcript counts by source, genome build, and biotype. "1.3M+" needs to be a real, citeable number.
+
+**What to do:**
+- Add a Snakemake rule that emits a summary TSV after each full build.
+- Fields: source, genome_build, biotype, transcript_count, versioned_transcript_count.
+- Also emit: count of codon-conflict discards, count of UTA-only transcripts.
+- Use this to produce the coverage comparison table (cdot vs UTA vs TARK).
+
+### B5. Domain migration to cdotlib.org (#100)
+
+**Why:** The URL in the paper must be stable and not blocked by institutional firewalls. `cdot.cc` is confirmed blocked at SA Path.
+
+**What to do:**
+- Deploy REST server on cdotlib.org (Dave).
+- Set up HTTP 301 redirect from cdot.cc → cdotlib.org.
+- Update default URLs in `RESTDataProvider` and `RESTPyHGVSTranscriptFactory`.
+- Update README and any docs.
+
+### B6. CI for tests (#62)
+
+**Why:** Bioinformatics reviewers expect a test suite with CI. Cannot credibly claim correctness without it.
+
+**What to do:**
+- Add GitHub Actions workflow running `python -m pytest tests/` on push/PR.
+- Matrix: Python 3.10, 3.11, 3.12.
+- No changes needed to the existing test suite — it already passes.
+
+### B7. Python version and build dependencies (#104)
+
+**Why:** Cannot publish a tool paper if `pip install cdot` is broken.
+
+**What to do:**
+- Audit `setup.cfg` for broken or overly pinned dependencies.
+- Verify clean install on Python 3.10, 3.11, 3.12.
+- Fix any issues found.
 
 ---
 
-## 4. Expose canonical transcripts via REST API and finalise the API (#36)
+## STRENGTHENS THE PAPER — non-blocking but important
 
-**Why:** The data is already there (Ensembl canonical tags deployed in v0.2.30; RefSeq MANE/Select tags stored since v0.2.12). Users wanting to resolve `BRCA2:c.36del` have no way to discover the canonical transcript programmatically yet.
+### S1. T2T novelty verification
+
+**Why:** If cdot is the first HGVS coordinate tool to support T2T-CHM13v2.0, that is a strong novelty claim. If it isn't, we need to know before reviewers point it out.
 
 **What to do:**
-- Add a `canonical: true` field to the transcript objects returned by `GET /transcripts/gene/{gene}` in cdot_rest, based on presence of `MANE_Select`, `RefSeq_Select`, or `Ensembl_canonical` tag.
-- Design a `CanonicalTranscriptSelector` class in `cdot/hgvs/dataproviders/` that, given a gene symbol and genome build, returns the best canonical transcript accession. Priority order: MANE Select > RefSeq Select / Ensembl_canonical.
-- Add a `get_canonical_tx_for_gene(gene, genome_build)` method to the data provider interface (or a separate helper), consistent with biocommons/hgvs#747.
-- Add tests: at minimum one RefSeq-MANE and one Ensembl-canonical case.
+- Check VariantValidator, VEP, TARK, TransVar, Mutalyzer for T2T-CHM13v2.0 support.
+- Count unique transcripts in cdot's T2T build that are absent from GRCh37/38 — this is the "unique value" figure.
+- If T2T novelty holds, promote it in the abstract.
+
+### S2. BRCA2 gap support verification
+
+**Why:** The 32% accuracy claim (Münz 2015) is a striking number used to motivate gap support. We should verify cdot actually fixes it.
+
+**What to do:**
+- Run the BRCA2 variant set from Münz et al. through biocommons/hgvs with cdot (with gap support via `FastaSeqFetcher`) vs without.
+- If reproducible, include as a panel in the benchmarks figure.
+
+### S3. Version fallback coverage analysis
+
+**Why:** `get_best_transcript_version()` is only useful if cdot actually has adjacent versions where UTA doesn't. Quantify this.
+
+**What to do:**
+- From the ClinVar benchmark (B1), take all cases where the exact version was not found.
+- Check: what % have an adjacent version in cdot? What % in UTA?
+- This is the quantitative argument for why broad historical coverage matters for version fallback.
+
+### S4. FastaSeqFetcher: mismatch detection and documentation (#84, #55)
+
+**Why:** FastaSeqFetcher is the offline sequence path; if it silently returns wrong sequences for gap-flagged transcripts it undermines the correctness story.
+
+**What to do:**
+- Use the stored `note` field to detect RefSeq-flagged indel transcripts.
+- Emit a warning (not an error) when `ExonsFromGenomeFastaSeqFetcher` is used for such a transcript.
+- Add a wiki page: when to use FastaSeqFetcher, what its limitations are.
+- Investigate `NM_000399.3` discrepancy (#55) — is it a cdot bug or genuine RefSeq/genome divergence?
 
 ---
 
-## 5. Document transcript source priority and produce pipeline summary statistics (#95 follow-up, docs/todo.txt)
+## POST-PAPER / FUTURE WORK
 
-**Why:** Multiple people have been confused by which transcript "wins" when sources disagree (e.g. UTA 20241220 vs old RefSeq GFF gives different `cds_start`/`cds_end` by 1 base). This needs to be explicit. Also feeds directly into the paper.
+### F1. GFF/GTF parser refactor: split by source not format (#101)
 
-**What to do:**
-- Write a short section in the wiki (or a `docs/data_sources.md`) describing the merge order: UTA (baseline) → older RefSeq/Ensembl releases → newer releases (last write wins).
-- Store a `source_priority` list in the JSON `metadata` block so the provenance is self-describing.
-- Add a Snakemake rule that emits a summary TSV after each build: per-source transcript count, total merged count, count of codon-conflict discards, count of UTA-only transcripts.
-- As a stretch: run a systematic comparison of UTA vs RefSeq GTF coordinates for the same transcript versions, classify the differences (patch version change? aligner parameter change?). This is good paper material.
+The GTFParser/GFF3Parser split follows file format but logic differs by source (RefSeq vs Ensembl). This causes Ensembl GFF3 protein version extraction to be broken. A proper fix requires splitting into `RefSeqParser` and `EnsemblParser`. High effort; needs CI first. Not needed for the paper.
 
----
+### F2. CDS phase / ribosomal frameshift support (#76)
 
-## 6. FastaSeqFetcher: mismatch detection and documentation (#84, #55)
-
-**Why:** FastaSeqFetcher is the practical path for users who don't have full seqrepo coverage (which is most cdot users, given cdot's broader transcript set). Currently there is no warning when a RefSeq transcript is known to differ from the genome FASTA — the user silently gets a wrong reconstruction.
-
-**What to do:**
-- Use the RefSeq `Note` field (already stored in JSON as `note`) to detect transcripts that are flagged as having indels vs the genomic sequence (e.g. `Note` contains "non-frameshifting indel" or `gap_count > 0`).
-- When `ExonsFromGenomeFastaSeqFetcher` is asked for such a transcript, emit a warning (or optionally raise, controlled by a flag).
-- Add wiki documentation for FastaSeqFetcher: when to use it, what its limitations are, how to set it up.
-- Investigate the `NM_000399.3` discrepancy (#55) to determine if the mismatch is a cdot reconstruction bug or a genuine RefSeq/genome divergence. Write a test case either way.
-
----
-
-## 8. Refactor GFF/GTF parser: split by source not format (#101)
-
-**Why:** The current GTFParser/GFF3Parser split follows file format, but the real logic difference is RefSeq vs Ensembl. This means Ensembl GFF3 parsing is broken (protein versions not extracted), and Ensembl-specific and RefSeq-specific code is entangled inside format-based classes.
-
-**Prerequisite:** Do step 2 (CI) first so refactoring has a safety net.
-
-**What to do:**
-- Step 1 (low risk): Write comprehensive unit tests that cover each parser × source combination, including Ensembl GFF3 (even if currently broken, document the failure as a failing test).
-- Step 2: Introduce `RefSeqParser` and `EnsemblParser` base classes (can still delegate to HTSeq for reading, but logic lives in source-aware classes).
-- Step 3: Move RefSeq-specific handling (Dbxref HGNC/CCDS, MT fake transcripts, `cDNA_match` features) into `RefSeqParser`. Move Ensembl-specific handling (gene/transcript versions, biotype, protein_id from CDS) into `EnsemblParser`.
-- This unblocks fixing Ensembl GFF3 protein version extraction.
-
----
-
-## 9. CDS phase / ribosomal frameshift support (#76)
-
-**Why correctness:** Genes with −1 ribosomal frameshifting (e.g. PEG10/`NM_015068.3`) cannot have their protein sequences correctly reconstructed from cdot data. This is a real gap for tools doing protein-level analysis.
-
-**Why deferred to #10:** Biocommons HGVS does not yet consume phase data, so storing it in cdot JSON currently has no effect on HGVS conversion. Worth doing now so the data is correct and non-HGVS consumers (e.g. pyreference) can use it.
-
-**What to do:**
-- Read GFF3 column 8 (`phase`) for CDS features and store as a `phasing` list in the exon data (only when non-zero to avoid bloating unaffected transcripts).
-- This requires either switching exons to dicts (#78) or adding a 7th element to the tuple (simpler, less clean).
-- Recommend the 7th-element approach as a non-breaking change now, with the dict migration deferred to a future major schema version.
-- Add tests using `NM_015068.3` and the other known frameshifting transcripts.
-
----
-
-## 10. Formal benchmarking script (#5)
-
-**Why:** Needed for the paper. Informal results exist (cdot REST: 0.1 s/HGVS, 100% resolved; UTA: 1.84 s/HGVS, 17% resolved on 500 ClinVar entries) but were run ad-hoc. A reproducible script is needed to make the numbers citable.
-
-**What to do:**
-- Write `tests/benchmark_hgvs.py` (scaffold already exists) as a proper script that:
-  1. Downloads a fixed ClinVar VCF release.
-  2. Samples N random HGVS strings (deduplicated by transcript to avoid local-cache skew).
-  3. Times resolution via: local JSON, cdot REST, UTA REST.
-  4. Reports median/p95 latency and resolution rate for each.
-- Use the [genome medicine truth set](https://genomemedicine.biomedcentral.com/articles/10.1186/s13073-016-0396-7#Sec14) as a secondary validation dataset.
-- Run once with the current data files and record results for the paper.
+Genes with −1 frameshifting (e.g. `NM_015068.3` / PEG10) have incorrect protein reconstruction from cdot data. Fix requires GFF3 phase column parsing and either a 7th exon tuple element or migration to exon dicts (#78). Biocommons HGVS does not yet consume phase, so impact is limited to non-HGVS consumers (pyreference). Worth a mention in the paper as a known limitation.
 
 ---
 
 ## Summary Table
 
-| # | Task | Effort | Blocks |
-|---|------|--------|--------|
-| 2 | CI for tests | Low | all refactoring (#9), release (#85) |
-| 3 | Domain migration to cdotlib.org | Low | user access |
-| 4 | Canonical transcript API | Medium | biocommons recognition (#85) |
-| 5 | Source priority docs + pipeline stats | Medium | paper, user trust |
-| 6 | FastaSeqFetcher docs + mismatch detection | Medium | user correctness |
-| 8 | GFF/GTF parser refactor | High | requires CI first |
-| 9 | CDS phase / ribosomal frameshift | Medium | correctness, paper |
-| 10 | Formal benchmarking script | Medium | paper |
+| ID | Task | Effort | Blocks submission |
+|----|------|--------|-------------------|
+| B1 | ClinVar resolution rate benchmark | High | Yes — primary figure |
+| B2 | Search-log cleaning figures from notebook | Low | Yes — key motivation figure |
+| B3 | CanonicalTranscriptSelector API | Medium | Yes — gene-only HGVS use case |
+| B4 | Snakemake pipeline summary stats | Medium | Yes — transcript count figures |
+| B5 | Domain migration to cdotlib.org | Low (infra) | Yes — URL stability |
+| B6 | CI for tests | Low | Yes — reviewer expectation |
+| B7 | Python/build dependencies | Low | Yes — installability |
+| S1 | T2T novelty verification | Low | No — but changes abstract claims |
+| S2 | BRCA2 gap support verification | Medium | No — but supports key claim |
+| S3 | Version fallback coverage analysis | Low | No — strengthens coverage argument |
+| S4 | FastaSeqFetcher mismatch detection | Medium | No |
+| F1 | Parser refactor | High | No |
+| F2 | CDS phase support | Medium | No |
