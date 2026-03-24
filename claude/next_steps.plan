@@ -114,13 +114,11 @@ NEED TO WAIT: This requires Dave to deploy the REST server on that domain
 
 | # | Task | Effort | Blocks |
 |---|------|--------|--------|
-| 1 | Fix Python version + build deps | Low | contributor onboarding |
 | 2 | CI for tests | Low | all refactoring (#9), release (#85) |
 | 3 | Domain migration to cdotlib.org | Low | user access |
 | 4 | Canonical transcript API | Medium | biocommons recognition (#85) |
 | 5 | Source priority docs + pipeline stats | Medium | paper, user trust |
 | 6 | FastaSeqFetcher docs + mismatch detection | Medium | user correctness |
-| 7 | HGVS string cleaning + warnings | High | broad user value |
 | 8 | GFF/GTF parser refactor | High | requires CI first |
 | 9 | CDS phase / ribosomal frameshift | Medium | correctness, paper |
 | 10 | Formal benchmarking script | Medium | paper |
