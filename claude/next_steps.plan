@@ -4,14 +4,6 @@ Ranked by impact. "Impact" here means: fixes a real correctness problem, unblock
 
 ---
 
-## ~~1. Fix Python version declaration and split build dependencies (#104)~~ DONE
-
-- Migrated `setup.cfg` → `pyproject.toml` (setup.cfg removed).
-- `python_requires` updated to `>=3.9` (actual minimum: PEP 585 generics used throughout).
-- Added `[project.optional-dependencies] build` group: `HTSeq>=2.1.2`, `ijson`, `biopython`, `pyhgvs`.
-
----
-
 ## 2. Add CI for tests (#62)
 
 **Why:** Tests already exist and pass locally. Not running them in CI means regressions go undetected. This is a prerequisite for doing any refactoring safely (#101) and for getting official recognition from biocommons (#85).
@@ -72,19 +64,6 @@ NEED TO WAIT: This requires Dave to deploy the REST server on that domain
 - When `ExonsFromGenomeFastaSeqFetcher` is asked for such a transcript, emit a warning (or optionally raise, controlled by a flag).
 - Add wiki documentation for FastaSeqFetcher: when to use it, what its limitations are, how to set it up.
 - Investigate the `NM_000399.3` discrepancy (#55) to determine if the mismatch is a cdot reconstruction bug or a genuine RefSeq/genome divergence. Write a test case either way.
-
----
-
-## 7. HGVS string cleaning and warning framework (#27, #28)
-
-**Why:** A large fraction of real-world HGVS strings (from clinical reports, search bars, literature) are malformed. VariantGrid has ad-hoc fixing code that every clinical genomics shop ends up reimplementing. Making this a first-class cdot feature would be high-value for downstream users.
-
-**What to do:**
-- Audit the cleaning ops currently in VariantGrid (`variantgrid/genes/hgvs.py` and `variantgrid/variantopedia/search.py`).
-- Implement a `clean_hgvs(hgvs_string) -> (cleaned_string, list[Warning])` function in cdot.
-- Common fixes to implement first: strip leading/trailing whitespace, fix case (`nm_` → `NM_`, `c.` casing), remove stray quotes, normalise `(GENE):` syntax.
-- A companion feature: if the exact transcript version isn't found, optionally try adjacent versions and return a warning — port the up/down version logic from VariantGrid (#28).
-- Build a test corpus from ClinVar and/or Shariant search logs.
 
 ---
 
