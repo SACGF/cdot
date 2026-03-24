@@ -1,20 +1,38 @@
 # cdot — Paper Framing Thoughts
 
+## The Mission Statement
+
+> **cdot's goal is to resolve as many HGVS strings from the wild as possible.**
+
+Everything cdot does is in service of this. A HGVS string from a clinical report, a search box, or ClinVar can fail to resolve for several distinct reasons — cdot attacks each one:
+
+| Failure mode | cdot's answer |
+|---|---|
+| String is malformatted | `clean_hgvs()` — fixes whitespace, casing, missing colons, swapped gene/transcript, etc. |
+| Transcript version not in database | 1.3M+ versioned alignments; covers historical RefSeq + Ensembl releases |
+| Exact version missing, adjacent exists | `get_best_transcript_version()` — controlled fallback to nearest version |
+| Transcript only in one consortium | Both RefSeq and Ensembl; clinical reports use both |
+| Transcript on wrong build | GRCh37, GRCh38, T2T-CHM13v2.0 all supported |
+| Alignment gap not handled | CIGAR gap encoding; fixes the 32% BRCA2 accuracy problem [Münz 2015] |
+| No database server available | Zero-dependency local JSON.gz; works offline, through firewalls |
+| Lookup too slow for bulk use | 500–1000× faster than UTA remote |
+
+This framing unifies what might otherwise look like a miscellaneous collection of features. The cleaner, the comprehensive transcript archive, the version fallback, the gap support, and the infrastructure choices are all expressions of the same goal.
+
 ## The Core Contribution
 
-cdot solves a specific, painful infrastructure problem in clinical and research genomics: **getting transcript data into HGVS conversion tools, fast, without a database server, and with comprehensive historical coverage.**
-
-The headline numbers frame the contribution cleanly:
+The headline numbers frame the contribution:
 - **Coverage:** 1.3M+ versioned transcript alignments vs ~141k in UTA uta_20210129 (9× increase)
 - **Speed:** ~500–1000 transcripts/s local JSON vs ~1 transcript/s UTA remote (500–1000× faster)
 - **Infrastructure:** zero-dependency (no PostgreSQL, works through firewalls, works offline)
 - **Breadth:** GRCh37, GRCh38, T2T-CHM13v2.0; RefSeq + Ensembl; multi-species potential
+- **Robustness:** `clean_hgvs()` preprocessing + transcript version fallback
 
 ### Why this matters — numbers from the literature
 
 The clinical scale of the problem is large. ClinVar now holds >3 million variants from >2,800 organisations [Landrum 2025], virtually all expressed in HGVS transcript notation. Mutalyzer processed 133 million HGVS descriptions over five years, finding ~50% contained errors [Lefter 2021] — many attributable to missing or misidentified transcript data. McCarthy et al. [2014] showed only 44% of putative loss-of-function variants agreed between RefSeq and Ensembl annotation sets using ANNOVAR; Park et al. [2022] found ~85% agreement between ANNOVAR and SnpEff on clinical variants. Most dramatically, Münz et al. [2015] found that most annotation tools correctly annotated only 32% of BRCA2 variants — the rest failed due to improper handling of alignment gaps or strand orientation.
 
-These numbers reframe the cdot contribution: this is not merely a *speed* problem (though cdot is 500–1000× faster than UTA remote access). It is fundamentally a **correctness and coverage** problem. Tools disagree, transcript versions are missing, and gapped alignments are handled incorrectly. cdot addresses all three.
+These numbers motivate each layer of cdot: the 50% Mutalyzer error rate motivates the cleaner; the 9× coverage gap motivates the transcript archive; the 32% BRCA2 accuracy motivates gap support. It is not merely a *speed* problem — it is a **resolution rate** problem.
 
 ---
 
@@ -168,6 +186,51 @@ This is more urgent than initially appreciated. The MANE Nature paper [Morales 2
 ## The SeqRepo Analogy
 
 The literature review clarifies a clean positioning statement: **cdot is to transcript coordinates what SeqRepo is to biological sequences**. Both projects provide local, high-performance, offline-capable access to data that was previously only available from slow remote databases. SeqRepo achieves 1300× speedup over remote access [Hart 2020]; cdot achieves 500–1000× speedup over UTA remote. Both are part of the biocommons stack. Framing cdot explicitly this way in the paper will resonate with the biocommons community and make the contribution concrete for reviewers unfamiliar with the HGVS pipeline.
+
+---
+
+## HGVS cleaning — already implemented, fits the paper
+
+### What exists
+
+`cdot/hgvs/clean.py` — already shipped. Two public functions:
+
+- **`clean_hgvs(hgvs_string)`** — pure string cleaning, no data provider needed. Returns `(cleaned, fixes)` where each fix has a severity (WARNING/ERROR) and a `HGVSFixCode`.
+- **`get_best_transcript_version(accession, requested_version, available_versions)`** — transcript version fallback, with configurable `VersionStrategy` (UP_THEN_DOWN / CLOSEST / LATEST).
+
+`analysis/clean_hgvs_search_csvs.py` + `analysis/HGVS cleaning.ipynb` — already ran the analysis on real search logs from three servers: shariant, vg-aws, vg3_upgrade.
+
+### Fix codes — derived from real search-log data
+
+The `HGVSFixCode` enum documents exactly what was found in the wild:
+
+| Code | Example of real input |
+|------|-----------------------|
+| `STRIPPED_WHITESPACE` | `"NM_205768 c.44A>G"` |
+| `STRIPPED_PROTEIN_SUFFIX` | `"NM_000059.4:c.316+5G>A p.Arg106*"` |
+| `FIXED_DOUBLE_COLON` | `"NM_004245: :c.337G>T"` |
+| `FIXED_DOUBLE_KIND` | `"NM_...:c.c.100A>G"` |
+| `ADDED_N_PREFIX` | `"M_001234:c.1A>G"` |
+| `LOWERCASED_MUTATION_TYPE` | `"NM_032638:c.1126_1133DUP"` |
+| `STRIPPED_UNBALANCED_BRACKETS` | `"NM_001754.5):c.557T>A"` |
+| `ADDED_TRANSCRIPT_UNDERSCORE` | `"NC000002.10g39139341C>T"` |
+| `ADDED_MISSING_KIND` | `"NM_001754.5:557T>A"` |
+| `SWAPPED_GENE_TRANSCRIPT` | `"BRCA1(NM_000059.4):c.316+5G>A"` |
+| `UPPERCASED_TRANSCRIPT` | `"nm_000059.4:c.316+5G>A"` |
+| `USED_ADJACENT_VERSION` | requested `.4`, used `.5` (fallback) |
+| `INS_WITH_INTEGER_LENGTH` | `"c.1246_2341ins23"` (unfixable) |
+
+### How this fits the paper
+
+This is a strong addition but needs careful framing. cdot is a data provider, not a validator — so the story is not "we fixed syntax errors" but rather:
+
+1. **Motivation (Introduction):** Real search-log data quantifies the categories and frequency of HGVS formatting errors in clinical practice. This is more granular than Lefter 2021 (Mutalyzer's 50% error rate), which doesn't break down *types* of errors.
+2. **Feature (Methods/Use Cases):** `clean_hgvs()` is a lightweight preprocessing layer — before invoking the HGVS parser or cdot's data provider, run the cleaner. The cleaner is pure-string, so it works before any transcript lookup.
+3. **The version fallback angle:** `get_best_transcript_version()` is the part that directly intersects with cdot's data. A caller can ask: "version 3 is in the search but my provider has versions 1, 2, 4 — use the closest." This requires cdot's comprehensive version coverage to have adjacent versions available, which UTA often cannot provide.
+
+### Key figure for the paper
+
+From the search-log analysis: what fraction of failures fell into each bucket? If "transcript version not found" or "fixable formatting error" are large buckets, that motivates both the cleaner and cdot's historical coverage. Retrieve actual percentages from `analysis/HGVS cleaning.ipynb`.
 
 ---
 
