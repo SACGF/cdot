@@ -51,35 +51,6 @@ Community HGVS library that cdot integrates with as a data provider. cdot has ma
 
 ---
 
-## Question 1: Should cdot client code be contributed into biocommons/hgvs?
-
-**Arguments for:**
-- Makes cdot the official/canonical data provider for biocommons/hgvs
-- Higher adoption — users of biocommons/hgvs get cdot "for free"
-- Better long-term maintenance (community instead of SACGF alone)
-- biocommons/hgvs#634 and #747 (canonical transcripts) suggest they want this
-
-**Arguments against:**
-- Loss of independent release cadence — cdot data schema and client would be coupled to biocommons/hgvs release cycle
-- cdot serves PyHGVS too — the client is not biocommons-specific; a split would be needed
-- The paper becomes a co-authorship / PR paper rather than a standalone contribution
-- cdot's broader scope (data generation pipeline, REST service, T2T support) wouldn't fit inside biocommons/hgvs cleanly
-
-**Recommended position:** Keep the client code in cdot, but explicitly position cdot as *the* recommended data provider for biocommons/hgvs, and make the integration seamless enough that biocommons could reference cdot in their own documentation. The paper can describe this as "a data provider for biocommons/hgvs," cite our contributions, and potentially include a biocommons author as a collaborator — without merging the repos.
-
-After publication: contribute the data provider to biocommons/hgvs as an optional extra, keeping cdot as the source of truth for the data generation and REST service.
-
----
-
-## Question 2: Should pyreference be in the same paper?
-
-**Probably not, for these reasons:**
-- Different audience: pyreference users are doing general bioinformatics (gene expression, splice analysis), not variant annotation
-- Different story: the cdot paper is about *solving an HGVS infrastructure problem*; pyreference is about *using a well-structured annotation format*
-- Dilutes the message of the cdot paper — reviewers would ask "what's the contribution, HGVS or general annotation?"
-- pyreference likely has simpler functionality and wouldn't carry a separate paper on its own; a bioRxiv preprint is the right vehicle
-
-**Recommended position:** Mention pyreference in the cdot paper as a one-paragraph demonstration that the JSON format has utility *beyond* HGVS (general bioinformatics, non-Python consumers, etc.). This strengthens the "format is generally useful" argument without making the paper unfocused. A separate pyreference bioRxiv preprint could follow.
 
 ---
 
@@ -200,9 +171,14 @@ The literature review clarifies a clean positioning statement: **cdot is to tran
 
 ---
 
+## Scattered thoughts
+
+JSON has become the standard for data transfer. Almost all libraries can rapidly load it. Useful not just for Python
+Mention pyreference in the cdot paper as a one-paragraph demonstration that the JSON format has utility *beyond* HGVS (general bioinformatics, non-Python consumers, etc.). This strengthens the "format is generally useful" argument without making the paper unfocused. A separate pyreference bioRxiv preprint could follow.
+
 ## Author / Collaboration Strategy
 
-- Core authors: Dave Lawrence, SACGF team
+- Core authors: Dave Lawrence, Shariant team who helped debug HGVS issues
 - Consider inviting: a biocommons/hgvs maintainer (acknowledges the integration work and broadens the community reach)
 - Consider inviting: a clinical genomics collaborator who can provide a real-world case study (VariantGrid/Shariant usage)
 - Acknowledgements: NCBI RefSeq team, Ensembl team, biocommons community
