@@ -124,3 +124,68 @@ From our experience, the most useful documentation additions would be:
 | Medium | Store APPRIS tier from Ensembl GTF | new issue |
 | Low | Pad RefSeq biotype to 2 elements or document | extend #77/#78 |
 | Low | Document field availability by cdot version | extend #77 |
+
+
+Here's some code I used in another project:
+
+
+```
+def get_ensembl_cdot_path(cdot_data_dir: str, cdot_version: str, ensembl_version: str) -> str:
+    """Return the path to the CDOT JSON for a given Ensembl release."""
+    return os.path.join(cdot_data_dir, "ensembl", "GRCh38",
+                        f"cdot-{cdot_version}.Homo_sapiens_GRCh38_Ensembl_{ensembl_version}.gtf.json.gz")
+
+
+def get_refseq_cdot_path(cdot_data_dir: str, cdot_version: str, refseq_version: str) -> str:
+    """Return the path to the CDOT JSON for a given RefSeq release."""
+    return os.path.join(cdot_data_dir, "refseq", "GRCh38",
+                        f"cdot-{cdot_version}.Homo_sapiens_GRCh38_RefSeq_{refseq_version}.json.gz")
+
+
+def load_cdot_json(path: str) -> dict:
+    """Load a gzipped CDOT JSON file and return the parsed dict."""
+    log.info("Loading %s", path)
+    return json.load(gzip.open(path))
+
+
+def get_biotype(td: dict) -> str:
+    """Return the primary biotype for a CDOT transcript dict.
+
+    CDOT stores biotype as a list; the first element is used.
+    Falls back to 'unknown' if absent or empty.
+    """
+    bt = td.get("biotype", [])
+    if isinstance(bt, list) and bt:
+        return bt[0]
+    return bt or "unknown"
+
+
+def get_tsl(td: dict) -> str:
+    """Return the GRCh38 transcript support level as a single-character string.
+
+    CDOT stores TSL under genome_builds.GRCh38.transcript_support_level as a
+    string like '1', '2 (assigned to previous version 9)', 'NA', etc.
+    Returns the first character when it is a digit, 'not assigned' otherwise.
+    """
+    gb = td.get("genome_builds", {}).get("GRCh38", {})
+    tsl_raw = gb.get("transcript_support_level")
+    if tsl_raw is None:
+        return "not assigned"
+    tsl_str = str(tsl_raw)
+    if not tsl_str:
+        return "not assigned"
+    first_char = tsl_str[0]
+    return first_char if first_char.isdigit() else "not assigned"
+
+
+def get_tags(td: dict) -> list:
+    """Return the list of GRCh38 GENCODE tags for a CDOT transcript dict.
+
+    CDOT stores tags as a comma-separated string in genome_builds.GRCh38.tag.
+    Returns an empty list if absent.
+    """
+    gb = td.get("genome_builds", {}).get("GRCh38", {})
+    tag_str = gb.get("tag", "")
+    return [t.strip() for t in tag_str.split(",") if t.strip()] if tag_str else []
+
+```
