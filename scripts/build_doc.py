@@ -79,7 +79,7 @@ def main():
     os.chdir(Path(__file__).parent.parent)  # run from project root
 
     output_dir = Path(args.output_dir)
-    docx = output_dir / f"too_many_transcripts_{date.today()}.docx"
+    docx = output_dir / f"cdot_{date.today()}.docx"
 
     build_docx(docx)
     strip_bookmarks(docx)
