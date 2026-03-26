@@ -82,6 +82,9 @@ have non-zero CDS phase (e.g. ribosomal slippage). Currently not stored.
 
 ---
 
+I am not sure if we are grabbig this? But in other use someone reported:
+"Transcript Support Level (TSL) — Ensembl's metric for mRNA/EST-based transcript support — is absent from the v115 cdot JSON files used in this analysis."
+
 ## BestRefSeq: all 368 BRCA1 transcripts are BestRefSeq
 
 In RefSeq RS_2025_08, all 368 BRCA1 NM_ accessions have `source: ["BestRefSeq"]`.
