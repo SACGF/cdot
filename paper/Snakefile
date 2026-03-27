@@ -1,0 +1,194 @@
+"""Snakemake workflow: generate cdot paper via vibepaper.
+
+Quickstart — build paper using existing facts CSVs (run from project root):
+    snakemake -s paper/Snakefile --cores 1
+
+Recompute coverage/benchmark from production data, then build:
+    snakemake -s paper/Snakefile --cores 1 --config data_dir=/path/to/cdot/data
+
+Recompute one facts file:
+    snakemake -s paper/Snakefile --cores 1 output/facts/coverage.csv
+
+Config keys (via --config or a config.yaml):
+    data_dir         Directory with production JSON.gz files.
+    clinvar_hgvs_csv Path to ClinVar HGVS benchmark CSV.
+    uta_uri          PostgreSQL URI for UTA, e.g. postgresql://uta_admin@localhost/uta/uta_20210129
+"""
+
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Resolve config
+# ---------------------------------------------------------------------------
+
+DATA_DIR    = config.get("data_dir", "")
+CLINVAR_CSV = config.get("clinvar_hgvs_csv", "")
+
+def data_file(stem):
+    """Return path from explicit config or data_dir/<stem>, else empty string."""
+    if stem in config:
+        return config[stem]
+    if DATA_DIR:
+        return str(Path(DATA_DIR) / stem)
+    return ""
+
+FILES = {
+    "refseq_grch37":  data_file("cdot.refseq.grch37.json.gz"),
+    "refseq_grch38":  data_file("cdot.refseq.grch38.json.gz"),
+    "refseq_t2t":     data_file("cdot.refseq.t2t.json.gz"),
+    "ensembl_grch37": data_file("cdot.ensembl.grch37.json.gz"),
+    "ensembl_grch38": data_file("cdot.ensembl.grch38.json.gz"),
+}
+
+HAVE_DATA    = any(p and Path(p).exists() for p in FILES.values())
+HAVE_CLINVAR = bool(CLINVAR_CSV and Path(CLINVAR_CSV).exists())
+
+PYTHON = ".venv/bin/python"
+VIBE   = ".venv/bin/vibepaper --config paper/paper.toml"
+
+PAPER_SOURCES = [
+    "paper/abstract.md",
+    "paper/introduction.md",
+    "paper/implementation.md",
+    "paper/discussion.md",
+    "paper/figures.md",
+    "paper/supplementary.md",
+    "paper/references.bib",
+    "paper/bioinformatics.csl",
+    "paper/paper.toml",
+]
+
+FACTS = [
+    "output/facts/literature.csv",
+    "output/facts/coverage.csv",
+    "output/facts/benchmark.csv",
+    "output/facts/clinvar.csv",
+]
+
+# ---------------------------------------------------------------------------
+# Rules
+# ---------------------------------------------------------------------------
+
+rule all:
+    """Default target: build the paper."""
+    input: "output/.paper_built"
+
+
+rule paper:
+    """Render templates and build the Word document via vibepaper."""
+    input:
+        sources = PAPER_SOURCES,
+        facts   = FACTS,
+    output:
+        touch("output/.paper_built"),
+    shell:
+        "{VIBE}"
+
+
+rule literature:
+    """Write static literature facts (values from published papers)."""
+    output: "output/facts/literature.csv"
+    run:
+        import csv, os
+        os.makedirs("output/facts", exist_ok=True)
+        rows = [{
+            "clinvar_variants":     3000000,
+            "hgvs_error_rate_pct":  50,
+            "lof_agreement_pct":    44,
+            "brca2_accuracy_pct":   32,
+            "uta_count":            141000,
+            "uta_remote_tps":       1,
+            "mane_coverage_pct":    97,
+            "seqrepo_speedup_fold": 1300,
+        }]
+        with open(output[0], "w", newline="") as fh:
+            writer = csv.DictWriter(fh, fieldnames=list(rows[0]))
+            writer.writeheader()
+            writer.writerows(rows)
+        print(f"Written: {output[0]}")
+
+
+rule coverage:
+    """Compute transcript coverage from production JSON.gz files.
+
+    Requires --config data_dir=/path/to/data (or individual file paths).
+    Without data, writes placeholder zeros so the paper build still runs.
+    """
+    output: "output/facts/coverage.csv"
+    run:
+        import os
+        os.makedirs("output/facts", exist_ok=True)
+        if not HAVE_DATA:
+            print("WARNING: no data_dir set — writing placeholder zeros to coverage.csv")
+            print("  Run with --config data_dir=/path/to/data to compute real values.")
+            import csv
+            row = {k: 0 for k in [
+                "total_count", "refseq_grch37_count", "refseq_grch38_count",
+                "t2t_count", "ensembl_grch37_count", "ensembl_grch38_count",
+                "ensembl_unique_count", "t2t_unique_count", "improvement_fold",
+            ]}
+            with open(output[0], "w", newline="") as fh:
+                writer = csv.DictWriter(fh, fieldnames=list(row))
+                writer.writeheader()
+                writer.writerow(row)
+        else:
+            flags = " ".join(
+                f"--{name.replace('_', '-')} {path}"
+                for name, path in FILES.items()
+                if path and Path(path).exists()
+            )
+            shell(f"{PYTHON} analysis/compute_coverage.py {flags}")
+
+
+rule benchmark:
+    """Benchmark local JSON throughput and load time.
+
+    Requires --config data_dir=/path/to/data pointing to a GRCh38 RefSeq JSON.gz.
+    Without data, writes the known cdot_local_min/max_tps=500/1000 and uta_remote_tps=1;
+    grch38_load_time_s stays 0 until benchmarked.
+    """
+    output: "output/facts/benchmark.csv"
+    run:
+        import os, csv
+        os.makedirs("output/facts", exist_ok=True)
+        grch38 = FILES.get("refseq_grch38", "")
+        if grch38 and Path(grch38).exists():
+            uta_flag = f"--uta-uri {config['uta_uri']}" if "uta_uri" in config else ""
+            shell(f"{PYTHON} analysis/compute_benchmark.py --refseq-grch38 {grch38} {uta_flag}")
+        else:
+            print("WARNING: refseq_grch38 not found — writing partial benchmark.csv (load time = 0)")
+            print("  Run with --config data_dir=/path/to/data to benchmark load time and REST throughput.")
+            row = {
+                "cdot_local_min_tps": 500,
+                "cdot_local_max_tps": 1000,
+                "cdot_rest_tps":      0,
+                "uta_local_tps":      0,
+                "uta_remote_tps":     1,
+                "grch38_load_time_s": 0,
+            }
+            with open(output[0], "w", newline="") as fh:
+                writer = csv.DictWriter(fh, fieldnames=list(row))
+                writer.writeheader()
+                writer.writerow(row)
+
+
+rule clinvar:
+    """Resolve ClinVar HGVS variants and write resolution rates.
+
+    Requires --config clinvar_hgvs_csv=/path/to/clinvar.csv.
+    Without data, writes placeholder zeros.
+    """
+    output: "output/facts/clinvar.csv"
+    run:
+        import os, csv
+        os.makedirs("output/facts", exist_ok=True)
+        if HAVE_CLINVAR:
+            shell(f"{PYTHON} analysis/investigate_fails.py {CLINVAR_CSV}")
+        else:
+            print("WARNING: no clinvar_hgvs_csv configured — writing placeholder zeros to clinvar.csv")
+            print("  Run with --config clinvar_hgvs_csv=/path/to/file to compute real values.")
+            row = {"n_variants": 0, "cdot_resolution_pct": 0.0, "uta_resolution_pct": 0.0}
+            with open(output[0], "w", newline="") as fh:
+                writer = csv.DictWriter(fh, fieldnames=list(row))
+                writer.writeheader()
+                writer.writerow(row)

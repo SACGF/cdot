@@ -1,0 +1,16 @@
+[paper]
+name        = "cdot"
+sections    = [
+    "abstract.md",
+    "introduction.md",
+    "implementation.md",
+    "discussion.md",
+    "figures.md",
+]
+supplementary = [
+    "supplementary.md",
+]
+facts_dir    = "../output/facts"
+output_dir   = "../output"
+bibliography = "references.bib"
+csl          = "bioinformatics.csl"
