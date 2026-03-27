@@ -13,7 +13,7 @@
 
 **Panel B** — Stacked bar chart or paired bars: ClinVar HGVS resolution rate for cdot vs UTA. Break the cdot bar into: resolved by RefSeq GRCh38 / resolved by Ensembl GRCh38 / resolved by GRCh37 / unresolved. Show UTA as comparison.
 
-**Legend**: `Transcript coverage and ClinVar HGVS resolution. (A) Versioned transcript alignments in cdot (RefSeq and Ensembl) and UTA across genome builds. cdot provides [X] alignments, [9]× more than UTA uta_20210129. T2T-CHM13v2.0 is absent from UTA. (B) Resolution of [N] ClinVar HGVS variant descriptions. cdot resolves [X]% versus [Y]% for UTA, with additional coverage from Ensembl and historical RefSeq annotation releases.`
+**Legend**: `Transcript coverage and ClinVar HGVS resolution. (A) Versioned transcript alignments in cdot (RefSeq and Ensembl) and UTA across genome builds. cdot provides {{ coverage.total_count | commas }} alignments, {{ coverage.improvement_fold | fmt('.0f') }}× more than UTA uta_20210129. T2T-CHM13v2.0 is absent from UTA. (B) Resolution of {{ clinvar.n_variants | commas }} ClinVar HGVS variant descriptions. cdot resolves {{ clinvar.cdot_resolution_pct | pct(1) }} versus {{ clinvar.uta_resolution_pct | pct(1) }} for UTA, with additional coverage from Ensembl and historical RefSeq annotation releases.`
 
 *This is the single most important figure — it encapsulates both the coverage and practical utility arguments.*
 
