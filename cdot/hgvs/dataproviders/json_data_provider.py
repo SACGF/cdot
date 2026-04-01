@@ -131,6 +131,8 @@ class AbstractJSONDataProvider(Interface):
             return None
 
         assembly_coordinates = self._get_transcript_coordinates_for_contig(transcript, alt_ac)
+        if assembly_coordinates is None:
+            return None
 
         tx_exons = []  # Genomic order
         exons = assembly_coordinates["exons"]
@@ -274,7 +276,7 @@ class AbstractJSONDataProvider(Interface):
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
         pass
 
-    def _validate_schema_compatability(self, json_schema_version: str):
+    def _validate_schema_compatibility(self, json_schema_version: str):
         """ Raise an error if versions out of sync """
         cdot_client_data_schema_int = get_data_schema_int(__version__)
         cdot_data_schema_version = get_data_schema_int(json_schema_version)
@@ -418,10 +420,8 @@ class JSONDataProvider(LocalDataProvider):
         self.genes = {}
         for file_or_filename in file_or_filename_list:
             if isinstance(file_or_filename, str):
-                if file_or_filename.endswith(".gz"):
-                    f = gzip.open(file_or_filename)
-                else:
-                    f = open(file_or_filename)
+                open_func = gzip.open if file_or_filename.endswith(".gz") else open
+                f = open_func(file_or_filename)
             else:
                 f = file_or_filename
             data = json.load(f)
@@ -432,7 +432,7 @@ class JSONDataProvider(LocalDataProvider):
                     if gene_symbol := g.get("gene_symbol"):
                         self.genes[gene_symbol] = g
             cdot_data_version_str = data["cdot_version"]
-            self._validate_schema_compatability(cdot_data_version_str)
+            self._validate_schema_compatibility(cdot_data_version_str)
             self.cdot_data_version = tuple(int(v) for v in cdot_data_version_str.split("."))
 
         super().__init__(assemblies=assemblies, mode=mode, cache=cache, seqfetcher=seqfetcher)

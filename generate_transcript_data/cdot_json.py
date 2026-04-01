@@ -194,7 +194,7 @@ def gtf_to_json(args):
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
     add_canonical_transcripts(args.gene_canonical_transcripts_csv, args.genome_build, transcripts)
-    method = "Single GFF3 file"
+    method = "Single GTF file"
     write_cdot_json(args.output, method, [args.gtf_filename],
                     genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
@@ -317,6 +317,15 @@ def _convert_uta_exons(exon_starts, exon_ends, cigars):
     return exons
 
 
+_CIGAR_OP_CONVERSION = {
+    "=": "M",
+    "D": "I",
+    "I": "D",
+    "X": "M",  # X=mismatch, GTF gap doesn't have mismatch, so count as match
+}
+_CIGAR_PATTERN = re.compile(r"(\d+)([" + "".join(_CIGAR_OP_CONVERSION.keys()) + "])")
+
+
 def _cigar_to_gap_and_length(cigar):
     """
         UTA performs their own alignment, and stores a CIGAR string of alignments
@@ -328,27 +337,18 @@ def _cigar_to_gap_and_length(cigar):
         Example input:  CIGAR = '194=1D60=1D184='
         Example output:   gap = 'M194 I1 M60 I1 M184'
     """
-
-    OP_CONVERSION = {
-        "=": "M",
-        "D": "I",
-        "I": "D",
-        "X": "M",  # X=mismatch, GTF gap doesn't have mismatch, so count as match
-    }
-
-    cigar_pattern = re.compile(r"(\d+)([" + "".join(OP_CONVERSION.keys()) + "])")
     gap_ops = []
     exon_length = 0
 
     # Attempt to simplify gap - if there are 2 matches together, we can join them
     # If it's all matches, we can just return None
     m = 0  # Merge adjacent matches
-    for (length_str, cigar_code) in cigar_pattern.findall(cigar):
+    for (length_str, cigar_code) in _CIGAR_PATTERN.findall(cigar):
         length = int(length_str)
         # Cigar code I = deletion in transcript (insertion in reference) so don't count that for exon length
         if cigar_code != 'I':
             exon_length += length
-        op = OP_CONVERSION[cigar_code]
+        op = _CIGAR_OP_CONVERSION[cigar_code]
         if op == 'M':
             m += length
         else:

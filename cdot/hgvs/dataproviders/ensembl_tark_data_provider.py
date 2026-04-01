@@ -1,6 +1,6 @@
 import json
 import logging
-import os
+import posixpath
 import re
 from collections import defaultdict
 
@@ -136,7 +136,7 @@ class EnsemblTarkDataProvider(Interface):
                         trs = result["transcript_release_set"]
                         return sorted([t["release_date"] for t in trs], reverse=True)[0]
 
-                    results = sorted(results, key=_get_most_recent_release_date)
+                    results = sorted(results, key=_get_most_recent_release_date, reverse=True)
                 filtered_results.append(results[0])
         return filtered_results
 
@@ -157,7 +157,7 @@ class EnsemblTarkDataProvider(Interface):
         if tx_ac in self.transcript_results:
             return self.transcript_results[tx_ac]
 
-        url = os.path.join(self.base_url, "transcript/?")
+        url = posixpath.join(self.base_url, "transcript/?")
         stable_id, version = self._get_transcript_id_and_version(tx_ac)
         params = {
             "stable_id": stable_id,
@@ -417,7 +417,7 @@ class EnsemblTarkDataProvider(Interface):
                 break
 
     def get_tx_for_gene(self, gene):
-        url = os.path.join(self.base_url, "transcript/search/?")
+        url = posixpath.join(self.base_url, "transcript/search/?")
         params = {
             "identifier_field": gene,
             "expand": "exons,genes,sequence",
@@ -446,7 +446,7 @@ class EnsemblTarkDataProvider(Interface):
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
         assert end_i >= start_i, f"{end_i=} must be greater or equal than {start_i=}"
 
-        url = os.path.join(self.base_url, "transcript/?")
+        url = posixpath.join(self.base_url, "transcript/?")
         assembly = self.assembly_by_contig[alt_ac]
         loc_region = self._get_chrom_from_contig(alt_ac)
         params = {

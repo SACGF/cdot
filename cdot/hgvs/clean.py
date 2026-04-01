@@ -327,16 +327,25 @@ def clean_hgvs(
         ))
         s = s2
 
-    # 3. Fix "::" → ":" and "__" → "_"
-    for bad, good, msg in [("::",":", "Fixed double colon '::'"), ("__","_", "Fixed double underscore '__'")]:
-        if bad in s:
-            s2 = s.replace(bad, good)
-            fixes.append(HGVSFix(
-                severity=HGVSFixSeverity.WARNING,
-                code=HGVSFixCode.FIXED_DOUBLE_COLON,
-                message=msg, original=s, fixed=s2,
-            ))
-            s = s2
+    # 3. Fix "::" → ":"
+    if "::" in s:
+        s2 = s.replace("::", ":")
+        fixes.append(HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.FIXED_DOUBLE_COLON,
+            message="Fixed double colon '::'", original=s, fixed=s2,
+        ))
+        s = s2
+
+    # 3b. Fix "__" → "_"
+    if "__" in s:
+        s2 = s.replace("__", "_")
+        fixes.append(HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.ADDED_TRANSCRIPT_UNDERSCORE,
+            message="Fixed double underscore '__'", original=s, fixed=s2,
+        ))
+        s = s2
 
     # 4. Fix double-kind notation (e.g. "c.c." → "c.")
     for kind in "cgmnpr":

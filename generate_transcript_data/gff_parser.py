@@ -96,7 +96,8 @@ class GFFParser(abc.ABC):
                 "url": self.url,
             }
             for field in GENOME_BUILD_FIELDS:
-                if value := transcript_data.pop(field, None):
+                value = transcript_data.pop(field, None)
+                if value is not None:
                     genome_build_coordinates[field] = value
 
             # Make sure contig uses accession not chromosome names
@@ -497,8 +498,8 @@ class GFF3Parser(GFFParser):
 
     def __init__(self, *args, **kwargs):
         super(GFF3Parser, self).__init__(*args, **kwargs)
-        self.gene_accession_by_feature_id = defaultdict()
-        self.transcript_accession_by_feature_id = defaultdict()
+        self.gene_accession_by_feature_id = {}
+        self.transcript_accession_by_feature_id = {}
         self.hgnc_pattern = re.compile(r".*\[Source:HGNC.*Acc:(HGNC:)?(\d+)]")
 
     def handle_feature(self, feature):

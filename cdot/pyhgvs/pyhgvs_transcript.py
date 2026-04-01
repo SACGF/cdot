@@ -82,10 +82,8 @@ class JSONPyHGVSTranscriptFactory(PyHGVSTranscriptFactory):
         transcripts = {}
         for file_or_filename in file_or_filename_list:
             if isinstance(file_or_filename, str):
-                if file_or_filename.endswith(".gz"):
-                    f = gzip.open(file_or_filename)
-                else:
-                    f = open(file_or_filename)
+                open_func = gzip.open if file_or_filename.endswith(".gz") else open
+                f = open_func(file_or_filename)
             else:
                 f = file_or_filename
             data = json.load(f)

@@ -19,14 +19,15 @@ def _get_version_from_tag_name(tag_name, data_version=False):
 
     if not tag_name.startswith(release_prefix):
         return None
-    return tag_name.lstrip(release_prefix)
+    return tag_name.removeprefix(release_prefix)
 
 
 def get_latest_data_version_and_release() -> tuple[Optional[str], dict]:
     client_data_schema = get_data_schema_int(cdot.__version__)
 
-    url = "https://api.github.com/repos/SACGF/cdot/releases"
+    url = "https://api.github.com/repos/SACGF/cdot/releases?per_page=100"
     response = requests.get(url)
+    response.raise_for_status()
     json_data = response.json()
     for release in json_data:
         tag_name = release['tag_name']  # Should look like 'v0.2.25' for code or 'data_v0.2.25' for data
@@ -49,8 +50,9 @@ def get_latest_data_release():
 
 def get_latest_release_version() -> Optional[str]:
     if latest_data_release := get_latest_data_release():
-        if release_name := latest_data_release["name"]:
-            data_version = _get_version_from_tag_name(tag_name, data_version=True)
+        if tag_name := latest_data_release.get("tag_name"):
+            return _get_version_from_tag_name(tag_name, data_version=True)
+    return None
 
 
 def get_latest_browser_urls():

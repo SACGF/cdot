@@ -31,13 +31,14 @@ class GenomeFastaSeqFetcher:
 class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
     """ This produces artificial transcript sequences by pasting together exons from the genome
         It is possible that this does not exactly match the transcript sequences - USE AT OWN RISK! """
+    _CIGAR_PATTERN = re.compile(r"(\d+)([=DIX])")
+
     def __init__(self, *args, cache=True):
         self.cache = cache
         self.transcript_cache = {}
         self.hdp = None  # Set when passed to data provider (via set_data_provider)
         self.source = "Transcript Exons using Genome Fasta file reference"
         self.contig_fastas = {}
-        self.cigar_pattern = re.compile(r"(\d+)([=DIX])")
         for fasta_filename in args:
             fasta_file = FastaFile(fasta_filename)
             for contig in fasta_file.references:
@@ -84,7 +85,7 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
             exon_seq_list = []
             start = 0
             # We are using HGVS cigar
-            for (length_str, op) in self.cigar_pattern.findall(exon["cigar"]):
+            for (length_str, op) in self._CIGAR_PATTERN.findall(exon["cigar"]):
                 length = int(length_str)
                 if op == 'D':    # Deletion in reference vs transcript
                     exon_seq_list.append("N" * length)
