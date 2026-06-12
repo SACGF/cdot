@@ -56,7 +56,7 @@ def main():
     if args.uta:
         hdp = hgvs.dataproviders.uta.connect()
     elif args.rest:
-        hdp = RESTDataProvider(seqfetcher=seqfetcher)  # Uses API server at cdot.cc
+        hdp = RESTDataProvider(seqfetcher=seqfetcher)  # Uses API server at cdotlib.org
     elif args.rest_insecure:
         hdp = RESTDataProvider(secure=False, seqfetcher=seqfetcher)
     elif args.json:

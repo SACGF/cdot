@@ -274,7 +274,7 @@ rule process_gene_info_json:
             "{workflow.basedir}/cdot_gene_info.py" \
                 --gene-info {input} \
                 --output {output} \
-                --email cdot@cdot.cc
+                --email cdot@cdotlib.org
         """
 
 
