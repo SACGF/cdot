@@ -56,6 +56,37 @@ Useful options:
 | `fallback_to_longest` | `False` | If no tagged/canonical transcript exists for a gene, fall back to the longest. |
 | `tag_priority` | MANE_Select > MANE_Plus_Clinical > RefSeq_Select > Ensembl_canonical | Order used when resolving a gene to a transcript. |
 | `ops` | `None` (all) | Restrict which cleaning operations run (see below). |
+| `version_fallback` | `None` (off) | Opt in to adjacent transcript-version fallback (see below). |
+
+### Transcript version fallback
+
+Real-world HGVS often names a transcript version your data release doesn't have (e.g. a report cites
+`NM_000059.2` but you only ship `.3`/`.4`). This is **off by default** — pass a `VersionStrategy` to
+opt in. When set, `fix_hgvs` substitutes the best available version and reports a WARNING:
+
+```python
+from cdot.hgvs import fix_hgvs
+from cdot.hgvs.clean import VersionStrategy
+
+result, fixes = fix_hgvs("NM_000059.2:c.36del", hdp,
+                         version_fallback=VersionStrategy.UP_THEN_DOWN)
+# result = "NM_000059.4:c.36del"  (if .2 absent but .4 present)
+# fixes[-1].code == HGVSFixCode.USED_ADJACENT_VERSION
+```
+
+`version_fallback` only needs a `data_provider` (not a `genome_build`). The strategies are:
+
+| `VersionStrategy` | Behaviour |
+|-------------------|-----------|
+| `UP_THEN_DOWN` | Prefer higher versions first, then lower (default for the helper). |
+| `CLOSEST` | Nearest version by absolute distance (ties prefer the higher one). |
+| `LATEST` | Always the highest available, ignoring the requested version. |
+
+If the requested version exists it's left untouched (non-destructive); if the accession has no
+versions at all an ERROR fix is returned. Call `resolve_transcript_version()` directly for the same
+behaviour outside `fix_hgvs`. Both rely on the data provider's `get_tx_versions(accession)`
+(implemented by `JSONDataProvider` and `RESTDataProvider`; the REST version uses the versionless
+`/transcript/<ac>` lookup and warms the cache with every returned version).
 
 ### `clean_hgvs` — string cleaning with op selection
 

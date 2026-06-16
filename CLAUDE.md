@@ -75,6 +75,10 @@ Schema versioning (`cdot/__init__.py`) uses major.minor; clients validate compat
 
 `cdot/data_release.py` queries the GitHub API for the latest compatible data release (filtered by schema version), returning download URLs for RefSeq/Ensembl JSON.gz files across GRCh37, GRCh38, and T2T-CHM13v2.0.
 
+### REST API
+
+The same team works on the REST server - http://github.com/SACGF/cdot_rest the REST API docs are here: https://cdotlib.org/static/api-docs.html 
+
 ## GitHub Comments
 When writing any comment on a GitHub issue or pull request, always preface it with 🤖 Written by Claude.
 Do NOT close GitHub issues. Issues must go through a testing lifecycle before being closed by the user.

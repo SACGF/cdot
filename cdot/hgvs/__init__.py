@@ -11,4 +11,5 @@ from cdot.hgvs.gene_hgvs import (
     DEFAULT_TAG_PRIORITY,
     fix_hgvs,
     resolve_gene_hgvs,
+    resolve_transcript_version,
 )

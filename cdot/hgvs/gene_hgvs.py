@@ -18,8 +18,10 @@ from cdot.hgvs.clean import (
     HGVSFixCode,
     HGVSFixSeverity,
     HGVSInputError,
+    VersionStrategy,
     _looks_like_transcript,
     clean_hgvs,
+    get_best_transcript_version,
 )
 
 DEFAULT_TAG_PRIORITY: list[str] = [
@@ -250,6 +252,92 @@ def resolve_gene_hgvs(
 
 
 # ---------------------------------------------------------------------------
+# Public: resolve_transcript_version — adjacent-version fallback
+# ---------------------------------------------------------------------------
+
+def _parse_versioned_transcript(hgvs_string: str) -> Optional[tuple[str, int]]:
+    """
+    Return (versionless_accession, version) if hgvs_string carries a versioned
+    transcript accession (e.g. "NM_000059.4:c.36del" → ("NM_000059", 4)), else None.
+
+    Handles a gene-in-parens suffix ("NM_000059.4(BRCA2):c.36del"). Returns None for
+    gene-only HGVS, genomic refs, or transcripts with no version (nothing to fall back from).
+    """
+    if ":" not in hgvs_string:
+        return None
+    prefix, _allele = hgvs_string.split(":", 1)
+    accession = prefix.split("(", 1)[0]  # drop "(GENE)" suffix if present
+    if not _looks_like_transcript(accession):
+        return None
+    base, dot, version = accession.rpartition(".")
+    if not dot or not version.isdigit():
+        return None  # no version present — nothing to fall back from
+    return base, int(version)
+
+
+def resolve_transcript_version(
+    hgvs_string: str,
+    data_provider,
+    strategy: VersionStrategy = VersionStrategy.UP_THEN_DOWN,
+) -> tuple[str, list[HGVSFix]]:
+    """
+    If hgvs_string names a transcript version that the data provider doesn't have,
+    substitute the best available adjacent version (per ``strategy``) and rewrite
+    the string.
+
+    Returns:
+        (resolved_string, fixes)
+        fixes is empty if the requested version exists (non-destructive) or if the
+        string carries no versioned transcript. A WARNING USED_ADJACENT_VERSION fix
+        is returned when a substitution is made; an ERROR NO_TRANSCRIPT_VERSIONS fix
+        (string unchanged) if the provider has no version of the accession at all.
+
+    The data provider must implement ``get_tx_versions(accession)`` (JSONDataProvider
+    and RESTDataProvider do). Providers that can't enumerate versions raise
+    NotImplementedError, which is surfaced as an ERROR fix.
+
+    Example::
+
+        # data provider has NM_000059 versions [3, 4] but not the requested .2
+        resolved, fixes = resolve_transcript_version("NM_000059.2:c.36del", dp)
+        # resolved = "NM_000059.4:c.36del"
+        # fixes[0].code = USED_ADJACENT_VERSION
+    """
+    parsed = _parse_versioned_transcript(hgvs_string)
+    if parsed is None:
+        return hgvs_string, []  # no versioned transcript — nothing to do
+    versionless, requested_version = parsed
+
+    try:
+        available_versions = data_provider.get_tx_versions(versionless)
+    except NotImplementedError as e:
+        return hgvs_string, [HGVSFix(
+            severity=HGVSFixSeverity.ERROR,
+            code=HGVSFixCode.NO_TRANSCRIPT_VERSIONS,
+            message=str(e),
+        )]
+
+    try:
+        best, fix = get_best_transcript_version(
+            versionless, requested_version, available_versions, strategy=strategy,
+        )
+    except HGVSInputError as e:
+        return hgvs_string, [HGVSFix(
+            severity=HGVSFixSeverity.ERROR,
+            code=HGVSFixCode.NO_TRANSCRIPT_VERSIONS,
+            message=str(e),
+        )]
+
+    if fix is None:
+        return hgvs_string, []  # requested version exists — non-destructive
+
+    resolved = hgvs_string.replace(
+        f"{versionless}.{requested_version}", f"{versionless}.{best}", 1
+    )
+    return resolved, [fix]
+
+
+# ---------------------------------------------------------------------------
 # Public: fix_hgvs — combined entry point
 # ---------------------------------------------------------------------------
 
@@ -262,6 +350,7 @@ def fix_hgvs(
     raise_on_errors: bool = False,
     ops: Optional[set] = None,
     prefer_consortium: Optional[Consortium] = DEFAULT_CONSORTIUM,
+    version_fallback: Optional[VersionStrategy] = None,
 ) -> tuple[str, list[HGVSFix]]:
     """
     Clean and resolve an HGVS string in one call.
@@ -282,6 +371,12 @@ def fix_hgvs(
     prefer_consortium hard-filters the resolved transcript to RefSeq (default)
     or Ensembl; pass None to allow both (see resolve_gene_hgvs).
 
+    version_fallback (default None = off) opts in to adjacent transcript-version
+    fallback: if set to a VersionStrategy and a data_provider is supplied, an
+    HGVS string whose exact transcript version isn't in the data is rewritten to
+    the best available version, with a WARNING (see resolve_transcript_version).
+    Only needs a data_provider, not a genome_build.
+
     Example — gene-only input resolved via MANE::
 
         result, fixes = fix_hgvs("BRCA2:c.36DEL", data_provider, "GRCh38")
@@ -293,6 +388,12 @@ def fix_hgvs(
 
         result, fixes = fix_hgvs("NM_000059.4 c.316+5G>A")
         # result = "NM_000059.4:c.316+5G>A"
+
+    Example — opt-in version fallback::
+
+        result, fixes = fix_hgvs("NM_000059.2:c.36del", data_provider,
+                                 version_fallback=VersionStrategy.UP_THEN_DOWN)
+        # result = "NM_000059.4:c.36del"  (if .2 absent but .4 present)
     """
     result, fixes = clean_hgvs(hgvs_string, ops=ops)
 
@@ -304,6 +405,12 @@ def fix_hgvs(
             prefer_consortium=prefer_consortium,
         )
         fixes.extend(resolution_fixes)
+
+    if version_fallback is not None and data_provider is not None:
+        result, version_fixes = resolve_transcript_version(
+            result, data_provider, strategy=version_fallback,
+        )
+        fixes.extend(version_fixes)
 
     if raise_on_errors:
         errors = [f for f in fixes if f.severity == HGVSFixSeverity.ERROR]

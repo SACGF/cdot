@@ -7,7 +7,7 @@ ENST00000617537.5 tagged as MANE_Select.
 import os
 import pytest
 
-from cdot.hgvs.clean import HGVSFixCode, HGVSFixSeverity, HGVSInputError
+from cdot.hgvs.clean import HGVSFixCode, HGVSFixSeverity, HGVSInputError, VersionStrategy
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
 from cdot.hgvs.gene_hgvs import (
     DEFAULT_TAG_PRIORITY,
@@ -15,9 +15,11 @@ from cdot.hgvs.gene_hgvs import (
     _consortium_of,
     _filter_by_consortium,
     _parse_gene_only_hgvs,
+    _parse_versioned_transcript,
     _rank_transcripts_by_tags,
     fix_hgvs,
     resolve_gene_hgvs,
+    resolve_transcript_version,
 )
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
@@ -337,6 +339,199 @@ def test_fix_hgvs_no_provider_no_genome_build():
     result, fixes = fix_hgvs("nm_000059.4:c.316+5G>A")
     assert result == "NM_000059.4:c.316+5G>A"
     assert any(f.code == C.UPPERCASED_TRANSCRIPT for f in fixes)
+
+
+# ---------------------------------------------------------------------------
+# _parse_versioned_transcript
+# ---------------------------------------------------------------------------
+
+def test_parse_versioned_transcript_plain():
+    assert _parse_versioned_transcript("NM_000059.4:c.36del") == ("NM_000059", 4)
+
+
+def test_parse_versioned_transcript_with_gene_parens():
+    assert _parse_versioned_transcript("NM_000059.4(BRCA2):c.36del") == ("NM_000059", 4)
+
+
+def test_parse_versioned_transcript_ensembl():
+    assert _parse_versioned_transcript("ENST00000380152.8:c.36del") == ("ENST00000380152", 8)
+
+
+def test_parse_versioned_transcript_no_version():
+    assert _parse_versioned_transcript("NM_000059:c.36del") is None
+
+
+def test_parse_versioned_transcript_gene_only():
+    assert _parse_versioned_transcript("BRCA2:c.36del") is None
+
+
+def test_parse_versioned_transcript_no_colon():
+    assert _parse_versioned_transcript("NM_000059.4") is None
+
+
+# ---------------------------------------------------------------------------
+# resolve_transcript_version — adjacent-version fallback
+# ---------------------------------------------------------------------------
+
+class _VersionStubProvider:
+    """Stub exposing only get_tx_versions(accession) -> list[int]."""
+    def __init__(self, version_map):
+        self._version_map = version_map
+
+    def get_tx_versions(self, accession):
+        return self._version_map.get(accession, [])
+
+
+@pytest.fixture
+def version_provider():
+    return _VersionStubProvider({"NM_000059": [2, 3, 4]})
+
+
+def test_resolve_version_exact_match_unchanged(version_provider):
+    resolved, fixes = resolve_transcript_version("NM_000059.4:c.36del", version_provider)
+    assert resolved == "NM_000059.4:c.36del"
+    assert fixes == []
+
+
+def test_resolve_version_falls_back_up(version_provider):
+    resolved, fixes = resolve_transcript_version("NM_000059.1:c.36del", version_provider)
+    assert resolved == "NM_000059.2:c.36del"
+    assert len(fixes) == 1
+    assert fixes[0].severity == W
+    assert fixes[0].code == C.USED_ADJACENT_VERSION
+
+
+def test_resolve_version_falls_back_down_when_no_higher(version_provider):
+    # requested .9 — nothing higher, UP_THEN_DOWN drops to the highest available
+    resolved, fixes = resolve_transcript_version("NM_000059.9:c.36del", version_provider)
+    assert resolved == "NM_000059.4:c.36del"
+    assert fixes[0].code == C.USED_ADJACENT_VERSION
+
+
+def test_resolve_version_latest_strategy(version_provider):
+    resolved, _fixes = resolve_transcript_version(
+        "NM_000059.1:c.36del", version_provider, strategy=VersionStrategy.LATEST
+    )
+    assert resolved == "NM_000059.4:c.36del"
+
+
+def test_resolve_version_preserves_gene_parens(version_provider):
+    resolved, fixes = resolve_transcript_version("NM_000059.1(BRCA2):c.36del", version_provider)
+    assert resolved == "NM_000059.2(BRCA2):c.36del"
+    assert fixes[0].code == C.USED_ADJACENT_VERSION
+
+
+def test_resolve_version_unknown_accession_errors(version_provider):
+    resolved, fixes = resolve_transcript_version("NM_999999.1:c.36del", version_provider)
+    assert resolved == "NM_999999.1:c.36del"  # unchanged
+    assert fixes[0].severity == E
+    assert fixes[0].code == C.NO_TRANSCRIPT_VERSIONS
+
+
+def test_resolve_version_no_versioned_transcript_noop(version_provider):
+    # gene-only / versionless input — nothing to do
+    assert resolve_transcript_version("BRCA2:c.36del", version_provider) == ("BRCA2:c.36del", [])
+    assert resolve_transcript_version("NM_000059:c.36del", version_provider) == ("NM_000059:c.36del", [])
+
+
+def test_resolve_version_unsupported_provider_errors():
+    class _NoVersions:
+        def get_tx_versions(self, accession):
+            raise NotImplementedError("nope")
+
+    resolved, fixes = resolve_transcript_version("NM_000059.1:c.36del", _NoVersions())
+    assert resolved == "NM_000059.1:c.36del"
+    assert fixes[0].severity == E
+    assert fixes[0].code == C.NO_TRANSCRIPT_VERSIONS
+
+
+# ---------------------------------------------------------------------------
+# fix_hgvs — opt-in version_fallback
+# ---------------------------------------------------------------------------
+
+def test_fix_hgvs_version_fallback_off_by_default(version_provider):
+    # No version_fallback → version untouched even though .1 isn't available
+    result, fixes = fix_hgvs("NM_000059.1:c.36del", data_provider=version_provider)
+    assert result == "NM_000059.1:c.36del"
+    assert not any(f.code == C.USED_ADJACENT_VERSION for f in fixes)
+
+
+def test_fix_hgvs_version_fallback_opt_in(version_provider):
+    result, fixes = fix_hgvs(
+        "NM_000059.1:c.36del", data_provider=version_provider,
+        version_fallback=VersionStrategy.UP_THEN_DOWN,
+    )
+    assert result == "NM_000059.2:c.36del"
+    assert any(f.code == C.USED_ADJACENT_VERSION for f in fixes)
+
+
+def test_fix_hgvs_version_fallback_with_cleaning(version_provider):
+    # messy input is cleaned first, then the version is bumped
+    result, fixes = fix_hgvs(
+        "nm_000059.1:c.36DEL", data_provider=version_provider,
+        version_fallback=VersionStrategy.UP_THEN_DOWN,
+    )
+    assert result == "NM_000059.2:c.36del"
+    codes = {f.code for f in fixes}
+    assert C.LOWERCASED_MUTATION_TYPE in codes
+    assert C.USED_ADJACENT_VERSION in codes
+
+
+def test_fix_hgvs_version_fallback_raise_on_errors(version_provider):
+    with pytest.raises(HGVSInputError):
+        fix_hgvs(
+            "NM_999999.1:c.36del", data_provider=version_provider,
+            version_fallback=VersionStrategy.UP_THEN_DOWN, raise_on_errors=True,
+        )
+
+
+# ---------------------------------------------------------------------------
+# JSONDataProvider.get_tx_versions — enumerate versions from in-memory data
+# ---------------------------------------------------------------------------
+
+def test_json_provider_get_tx_versions(ensembl_provider):
+    # Fixture has ENST00000617537.5
+    assert ensembl_provider.get_tx_versions("ENST00000617537") == [5]
+
+
+def test_json_provider_get_tx_versions_unknown(ensembl_provider):
+    assert ensembl_provider.get_tx_versions("NM_999999") == []
+
+
+def test_json_provider_get_tx_versions_no_prefix_overmatch(ensembl_provider):
+    # "ENST0000061753" must not match "ENST00000617537.5" (dot guard)
+    assert ensembl_provider.get_tx_versions("ENST0000061753") == []
+
+
+# ---------------------------------------------------------------------------
+# RESTDataProvider.get_tx_versions — drives the versionless /transcript endpoint
+# ---------------------------------------------------------------------------
+
+def test_rest_provider_get_tx_versions(monkeypatch):
+    from cdot.hgvs.dataproviders.json_data_provider import RESTDataProvider
+
+    dp = RESTDataProvider(url="https://example.org")
+    captured = {}
+
+    def fake_get(url):
+        captured["url"] = url
+        # versionless lookup returns every version keyed by full accession
+        return {"NM_000059.3": {"id": "NM_000059.3"}, "NM_000059.4": {"id": "NM_000059.4"}}
+
+    monkeypatch.setattr(dp, "_get_from_url", fake_get)
+
+    assert dp.get_tx_versions("NM_000059") == [3, 4]
+    assert captured["url"] == "https://example.org/transcript/NM_000059"
+    # versioned transcripts are warmed into the cache as a bonus
+    assert dp.transcripts["NM_000059.4"] == {"id": "NM_000059.4"}
+
+
+def test_rest_provider_get_tx_versions_unknown(monkeypatch):
+    from cdot.hgvs.dataproviders.json_data_provider import RESTDataProvider
+
+    dp = RESTDataProvider(url="https://example.org")
+    monkeypatch.setattr(dp, "_get_from_url", lambda url: None)  # 404 → None
+    assert dp.get_tx_versions("NM_999999") == []
 
 
 # ---------------------------------------------------------------------------

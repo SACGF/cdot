@@ -64,6 +64,18 @@ class AbstractJSONDataProvider(Interface):
     def _get_gene(self, gene):
         pass
 
+    def get_tx_versions(self, accession: str) -> list[int]:
+        """ Return every stored integer version for a versionless transcript accession,
+            ascending (eg "NM_000059" -> [3, 4]). Empty list if the accession is unknown.
+
+            Used by cdot.hgvs.gene_hgvs.resolve_transcript_version() to substitute an
+            adjacent version when the requested one isn't available. Subclasses that can
+            enumerate their transcripts implement this; the default raises NotImplementedError
+            so providers that can't (and callers who don't ask for version fallback) are
+            unaffected.
+        """
+        raise NotImplementedError("This data provider cannot enumerate transcript versions")
+
     def _get_transcript_coordinates_for_contig(self, transcript, alt_ac):
         assembly = self.assembly_by_contig.get(alt_ac)
         if assembly is None:
@@ -443,6 +455,16 @@ class JSONDataProvider(LocalDataProvider):
     def _get_transcript(self, tx_ac):
         return self.transcripts.get(tx_ac)
 
+    def get_tx_versions(self, accession: str) -> list[int]:
+        prefix = accession + "."  # so "NM_000059" doesn't also match "NM_0000591"
+        versions = []
+        for tx_ac in self.transcripts:
+            if tx_ac.startswith(prefix):
+                _base, _dot, version = tx_ac.rpartition(".")
+                if version.isdigit():
+                    versions.append(int(version))
+        return sorted(versions)
+
     def _get_gene(self, gene):
         return self.genes.get(gene)
 
@@ -522,6 +544,22 @@ class RESTDataProvider(AbstractJSONDataProvider):
         transcript = self._get_from_url(self.url + "/transcript/" + tx_ac)
         self.transcripts[tx_ac] = transcript
         return transcript
+
+    def get_tx_versions(self, accession: str) -> list[int]:
+        """ For a versionless accession (eg "NM_000059") the /transcript/<ac> endpoint returns
+            an object containing every stored version, keyed by full accession. We parse the
+            versions out and warm the cache with each versioned transcript as a bonus (so a
+            following _get_transcript() for the chosen version is a hit).
+            See https://cdotlib.org/static/api-docs.html
+        """
+        versions = []
+        if data := self._get_from_url(self.url + "/transcript/" + accession):
+            for full_ac, transcript in data.items():
+                self.transcripts[full_ac] = transcript  # warm cache
+                _base, _dot, version = full_ac.rpartition(".")
+                if version.isdigit():
+                    versions.append(int(version))
+        return sorted(versions)
 
     def prefetch(self, tx_acs, batch=True, max_workers=10):
         """ Read-ahead cache warming: populate self.transcripts up front.
