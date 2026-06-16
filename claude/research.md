@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-- **Package name:** `cdot` ("Complete Dict Of Transcripts")
+- **Package name:** `cdot`
 - **Version:** `0.2.26` (code); data schema version `0.2.33`
 - **GitHub:** https://github.com/SACGF/cdot
 - **Author:** Dave Lawrence (SACGF)

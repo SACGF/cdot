@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**cdot** ("Complete Dict Of Transcripts") converts RefSeq/Ensembl GTF/GFF3 annotation files into JSON format, providing high-performance transcript data for two Python HGVS variant annotation libraries: **biocommons HGVS** and **PyHGVS**.
+**cdot** converts RefSeq/Ensembl GTF/GFF3 annotation files into JSON format, providing high-performance transcript data for two Python HGVS variant annotation libraries: **biocommons HGVS** and **PyHGVS**.
 
 Performance comparison: UTA public DB ~1s/transcript vs cdot JSON.gz ~500-1000 transcripts/second.
 

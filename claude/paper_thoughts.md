@@ -26,7 +26,7 @@ This framing unifies what might otherwise look like a miscellaneous collection o
 
 - *cdot: maximising HGVS resolution across clinical and research genomics*
 - *cdot: a comprehensive transcript resource for resolving HGVS variant nomenclature*
-- *cdot: Complete Dict Of Transcripts for high-coverage HGVS resolution*
+- *cdot: high-coverage HGVS resolution*
 
 The title should contain "HGVS" and signal the breadth/resolution angle, not just "fast" or "database".
 
