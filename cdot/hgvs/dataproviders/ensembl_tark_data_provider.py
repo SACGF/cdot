@@ -8,10 +8,9 @@ import requests
 from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError
 
-from cdot.hgvs.dataproviders import get_ac_name_map, get_name_ac_map, ExonsFromGenomeFastaSeqFetcher, \
-    GenomeFastaSeqFetcher
+from cdot.hgvs.dataproviders import get_ac_name_map, get_name_ac_map
 from cdot.hgvs.dataproviders.seqfetcher import AbstractTranscriptSeqFetcher, PrefixSeqFetcher, \
-    VerifyMultipleSeqFetcher, AlwaysFailSeqFetcher
+    AlwaysFailSeqFetcher
 from hgvs.dataproviders.interface import Interface
 
 _REFSEQ_PREFIXES = {"NM_", "NR_"}
@@ -30,31 +29,33 @@ class _EnsemblTarkTranscriptSeqFetcher(AbstractTranscriptSeqFetcher):
 
 
 class EnsemblTarkSeqFetcher(PrefixSeqFetcher):
-    """ Default for EnsemblTarkDataProvider
-        You may need to instantiate your own copy to provide fasta_files """
-    def __init__(self, *args, fasta_files=None):
+    """ Default for EnsemblTarkDataProvider.
+
+        Tark only provides Ensembl (ENST) transcript sequences. To support genomic (NC_) and
+        RefSeq (NM_/NR_) sequences you need to compose in genome FASTA-backed seqfetchers (which
+        require pysam - ``pip install cdot[fasta]``). Build them with
+        ``cdot.hgvs.dataproviders.fasta_seqfetcher.get_ensembl_tark_fasta_seqfetchers()`` and pass
+        them in here, e.g.::
+
+            from cdot.hgvs.dataproviders.fasta_seqfetcher import get_ensembl_tark_fasta_seqfetchers
+
+            nc_sf, refseq_sf = get_ensembl_tark_fasta_seqfetchers("GRCh38.fna")
+            seqfetcher = EnsemblTarkSeqFetcher(nc_seqfetcher=nc_sf, refseq_seqfetcher=refseq_sf)
+            hdp = EnsemblTarkDataProvider(seqfetcher=seqfetcher)
+    """
+    def __init__(self, *args, nc_seqfetcher=None, refseq_seqfetcher=None):
         super().__init__()
         tark_seqfetcher = _EnsemblTarkTranscriptSeqFetcher()
-        if fasta_files is not None:
-            fasta_seqfetcher = GenomeFastaSeqFetcher(*fasta_files)
-
-            # For RefSeq - Tark doesn't have alignments, so can't check whether there are gaps
-            # So we'll look up the genome reference, and if they don't match, throw an error
-            class NoValidationExonsFromGenomeFastaSeqFetcher(ExonsFromGenomeFastaSeqFetcher):
-                def get_mapping_options(self, ac):
-                    # Normal 'get_tx_mapping_options' has a check that causes recursion
-                    return self.hdp.get_tx_mapping_options_without_validation(ac)
-
-            exons_seqfetcher = NoValidationExonsFromGenomeFastaSeqFetcher(*fasta_files, cache=True)
-            refseq_seqfetcher = VerifyMultipleSeqFetcher(tark_seqfetcher, exons_seqfetcher)
-        else:
-            fasta_seqfetcher = SeqFetcher()  # Default HGVS
-            msg = "You need to provide 'fasta_files' to use RefSeq transcripts. RefSeq transcripts can align with " + \
-                   "gaps, so need to compare transcript/genome sequences"
+        if nc_seqfetcher is None:
+            nc_seqfetcher = SeqFetcher()  # Default HGVS
+        if refseq_seqfetcher is None:
+            msg = "You need to provide a 'refseq_seqfetcher' to use RefSeq transcripts (see " + \
+                  "get_ensembl_tark_fasta_seqfetchers). RefSeq transcripts can align with gaps, " + \
+                  "so need to compare transcript/genome sequences"
             refseq_seqfetcher = AlwaysFailSeqFetcher(msg)
 
         self.prefix_seqfetchers.update({
-            "NC_": fasta_seqfetcher,
+            "NC_": nc_seqfetcher,
             "ENST": tark_seqfetcher,
         })
         self.prefix_seqfetchers.update({rp: refseq_seqfetcher for rp in _REFSEQ_PREFIXES})

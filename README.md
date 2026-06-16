@@ -34,6 +34,15 @@ See [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
 pip install cdot
 ```
 
+Optional extras:
+
+```
+pip install cdot[fasta]   # local genome FASTA sequence fetching (pysam) - needed for the PyHGVS example below
+pip install cdot[typed]   # typed JSON models (cdot.models, msgspec)
+```
+
+(`hgvs` is a core dependency, so the biocommons HGVS examples work out of the box.)
+
 ## Examples
 
 [Biocommons HGVS](https://github.com/biocommons/hgvs) example:

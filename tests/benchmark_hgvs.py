@@ -64,10 +64,11 @@ def main():
     elif args.ensembl_tark:
         # Tark doesn't provide genomes so it needs a genome one...
         if args.fasta:
-            fasta_files = [args.fasta]
+            from cdot.hgvs.dataproviders.fasta_seqfetcher import get_ensembl_tark_fasta_seqfetchers
+            nc_sf, refseq_sf = get_ensembl_tark_fasta_seqfetchers(args.fasta)
+            seqfetcher = EnsemblTarkSeqFetcher(nc_seqfetcher=nc_sf, refseq_seqfetcher=refseq_sf)
         else:
-            fasta_files = None
-        seqfetcher = EnsemblTarkSeqFetcher(fasta_files=fasta_files)
+            seqfetcher = EnsemblTarkSeqFetcher()
         hdp = EnsemblTarkDataProvider(seqfetcher=seqfetcher)
     else:
         raise ValueError("Unknown data provider method!")

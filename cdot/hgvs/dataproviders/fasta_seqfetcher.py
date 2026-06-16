@@ -111,6 +111,38 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
 
 
 
+def get_ensembl_tark_fasta_seqfetchers(*fasta_files, cache=True):
+    """ Build ``(nc_seqfetcher, refseq_seqfetcher)`` for ``EnsemblTarkSeqFetcher`` from genome FASTA
+        files. Requires pysam (``pip install cdot[fasta]``).
+
+        Tark has no RefSeq alignments (so no gap info), so RefSeq sequences are built from the genome
+        and verified against Tark - if they disagree (eg the transcript aligns with gaps) it fails
+        rather than return a wrong sequence.
+
+        Example::
+
+            nc_sf, refseq_sf = get_ensembl_tark_fasta_seqfetchers("GRCh38.fna")
+            seqfetcher = EnsemblTarkSeqFetcher(nc_seqfetcher=nc_sf, refseq_seqfetcher=refseq_sf)
+            hdp = EnsemblTarkDataProvider(seqfetcher=seqfetcher)
+    """
+    # Imported lazily to keep the (pysam-free) ensembl_tark module importable without cdot[fasta]
+    from cdot.hgvs.dataproviders.ensembl_tark_data_provider import _EnsemblTarkTranscriptSeqFetcher
+    from cdot.hgvs.dataproviders.seqfetcher import VerifyMultipleSeqFetcher
+
+    nc_seqfetcher = GenomeFastaSeqFetcher(*fasta_files)
+
+    # Tark doesn't have RefSeq alignments, so can't check whether there are gaps - look up the
+    # genome reference, and if it doesn't match Tark, throw an error
+    class NoValidationExonsFromGenomeFastaSeqFetcher(ExonsFromGenomeFastaSeqFetcher):
+        def get_mapping_options(self, ac):
+            # Normal 'get_tx_mapping_options' has a check that causes recursion
+            return self.hdp.get_tx_mapping_options_without_validation(ac)
+
+    exons_seqfetcher = NoValidationExonsFromGenomeFastaSeqFetcher(*fasta_files, cache=cache)
+    refseq_seqfetcher = VerifyMultipleSeqFetcher(_EnsemblTarkTranscriptSeqFetcher(), exons_seqfetcher)
+    return nc_seqfetcher, refseq_seqfetcher
+
+
 class FastaSeqFetcher(PrefixSeqFetcher):
     """ Re-implementing using above - deprecated use """
 

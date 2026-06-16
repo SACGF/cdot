@@ -27,7 +27,7 @@ Example::
 from __future__ import annotations
 
 import gzip
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 try:
     import msgspec
@@ -74,6 +74,9 @@ class GenomeBuild(msgspec.Struct, forbid_unknown_fields=False):
     stop: Optional[int] = None
     tag: Optional[str] = None
     """Comma-separated tags (e.g. ``'MANE_Select,Ensembl_canonical'``); typically Ensembl only."""
+    note: Optional[str] = None
+    other_chroms: Optional[List[str]] = None
+    """Other contigs this transcript also aligns to (e.g. PAR/alt loci)."""
 
 
 class Transcript(msgspec.Struct, forbid_unknown_fields=False):
@@ -94,18 +97,26 @@ class Transcript(msgspec.Struct, forbid_unknown_fields=False):
     hgnc: Optional[str] = None
     cdot: Optional[str] = None
     """cdot version that generated/last touched this transcript record."""
+    source: Optional[List[str]] = None
+    """Annotation source(s) this transcript came from (e.g. ``['NCBI']``)."""
+    partial: Optional[int] = None
+    """Non-zero if the transcript is annotated as partial/incomplete."""
 
 
 class Gene(msgspec.Struct, forbid_unknown_fields=False):
     """Gene-level metadata (present when the source provided gene info)."""
     gene_symbol: Optional[str] = None
     aliases: Optional[str] = None
-    biotype: Optional[str] = None
+    # biotype is a list[str] in current releases but a bare str in older data (<=0.2.10)
+    biotype: Optional[Union[List[str], str]] = None
     description: Optional[str] = None
     hgnc: Optional[str] = None
     map_location: Optional[str] = None
     summary: Optional[str] = None
     url: Optional[str] = None
+    source: Optional[List[str]] = None
+    transcripts: Optional[List[str]] = None
+    """Transcript accessions belonging to this gene (when provided)."""
 
 
 class CdotData(msgspec.Struct, forbid_unknown_fields=False):
