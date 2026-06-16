@@ -3,7 +3,7 @@
 [![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/) [![DOI](https://zenodo.org/badge/448753921.svg)](https://zenodo.org/doi/10.5281/zenodo.13324621)
 
 
-**cdot** ("Complete Dict Of Transcripts") provides the transcript data needed to map and validate
+**cdot** provides the transcript data needed to map and validate
 [HGVS](http://varnomen.hgvs.org/) variants — the gene/transcript coordinates, exon structure and
 genome alignments — for the two most popular Python HGVS libraries:
 [biocommons HGVS](https://github.com/biocommons/hgvs) and [PyHGVS](https://github.com/counsyl/hgvs).
@@ -125,6 +125,6 @@ We think a standard for JSON gene/transcript information would be a great thing,
 
 ## Q. What does cdot stand for?
 
-cdot, pronounced "see dot" is a play on HGVS coding sequence ```:c.``` But if you want a backronym, it's "Complete Dict Of Transcripts"
+cdot, pronounced "see dot", is a play on the HGVS coding-sequence prefix ```:c.```
 
 This was developed for the [Australian Genomics](https://www.australiangenomics.org.au/) [Shariant](https://shariant.org.au/) project, due to the need to load historical HGVS from lab archives.   
