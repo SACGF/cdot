@@ -50,8 +50,15 @@ else
   RELEASE_NOTES_FILENAME="/tmp/${CDOT_RELEASE_NAME}.txt"
   echo > ${RELEASE_NOTES_FILENAME} # Clear
   for f in "${files[@]}"; do
-    ${BASE_DIR}/cdot_json.py release_notes $f --show-urls >> ${RELEASE_NOTES_FILENAME}
-    echo "" >> ${RELEASE_NOTES_FILENAME}  # New line
+    # Wrap each file's notes in a collapsible block so the release page stays compact (issue #106)
+    {
+      echo "<details><summary>$(basename "$f")</summary>"
+      echo ""  # Blank line required for GitHub to render the Markdown inside <details>
+      ${BASE_DIR}/cdot_json.py release_notes $f --show-urls
+      echo ""
+      echo "</details>"
+      echo ""  # New line between files
+    } >> ${RELEASE_NOTES_FILENAME}
   done
   echo "Creating on GitHub"
   gh release create ${CDOT_RELEASE_NAME} --title=${CDOT_RELEASE_NAME} --notes-file="${RELEASE_NOTES_FILENAME}"
