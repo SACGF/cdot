@@ -2,6 +2,7 @@
 
 ### Added
 
+- #62 - Run the test suite in GitHub Actions CI (`.github/workflows/tests.yml`) on push/PR across Python 3.9–3.12 (dev/infra only, no client code change)
 - #86 Ensembl Tark Data Provider implementation 
 - #70 Use Snakemake to build transcripts (only affects data not client code)
 - #27 - HGVS cleaning: new `cdot.hgvs.clean` module (`clean_hgvs`, `get_best_transcript_version`) - cdot can now fix common bad HGVS formatting and report warnings

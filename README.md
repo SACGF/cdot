@@ -1,6 +1,6 @@
 # cdot
 
-[![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/) [![DOI](https://zenodo.org/badge/448753921.svg)](https://zenodo.org/doi/10.5281/zenodo.13324621)
+[![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/) [![tests](https://github.com/SACGF/cdot/actions/workflows/tests.yml/badge.svg)](https://github.com/SACGF/cdot/actions/workflows/tests.yml) [![DOI](https://zenodo.org/badge/448753921.svg)](https://zenodo.org/doi/10.5281/zenodo.13324621)
 
 
 **cdot** provides the transcript data needed to map and validate
