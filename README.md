@@ -26,7 +26,7 @@ See [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
 * Support for mouse transcripts (Mus Musculus GRCm38 and GRCm39)
 
 2023-04-03:
-* #41 - Support for T2T CHM13v2.0 [example code](https://github.com/SACGF/cdot/wiki/Biocommons-T2T-CHM13v2.0-example-code)
+* #41 - Support for T2T CHM13v2.0 [example code](docs/examples_biocommons.md#t2t-chm13v20-example)
 
 ## Install
 
@@ -63,7 +63,9 @@ var_c = hp.parse_hgvs_variant('NM_001637.3:c.1582G>A')
 am.c_to_g(var_c)
 ```
 
-[more Biocommons examples](https://github.com/SACGF/cdot/wiki/Biocommons-HGVS-example-code):
+[more Biocommons examples](docs/examples_biocommons.md):
+
+For fixing messy HGVS input and fast bulk processing, see [Advanced usage](docs/advanced_usage.md).
 
 [PyHGVS](https://github.com/counsyl/hgvs) example (needs `pip install cdot[fasta]` for pysam):
 
@@ -78,7 +80,17 @@ factory = RESTPyHGVSTranscriptFactory()
 pyhgvs.parse_hgvs_name('NM_001637.3:c.1582G>A', genome, get_transcript=factory.get_transcript_grch37)
 ```
 
-[more PyHGVS examples](https://github.com/SACGF/cdot/wiki/PyHGVS-example-code):
+[more PyHGVS examples](docs/examples_pyhgvs.md):
+
+## Documentation
+
+See [docs/](docs/) for reference and how-to guides:
+
+* [JSON data format](docs/json_data_format.md) — every field in a cdot JSON(.gz) file
+* [Coordinates & exon alignments](docs/coordinates_and_exons.md) — how exon coordinates and gap strings work
+* [Advanced usage](docs/advanced_usage.md) — fixing messy HGVS input, and bulk read-ahead retrieval
+
+See the [docs index](docs/README.md) for the full list (examples, FastaSeqFetcher, creating data, cdot vs UTA, …).
 
 ## Q. What's the performance like?
 
@@ -90,7 +102,7 @@ pyhgvs.parse_hgvs_name('NM_001637.3:c.1582G>A', genome, get_transcript=factory.g
 
 [Download from GitHub releases](https://github.com/SACGF/cdot/releases) - RefSeq (37/38) - 72M, Ensembl (37/38) 61M
 
-Details on what the files contain [here](https://github.com/SACGF/cdot/wiki/GitHub-release-file-details)
+Details on what the files contain [here](docs/release_files.md)
 
 ## Q. How does this compare to Universal Transcript Archive?
 
@@ -99,11 +111,11 @@ Both projects have similar goals of providing transcripts for loading HGVS, but 
 * UTA aligns sequences, then stores coordinates in an SQL database. 
 * cdot convert existing Ensembl/RefSeq GTFs into JSON
 
-See [wiki for more details](https://github.com/SACGF/cdot/wiki/cdot-vs-UTA)
+See [cdot vs UTA](docs/cdot_vs_uta.md) for more details
 
 ## Q. How do you store transcripts in JSON?
 
-See the **[JSON data format reference](docs/json_data_format.md)** for a full description of every field, with a machine-readable [JSON Schema](docs/cdot-json-schema.json) alongside it. There's also a [wiki page](https://github.com/SACGF/cdot/wiki/Transcript-JSON-format).
+See the **[JSON data format reference](docs/json_data_format.md)** for a full description of every field, with a machine-readable [JSON Schema](docs/cdot-json-schema.json) alongside it. [Coordinates & exon alignments](docs/coordinates_and_exons.md) explains how exon coordinates and the alignment gap strings work. See also [design notes](docs/design_notes.md) on why the format looks the way it does.
 
 You can also read the data with typed Python objects (no extra install required):
 

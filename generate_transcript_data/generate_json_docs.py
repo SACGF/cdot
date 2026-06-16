@@ -150,6 +150,9 @@ def render_markdown(field_docs):
         f"Generated from cdot **{__version__}**. "
         "A machine-readable [JSON Schema](cdot-json-schema.json) is generated alongside this file.",
         "",
+        "See [Coordinates & exon alignments](coordinates_and_exons.md) for a conceptual walk-through "
+        "of exon coordinates, exon ordering and the alignment gap strings.",
+        "",
         "```python",
         "from cdot import models",
         "",

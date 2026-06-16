@@ -14,6 +14,8 @@
 - #77 - Generate JSON schema docs (`generate_transcript_data/generate_json_docs.py`)
 - #109 - `RESTDataProvider.prefetch(tx_acs)` - read-ahead cache warming for bulk HGVS: populate the transcript cache up front so subsequent per-variant `c_to_g` calls are all cache hits. Plus `prefetch_from_hgvs(hgvs_strings)` which extracts transcript accessions (via `clean_hgvs`) and prefetches them
 - #108 - `prefetch()` now warms the cache in a single round-trip via the batch `POST /transcripts` endpoint (needs cdot_rest, see SACGF/cdot_rest#9), expanding versionless accessions (eg `NM_000059`) to all versions server-side; falls back to a concurrent thread-pool of single `/transcript/<ac>` requests for servers without the batch endpoint
+- #102 - Docs: new `docs/coordinates_and_exons.md` (how exon coordinates and the alignment gap strings work) and `docs/advanced_usage.md` (fixing messy HGVS input via `fix_hgvs`/`clean_hgvs`, and bulk read-ahead retrieval via `prefetch`), plus a `docs/` index; linked from the README (docs only, no client code change)
+- #102 - Docs: migrated the GitHub wiki into `docs/` (examples, FastaSeqFetcher, local JSON files, release file details, create-data-from-scratch, cdot vs UTA, design notes) so docs are versioned with the code; README and the generated `json_data_format.md` now link to `docs/` instead of the wiki (docs only, no client code change)
 
 ### Changed
 
