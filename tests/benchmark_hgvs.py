@@ -2,6 +2,13 @@
 
 """
     See instructions at end of file on how to extract test HGVS from clinvar
+
+    Tip: pass a local genome FASTA via --fasta to fetch sequences locally instead
+    of per-variant calls to NCBI (much faster). On the dev box these live in
+    /data/annotation/fasta, e.g. for GRCh38:
+        --fasta /data/annotation/fasta/GCF_000001405.40_GRCh38.p14_genomic.fna.gz
+    Combine with --rest --prefetch to batch-warm the REST cache up front; the
+    whole ClinVar test set then resolves in a couple of seconds.
 """
 import logging
 import time
@@ -28,6 +35,9 @@ def handle_args():
     group.add_argument('--ensembl-tark', action='store_true')
     parser.add_argument('--json', help='JSON file')
     parser.add_argument('--fasta', help='Fasta file for local sequences')
+    parser.add_argument('--prefetch', action='store_true',
+                        help='Batch-warm the data provider cache from all c.HGVS up front '
+                             '(RESTDataProvider only) before resolving')
     args = parser.parse_args()
     if not any([args.uta, args.rest, args.rest_insecure, args.ensembl_tark, args.json]):
         parser.error("You need to specify at least one of 'uta', 'rest', 'rest-insecure', 'ensembl-tark', 'json'")
@@ -72,6 +82,15 @@ def main():
         hdp = EnsemblTarkDataProvider(seqfetcher=seqfetcher)
     else:
         raise ValueError("Unknown data provider method!")
+
+    if args.prefetch:
+        if not hasattr(hdp, "prefetch_from_hgvs"):
+            parser_error = "--prefetch requires a data provider with prefetch_from_hgvs (RESTDataProvider)"
+            raise SystemExit(parser_error)
+        c_hgvs_list = [hgvs_c for _hgvs_g, hgvs_c in hgvs_g_c_list]
+        prefetch_start = time.time()
+        hdp.prefetch_from_hgvs(c_hgvs_list)
+        print(f"Batch prefetch of {len(c_hgvs_list)} transcripts: {time.time() - prefetch_start:.2f}s")
 
     if args.debug:
         logging.debug("Starting benchmark...")

@@ -1,4 +1,4 @@
-__version__ = "0.2.26"
+__version__ = "0.2.27"
 # Data version is kept in generate_transcript_version.json_schema_version
 
 def get_data_schema_int(version: str) -> int:

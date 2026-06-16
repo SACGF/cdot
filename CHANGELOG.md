@@ -1,5 +1,7 @@
 ## [unreleased]
 
+## [0.2.27] - 2026-06-16
+
 ### Added
 
 - #62 - Run the test suite in GitHub Actions CI (`.github/workflows/tests.yml`) on push/PR across Python 3.10–3.14 (dev/infra only, no client code change)
