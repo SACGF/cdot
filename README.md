@@ -88,9 +88,15 @@ See the [docs index](docs/README.md) for the full list (examples, FastaSeqFetche
 
 ## Q. What's the performance like?
 
-* UTA public DB: 1-1.5 seconds / transcript
-* cdot REST service: 10/second
-* cdot JSON.gz: 500-1k/second
+Resolving real ClinVar c.HGVS to genomic coordinates (GRCh38, biocommons HGVS, local sequence fetching):
+
+* UTA public DB: ~1-1.5 seconds / transcript
+* cdot REST service: ~30 HGVS/second sequential, **~500 HGVS/second** with [`prefetch()`](docs/advanced_usage.md) batch cache-warming
+* cdot JSON.gz (local): 500-1k/second
+
+`prefetch()` warms every transcript in one batch round-trip up front, so bulk resolution over the REST
+service runs almost entirely from cache - closing most of the gap to local JSON.gz (~16x faster end-to-end
+on 500 variants). Reproduce with `analysis/benchmark_resolution.py`.
 
 ## Q. Where can I download the JSON.gz files?
 
