@@ -4,6 +4,10 @@
 
 - #86 Ensembl Tark Data Provider implementation 
 - #70 Use Snakemake to build transcripts (only affects data not client code)
+- #27 - HGVS cleaning: new `cdot.hgvs.clean` module (`clean_hgvs`, `get_best_transcript_version`) - cdot can now fix common bad HGVS formatting and report warnings
+- Gene HGVS: new `cdot.hgvs.gene_hgvs` module (`resolve_gene_hgvs`, `fix_hgvs`) - resolve gene-symbol HGVS (eg `BRCA2:c.36del`) via MANE/canonical transcript tags
+- #37 - msgspec typed data models in `cdot.models`
+- #77 - Generate JSON schema docs (`generate_transcript_data/generate_json_docs.py`)
 
 ### Changed
 
@@ -12,6 +16,10 @@
 - #17 RefSeq missing MT transcripts (only affects data not client code)
 - #96 - All builds files now only contain 1 annotation consortium (RefSeq OR Ensembl not both)  
 - #97 - Ensembl now has HGNC codes (used Gencode lookup) to match RefSeq
+- #100 - Swapped cdot.cc domain references to cdotlib.org
+- #106 - Collapse release nodes (only affects data not client code)
+- Adjusted requirements - depend on hgvs core, bring in pysam for FASTA SeqFetcher
+- Bug fixes + optimisations
 
 ## [0.2.26] 2024-08-15
 

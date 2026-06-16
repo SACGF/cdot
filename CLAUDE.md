@@ -14,6 +14,8 @@ Performance comparison: UTA public DB ~1s/transcript vs cdot JSON.gz ~500-1000 t
 
 **PyHGVS is abandoned — prefer biocommons HGVS.** The `cdot/pyhgvs/` integration exists for legacy compatibility but PyHGVS is no longer maintained. Do not write new features that require significant PyHGVS-specific work. Focus new development on the biocommons HGVS path (`cdot/hgvs/dataproviders/`). If a feature is straightforward to support in both libraries, fine; if it requires real effort for PyHGVS, skip it and biocommons-only is acceptable.
 
+**Keep the changelog up to date.** When making a change (client code or data), add an entry to the `[unreleased]` section of `CHANGELOG.md` under `### Added` or `### Changed`, and reference the GitHub issue it is done against (eg `#27`). Note when a change only affects data and not client code.
+
 ## Commands
 
 ```bash
