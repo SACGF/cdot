@@ -32,6 +32,9 @@ dependencies = [
 hgvs = [
     "hgvs",
 ]
+typed = [
+    "msgspec",
+]
 build = [
     "HTSeq>=2.1.2",
     "ijson",
@@ -41,6 +44,7 @@ build = [
 test = [
     "hgvs",
     "pytest",
+    "msgspec",
 ]
 
 [project.urls]
