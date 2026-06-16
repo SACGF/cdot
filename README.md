@@ -66,7 +66,7 @@ am.c_to_g(var_c)
 
 [more Biocommons examples](https://github.com/SACGF/cdot/wiki/Biocommons-HGVS-example-code):
 
-[PyHGVS](https://github.com/counsyl/hgvs) example:
+[PyHGVS](https://github.com/counsyl/hgvs) example (needs `pip install cdot[fasta]` for pysam):
 
 ```
 import pyhgvs
