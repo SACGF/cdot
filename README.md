@@ -3,30 +3,24 @@
 [![PyPi version](https://img.shields.io/pypi/v/cdot.svg)](https://pypi.org/project/cdot/) [![Python versions](https://img.shields.io/pypi/pyversions/cdot.svg)](https://pypi.org/project/cdot/) [![DOI](https://zenodo.org/badge/448753921.svg)](https://zenodo.org/doi/10.5281/zenodo.13324621)
 
 
-cdot provides transcripts for the 2 most popular Python [HGVS](http://varnomen.hgvs.org/) libraries.
+**cdot** ("Complete Dict Of Transcripts") provides the transcript data needed to map and validate
+[HGVS](http://varnomen.hgvs.org/) variants — the gene/transcript coordinates, exon structure and
+genome alignments — for the two most popular Python HGVS libraries:
+[biocommons HGVS](https://github.com/biocommons/hgvs) and [PyHGVS](https://github.com/counsyl/hgvs).
 
-It works by:
+To do HGVS work (e.g. convert `NM_001637.3:c.1582G>A` to genomic coordinates) those libraries need a
+transcript data source. The usual source, [UTA](https://github.com/biocommons/uta), is a PostgreSQL
+database that's slow and heavy to run. cdot instead **converts the official RefSeq/Ensembl annotation
+files (GTF/GFF3) into compact JSON** and ships fast loaders for the HGVS libraries. You can use it via:
 
-* Converting RefSeq/Ensembl GTFs to JSON 
-* Providing loaders for the HGVS libraries, via JSON.gz files, or REST API via [cdot_rest](https://github.com/SACGF/cdot_rest))
+* **Local `JSON.gz` files** — [download a release](https://github.com/SACGF/cdot/releases) and load it into RAM (fastest).
+* **REST API** — query a [cdot_rest](https://github.com/SACGF/cdot_rest) server (no local data needed).
 
-We currently support 1.58 million transcript/genome alignments (vs ~141k in UTA v.20210129)
+Because it reads the released annotation files directly, cdot covers **1.58 million transcript/genome
+alignments**, including historical transcript versions — vs ~141k in UTA (v.20210129) — which matters
+when resolving legacy HGVS. See [cdot vs UTA](docs/cdot_vs_uta.md) for the trade-offs.
 
-## New 
-
-See [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md)
-
-2024-08-15:
-
-* 'data_release' helper code
-* Many minor updates to data (see changelog)
-
-2023-07-05:
-* BioCommons HGVS DataProvider fixes
-* Support for mouse transcripts (Mus Musculus GRCm38 and GRCm39)
-
-2023-04-03:
-* #41 - Support for T2T CHM13v2.0 [example code](docs/examples_biocommons.md#t2t-chm13v20-example)
+Recent changes are in the [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md).
 
 ## Install
 
@@ -52,7 +46,7 @@ from hgvs.assemblymapper import AssemblyMapper
 from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider
 
 hdp = RESTDataProvider()  # Uses API server at cdotlib.org
-# hdp = JSONDataProvider(["./cdot-0.2.14.refseq.grch37.json.gz"])  # Uses local JSON file
+# hdp = JSONDataProvider(["./cdot-0.2.32.refseq.grch37.json.gz"])  # Uses local JSON file
 
 am = AssemblyMapper(hdp,
                     assembly_name='GRCh37',
@@ -76,7 +70,7 @@ from cdot.pyhgvs.pyhgvs_transcript import JSONPyHGVSTranscriptFactory, RESTPyHGV
 
 genome = FastaFile("/data/annotation/fasta/GCF_000001405.25_GRCh37.p13_genomic.fna.gz")
 factory = RESTPyHGVSTranscriptFactory()
-# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.14.refseq.grch37.json.gz"])  # Uses local JSON file
+# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.32.refseq.grch37.json.gz"])  # Uses local JSON file
 pyhgvs.parse_hgvs_name('NM_001637.3:c.1582G>A', genome, get_transcript=factory.get_transcript_grch37)
 ```
 
