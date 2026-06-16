@@ -16,7 +16,7 @@ REFSEQ_JSON = os.path.join(THIS_DIR, "test_data/cdot.refseq.grch37.json")
 ENSEMBL_JSON = os.path.join(THIS_DIR, "test_data/cdot.ensembl.grch38.json")
 
 
-@unittest.skipUnless(HAVE_MSGSPEC, "msgspec not installed (pip install cdot[typed])")
+@unittest.skipUnless(HAVE_MSGSPEC, "msgspec not installed")
 class TestModels(unittest.TestCase):
     def test_load_refseq(self):
         data = models.load(REFSEQ_JSON)

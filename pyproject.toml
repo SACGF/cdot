@@ -27,6 +27,7 @@ dependencies = [
     "bioutils>=0.5.8",
     "lazy",
     "hgvs",
+    "msgspec",
 ]
 
 [project.optional-dependencies]
@@ -37,9 +38,6 @@ hgvs = [
 # Local genome FASTA sequence fetching (GenomeFastaSeqFetcher / FastaSeqFetcher) - needs pysam
 fasta = [
     "pysam",
-]
-typed = [
-    "msgspec",
 ]
 build = [
     "HTSeq>=2.1.2",
