@@ -8,12 +8,12 @@ Two things you'll likely want once you're past the [basic examples](../README.md
 
 ## Fixing messy HGVS input
 
-Real-world HGVS strings — from spreadsheets, lab reports, literature, decades-old archives — are
+Real-world HGVS strings - from spreadsheets, lab reports, literature, decades-old archives - are
 frequently *almost* valid: stray whitespace, a `p.` suffix glued on, an uppercase `DEL`, a missing
 underscore (`NM000059`), or just a gene symbol instead of a transcript (`BRCA2:c.36del`). biocommons
 HGVS will reject these. cdot's `cdot.hgvs` module fixes the common cases and tells you what it changed.
 
-### `fix_hgvs` — the one-call entry point
+### `fix_hgvs` - the one-call entry point
 
 `fix_hgvs()` is the recommended function. It chains string cleaning and (optionally) gene→transcript
 resolution, returning the cleaned string plus a list of `HGVSFix` records describing every change:
@@ -40,7 +40,7 @@ Each [`HGVSFix`](../cdot/hgvs/clean.py) has a `severity` (`WARNING` = fixed some
 or reject the variant.
 
 **Cleaning only (no data provider).** If your input already names a transcript, omit the provider and
-build — only string normalisation runs, so no data load is needed:
+build - only string normalisation runs, so no data load is needed:
 
 ```python
 result, fixes = fix_hgvs("NM_000059.4 c.316+5G>A")
@@ -61,7 +61,7 @@ Useful options:
 ### Transcript version fallback
 
 Real-world HGVS often names a transcript version your data release doesn't have (e.g. a report cites
-`NM_000059.2` but you only ship `.3`/`.4`). This is **off by default** — pass a `VersionStrategy` to
+`NM_000059.2` but you only ship `.3`/`.4`). This is **off by default** - pass a `VersionStrategy` to
 opt in. When set, `fix_hgvs` substitutes the best available version and reports a WARNING:
 
 ```python
@@ -88,7 +88,7 @@ behaviour outside `fix_hgvs`. Both rely on the data provider's `get_tx_versions(
 (implemented by `JSONDataProvider` and `RESTDataProvider`; the REST version uses the versionless
 `/transcript/<ac>` lookup and warms the cache with every returned version).
 
-### `clean_hgvs` — string cleaning with op selection
+### `clean_hgvs` - string cleaning with op selection
 
 `fix_hgvs` calls `clean_hgvs()` for the string-fixing half. Call it directly when you want only the
 pure-string normalisation (no provider, no gene resolution) and fine control over which operations
@@ -112,10 +112,10 @@ the ERROR-level validation pass when you only want normalisation.
 The biocommons HGVS `Interface` is **one transcript at a time**: each `c_to_g` (etc.) triggers a
 single `/transcript/<ac>` lookup that's then reused for `get_tx_info` / `get_tx_exons` / .... For a
 local `JSONDataProvider` that's all in memory, so it's already fast. But for the `RESTDataProvider`,
-processing N variants means N sequential HTTP round-trips — the latency dominates.
+processing N variants means N sequential HTTP round-trips - the latency dominates.
 
 When you know the transcripts up front (bulk processing a file of variants), warm the cache first
-with `prefetch()`. Every later lookup is then a cache hit — **no change to how you call biocommons HGVS**:
+with `prefetch()`. Every later lookup is then a cache hit - **no change to how you call biocommons HGVS**:
 
 ```python
 from cdot.hgvs.dataproviders import RESTDataProvider
@@ -145,11 +145,11 @@ hdp.prefetch_from_hgvs(variants)   # prefetches NM_001637.3 and NM_000059.4; ski
 
 - **Batch (default).** POSTs the whole accession list to the cdot_rest batch `POST /transcripts`
   endpoint in a **single round-trip**. Versionless accessions (e.g. `NM_000059`) are expanded
-  server-side to *every* available version — handy for warming the version-bump path.
+  server-side to *every* available version - handy for warming the version-bump path.
 - **Concurrent fallback.** Servers without the batch endpoint (older cdot_rest) automatically fall
   back to a thread-pool of single `/transcript/<ac>` requests, turning N sequential round-trips into
   `ceil(N / max_workers)` waves. Force this with `batch=False`; tune the pool with `max_workers`
-  (default 10). Note: the fallback does **not** expand versionless accessions — pass exact versions.
+  (default 10). Note: the fallback does **not** expand versionless accessions - pass exact versions.
 
 ```python
 hdp.prefetch(accessions, batch=False, max_workers=20)

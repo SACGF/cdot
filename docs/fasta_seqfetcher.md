@@ -1,4 +1,4 @@
-# FastaSeqFetcher — local FASTA sequence fetching
+# FastaSeqFetcher - local FASTA sequence fetching
 
 Needs the `fasta` extra: `pip install cdot[fasta]` (brings in `pysam`).
 
@@ -7,13 +7,13 @@ Needs the `fasta` extra: `pip install cdot[fasta]` (brings in `pysam`).
 biocommons HGVS uses [SeqRepo](https://github.com/biocommons/biocommons.seqrepo) to retrieve genome
 and transcript sequences.
 
-cdot collects as many transcripts as possible, and some of these are not in SeqRepo — meaning you
+cdot collects as many transcripts as possible, and some of these are not in SeqRepo - meaning you
 can't resolve them using the [biocommons HGVS](https://github.com/biocommons/hgvs/) library.
 
 `FastaSeqFetcher` is a SeqRepo replacement that builds transcript sequences by pasting together exons
 from the genome. This means every cdot transcript becomes resolvable.
 
-> **Warning: transcript sequences may differ from the genome sequence — do this at your own risk!**
+> **Warning: transcript sequences may differ from the genome sequence - do this at your own risk!**
 > (See [Transcript vs genome differences](#warnings--transcript-vs-genome-differences) below.)
 
 ## Install
@@ -60,7 +60,7 @@ seqfetcher = ChainedSeqFetcher(SeqFetcher(), FastaSeqFetcher(fasta_filename))
 
 ## Warnings / Transcript vs genome differences
 
-Ensembl transcripts always match the genome reference — this only affects RefSeq, where the
+Ensembl transcripts always match the genome reference - this only affects RefSeq, where the
 transcript and genome sequences can differ.
 
 The errors that could occur from a genome/transcript mismatch are:

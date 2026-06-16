@@ -1,6 +1,6 @@
 # PyHGVS example code
 
-> **Note:** PyHGVS is no longer maintained — prefer the [biocommons HGVS examples](examples_biocommons.md).
+> **Note:** PyHGVS is no longer maintained - prefer the [biocommons HGVS examples](examples_biocommons.md).
 > The PyHGVS integration exists for legacy compatibility.
 
 Needs the `fasta` extra for `pysam`: `pip install cdot[fasta]`.

@@ -3,7 +3,7 @@
 We distribute pre-built `.json.gz` files of transcripts via
 [GitHub releases](https://github.com/SACGF/cdot/releases).
 
-The main files contain **every historical transcript** — useful for maximum compatibility when you
+The main files contain **every historical transcript** - useful for maximum compatibility when you
 want to resolve as many HGVS strings as possible.
 
 The gene symbol associated with a gene (and thus a transcript version) can change between GTFs (i.e.

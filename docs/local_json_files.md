@@ -22,4 +22,4 @@ hdp = JSONDataProvider(local_json)
 ## See also
 
 - [Biocommons HGVS examples](examples_biocommons.md)
-- [Advanced usage](advanced_usage.md) — fixing messy HGVS input and bulk retrieval
+- [Advanced usage](advanced_usage.md) - fixing messy HGVS input and bulk retrieval

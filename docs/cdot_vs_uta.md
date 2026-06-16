@@ -14,18 +14,18 @@ Prior to v105 (GRCh37.p13) RefSeq did not provide alignment gap information, so 
 their own alignment to get CIGAR strings, in order to correctly handle these gaps.
 
 From v105 onwards, RefSeq provide
-[these gaps](https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md#the-gap-attribute) —
+[these gaps](https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md#the-gap-attribute) -
 making it possible to use the GFFs. See [Coordinates & exon alignments](coordinates_and_exons.md) for
 how cdot stores them.
 
 ## Advantages of aligning sequences (UTA)
 
 * UTA can map GRCh37 sequences to GRCh38 and vice-versa.
-* UTA can account for alignment gaps in earlier RefSeq releases (cdot uses these UTA transcripts — thanks!).
+* UTA can account for alignment gaps in earlier RefSeq releases (cdot uses these UTA transcripts - thanks!).
 
 ## Advantages of using existing GTFs (cdot)
 
-* Drastically simpler workflow — meaning we can load more transcripts.
+* Drastically simpler workflow - meaning we can load more transcripts.
 * Alignments exactly match those in the official releases.
 
 ## JSON vs SQL

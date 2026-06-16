@@ -4,8 +4,8 @@
 
 
 **cdot** provides the transcript data needed to map and validate
-[HGVS](http://varnomen.hgvs.org/) variants — the gene/transcript coordinates, exon structure and
-genome alignments — for the two most popular Python HGVS libraries:
+[HGVS](http://varnomen.hgvs.org/) variants - the gene/transcript coordinates, exon structure and
+genome alignments - for the two most popular Python HGVS libraries:
 [biocommons HGVS](https://github.com/biocommons/hgvs) and [PyHGVS](https://github.com/counsyl/hgvs).
 
 To do HGVS work (e.g. convert `NM_001637.3:c.1582G>A` to genomic coordinates) those libraries need a
@@ -13,11 +13,11 @@ transcript data source. The usual source, [UTA](https://github.com/biocommons/ut
 database that's slow and heavy to run. cdot instead **converts the official RefSeq/Ensembl annotation
 files (GTF/GFF3) into compact JSON** and ships fast loaders for the HGVS libraries. You can use it via:
 
-* **Local `JSON.gz` files** — [download a release](https://github.com/SACGF/cdot/releases) and load it into RAM (fastest).
-* **REST API** — query a [cdot_rest](https://github.com/SACGF/cdot_rest) server (no local data needed).
+* **Local `JSON.gz` files** - [download a release](https://github.com/SACGF/cdot/releases) and load it into RAM (fastest).
+* **REST API** - query a [cdot_rest](https://github.com/SACGF/cdot_rest) server (no local data needed).
 
 Because it reads the released annotation files directly, cdot covers **1.58 million transcript/genome
-alignments**, including historical transcript versions — vs ~141k in UTA (v.20210129) — which matters
+alignments**, including historical transcript versions - vs ~141k in UTA (v.20210129) - which matters
 when resolving legacy HGVS. See [cdot vs UTA](docs/cdot_vs_uta.md) for the trade-offs.
 
 Recent changes are in the [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md).
@@ -80,9 +80,9 @@ pyhgvs.parse_hgvs_name('NM_001637.3:c.1582G>A', genome, get_transcript=factory.g
 
 See [docs/](docs/) for reference and how-to guides:
 
-* [JSON data format](docs/json_data_format.md) — every field in a cdot JSON(.gz) file
-* [Coordinates & exon alignments](docs/coordinates_and_exons.md) — how exon coordinates and gap strings work
-* [Advanced usage](docs/advanced_usage.md) — fixing messy HGVS input, and bulk read-ahead retrieval
+* [JSON data format](docs/json_data_format.md) - every field in a cdot JSON(.gz) file
+* [Coordinates & exon alignments](docs/coordinates_and_exons.md) - how exon coordinates and gap strings work
+* [Advanced usage](docs/advanced_usage.md) - fixing messy HGVS input, and bulk read-ahead retrieval
 
 See the [docs index](docs/README.md) for the full list (examples, FastaSeqFetcher, creating data, cdot vs UTA, …).
 

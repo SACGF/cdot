@@ -6,10 +6,10 @@ the concrete format, see the [JSON data format reference](json_data_format.md) a
 
 ## Why JSON?
 
-In bioinformatics, gene/transcript information is traditionally stored in GTF/GFF — good for genome
+In bioinformatics, gene/transcript information is traditionally stored in GTF/GFF - good for genome
 browsers and manipulable with unix tools, but very verbose and not easy to use.
 
-JSON has become the standard for the web, and Python has very fast implementations — so storing
+JSON has become the standard for the web, and Python has very fast implementations - so storing
 gene/transcript information in JSON seems like a good thing to do. Ideally we'd like to make it a
 standard, and will pitch GA4GH about it.
 
@@ -27,9 +27,9 @@ file is in the repo:
 * The `exons` array uses `gap=None` to indicate a perfect alignment. biocommons HGVS always provides
   e.g. `M100` for a perfect 100-base match.
 * The `exons` array contains `exon_id`; this could be derived at runtime via reverse/enumerate.
-* Genome build patches may have base changes that alter splice sites — this may make historical GTFs
+* Genome build patches may have base changes that alter splice sites - this may make historical GTFs
   subtly wrong.
-* In `cdot_json` `merge_builds`, we throw away earlier coordinates when there's a conflict — worth
+* In `cdot_json` `merge_builds`, we throw away earlier coordinates when there's a conflict - worth
   investigating further (likely build-sequence changes altering exons).
 * We store coordinates per genome build; storing by contig would remove redundancy for shared contigs
   (e.g. chrM), at the cost of being slightly harder for humans to read.
@@ -38,7 +38,7 @@ file is in the repo:
 
 Ensembl provide a [lookup API](https://rest.ensembl.org/documentation/info/lookup), e.g.
 [ENSG00000179348](https://rest.ensembl.org/lookup/id/ENSG00000179348?expand=1;content-type=application/json),
-which looks to have enough to create HGVS records — however Ensembl do not provide all historical
+which looks to have enough to create HGVS records - however Ensembl do not provide all historical
 transcript versions.
 
 ## Project goals / directions

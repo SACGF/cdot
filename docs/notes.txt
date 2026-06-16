@@ -24,7 +24,7 @@ https://github.com/SACGF/pyreference
 
 A long time ago, someone wrote gtf-to-genes which used a binary file for rapid loading - but gzipped JSON is faster (and human readable). Discontinued. 
 
-—---------------
+----------------
 
 The Human Genome Variation Society (HGVS) nomenclature [2016]
 
@@ -51,7 +51,7 @@ Doesn’t support Ensembl transcript versions - https://github.com/biocommons/ut
 
 UTA has had plans to build a REST web API since 2014: https://github.com/biocommons/uta/issues/164 
 
-—----------
+-----------
 
 Counsyl HGVS 
 
@@ -78,7 +78,7 @@ Transcript version (NM_XXX.1)
 
 Firewalls prevent making a postgres database connection 
 
-—------
+-------
 
 
 
@@ -102,16 +102,16 @@ uta=> select count(ac) from uta_20210129.transcript where ac like '%.%';
 
 VariantGrid: 788252 distinct transcript versions
 
-—----------------
+-----------------
 
 
 
-—--------
+---------
 
 Benchmark - resolve all the HGVS in ClinVar, check against the genomic coordinate in VCF
 
 
-—-------------
+--------------
 
 HGVS Recommendations for the Description of SequenceVariants: 2016 Update
 
