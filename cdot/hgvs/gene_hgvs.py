@@ -10,6 +10,7 @@ fix_hgvs() is the single combined entry point that chains clean_hgvs() and
 resolve_gene_hgvs() in one call — the recommended function for most callers.
 """
 
+from enum import Enum
 from typing import Optional
 
 from cdot.hgvs.clean import (
@@ -27,6 +28,27 @@ DEFAULT_TAG_PRIORITY: list[str] = [
     "RefSeq_Select",
     "Ensembl_canonical",
 ]
+
+
+class Consortium(Enum):
+    """Annotation consortium. Used as a hard filter when resolving a gene symbol
+    to a transcript: setting a consortium guarantees the returned accession is
+    from that consortium (RefSeq NM_/NR_/XM_/XR_ vs Ensembl ENST), never the
+    other.
+    """
+    REFSEQ = "refseq"
+    ENSEMBL = "ensembl"
+
+
+# RefSeq is the default: clinical/diagnostic HGVS overwhelmingly uses NM_
+# transcripts, and biocommons HGVS is typically driven with RefSeq accessions.
+DEFAULT_CONSORTIUM: Consortium = Consortium.REFSEQ
+
+
+def _consortium_of(tx_ac: str) -> Consortium:
+    """Ensembl transcripts start with 'ENST'; everything else (NM_/NR_/XM_/XR_/LRG)
+    is treated as RefSeq for tie-breaking purposes."""
+    return Consortium.ENSEMBL if tx_ac.startswith("ENST") else Consortium.REFSEQ
 
 
 # ---------------------------------------------------------------------------
@@ -52,6 +74,26 @@ def _parse_gene_only_hgvs(hgvs_string: str) -> tuple[Optional[str], Optional[str
     return prefix, allele
 
 
+def _normalize_tag(tag: str) -> str:
+    """
+    Normalise a transcript tag for comparison against tag_priority.
+
+    RefSeq stores tags with spaces ("MANE Select", "RefSeq Select") while
+    Ensembl uses underscores ("MANE_Select", "Ensembl_canonical").  Without
+    this, RefSeq's MANE/canonical transcripts never match the underscore-form
+    entries in DEFAULT_TAG_PRIORITY.
+    """
+    return tag.replace(" ", "_")
+
+
+def _filter_by_consortium(
+    tx_and_tags: list[tuple[str, list[str]]],
+    consortium: Consortium,
+) -> list[tuple[str, list[str]]]:
+    """Keep only transcripts from the given consortium (hard filter)."""
+    return [t for t in tx_and_tags if _consortium_of(t[0]) == consortium]
+
+
 def _rank_transcripts_by_tags(
     tx_and_tags: list[tuple[str, list[str]]],
     tag_priority: list[str],
@@ -62,19 +104,24 @@ def _rank_transcripts_by_tags(
     Transcripts whose tags include an earlier entry in tag_priority sort first.
     Transcripts with no matching priority tag sort last (preserving the
     input order, which is longest-first from get_tx_ac_tags_for_gene).
+
+    Tag comparison is done on normalised tags (see _normalize_tag), so RefSeq
+    space-form tags match the underscore-form entries in tag_priority.  The
+    original (un-normalised) tags are preserved in the returned tuples.
     """
+    def matched_priority_tag(tags: list[str]) -> Optional[str]:
+        norm = {_normalize_tag(t) for t in tags}
+        return next((tag for tag in tag_priority if tag in norm), None)
+
     def sort_key(item: tuple[str, list[str]]) -> int:
         _tx_ac, tags = item
-        for i, tag in enumerate(tag_priority):
-            if tag in tags:
-                return i
-        return len(tag_priority)
+        matched = matched_priority_tag(tags)
+        return tag_priority.index(matched) if matched else len(tag_priority)
 
     ranked = sorted(tx_and_tags, key=sort_key)
     result = []
     for tx_ac, tags in ranked:
-        matched = next((t for t in tag_priority if t in tags), None)
-        result.append((tx_ac, tags, matched))
+        result.append((tx_ac, tags, matched_priority_tag(tags)))
     return result
 
 
@@ -88,6 +135,7 @@ def resolve_gene_hgvs(
     genome_build: str,
     tag_priority: list[str] = DEFAULT_TAG_PRIORITY,
     fallback_to_longest: bool = False,
+    prefer_consortium: Optional[Consortium] = DEFAULT_CONSORTIUM,
 ) -> tuple[str, list[HGVSFix]]:
     """
     If hgvs_string contains a gene symbol but no transcript (e.g. "BRCA2:c.36del"),
@@ -108,6 +156,12 @@ def resolve_gene_hgvs(
     an ERROR-level fix is returned. Pass fallback_to_longest=True to use the longest
     available transcript instead, with a WARNING.
 
+    prefer_consortium is a HARD filter on the returned transcript's consortium:
+    with Consortium.REFSEQ (the default) you never get an Ensembl transcript back,
+    and vice versa. If the preferred consortium has no transcript for the gene
+    (but the other does), an ERROR fix is returned rather than crossing over.
+    Pass None to consider both consortiums (ranked by tag, then input order).
+
     Example::
 
         resolved, fixes = resolve_gene_hgvs("BRCA2:c.36del", data_provider, "GRCh38")
@@ -122,6 +176,22 @@ def resolve_gene_hgvs(
 
     tx_and_tags = data_provider.get_tx_ac_tags_for_gene(gene_symbol, genome_build)
 
+    # Gene lookups are case-sensitive; gene symbols are conventionally uppercase
+    # (some legitimately have lowercase parts, e.g. "C7orf26", so we only retry
+    # uppercased after an exact-case miss rather than uppercasing unconditionally).
+    if not tx_and_tags and gene_symbol != gene_symbol.upper():
+        uc_gene_symbol = gene_symbol.upper()
+        tx_and_tags = data_provider.get_tx_ac_tags_for_gene(uc_gene_symbol, genome_build)
+        if tx_and_tags:
+            fixes.append(HGVSFix(
+                severity=HGVSFixSeverity.WARNING,
+                code=HGVSFixCode.UPPERCASED_GENE_SYMBOL,
+                message=f"Uppercased gene symbol '{gene_symbol}' to '{uc_gene_symbol}'",
+                original=gene_symbol,
+                fixed=uc_gene_symbol,
+            ))
+            gene_symbol = uc_gene_symbol
+
     if not tx_and_tags:
         fixes.append(HGVSFix(
             severity=HGVSFixSeverity.ERROR,
@@ -129,6 +199,28 @@ def resolve_gene_hgvs(
             message=f"No transcripts found for gene '{gene_symbol}' in {genome_build}",
         ))
         return hgvs_string, fixes
+
+    # Consortium is a hard filter: with a preference set we never return a
+    # transcript from the other consortium. If the preferred consortium has
+    # none (but the other does), error with an actionable message rather than
+    # crossing over.
+    if prefer_consortium is not None:
+        filtered = _filter_by_consortium(tx_and_tags, prefer_consortium)
+        if not filtered:
+            other = (Consortium.ENSEMBL if prefer_consortium == Consortium.REFSEQ
+                     else Consortium.REFSEQ)
+            fixes.append(HGVSFix(
+                severity=HGVSFixSeverity.ERROR,
+                code=HGVSFixCode.NO_TRANSCRIPT_FOR_GENE,
+                message=(
+                    f"No {prefer_consortium.value} transcript found for gene "
+                    f"'{gene_symbol}' in {genome_build} ({len(tx_and_tags)} "
+                    f"{other.value} transcript(s) available). Pass "
+                    f"prefer_consortium=Consortium.{other.name} or None to use them."
+                ),
+            ))
+            return hgvs_string, fixes
+        tx_and_tags = filtered
 
     ranked = _rank_transcripts_by_tags(tx_and_tags, tag_priority)
     best_tx, _best_tags, matched_tag = ranked[0]
@@ -168,6 +260,8 @@ def fix_hgvs(
     tag_priority: list[str] = DEFAULT_TAG_PRIORITY,
     fallback_to_longest: bool = False,
     raise_on_errors: bool = False,
+    ops: Optional[set] = None,
+    prefer_consortium: Optional[Consortium] = DEFAULT_CONSORTIUM,
 ) -> tuple[str, list[HGVSFix]]:
     """
     Clean and resolve an HGVS string in one call.
@@ -182,6 +276,12 @@ def fix_hgvs(
     If raise_on_errors=True, raises HGVSInputError on the first ERROR-level fix
     instead of returning it in the list.
 
+    ops selects the subset of clean_hgvs cleaning operations to apply (see
+    clean_hgvs); None (default) runs them all.
+
+    prefer_consortium hard-filters the resolved transcript to RefSeq (default)
+    or Ensembl; pass None to allow both (see resolve_gene_hgvs).
+
     Example — gene-only input resolved via MANE::
 
         result, fixes = fix_hgvs("BRCA2:c.36DEL", data_provider, "GRCh38")
@@ -194,13 +294,14 @@ def fix_hgvs(
         result, fixes = fix_hgvs("NM_000059.4 c.316+5G>A")
         # result = "NM_000059.4:c.316+5G>A"
     """
-    result, fixes = clean_hgvs(hgvs_string)
+    result, fixes = clean_hgvs(hgvs_string, ops=ops)
 
     if data_provider is not None and genome_build is not None:
         result, resolution_fixes = resolve_gene_hgvs(
             result, data_provider, genome_build,
             tag_priority=tag_priority,
             fallback_to_longest=fallback_to_longest,
+            prefer_consortium=prefer_consortium,
         )
         fixes.extend(resolution_fixes)
 

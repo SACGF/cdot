@@ -523,6 +523,19 @@ class RESTDataProvider(AbstractJSONDataProvider):
             tx_list = data["results"]
         return tx_list
 
+    def get_tx_ac_tags_for_gene(self, gene: str, genome_build: str) -> list[tuple[str, list[str]]]:
+        """ Return [(tx_ac, tags), ...] for a gene/build, sorted longest-first.
+
+            Used by cdot.hgvs.gene_hgvs.resolve_gene_hgvs() to pick the best
+            (MANE/canonical) transcript. The server returns the same data as
+            LocalDataProvider.get_tx_ac_tags_for_gene(); ranking stays client-side.
+        """
+        tx_list = []
+        url = f"{self.url}/transcripts/gene/{gene}/tags/{genome_build}"
+        if data := self._get_from_url(url):
+            tx_list = [(tx_ac, tags) for tx_ac, tags in data["results"]]
+        return tx_list
+
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
         self._check_alt_aln_method(alt_aln_method)
 

@@ -7,6 +7,8 @@ test_fix_gene_transcript) and extended for the version-fallback helpers.
 import pytest
 
 from cdot.hgvs.clean import (
+    ALL_CLEAN_OPS,
+    HGVSCleanOp,
     HGVSFix,
     HGVSFixCode,
     HGVSFixSeverity,
@@ -32,6 +34,58 @@ def codes(fixes: list[HGVSFix]) -> set[HGVSFixCode]:
 
 def severities(fixes: list[HGVSFix]) -> set[HGVSFixSeverity]:
     return {f.severity for f in fixes}
+
+
+# ---------------------------------------------------------------------------
+# clean_hgvs — op selection (subset of cleaning operations)
+# ---------------------------------------------------------------------------
+
+def test_ops_default_runs_everything():
+    # whitespace + lowercase transcript both fixed by default
+    result, fixes = clean_hgvs("nm_000059.4 c.316+5G>A")
+    assert result == "NM_000059.4:c.316+5G>A"
+    assert C.STRIPPED_WHITESPACE in codes(fixes)
+
+
+def test_ops_allowlist_runs_only_selected():
+    # Only strip whitespace; do NOT uppercase/reconstruct the transcript
+    result, fixes = clean_hgvs(
+        "nm_000059.4 c.316+5G>A",
+        ops={HGVSCleanOp.STRIP_WHITESPACE},
+        validate=False,
+    )
+    assert result == "nm_000059.4c.316+5G>A"  # whitespace gone, casing untouched
+    assert codes(fixes) == {C.STRIPPED_WHITESPACE}
+
+
+def test_ops_blocklist_via_set_algebra():
+    # Run everything except whitespace stripping
+    result, fixes = clean_hgvs(
+        "NM_000059.4:c.316+5G>A p.Arg106*",
+        ops=ALL_CLEAN_OPS - {HGVSCleanOp.STRIP_PROTEIN_SUFFIX},
+    )
+    # protein suffix NOT stripped because that op was excluded
+    assert "p.Arg106*" in result
+    assert C.STRIPPED_PROTEIN_SUFFIX not in codes(fixes)
+
+
+def test_ops_empty_set_is_noop():
+    s = "nm_000059.4 c.316+5G>A"
+    result, fixes = clean_hgvs(s, ops=set(), validate=False)
+    assert result == s
+    assert fixes == []
+
+
+def test_validate_false_skips_error_fixes():
+    # "ins" with no sequence is an ERROR from validation
+    _result, fixes = clean_hgvs("NM_000059.4:c.123ins", validate=False)
+    assert E not in severities(fixes)
+    _result, fixes = clean_hgvs("NM_000059.4:c.123ins", validate=True)
+    assert E in severities(fixes)
+
+
+def test_all_clean_ops_covers_every_op():
+    assert ALL_CLEAN_OPS == frozenset(HGVSCleanOp)
 
 
 # ---------------------------------------------------------------------------

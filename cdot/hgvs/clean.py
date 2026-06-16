@@ -51,6 +51,7 @@ class HGVSFixCode(Enum):
     SWAPPED_GENE_TRANSCRIPT      = "swapped_gene_transcript"
     UPPERCASED_TRANSCRIPT        = "uppercased_transcript"
     UPPERCASED_HGVS_PREFIX       = "uppercased_hgvs_prefix"
+    UPPERCASED_GENE_SYMBOL       = "uppercased_gene_symbol"
     # Transcript version fallback (WARNING)
     USED_ADJACENT_VERSION        = "used_adjacent_version"
     # Gene → transcript resolution (WARNING on success, ERROR on failure)
@@ -61,6 +62,30 @@ class HGVSFixCode(Enum):
     MISSING_REFERENCE_SEQUENCE   = "missing_reference_sequence"
     INS_WITH_INTEGER_LENGTH      = "ins_with_integer_length"
     INS_MISSING_SEQUENCE         = "ins_missing_sequence"
+
+
+class HGVSCleanOp(Enum):
+    """A single cleaning operation in the clean_hgvs() pipeline.
+
+    Unlike HGVSFixCode (which describes *outcomes* and is not 1:1 with steps),
+    each member here names exactly one step, so it is a stable key for selecting
+    a subset of cleaning operations.  Members are listed in pipeline order, but
+    selection only *filters* the pipeline — it never reorders it (several steps
+    depend on earlier ones running first).
+    """
+    STRIP_PROTEIN_SUFFIX     = "strip_protein_suffix"
+    STRIP_WHITESPACE         = "strip_whitespace"
+    FIX_DOUBLE_COLON         = "fix_double_colon"
+    FIX_DOUBLE_UNDERSCORE    = "fix_double_underscore"
+    FIX_DOUBLE_KIND          = "fix_double_kind"
+    ADD_N_PREFIX             = "add_n_prefix"
+    LOWERCASE_MUTATION_TYPE  = "lowercase_mutation_type"
+    STRIP_UNBALANCED_BRACKETS = "strip_unbalanced_brackets"
+    ADD_TRANSCRIPT_UNDERSCORE = "add_transcript_underscore"
+    RECONSTRUCT_STRUCTURE    = "reconstruct_structure"
+    UPPERCASE_BASES          = "uppercase_bases"
+    ADD_MISSING_KIND         = "add_missing_kind"
+    FIX_GENE_TRANSCRIPT      = "fix_gene_transcript"
 
 
 @dataclass(frozen=True)
@@ -270,84 +295,65 @@ def _validate(s: str) -> list[HGVSFix]:
 
 
 # ---------------------------------------------------------------------------
-# Public: clean_hgvs
+# Cleaning operations
+#
+# Each op has the signature (s: str) -> tuple[str, list[HGVSFix]]: it returns
+# the (possibly unchanged) string and a list of HGVSFix describing what it did
+# (empty if it made no change).  Ops are pure and order-dependent — _PIPELINE
+# fixes the canonical order; selection only filters which ops run.
 # ---------------------------------------------------------------------------
 
-def clean_hgvs(
-    hgvs_string: str,
-    raise_on_errors: bool = False,
-) -> tuple[str, list[HGVSFix]]:
-    """
-    Attempt to fix common formatting problems in an HGVS string.
-
-    Returns:
-        (cleaned_string, fixes)
-        where fixes is a list of HGVSFix describing every change made and
-        any validation errors found.
-
-    If raise_on_errors=True, raises HGVSInputError on the first ERROR-level
-    fix instead of returning it in the list.
-
-    The returned string is always the best attempt at a valid HGVS string.
-    If ERROR-level fixes are present (and raise_on_errors=False), the
-    returned string may still be invalid.
-
-    Example::
-
-        cleaned, fixes = clean_hgvs("nm_000059.4 c.316+5G>A")
-        # cleaned == "NM_000059.4:c.316+5G>A"
-        # fixes == [
-        #   HGVSFix(WARNING, STRIPPED_WHITESPACE, ...),
-        #   HGVSFix(WARNING, UPPERCASED_TRANSCRIPT, ...),
-        # ]
-    """
-    fixes: list[HGVSFix] = []
-    s = hgvs_string
-
-    # 1. Strip trailing protein (p.) annotation separated by a space
-    #    e.g. "NM_000059.4:c.316+5G>A p.Arg106*" → "NM_000059.4:c.316+5G>A"
+def _op_strip_protein_suffix(s: str) -> tuple[str, list[HGVSFix]]:
+    # e.g. "NM_000059.4:c.316+5G>A p.Arg106*" → "NM_000059.4:c.316+5G>A"
     if m := _P_HGVS_REMOVAL.match(s):
         new_s = m.group("main")
-        fixes.append(HGVSFix(
+        return new_s, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.STRIPPED_PROTEIN_SUFFIX,
             message="Removed trailing protein (p.) annotation",
             original=s, fixed=new_s,
-        ))
-        s = new_s
+        )]
+    return s, []
 
-    # 2. Strip non-printable characters and all whitespace
+
+def _op_strip_whitespace(s: str) -> tuple[str, list[HGVSFix]]:
+    # Strip non-printable characters and all whitespace
     s2 = "".join(c for c in s if c.isprintable()).replace(" ", "")
     if s2 != s:
-        fixes.append(HGVSFix(
+        return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.STRIPPED_WHITESPACE,
             message="Removed whitespace",
             original=s, fixed=s2,
-        ))
-        s = s2
+        )]
+    return s, []
 
-    # 3. Fix "::" → ":"
+
+def _op_fix_double_colon(s: str) -> tuple[str, list[HGVSFix]]:
     if "::" in s:
         s2 = s.replace("::", ":")
-        fixes.append(HGVSFix(
+        return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.FIXED_DOUBLE_COLON,
             message="Fixed double colon '::'", original=s, fixed=s2,
-        ))
-        s = s2
+        )]
+    return s, []
 
-    # 3b. Fix "__" → "_"
+
+def _op_fix_double_underscore(s: str) -> tuple[str, list[HGVSFix]]:
     if "__" in s:
         s2 = s.replace("__", "_")
-        fixes.append(HGVSFix(
+        return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.ADDED_TRANSCRIPT_UNDERSCORE,
             message="Fixed double underscore '__'", original=s, fixed=s2,
-        ))
-        s = s2
+        )]
+    return s, []
 
-    # 4. Fix double-kind notation (e.g. "c.c." → "c.")
+
+def _op_fix_double_kind(s: str) -> tuple[str, list[HGVSFix]]:
+    # Fix double-kind notation (e.g. "c.c." → "c.")
+    fixes = []
     for kind in "cgmnpr":
         pat = f"{kind}.{kind}."
         if pat in s.lower():
@@ -359,20 +365,26 @@ def clean_hgvs(
                 original=s, fixed=s2,
             ))
             s = s2
+    return s, fixes
 
-    # 5. Add missing "N" prefix (e.g. "M_001234" → "NM_001234")
+
+def _op_add_n_prefix(s: str) -> tuple[str, list[HGVSFix]]:
+    # Add missing "N" prefix (e.g. "M_001234" → "NM_001234")
     if s[:2].upper() in ("M_", "C_", "R_"):
         s2 = "N" + s
-        fixes.append(HGVSFix(
+        return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.ADDED_N_PREFIX,
-            message=f"Added missing 'N' prefix",
+            message="Added missing 'N' prefix",
             original=s, fixed=s2,
-        ))
-        s = s2
+        )]
+    return s, []
 
-    # 6. Lowercase mutation types (DUP→dup, DEL→del, INS→ins, INV→inv)
-    #    Also handles DELINS since it replaces substrings
+
+def _op_lowercase_mutation_type(s: str) -> tuple[str, list[HGVSFix]]:
+    # Lowercase mutation types (DUP→dup, DEL→del, INS→ins, INV→inv)
+    # Also handles DELINS since it replaces substrings
+    fixes = []
     for mt in ["INS", "DEL", "DUP", "INV"]:
         if mt in s:
             s2 = s.replace(mt, mt.lower())
@@ -383,33 +395,39 @@ def clean_hgvs(
                 original=s, fixed=s2,
             ))
             s = s2
+    return s, fixes
 
-    # 7. Strip unbalanced or multiple brackets
+
+def _op_strip_unbalanced_brackets(s: str) -> tuple[str, list[HGVSFix]]:
     open_b  = s.count("(")
     close_b = s.count(")")
     if open_b != close_b or open_b > 1 or close_b > 1:
         s2 = s.replace("(", "").replace(")", "")
-        fixes.append(HGVSFix(
+        return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.STRIPPED_UNBALANCED_BRACKETS,
             message="Stripped unbalanced or multiple brackets",
             original=s, fixed=s2,
-        ))
-        s = s2
+        )]
+    return s, []
 
-    # 8. Add missing underscore to NM/NC prefix (e.g. "NM12345" → "NM_12345")
+
+def _op_add_transcript_underscore(s: str) -> tuple[str, list[HGVSFix]]:
+    # Add missing underscore to NM/NC prefix (e.g. "NM12345" → "NM_12345")
     s2 = _TRANSCRIPT_NO_UNDERSCORE.sub(r"\1_\2", s)
     if s2 != s:
-        fixes.append(HGVSFix(
+        return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.ADDED_TRANSCRIPT_UNDERSCORE,
             message="Added missing underscore to transcript prefix",
             original=s, fixed=s2,
-        ))
-        s = s2
+        )]
+    return s, []
 
-    # 9. Structural reconstruction: uppercase prefix, lowercase kind letter,
-    #    insert ':' and '.' where missing, place gene symbol correctly
+
+def _op_reconstruct_structure(s: str) -> tuple[str, list[HGVSFix]]:
+    # Structural reconstruction: uppercase prefix, lowercase kind letter,
+    # insert ':' and '.' where missing, place gene symbol correctly
     if m := _HGVS_CLEAN_PATTERN.match(s):
         reconstructed = _reconstruct(m)
         if reconstructed and reconstructed != s:
@@ -420,14 +438,17 @@ def clean_hgvs(
             else:
                 code = HGVSFixCode.UPPERCASED_BASES
                 message = "Reconstructed HGVS with correct casing and structure"
-            fixes.append(HGVSFix(
+            return reconstructed, [HGVSFix(
                 severity=HGVSFixSeverity.WARNING,
                 code=code, message=message,
                 original=s, fixed=reconstructed,
-            ))
-            s = reconstructed
+            )]
+    return s, []
 
-    # 10. Uppercase bases in ref>alt substitutions (e.g. "c.100a>g" → "c.100A>G")
+
+def _op_uppercase_bases(s: str) -> tuple[str, list[HGVSFix]]:
+    fixes = []
+    # Uppercase bases in ref>alt substitutions (e.g. "c.100a>g" → "c.100A>G")
     s2 = _REF_ALT_NUC.sub(
         lambda m: m.group("ref").upper() + ">" + m.group("alt").upper(), s
     )
@@ -450,35 +471,113 @@ def clean_hgvs(
             original=s, fixed=s2,
         ))
         s = s2
+    return s, fixes
 
-    # 11. Insert missing "c." or "g." after the colon
-    #     e.g. "NM_001754.5:557T>A" → "NM_001754.5:c.557T>A"
+
+def _op_add_missing_kind(s: str) -> tuple[str, list[HGVSFix]]:
+    # Insert missing "c." or "g." after the colon
+    # e.g. "NM_001754.5:557T>A" → "NM_001754.5:c.557T>A"
     if _HGVS_TRANSCRIPT_NO_CDOT.match(s):
         s2 = s.replace(":", ":c.", 1)
-        fixes.append(HGVSFix(
+        return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.ADDED_MISSING_KIND,
             message="Added missing 'c.' kind prefix",
             original=s, fixed=s2,
-        ))
-        s = s2
+        )]
     elif _HGVS_CONTIG_NO_GDOT.match(s):
         s2 = s.replace(":", ":g.", 1)
-        fixes.append(HGVSFix(
+        return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.ADDED_MISSING_KIND,
             message="Added missing 'g.' kind prefix",
             original=s, fixed=s2,
-        ))
-        s = s2
+        )]
+    return s, []
 
-    # 12. Gene/transcript swap and case normalisation
-    s, gene_fixes = _fix_gene_transcript(s)
-    fixes.extend(gene_fixes)
 
-    # 13. Validation — run after cleaning so both the fix and any remaining
-    #     problem are captured in one call
-    fixes.extend(_validate(s))
+# Canonical pipeline: (op, function), in the order they must run.
+# clean_hgvs() filters this by the caller's `ops` set but never reorders it.
+_PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
+    (HGVSCleanOp.STRIP_PROTEIN_SUFFIX,      _op_strip_protein_suffix),
+    (HGVSCleanOp.STRIP_WHITESPACE,          _op_strip_whitespace),
+    (HGVSCleanOp.FIX_DOUBLE_COLON,          _op_fix_double_colon),
+    (HGVSCleanOp.FIX_DOUBLE_UNDERSCORE,     _op_fix_double_underscore),
+    (HGVSCleanOp.FIX_DOUBLE_KIND,           _op_fix_double_kind),
+    (HGVSCleanOp.ADD_N_PREFIX,              _op_add_n_prefix),
+    (HGVSCleanOp.LOWERCASE_MUTATION_TYPE,   _op_lowercase_mutation_type),
+    (HGVSCleanOp.STRIP_UNBALANCED_BRACKETS, _op_strip_unbalanced_brackets),
+    (HGVSCleanOp.ADD_TRANSCRIPT_UNDERSCORE, _op_add_transcript_underscore),
+    (HGVSCleanOp.RECONSTRUCT_STRUCTURE,     _op_reconstruct_structure),
+    (HGVSCleanOp.UPPERCASE_BASES,           _op_uppercase_bases),
+    (HGVSCleanOp.ADD_MISSING_KIND,          _op_add_missing_kind),
+    (HGVSCleanOp.FIX_GENE_TRANSCRIPT,       _fix_gene_transcript),
+]
+
+# All cleaning ops — the default for clean_hgvs(). Use set algebra for a
+# blocklist, e.g. ALL_CLEAN_OPS - {HGVSCleanOp.STRIP_PROTEIN_SUFFIX}.
+ALL_CLEAN_OPS: frozenset = frozenset(HGVSCleanOp)
+
+
+# ---------------------------------------------------------------------------
+# Public: clean_hgvs
+# ---------------------------------------------------------------------------
+
+def clean_hgvs(
+    hgvs_string: str,
+    ops: Optional[set] = None,
+    raise_on_errors: bool = False,
+    validate: bool = True,
+) -> tuple[str, list[HGVSFix]]:
+    """
+    Attempt to fix common formatting problems in an HGVS string.
+
+    Args:
+        hgvs_string: the input to clean.
+        ops: the subset of HGVSCleanOp to apply. None (default) runs them all
+            (ALL_CLEAN_OPS). For an allowlist, pass just the ops you want, e.g.
+            {HGVSCleanOp.STRIP_WHITESPACE}. For a blocklist, use set algebra,
+            e.g. ALL_CLEAN_OPS - {HGVSCleanOp.STRIP_PROTEIN_SUFFIX}. Ops always
+            run in the canonical pipeline order regardless of set order.
+        raise_on_errors: if True, raise HGVSInputError on the first ERROR-level
+            fix instead of returning it in the list.
+        validate: if True (default), run post-cleaning validation and include any
+            ERROR-level problems in the returned fixes. Pass False to skip it
+            (e.g. when you only want string normalisation).
+
+    Returns:
+        (cleaned_string, fixes)
+        where fixes is a list of HGVSFix describing every change made and
+        any validation errors found.
+
+    The returned string is always the best attempt at a valid HGVS string.
+    If ERROR-level fixes are present (and raise_on_errors=False), the
+    returned string may still be invalid.
+
+    Example::
+
+        cleaned, fixes = clean_hgvs("nm_000059.4 c.316+5G>A")
+        # cleaned == "NM_000059.4:c.316+5G>A"
+        # fixes == [
+        #   HGVSFix(WARNING, STRIPPED_WHITESPACE, ...),
+        #   HGVSFix(WARNING, UPPERCASED_TRANSCRIPT, ...),
+        # ]
+    """
+    if ops is None:
+        ops = ALL_CLEAN_OPS
+
+    fixes: list[HGVSFix] = []
+    s = hgvs_string
+
+    for op, fn in _PIPELINE:
+        if op in ops:
+            s, op_fixes = fn(s)
+            fixes.extend(op_fixes)
+
+    # Validation — run after cleaning so both the fix and any remaining
+    # problem are captured in one call
+    if validate:
+        fixes.extend(_validate(s))
 
     if raise_on_errors:
         errors = [f for f in fixes if f.severity == HGVSFixSeverity.ERROR]

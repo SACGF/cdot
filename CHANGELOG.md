@@ -5,12 +5,16 @@
 - #86 Ensembl Tark Data Provider implementation 
 - #70 Use Snakemake to build transcripts (only affects data not client code)
 - #27 - HGVS cleaning: new `cdot.hgvs.clean` module (`clean_hgvs`, `get_best_transcript_version`) - cdot can now fix common bad HGVS formatting and report warnings
+- #27 - `clean_hgvs` now accepts an `ops` set (`HGVSCleanOp` / `ALL_CLEAN_OPS`) to run a subset of cleaning operations (allowlist, or blocklist via set algebra) and a `validate` flag to toggle ERROR-level validation; `fix_hgvs` forwards `ops`
 - Gene HGVS: new `cdot.hgvs.gene_hgvs` module (`resolve_gene_hgvs`, `fix_hgvs`) - resolve gene-symbol HGVS (eg `BRCA2:c.36del`) via MANE/canonical transcript tags
+- #27 - `RESTDataProvider.get_tx_ac_tags_for_gene` - retrieve canonical/tagged transcripts over REST (needs cdot_rest endpoint `transcripts/gene/<gene>/tags/<genome_build>`, see SACGF/cdot_rest#12), enabling `resolve_gene_hgvs` against the REST API
 - #37 - msgspec typed data models in `cdot.models`
 - #77 - Generate JSON schema docs (`generate_transcript_data/generate_json_docs.py`)
 
 ### Changed
 
+- #27 - Gene HGVS resolution now matches RefSeq space-form tags (`MANE Select`) against the underscore-form tag priority, and retries a lowercase gene symbol (eg `brca2`) uppercased after a case-sensitive lookup miss
+- #27 - `resolve_gene_hgvs` / `fix_hgvs` take a `prefer_consortium` arg (`Consortium.REFSEQ` default, or `ENSEMBL`/`None`) that **hard-filters** the resolved transcript's consortium - with a preference set you never get the other consortium back (eg `BRCA2` → `NM_000059.4` not `ENST00000380152.8`); errors if the preferred consortium has no transcript for the gene rather than crossing over; pass `None` to allow either
 - #111 - Gene `biotype` changed from comma-separated str (<= 0.2.19) to list (0.2.20) without a schema bump; `cdot.models` now accepts both forms and normalises legacy str biotype to `list[str]` on load
 - #88 get_acs_for_protein_seq should return list not None
 - #83 Ensembl files missing protein - breaking c_to_p (only affects data not client code)

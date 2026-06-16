@@ -11,6 +11,9 @@ from cdot.hgvs.clean import HGVSFixCode, HGVSFixSeverity, HGVSInputError
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
 from cdot.hgvs.gene_hgvs import (
     DEFAULT_TAG_PRIORITY,
+    Consortium,
+    _consortium_of,
+    _filter_by_consortium,
     _parse_gene_only_hgvs,
     _rank_transcripts_by_tags,
     fix_hgvs,
@@ -28,6 +31,34 @@ E = HGVSFixSeverity.ERROR
 @pytest.fixture(scope="module")
 def ensembl_provider():
     return JSONDataProvider([ENSEMBL_JSON])
+
+
+class _StubProvider:
+    """Minimal data provider for consortium-filter tests.
+
+    resolve_gene_hgvs only calls get_tx_ac_tags_for_gene(gene, build), so we
+    stub that with a gene→[(tx_ac, tags)] map (case-sensitive, like Redis).
+    """
+    def __init__(self, gene_map):
+        self._gene_map = gene_map
+
+    def get_tx_ac_tags_for_gene(self, gene, genome_build):
+        return self._gene_map.get(gene, [])
+
+
+@pytest.fixture
+def refseq_mixed_provider():
+    return _StubProvider({
+        # BRCA2: MANE Select pair present in both consortiums
+        "BRCA2": [
+            ("ENST00000380152.8", ["MANE_Select", "Ensembl_canonical"]),
+            ("NM_000059.4", ["MANE Select"]),  # RefSeq space-form tag
+        ],
+        # Gene that only exists in Ensembl
+        "ENSEMBLONLY": [
+            ("ENST00000999999.1", ["MANE_Select"]),
+        ],
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -104,6 +135,92 @@ def test_rank_matched_tag_field():
     assert ranked[0][2] == "MANE_Select"
 
 
+def test_rank_refseq_space_form_tags_match():
+    # RefSeq stores tags with spaces ("MANE Select"); must still match the
+    # underscore-form entries in DEFAULT_TAG_PRIORITY.
+    tx_and_tags = [
+        ("NM_002", []),
+        ("NM_001", ["MANE Select"]),
+    ]
+    ranked = _rank_transcripts_by_tags(tx_and_tags, DEFAULT_TAG_PRIORITY)
+    assert ranked[0][0] == "NM_001"
+    assert ranked[0][2] == "MANE_Select"          # matched tag is normalised
+    assert ranked[0][1] == ["MANE Select"]        # original tag preserved
+
+
+def test_rank_refseq_select_space_form_matches():
+    tx_and_tags = [("NM_001", ["RefSeq Select"])]
+    ranked = _rank_transcripts_by_tags(tx_and_tags, DEFAULT_TAG_PRIORITY)
+    assert ranked[0][2] == "RefSeq_Select"
+
+
+# ---------------------------------------------------------------------------
+# _filter_by_consortium / _consortium_of
+# ---------------------------------------------------------------------------
+
+# The MANE Select pair: same biological transcript in both consortiums.
+MANE_PAIR = [
+    ("ENST00000380152.8", ["MANE_Select"]),
+    ("NM_000059.4", ["MANE Select"]),
+]
+
+
+def test_consortium_of():
+    assert _consortium_of("ENST00000380152.8") == Consortium.ENSEMBL
+    assert _consortium_of("NM_000059.4") == Consortium.REFSEQ
+    assert _consortium_of("XR_001.1") == Consortium.REFSEQ
+
+
+def test_filter_by_consortium_refseq():
+    filtered = _filter_by_consortium(MANE_PAIR, Consortium.REFSEQ)
+    assert [t[0] for t in filtered] == ["NM_000059.4"]
+
+
+def test_filter_by_consortium_ensembl():
+    filtered = _filter_by_consortium(MANE_PAIR, Consortium.ENSEMBL)
+    assert [t[0] for t in filtered] == ["ENST00000380152.8"]
+
+
+# ---------------------------------------------------------------------------
+# resolve_gene_hgvs — consortium hard filter (uses RefSeq test fixture)
+# ---------------------------------------------------------------------------
+
+def test_resolve_prefers_refseq_from_mixed(refseq_mixed_provider):
+    resolved, fixes = resolve_gene_hgvs(
+        "BRCA2:c.36del", refseq_mixed_provider, "GRCh38",
+        prefer_consortium=Consortium.REFSEQ,
+    )
+    assert resolved == "NM_000059.4:c.36del"
+
+
+def test_resolve_prefers_ensembl_from_mixed(refseq_mixed_provider):
+    resolved, fixes = resolve_gene_hgvs(
+        "BRCA2:c.36del", refseq_mixed_provider, "GRCh38",
+        prefer_consortium=Consortium.ENSEMBL,
+    )
+    assert resolved == "ENST00000380152.8:c.36del"
+
+
+def test_resolve_refseq_filter_errors_when_only_ensembl(refseq_mixed_provider):
+    # ENSG-only gene with prefer=REFSEQ must error, never cross to Ensembl
+    resolved, fixes = resolve_gene_hgvs(
+        "ENSEMBLONLY:c.36del", refseq_mixed_provider, "GRCh38",
+        prefer_consortium=Consortium.REFSEQ,
+    )
+    assert resolved == "ENSEMBLONLY:c.36del"  # unchanged
+    assert fixes[-1].severity == E
+    assert fixes[-1].code == C.NO_TRANSCRIPT_FOR_GENE
+    assert "refseq" in fixes[-1].message.lower()
+
+
+def test_resolve_none_allows_either(refseq_mixed_provider):
+    resolved, _fixes = resolve_gene_hgvs(
+        "ENSEMBLONLY:c.36del", refseq_mixed_provider, "GRCh38",
+        prefer_consortium=None,
+    )
+    assert resolved == "ENST00000999999.1:c.36del"
+
+
 # ---------------------------------------------------------------------------
 # resolve_gene_hgvs — already has transcript (passthrough)
 # ---------------------------------------------------------------------------
@@ -121,7 +238,9 @@ def test_resolve_passthrough_when_transcript_present(ensembl_provider):
 # ---------------------------------------------------------------------------
 
 def test_resolve_gene_symbol_picks_mane_select(ensembl_provider):
-    resolved, fixes = resolve_gene_hgvs("AOAH:c.36del", ensembl_provider, "GRCh38")
+    # Fixture is Ensembl data, so allow Ensembl (default is RefSeq)
+    resolved, fixes = resolve_gene_hgvs("AOAH:c.36del", ensembl_provider, "GRCh38",
+                                        prefer_consortium=Consortium.ENSEMBL)
     assert resolved == "ENST00000617537.5:c.36del"
     assert len(fixes) == 1
     fix = fixes[0]
@@ -132,6 +251,18 @@ def test_resolve_gene_symbol_picks_mane_select(ensembl_provider):
     assert "MANE_Select" in fix.message
     assert fix.original == "AOAH"
     assert fix.fixed == "ENST00000617537.5"
+
+
+def test_resolve_lowercase_gene_symbol_retries_uppercased(ensembl_provider):
+    # Gene lookups are case-sensitive; a lowercase symbol should retry uppercased
+    resolved, fixes = resolve_gene_hgvs("aoah:c.36del", ensembl_provider, "GRCh38",
+                                        prefer_consortium=Consortium.ENSEMBL)
+    assert resolved == "ENST00000617537.5:c.36del"
+    assert any(f.code == C.UPPERCASED_GENE_SYMBOL for f in fixes)
+    uc_fix = next(f for f in fixes if f.code == C.UPPERCASED_GENE_SYMBOL)
+    assert uc_fix.original == "aoah"
+    assert uc_fix.fixed == "AOAH"
+    assert any(f.code == C.RESOLVED_GENE_TO_TRANSCRIPT for f in fixes)
 
 
 def test_resolve_unknown_gene_returns_error(ensembl_provider):
@@ -163,14 +294,16 @@ def test_fix_hgvs_cleaning_only_no_provider():
 
 
 def test_fix_hgvs_gene_resolution_with_provider(ensembl_provider):
-    result, fixes = fix_hgvs("AOAH:c.36del", data_provider=ensembl_provider, genome_build="GRCh38")
+    result, fixes = fix_hgvs("AOAH:c.36del", data_provider=ensembl_provider,
+                             genome_build="GRCh38", prefer_consortium=Consortium.ENSEMBL)
     assert result == "ENST00000617537.5:c.36del"
     assert any(f.code == C.RESOLVED_GENE_TO_TRANSCRIPT for f in fixes)
 
 
 def test_fix_hgvs_cleaning_then_resolution(ensembl_provider):
     # uppercase mutation type should be cleaned, then gene resolved
-    result, fixes = fix_hgvs("AOAH:c.36DEL", data_provider=ensembl_provider, genome_build="GRCh38")
+    result, fixes = fix_hgvs("AOAH:c.36DEL", data_provider=ensembl_provider,
+                             genome_build="GRCh38", prefer_consortium=Consortium.ENSEMBL)
     assert result == "ENST00000617537.5:c.36del"
     fix_codes = {f.code for f in fixes}
     assert C.LOWERCASED_MUTATION_TYPE in fix_codes
@@ -193,6 +326,7 @@ def test_fix_hgvs_no_raise_when_no_errors(ensembl_provider):
         data_provider=ensembl_provider,
         genome_build="GRCh38",
         raise_on_errors=True,
+        prefer_consortium=Consortium.ENSEMBL,
     )
     assert result == "ENST00000617537.5:c.36del"
     assert all(f.severity == W for f in fixes)
@@ -203,3 +337,37 @@ def test_fix_hgvs_no_provider_no_genome_build():
     result, fixes = fix_hgvs("nm_000059.4:c.316+5G>A")
     assert result == "NM_000059.4:c.316+5G>A"
     assert any(f.code == C.UPPERCASED_TRANSCRIPT for f in fixes)
+
+
+# ---------------------------------------------------------------------------
+# RESTDataProvider.get_tx_ac_tags_for_gene — drives the cdot_rest tags endpoint
+# ---------------------------------------------------------------------------
+
+def test_rest_provider_get_tx_ac_tags_for_gene(monkeypatch):
+    from cdot.hgvs.dataproviders.json_data_provider import RESTDataProvider
+
+    dp = RESTDataProvider(url="https://example.org")
+
+    captured = {}
+
+    def fake_get(url):
+        captured["url"] = url
+        # Server JSON: tuples come back as lists nested under "results"
+        return {"results": [["NM_000059.4", ["MANE_Select", "basic"]],
+                            ["NM_000059.3", []]]}
+
+    monkeypatch.setattr(dp, "_get_from_url", fake_get)
+
+    result = dp.get_tx_ac_tags_for_gene("BRCA2", "GRCh38")
+
+    assert captured["url"] == "https://example.org/transcripts/gene/BRCA2/tags/GRCh38"
+    assert result == [("NM_000059.4", ["MANE_Select", "basic"]),
+                      ("NM_000059.3", [])]
+
+
+def test_rest_provider_get_tx_ac_tags_for_gene_empty(monkeypatch):
+    from cdot.hgvs.dataproviders.json_data_provider import RESTDataProvider
+
+    dp = RESTDataProvider(url="https://example.org")
+    monkeypatch.setattr(dp, "_get_from_url", lambda url: None)  # 404 → None
+    assert dp.get_tx_ac_tags_for_gene("NOPE", "GRCh38") == []
