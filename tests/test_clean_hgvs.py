@@ -150,6 +150,25 @@ CLEAN_CASES = [
     ("NM_001754.5(RUNX1):c..1415T>C",            "NM_001754.5(RUNX1):c.1415T>C",              {C.FIXED_DOUBLE_DOT}),
     # #112 — misplaced colon in transcript prefix
     ("NM:_000059.4:c.316+5G>A",                  "NM_000059.4:c.316+5G>A",                     {C.FIXED_PREFIX_COLON}),
+    # #112 — leading junk before the transcript accession
+    ("#NM_000059.4:c.316+5G>A",                  "NM_000059.4:c.316+5G>A",                     {C.STRIPPED_LEADING_JUNK}),
+    (":NM_000059.4:c.316+5G>A",                  "NM_000059.4:c.316+5G>A",                     {C.STRIPPED_LEADING_JUNK}),
+    ("GRCh38.p2 NM_000059.4:c.316+5G>A",         "NM_000059.4:c.316+5G>A",                     {C.STRIPPED_LEADING_JUNK}),
+    # #112 — gene symbol wedged between extra colons / stray parens
+    ("NM_001754.5:(RUNX1):c.1415T>C",            "NM_001754.5(RUNX1):c.1415T>C",              {C.FIXED_GENE_WRAPPER}),
+    ("NM_001754.5:RUNX1:c.1415T>C",              "NM_001754.5(RUNX1):c.1415T>C",              {C.FIXED_GENE_WRAPPER}),
+    ("NM_001754.5(RUNX1:):c.1415T>C",            "NM_001754.5(RUNX1):c.1415T>C",              {C.FIXED_GENE_WRAPPER}),
+    # #112 — comma for the kind dot, period for the substitution '>'
+    ("NM_000059.4:c,123del",                     "NM_000059.4:c.123del",                       {C.FIXED_SEPARATOR_TYPO}),
+    ("NM_000059.4:c.123C.T",                     "NM_000059.4:c.123C>T",                       {C.FIXED_SEPARATOR_TYPO}),
+    # #112 — redundant base count after a ranged del/dup, normalised to plain del/dup
+    ("NM_000059.4:c.1315_1337dup23",             "NM_000059.4:c.1315_1337dup",                 {C.DROPPED_DEL_DUP_COUNT}),
+    ("NM_000059.4:c.123_127del5",                "NM_000059.4:c.123_127del",                   {C.DROPPED_DEL_DUP_COUNT}),
+    # #112 — trailing comma separator
+    ("NM_000059.4:c.316+5G>A,",                  "NM_000059.4:c.316+5G>A",                     {C.STRIPPED_SURROUNDING_PUNCTUATION}),
+    # Gene symbol contains a mutation-type substring (INS) AND the allele has an
+    # uppercase mutation type — only the allele must be lowercased, not the gene.
+    ("NM_000208.4(INSR):c.215_216DEL",           "NM_000208.4(INSR):c.215_216del",            {C.LOWERCASED_MUTATION_TYPE}),
 ]
 
 
@@ -191,6 +210,17 @@ def test_fix_gene_transcript(bad, expected, required_codes):
 # ---------------------------------------------------------------------------
 # clean_hgvs — protein suffix removal
 # ---------------------------------------------------------------------------
+
+def test_drop_del_dup_count_requires_range():
+    # With a range the count is redundant -> dropped to plain dup
+    cleaned, fixes = clean_hgvs("NM_000059.4:c.1315_1337dup23", validate=False)
+    assert cleaned == "NM_000059.4:c.1315_1337dup"
+    assert C.DROPPED_DEL_DUP_COUNT in codes(fixes)
+    # Single position: "del5" means delete 5 bases -> must NOT be altered
+    cleaned, fixes = clean_hgvs("NM_000059.4:c.123del5", validate=False)
+    assert cleaned == "NM_000059.4:c.123del5"
+    assert C.DROPPED_DEL_DUP_COUNT not in codes(fixes)
+
 
 def test_clean_hgvs_protein_suffix():
     cleaned, fixes = clean_hgvs("NM_000059.4:c.316+5G>A p.Arg106*")
@@ -244,6 +274,16 @@ ALREADY_VALID = [
     "NM_001145661.2(GATA2):c.890_903dup",
     "NC_000017.10:g.21085664G>C",
     "GATA2:c.1113dup",
+    # Gene symbols containing a mutation-type substring must not be corrupted
+    # (INSR -> insR / INVS -> invS were the bug); both transcript-qualified and
+    # bare gene-symbol forms must pass through untouched.
+    "NM_000208.4(INSR):c.215A>G",
+    "NM_014425.5(INVS):c.100A>G",
+    "INSR:c.215A>G",
+    # Multiple *balanced* brackets are valid HGVS (gene symbol in parens plus
+    # uncertain-range notation) and must NOT be stripped as "unbalanced".
+    "NM_004006.2(DMD):c.(4071+1_4072-1)_(5154+1_5155-1)del",
+    "NC_000023.11:g.(31180435_31200854)_(33274278_33357726)del",
 ]
 
 

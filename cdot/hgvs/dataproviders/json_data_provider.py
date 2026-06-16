@@ -374,8 +374,10 @@ class LocalDataProvider(AbstractJSONDataProvider):
             build_data = transcript_data["genome_builds"].get(genome_build)
             if build_data is None:
                 continue
-            contig, tx_start, tx_end, _ = self._get_contig_start_end_strand(build_data)
-            length = tx_end - tx_start
+            # Spliced (exonic) transcript length - the sum of exon lengths, NOT
+            # the genomic span (which would include introns). Exons are
+            # [alt_start, alt_end, ...] so each exon's length is alt_end - alt_start.
+            length = sum(exon[1] - exon[0] for exon in build_data["exons"])
             tags = self._get_transcript_tags(transcript_data, genome_build)
             tx_list.append((length, transcript_id, tags))
 

@@ -92,6 +92,42 @@ class EnsemblTarkDataProviderTestCase(AbstractEnsemblTestCase):
     def setUpClass(cls):
         cls.json_data_provider = MockEnsemblTarkDataProvider()
 
+    def test_cds_start_end_coding_with_missing_utr(self):
+        # A coding transcript may lack a 5' and/or 3' UTR; it must still be
+        # reported as coding (not None,None just because a UTR seq is missing).
+        from cdot.hgvs.dataproviders.ensembl_tark_data_provider import EnsemblTarkDataProvider
+        f = EnsemblTarkDataProvider._get_cds_start_end
+        exons = [{"loc_start": 1, "loc_end": 100}]  # sequence length 100
+        coding = {"translation_start": 1}  # any truthy cds_info -> coding
+
+        # both UTRs present
+        self.assertEqual(
+            f({"cds_info": coding, "exons": exons,
+               "five_prime_utr_seq": "A" * 5, "three_prime_utr_seq": "G" * 3}),
+            (5, 97))
+        # no 5' UTR (CDS reaches transcript start) -> cds_start_i == 0
+        self.assertEqual(
+            f({"cds_info": coding, "exons": exons,
+               "five_prime_utr_seq": None, "three_prime_utr_seq": "G" * 3}),
+            (0, 97))
+        # no 3' UTR (CDS reaches transcript end) -> cds_end_i == sequence length
+        self.assertEqual(
+            f({"cds_info": coding, "exons": exons,
+               "five_prime_utr_seq": "A" * 5, "three_prime_utr_seq": None}),
+            (5, 100))
+        # non-coding (TARK gives cds_info == {} and no UTR seqs) -> None, None
+        self.assertEqual(
+            f({"cds_info": {}, "exons": exons,
+               "five_prime_utr_seq": None, "three_prime_utr_seq": None}),
+            (None, None))
+
+    def test_get_tx_exons_wrong_build_raises(self):
+        # The transcript exists but is only aligned to GRCh38 (NC_000007.14).
+        # Requesting a supported-but-unaligned contig must raise
+        # HGVSDataNotAvailableError, not crash with a TypeError on None.
+        with self.assertRaises(HGVSDataNotAvailableError):
+            self.json_data_provider.get_tx_exons("ENST00000617537.5", "NC_000007.13", "splign")
+
 
 
 if __name__ == '__main__':

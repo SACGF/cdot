@@ -97,6 +97,19 @@ def test_parse_gene_only_hgvs_ensembl_transcript():
     assert allele is None
 
 
+@pytest.mark.parametrize("hgvs_string", [
+    "nm_000059.4:c.36del",
+    "enst00000617537.5:c.36del",
+])
+def test_parse_gene_only_hgvs_lowercase_transcript_is_passthrough(hgvs_string):
+    # A lowercase transcript accession must be recognised as a transcript (and
+    # passed through), not mistaken for a gene symbol. Otherwise resolve_gene_hgvs
+    # tries to look up e.g. "enst00000617537.5" as a gene and errors.
+    gene, allele = _parse_gene_only_hgvs(hgvs_string)
+    assert gene is None
+    assert allele is None
+
+
 # ---------------------------------------------------------------------------
 # _rank_transcripts_by_tags
 # ---------------------------------------------------------------------------
@@ -483,6 +496,49 @@ def test_fix_hgvs_version_fallback_raise_on_errors(version_provider):
             "NM_999999.1:c.36del", data_provider=version_provider,
             version_fallback=VersionStrategy.UP_THEN_DOWN, raise_on_errors=True,
         )
+
+
+# ---------------------------------------------------------------------------
+# JSONDataProvider.get_tx_ac_tags_for_gene — ranks by spliced (exonic) length
+# ---------------------------------------------------------------------------
+
+def test_json_provider_tags_ranked_by_exonic_not_genomic_length():
+    """Ranking must use spliced (exonic) length, not genomic span.
+
+    WIDE_SPAN has a huge genomic footprint but little exonic sequence; COMPACT
+    has a small footprint but more exonic sequence. The longer *transcript*
+    (COMPACT) must rank first - ranking on genomic span would wrongly pick
+    WIDE_SPAN.
+    """
+    import io
+    import json
+
+    def _build(exons):
+        return {
+            "contig": "NC_000001.11", "strand": "+", "url": None,
+            "cds_start": None, "cds_end": None, "exons": exons,
+        }
+
+    data = {
+        "cdot_version": "0.2.26",
+        "genome_builds": ["GRCh38"],
+        "transcripts": {
+            # 2 tiny exons spread across a 10kb span -> exonic length 100
+            "WIDE_SPAN.1": {
+                "id": "WIDE_SPAN.1", "gene_name": "GENEX",
+                "genome_builds": {"GRCh38": _build(
+                    [[0, 50, 1, 1, 50, None], [9950, 10000, 2, 51, 100, None]])},
+            },
+            # 1 big exon in a 500bp span -> exonic length 500
+            "COMPACT.1": {
+                "id": "COMPACT.1", "gene_name": "GENEX",
+                "genome_builds": {"GRCh38": _build([[0, 500, 1, 1, 500, None]])},
+            },
+        },
+    }
+    dp = JSONDataProvider([io.StringIO(json.dumps(data))])
+    ranked = dp.get_tx_ac_tags_for_gene("GENEX", "GRCh38")
+    assert [tx_ac for tx_ac, _tags in ranked] == ["COMPACT.1", "WIDE_SPAN.1"]
 
 
 # ---------------------------------------------------------------------------

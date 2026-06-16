@@ -112,6 +112,32 @@ class TestModels(unittest.TestCase):
         self.assertEqual(models.gene_from_dict({"biotype": ""}).biotype, [])
         self.assertIsNone(models.gene_from_dict({}).biotype)
 
+    def test_genome_build_keeps_current_schema_fields(self):
+        """source/ccds/transcript_support_level (data schema >= 0.2.32/0.2.33) must be
+        retained, not silently dropped. The typed struct is meant to be a drop-in for
+        the plain build dicts, so attribute, item and .get() access must all work."""
+        d = {
+            "id": "NM_FAKE.1",
+            "gene_name": "FAKE1",
+            "genome_builds": {
+                "GRCh38": {
+                    "contig": "NC_000001.11",
+                    "strand": "+",
+                    "exons": [[100, 200, 1, 0, 100, None]],
+                    "source": "BestRefSeq",
+                    "ccds": "CCDS123.1",
+                    "transcript_support_level": "1",
+                }
+            },
+        }
+        build = models.transcript_from_dict(d).genome_builds["GRCh38"]
+        self.assertEqual(build.source, "BestRefSeq")
+        self.assertEqual(build.ccds, "CCDS123.1")
+        self.assertEqual(build.transcript_support_level, "1")
+        # dict-compat access (used by the data providers / external subclasses)
+        self.assertEqual(build["ccds"], "CCDS123.1")
+        self.assertEqual(build.get("source"), "BestRefSeq")
+
     def test_transcript_from_dict(self):
         """On-demand path: build a typed Transcript from a plain dict."""
         with open(REFSEQ_JSON) as f:

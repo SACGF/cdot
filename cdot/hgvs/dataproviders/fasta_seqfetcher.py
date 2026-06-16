@@ -46,7 +46,7 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
 
         if not self.contig_fastas:
             raise ValueError("Need to provide at least one of fasta file as argument")
-        super().__init__(*args, cache)
+        super().__init__(*args, cache=cache)
 
     def get_mapping_options(self, ac):
         return self.hdp.get_tx_mapping_options(ac)

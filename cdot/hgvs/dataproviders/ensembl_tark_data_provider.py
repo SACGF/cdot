@@ -214,13 +214,18 @@ class EnsemblTarkDataProvider(Interface):
 
     @staticmethod
     def _get_cds_start_end(transcript):
-        # TODO: Could get this out of cds_info - three_prime_utr_length etc
+        # A transcript is coding iff TARK provides a translation (cds_info). For
+        # non-coding transcripts cds_info is {} and both UTR seqs are None.
         cds_start_i = None
         cds_end_i = None
-        three_prime_utr_seq = transcript["three_prime_utr_seq"]
-        five_prime_utr_seq = transcript["five_prime_utr_seq"]
-        if three_prime_utr_seq and five_prime_utr_seq:
+        if transcript.get("cds_info"):
             sequence_length = sum([ex["loc_end"] - ex["loc_start"] + 1 for ex in transcript["exons"]])
+            # A coding transcript may have no 5' and/or no 3' UTR (the CDS reaches
+            # the transcript start/end), in which case TARK gives None/"" for that
+            # UTR seq. Treat a missing UTR as zero length rather than (wrongly)
+            # reporting the whole transcript as non-coding.
+            five_prime_utr_seq = transcript.get("five_prime_utr_seq") or ""
+            three_prime_utr_seq = transcript.get("three_prime_utr_seq") or ""
             cds_start_i = len(five_prime_utr_seq)
             cds_end_i = sequence_length - len(three_prime_utr_seq)
         return cds_start_i, cds_end_i
@@ -260,6 +265,9 @@ class EnsemblTarkDataProvider(Interface):
             return None
 
         transcript = self._get_transcript_for_contig(transcript_results, alt_ac)
+        if transcript is None:
+            raise HGVSDataNotAvailableError(
+                f"Transcript '{tx_ac}' is not aligned to contig '{alt_ac}'")
         tx_exons = []  # Genomic order
         alt_strand = transcript["loc_strand"]
 

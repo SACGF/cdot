@@ -5,9 +5,7 @@
 - #62 - Run the test suite in GitHub Actions CI (`.github/workflows/tests.yml`) on push/PR across Python 3.10–3.14 (dev/infra only, no client code change)
 - #86 Ensembl Tark Data Provider implementation 
 - #70 Use Snakemake to build transcripts (only affects data not client code)
-- #27 - HGVS cleaning: new `cdot.hgvs.clean` module (`clean_hgvs`, `get_best_transcript_version`) - cdot can now fix common bad HGVS formatting and report warnings
-- #112 - `clean_hgvs` gained three string-cleaning ops driven by a real-world search-log corpus: `STRIP_SURROUNDING_PUNCTUATION` (stray wrapping quotes / trailing `;`/`/`, eg `NM_000059.4:c.123A>G'`), `FIX_DOUBLE_DOT` (eg `NM_000059..4` / `c..123`), and `FIX_PREFIX_COLON` (misplaced colon in the transcript prefix, eg `NM:_000059.4`). Lifts corpus recovery of unparseable strings from 48.2% to 52.0%
-- #27 - `clean_hgvs` now accepts an `ops` set (`HGVSCleanOp` / `ALL_CLEAN_OPS`) to run a subset of cleaning operations (allowlist, or blocklist via set algebra) and a `validate` flag to toggle ERROR-level validation; `fix_hgvs` forwards `ops`
+- #27, #112 - HGVS cleaning: new `cdot.hgvs.clean` module (`clean_hgvs`, `get_best_transcript_version`) - cdot can now fix/clean common bad HGVS formatting (whitespace, quotes/punctuation, case, gene/transcript wrappers, separator typos, redundant del/dup counts, etc., driven by a real-world search-log corpus) and report warnings; cleaning ops are individually selectable via an `ops` set (`HGVSCleanOp` / `ALL_CLEAN_OPS`) with a `validate` flag, both forwarded by `fix_hgvs`
 - #27, #36 - Gene HGVS: new `cdot.hgvs.gene_hgvs` module (`resolve_gene_hgvs`, `fix_hgvs`) - resolve gene-symbol HGVS (eg `BRCA2:c.36del`) via MANE/canonical transcript tags
 - #28 - Transcript version fallback: `resolve_transcript_version` and a `version_fallback` arg on `fix_hgvs` (off by default) move to an adjacent transcript version (`VersionStrategy.UP_THEN_DOWN`/`CLOSEST`/`LATEST`) when the requested one isn't in the data, reporting a WARNING (`USED_ADJACENT_VERSION`); backed by a new `get_tx_versions(accession)` data-provider method on `JSONDataProvider` (enumerates in-memory) and `RESTDataProvider` (uses the versionless `/transcript/<ac>` lookup, which returns every stored version keyed by full accession, and warms the cache)
 - #36 - Canonical transcript resolution: `get_tx_ac_tags_for_gene` (JSON + REST data providers) returns transcripts ranked by tag priority (MANE_Select > MANE_Plus_Clinical > RefSeq_Select > Ensembl_canonical > longest); `_get_transcript_tags` is overridable to supplement tags from an external source
@@ -35,6 +33,17 @@
 - #106 - Collapse release nodes (only affects data not client code)
 - Adjusted requirements - depend on hgvs core, bring in pysam for FASTA SeqFetcher
 - Bug fixes + optimisations
+
+### Fixed
+
+- #27 - `clean_hgvs` no longer corrupts gene symbols that contain a mutation-type substring (eg `INSR`→`insR`, `INVS`→`invS`); mutation-type lowercasing is now confined to the allele (after the first `:`)
+- #27 - `clean_hgvs` no longer strips brackets from valid HGVS with multiple *balanced* parentheses (gene symbol in parens plus uncertain-range notation, eg `NM_004006.2(DMD):c.(4071+1_4072-1)_(5154+1_5155-1)del`); only genuinely unbalanced brackets are stripped now
+- #86 - `EnsemblTarkDataProvider` now reports coding transcripts that lack a 5' or 3' UTR correctly (CDS bounds derived from `cds_info`/UTR lengths), instead of returning `cds_start_i`/`cds_end_i` as `None` (which made them look non-coding) when either UTR was absent
+- #36 - `JSONDataProvider.get_tx_ac_tags_for_gene` now ranks transcripts by spliced (exonic) length rather than genomic span (which included introns), matching the documented "decreasing transcript length" ordering used to pick the longest fallback transcript
+- #36 - `resolve_gene_hgvs` now recognises a lowercase transcript accession (eg `enst00000617537.5:c.36del`, `nm_000059.4:c.36del`) as a transcript and passes it through unchanged, instead of treating it as a gene symbol and raising an error
+- #86 - `EnsemblTarkDataProvider.get_tx_exons` now raises `HGVSDataNotAvailableError` (instead of crashing with a `TypeError`) when a transcript is not aligned to the requested (supported) contig
+- #37 - `cdot.models.GenomeBuild` now retains the `source`, `ccds` and `transcript_support_level` build fields (data schema >= 0.2.32/0.2.33) instead of silently dropping them, preserving the dict drop-in contract
+- #39 - `ExonsFromGenomeFastaSeqFetcher(cache=False)` now actually disables caching (the flag was being passed positionally and ignored)
 
 ## [0.2.26] 2024-08-15
 

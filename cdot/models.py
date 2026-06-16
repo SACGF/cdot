@@ -110,6 +110,12 @@ class GenomeBuild(_DictAccessStruct, forbid_unknown_fields=False):
     note: Optional[str] = None
     other_chroms: Optional[List[str]] = None
     """Other contigs this transcript also aligns to (e.g. PAR/alt loci)."""
+    source: Optional[str] = None
+    """Annotation source (GTF/GFF column 2, e.g. ``'BestRefSeq'``); data schema >= 0.2.32."""
+    ccds: Optional[str] = None
+    """CCDS id, when present; data schema >= 0.2.33."""
+    transcript_support_level: Optional[str] = None
+    """Ensembl transcript support level (TSL); data schema >= 0.2.33."""
 
 
 class Transcript(_DictAccessStruct, forbid_unknown_fields=False):

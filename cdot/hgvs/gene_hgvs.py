@@ -71,7 +71,10 @@ def _parse_gene_only_hgvs(hgvs_string: str) -> tuple[Optional[str], Optional[str
     # Parentheses mean a transcript(gene) pair — already has a transcript
     if "(" in prefix or ")" in prefix:
         return None, None
-    if _looks_like_transcript(prefix):
+    # _looks_like_transcript is case-sensitive; uppercase so a lowercase accession
+    # (e.g. "enst00000617537.5" / "nm_000059.4") is recognised as a transcript and
+    # passed through unchanged rather than being treated as a gene symbol.
+    if _looks_like_transcript(prefix.upper()):
         return None, None
     return prefix, allele
 

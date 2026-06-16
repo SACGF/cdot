@@ -47,6 +47,10 @@ class HGVSFixCode(Enum):
     STRIPPED_SURROUNDING_PUNCTUATION = "stripped_surrounding_punctuation"
     FIXED_DOUBLE_DOT             = "fixed_double_dot"
     FIXED_PREFIX_COLON           = "fixed_prefix_colon"
+    STRIPPED_LEADING_JUNK        = "stripped_leading_junk"
+    FIXED_GENE_WRAPPER           = "fixed_gene_wrapper"
+    FIXED_SEPARATOR_TYPO         = "fixed_separator_typo"
+    DROPPED_DEL_DUP_COUNT        = "dropped_del_dup_count"
     ADDED_TRANSCRIPT_UNDERSCORE  = "added_transcript_underscore"
     UPPERCASED_BASES             = "uppercased_bases"
     ADDED_MISSING_KIND           = "added_missing_kind"
@@ -78,15 +82,19 @@ class HGVSCleanOp(Enum):
     depend on earlier ones running first).
     """
     STRIP_PROTEIN_SUFFIX     = "strip_protein_suffix"
+    STRIP_LEADING_JUNK       = "strip_leading_junk"
     STRIP_WHITESPACE         = "strip_whitespace"
     STRIP_SURROUNDING_PUNCTUATION = "strip_surrounding_punctuation"
     FIX_DOUBLE_COLON         = "fix_double_colon"
+    FIX_GENE_WRAPPER         = "fix_gene_wrapper"
     FIX_DOUBLE_DOT           = "fix_double_dot"
     FIX_DOUBLE_UNDERSCORE    = "fix_double_underscore"
     FIX_PREFIX_COLON         = "fix_prefix_colon"
     FIX_DOUBLE_KIND          = "fix_double_kind"
+    FIX_SEPARATOR_TYPO       = "fix_separator_typo"
     ADD_N_PREFIX             = "add_n_prefix"
     LOWERCASE_MUTATION_TYPE  = "lowercase_mutation_type"
+    DROP_DEL_DUP_COUNT       = "drop_del_dup_count"
     STRIP_UNBALANCED_BRACKETS = "strip_unbalanced_brackets"
     ADD_TRANSCRIPT_UNDERSCORE = "add_transcript_underscore"
     RECONSTRUCT_STRUCTURE    = "reconstruct_structure"
@@ -175,6 +183,32 @@ _INS_EMPTY   = re.compile(r".*ins$",    re.IGNORECASE)
 
 # Misplaced colon between an mRNA/RNA prefix and its underscore, e.g. "NM:_000059"
 _PREFIX_COLON_UNDERSCORE = re.compile(r"^(N[MR]|X[MR]):_", re.IGNORECASE)
+
+# Transcript accession prefixes (used to locate the HGVS core within a string)
+_TX_PREFIX = r"(?:NM_|NR_|XM_|XR_|NC_|NG_|ENST|LRG_)"
+
+# Leading junk before a transcript accession, e.g. "#", ":", a literal "\t",
+# or a genome-build prefix like "GRCh38.p2 " / "GRCh37.p12#"
+_LEADING_JUNK = re.compile(r"^(?:GRCh\d+(?:\.p\d+)?[#\s]*|\\t|[#:])+", re.IGNORECASE)
+
+# Gene symbol wedged between extra colons, e.g. "tx:(GENE):c." / "tx:(GENE)c." /
+# "tx:GENE:c." — should be "tx(GENE):c."
+_GENE_WRAPPER = re.compile(
+    rf"^({_TX_PREFIX}[\w.]+):\(?([A-Za-z][A-Za-z0-9-]+)\)?:?([cgnmp][.,])", re.IGNORECASE)
+# Stray colon inside the gene parens, e.g. "(RAD51C:)" -> "(RAD51C)"
+_GENE_PARENS_COLON = re.compile(r"\(([A-Za-z][A-Za-z0-9-]*):\)")
+
+# Comma used in place of the c./g. dot, e.g. ":c,1811" -> ":c.1811"
+_KIND_COMMA = re.compile(r":([cgnmp]),", re.IGNORECASE)
+# Period used in place of the substitution '>', e.g. "1030C.T" -> "1030C>T"
+_SUB_PERIOD = re.compile(r"([ACGT])\.([ACGT])$", re.IGNORECASE)
+
+# del/dup with an explicit range followed by a redundant base count, e.g.
+# "c.1315_1337dup23" -> "c.1315_1337dup" (the range already gives the length;
+# normalise to plain del/dup). The range guard avoids changing the meaning of a
+# single-position "c.123del5" (delete 5 bases). delins/ins are excluded — they
+# genuinely need the inserted sequence, so they stay flagged as errors.
+_DEL_DUP_RANGE_COUNT = re.compile(r"(\d+_\d[\d+\-_*]*(?:del|dup))\d+$", re.IGNORECASE)
 
 
 # ---------------------------------------------------------------------------
@@ -343,7 +377,7 @@ def _op_strip_surrounding_punctuation(s: str) -> tuple[str, list[HGVSFix]]:
     # Strip stray wrapping quotes/backticks and trailing separators left by
     # copy/paste or search boxes, e.g. "NM_000059.4:c.123A>G'" or
     # "NM_000059.4:c.123A>G;". No valid HGVS string starts/ends with these.
-    s2 = s.strip().strip("'\"`").rstrip("/;").strip()
+    s2 = s.strip().strip("'\"`").rstrip("/;,").strip()
     if s2 != s:
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
@@ -433,30 +467,42 @@ def _op_add_n_prefix(s: str) -> tuple[str, list[HGVSFix]]:
 
 def _op_lowercase_mutation_type(s: str) -> tuple[str, list[HGVSFix]]:
     # Lowercase mutation types (DUP→dup, DEL→del, INS→ins, INV→inv)
-    # Also handles DELINS since it replaces substrings
+    # Also handles DELINS since it replaces substrings.
+    # Only operate on the allele (the part after the first ':'): gene symbols such
+    # as INSR, INVS, INSL3 or DELEC1 contain a mutation-type substring and must
+    # not be corrupted (e.g. "NM_000208.4(INSR):c.215A>G" must not become "insR").
+    if ":" not in s:
+        return s, []
+    prefix, allele = s.split(":", 1)
     fixes = []
     for mt in ["INS", "DEL", "DUP", "INV"]:
-        if mt in s:
-            s2 = s.replace(mt, mt.lower())
+        if mt in allele:
+            allele2 = allele.replace(mt, mt.lower())
+            new_s = f"{prefix}:{allele2}"
             fixes.append(HGVSFix(
                 severity=HGVSFixSeverity.WARNING,
                 code=HGVSFixCode.LOWERCASED_MUTATION_TYPE,
                 message=f"Lowercased mutation type '{mt}'",
-                original=s, fixed=s2,
+                original=s, fixed=new_s,
             ))
-            s = s2
+            allele = allele2
+            s = new_s
     return s, fixes
 
 
 def _op_strip_unbalanced_brackets(s: str) -> tuple[str, list[HGVSFix]]:
+    # Only strip when brackets are genuinely unbalanced (a stray "(" or ")" from
+    # copy/paste). Do NOT strip when they balance: multiple balanced pairs are
+    # valid HGVS - a gene symbol in parens plus uncertain-range notation, e.g.
+    # "NM_004006.2(DMD):c.(4071+1_4072-1)_(5154+1_5155-1)del".
     open_b  = s.count("(")
     close_b = s.count(")")
-    if open_b != close_b or open_b > 1 or close_b > 1:
+    if open_b != close_b:
         s2 = s.replace("(", "").replace(")", "")
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.STRIPPED_UNBALANCED_BRACKETS,
-            message="Stripped unbalanced or multiple brackets",
+            message="Stripped unbalanced brackets",
             original=s, fixed=s2,
         )]
     return s, []
@@ -546,19 +592,84 @@ def _op_add_missing_kind(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
+def _op_strip_leading_junk(s: str) -> tuple[str, list[HGVSFix]]:
+    # Strip junk before the transcript accession, e.g. "#NM_...", ":NM_...",
+    # "GRCh38.p2 NM_...". Only fires when a transcript prefix actually follows,
+    # so a leading gene symbol (e.g. "BRCA1(NM_...)") is never touched.
+    s2 = _LEADING_JUNK.sub("", s)
+    if s2 != s and re.match(_TX_PREFIX, s2, re.IGNORECASE):
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.STRIPPED_LEADING_JUNK,
+            message="Stripped leading junk before transcript", original=s, fixed=s2,
+        )]
+    return s, []
+
+
+def _op_fix_gene_wrapper(s: str) -> tuple[str, list[HGVSFix]]:
+    # Normalise a gene symbol wedged between extra colons / stray parens:
+    #   "tx:(GENE):c."  "tx:(GENE)c."  "tx:GENE:c."  -> "tx(GENE):c."
+    #   "tx(GENE:):c."                               -> "tx(GENE):c."
+    s2 = _GENE_PARENS_COLON.sub(r"(\1)", s)
+    s2 = _GENE_WRAPPER.sub(r"\1(\2):\3", s2)
+    if s2 != s:
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.FIXED_GENE_WRAPPER,
+            message="Fixed transcript(gene) wrapper punctuation",
+            original=s, fixed=s2,
+        )]
+    return s, []
+
+
+def _op_fix_separator_typo(s: str) -> tuple[str, list[HGVSFix]]:
+    # Comma in place of the kind dot ("c,1811" -> "c.1811") and period in place
+    # of the substitution '>' ("1030C.T" -> "1030C>T").
+    s2 = _KIND_COMMA.sub(r":\1.", s)
+    s2 = _SUB_PERIOD.sub(r"\1>\2", s2)
+    if s2 != s:
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.FIXED_SEPARATOR_TYPO,
+            message="Fixed comma/period separator typo", original=s, fixed=s2,
+        )]
+    return s, []
+
+
+def _op_drop_del_dup_count(s: str) -> tuple[str, list[HGVSFix]]:
+    # Drop a redundant base count after a ranged del/dup, normalising to plain
+    # del/dup, e.g. "c.1315_1337dup23" -> "c.1315_1337dup".
+    head, sep, allele = s.rpartition(":")
+    target = allele if sep else s
+    if _DEL_DUP_RANGE_COUNT.search(target):
+        new_allele = _DEL_DUP_RANGE_COUNT.sub(r"\1", target)
+        s2 = f"{head}:{new_allele}" if sep else new_allele
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.DROPPED_DEL_DUP_COUNT,
+            message="Dropped redundant base count after ranged del/dup",
+            original=s, fixed=s2,
+        )]
+    return s, []
+
+
 # Canonical pipeline: (op, function), in the order they must run.
 # clean_hgvs() filters this by the caller's `ops` set but never reorders it.
 _PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
     (HGVSCleanOp.STRIP_PROTEIN_SUFFIX,      _op_strip_protein_suffix),
+    (HGVSCleanOp.STRIP_LEADING_JUNK,        _op_strip_leading_junk),
     (HGVSCleanOp.STRIP_WHITESPACE,          _op_strip_whitespace),
     (HGVSCleanOp.STRIP_SURROUNDING_PUNCTUATION, _op_strip_surrounding_punctuation),
     (HGVSCleanOp.FIX_DOUBLE_COLON,          _op_fix_double_colon),
+    (HGVSCleanOp.FIX_GENE_WRAPPER,          _op_fix_gene_wrapper),
     (HGVSCleanOp.FIX_DOUBLE_DOT,            _op_fix_double_dot),
     (HGVSCleanOp.FIX_DOUBLE_UNDERSCORE,     _op_fix_double_underscore),
     (HGVSCleanOp.FIX_PREFIX_COLON,          _op_fix_prefix_colon),
     (HGVSCleanOp.FIX_DOUBLE_KIND,           _op_fix_double_kind),
+    (HGVSCleanOp.FIX_SEPARATOR_TYPO,        _op_fix_separator_typo),
     (HGVSCleanOp.ADD_N_PREFIX,              _op_add_n_prefix),
     (HGVSCleanOp.LOWERCASE_MUTATION_TYPE,   _op_lowercase_mutation_type),
+    (HGVSCleanOp.DROP_DEL_DUP_COUNT,        _op_drop_del_dup_count),
     (HGVSCleanOp.STRIP_UNBALANCED_BRACKETS, _op_strip_unbalanced_brackets),
     (HGVSCleanOp.ADD_TRANSCRIPT_UNDERSCORE, _op_add_transcript_underscore),
     (HGVSCleanOp.RECONSTRUCT_STRUCTURE,     _op_reconstruct_structure),
