@@ -6,10 +6,14 @@
 - #70 Use Snakemake to build transcripts (only affects data not client code)
 - #27 - HGVS cleaning: new `cdot.hgvs.clean` module (`clean_hgvs`, `get_best_transcript_version`) - cdot can now fix common bad HGVS formatting and report warnings
 - #27 - `clean_hgvs` now accepts an `ops` set (`HGVSCleanOp` / `ALL_CLEAN_OPS`) to run a subset of cleaning operations (allowlist, or blocklist via set algebra) and a `validate` flag to toggle ERROR-level validation; `fix_hgvs` forwards `ops`
-- Gene HGVS: new `cdot.hgvs.gene_hgvs` module (`resolve_gene_hgvs`, `fix_hgvs`) - resolve gene-symbol HGVS (eg `BRCA2:c.36del`) via MANE/canonical transcript tags
+- #27, #36 - Gene HGVS: new `cdot.hgvs.gene_hgvs` module (`resolve_gene_hgvs`, `fix_hgvs`) - resolve gene-symbol HGVS (eg `BRCA2:c.36del`) via MANE/canonical transcript tags
+- #36 - Canonical transcript resolution: `get_tx_ac_tags_for_gene` (JSON + REST data providers) returns transcripts ranked by tag priority (MANE_Select > MANE_Plus_Clinical > RefSeq_Select > Ensembl_canonical > longest); `_get_transcript_tags` is overridable to supplement tags from an external source
+- #36 - Added `Ensembl_canonical` tag to GRCh37 Ensembl data (pulled from the Ensembl REST API, see `generate_transcript_data/ensembl_grch37_canonical_transcripts.py`) so GRCh37 Ensembl transcripts can be resolved as canonical (only affects data not client code)
 - #27 - `RESTDataProvider.get_tx_ac_tags_for_gene` - retrieve canonical/tagged transcripts over REST (needs cdot_rest endpoint `transcripts/gene/<gene>/tags/<genome_build>`, see SACGF/cdot_rest#12), enabling `resolve_gene_hgvs` against the REST API
 - #37 - msgspec typed data models in `cdot.models`
 - #77 - Generate JSON schema docs (`generate_transcript_data/generate_json_docs.py`)
+- #109 - `RESTDataProvider.prefetch(tx_acs)` - read-ahead cache warming for bulk HGVS: populate the transcript cache up front so subsequent per-variant `c_to_g` calls are all cache hits. Plus `prefetch_from_hgvs(hgvs_strings)` which extracts transcript accessions (via `clean_hgvs`) and prefetches them
+- #108 - `prefetch()` now warms the cache in a single round-trip via the batch `POST /transcripts` endpoint (needs cdot_rest, see SACGF/cdot_rest#9), expanding versionless accessions (eg `NM_000059`) to all versions server-side; falls back to a concurrent thread-pool of single `/transcript/<ac>` requests for servers without the batch endpoint
 
 ### Changed
 

@@ -499,6 +499,21 @@ class RESTDataProvider(AbstractJSONDataProvider):
                 raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % url)
         return data
 
+    def _post_to_url(self, url, json_body):
+        """ POST helper mirroring _get_from_url.
+
+            Returns the parsed JSON response, or None if the endpoint is absent (404/405) so
+            the caller can fall back to an older code path. Any other non-ok status raises.
+        """
+        response = requests.post(url, json=json_body)
+        if response.status_code in (404, 405):
+            return None  # Server predates this endpoint - caller falls back
+        if not response.ok:
+            response.raise_for_status()
+        if 'application/json' in response.headers.get('Content-Type', ''):
+            return response.json()
+        raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % url)
+
     def _get_transcript(self, tx_ac):
         # We store None for 404 on REST
         if tx_ac in self.transcripts:
@@ -507,6 +522,99 @@ class RESTDataProvider(AbstractJSONDataProvider):
         transcript = self._get_from_url(self.url + "/transcript/" + tx_ac)
         self.transcripts[tx_ac] = transcript
         return transcript
+
+    def prefetch(self, tx_acs, batch=True, max_workers=10):
+        """ Read-ahead cache warming: populate self.transcripts up front.
+
+            The biocommons HGVS Interface is one-transcript-at-a-time, and each c_to_g makes a
+            single /transcript/<ac> call that's then reused for get_tx_info/get_tx_exons/etc.
+            When you know the transcripts up front (eg bulk HGVS processing) calling this first
+            means every later _get_transcript() is a cache hit - no Interface change required.
+
+            By default this POSTs the whole accession list to the batch /transcripts endpoint in
+            a single round-trip. Accessions may be versionless (eg "NM_000059"), in which case
+            the server expands them to every available version - useful for warming the
+            version-bump path. Servers without the batch endpoint fall back to a concurrent
+            thread-pool of single /transcript/<ac> requests (set batch=False to force this).
+
+            Already-cached accessions are skipped. Missing/404 transcripts are stored as None,
+            matching _get_transcript. Returns the number of transcripts added to the cache.
+        """
+        to_fetch = {ac for ac in tx_acs if ac not in self.transcripts}
+        if not to_fetch:
+            return 0
+
+        if batch:
+            data = self._post_to_url(self.url + "/transcripts", {"ids": sorted(to_fetch)})
+            if data is not None:
+                # Keyed by full accession: versionless ids expand to all their versions,
+                # versioned misses come back as null. Drop straight into the cache.
+                for tx_ac, transcript in data.items():
+                    self.transcripts[tx_ac] = transcript
+                return len(data)
+            # else: no batch endpoint on this server - fall through to concurrent singles
+
+        return self._prefetch_concurrent(to_fetch, max_workers=max_workers)
+
+    def _prefetch_concurrent(self, to_fetch, max_workers=10):
+        """ Fallback pre-warm: fire one /transcript/<ac> per accession concurrently. Turns N
+            sequential round-trips into ceil(N/max_workers) waves. Used when the server has no
+            batch endpoint. Versionless accessions aren't expanded here - pass exact versions.
+        """
+        from concurrent.futures import ThreadPoolExecutor
+
+        def _fetch(tx_ac):
+            try:
+                return tx_ac, self._get_from_url(self.url + "/transcript/" + tx_ac)
+            except Exception:
+                # Match _get_transcript's "store None for missing" behaviour; a failed
+                # prefetch must not be fatal - a later _get_transcript can retry/raise.
+                return tx_ac, None
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for tx_ac, transcript in executor.map(_fetch, to_fetch):
+                self.transcripts[tx_ac] = transcript
+        return len(to_fetch)
+
+    def prefetch_from_hgvs(self, hgvs_strings, clean=True, **kwargs):
+        """ Convenience wrapper: extract transcript accessions from HGVS strings and prefetch.
+
+            Runs clean_hgvs() first (pure string, no provider) so messy input still yields a
+            usable accession, then warms the cache for every distinct transcript accession.
+            Non-transcript references (gene-only HGVS, genomic NC_ contigs) are skipped.
+
+            Versions are kept as-is, so "NM_000059:c.1A>G" (no version) prefetches every
+            available version in one round-trip - the input the version-bump path needs.
+
+            Extra kwargs (batch, max_workers) are passed through to prefetch().
+            Returns the number of transcripts added to the cache.
+        """
+        from cdot.hgvs.clean import clean_hgvs
+
+        accessions = set()
+        for hgvs_string in hgvs_strings:
+            if clean:
+                hgvs_string, _fixes = clean_hgvs(hgvs_string)
+            if accession := self._accession_from_hgvs(hgvs_string):
+                accessions.add(accession)
+        return self.prefetch(accessions, **kwargs)
+
+    @staticmethod
+    def _accession_from_hgvs(hgvs_string):
+        """ Pull the transcript accession (before the ':') from an HGVS string, or None.
+
+            Strips a gene-in-parens suffix ("NM_000059.4(BRCA2)" -> "NM_000059.4") and returns
+            None for anything that isn't a transcript (gene symbols, genomic NC_ refs).
+        """
+        from cdot.hgvs.clean import _looks_like_transcript
+
+        accession, sep, _allele = hgvs_string.partition(":")
+        if not sep:
+            return None
+        accession = accession.strip().split("(", 1)[0]  # drop "(GENE)" suffix if present
+        if _looks_like_transcript(accession):
+            return accession
+        return None
 
     def _get_gene(self, gene_name):
         # We store None for 404 on REST
