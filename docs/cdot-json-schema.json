@@ -1,0 +1,498 @@
+{
+  "$ref": "#/$defs/CdotData",
+  "$defs": {
+    "CdotData": {
+      "title": "CdotData",
+      "description": "The top-level contents of a cdot JSON(.gz) file.",
+      "type": "object",
+      "properties": {
+        "cdot_version": {
+          "type": "string"
+        },
+        "genome_builds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "transcripts": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Transcript"
+          },
+          "default": {},
+          "description": "Keyed by transcript accession (e.g. `NM_001637.3`)."
+        },
+        "genes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Gene"
+          },
+          "default": {},
+          "description": "Keyed by **gene ID** (e.g. RefSeq `80167`), *not* the symbol - the symbol is in each gene's `gene_symbol` field. For UTA-sourced data the gene ID is unknown, so a placeholder symbol is used as the key instead."
+        },
+        "metadata": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Release provenance (input_files, method, sys.argv, url_counts, ...); freeform, present in merged release files."
+        }
+      },
+      "required": [
+        "cdot_version",
+        "genome_builds"
+      ]
+    },
+    "Transcript": {
+      "title": "Transcript",
+      "description": "A single transcript and its per-build coordinates.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Transcript accession, e.g. `'NM_001637.3'`."
+        },
+        "genome_builds": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/GenomeBuild"
+          },
+          "description": "Build name (`'GRCh37'` / `'GRCh38'` / `'T2T-CHM13v2.0'`) -> coordinates."
+        },
+        "gene_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "gene_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "biotype": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "protein": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Protein accession (coding transcripts only)."
+        },
+        "start_codon": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based transcript (cDNA) coordinate of the CDS start (coding only)."
+        },
+        "stop_codon": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based transcript (cDNA) coordinate of the CDS end (coding only)."
+        },
+        "hgnc": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cdot": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "cdot version that generated/last touched this transcript record."
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Annotation source(s) this transcript came from (e.g. `['NCBI']`)."
+        },
+        "partial": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Non-zero if the transcript is annotated as partial/incomplete."
+        }
+      },
+      "required": [
+        "id",
+        "genome_builds"
+      ]
+    },
+    "GenomeBuild": {
+      "title": "GenomeBuild",
+      "description": "A transcript's coordinates on one genome build (e.g. ``GRCh38``).",
+      "type": "object",
+      "properties": {
+        "contig": {
+          "type": "string",
+          "description": "Chromosome/contig accession, e.g. `'NC_000007.14'`."
+        },
+        "strand": {
+          "type": "string",
+          "description": "`'+'` or `'-'`."
+        },
+        "exons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Exon"
+          }
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source annotation file the transcript was extracted from."
+        },
+        "cds_start": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "0-based genomic CDS start on the contig (coding transcripts only)."
+        },
+        "cds_end": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "0-based genomic CDS end on the contig (coding transcripts only)."
+        },
+        "start": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "0-based genomic start of the transcript on the contig."
+        },
+        "stop": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "0-based genomic end of the transcript on the contig."
+        },
+        "tag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Comma-separated tags (e.g. `'MANE_Select,Ensembl_canonical'`); typically Ensembl only."
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "other_chroms": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Other contigs this transcript also aligns to (e.g. PAR/alt loci)."
+        }
+      },
+      "required": [
+        "contig",
+        "strand",
+        "exons"
+      ]
+    },
+    "Exon": {
+      "title": "Exon",
+      "description": "A single exon alignment.\n\nSerialised in JSON as a positional array, e.g.::\n\n    [36552548, 36552986, 20, 2001, 2440, \"M196 I1 M61 I1 M181\"]\n\nCoordinates: ``alt_start``/``alt_end`` are 0-based genomic coordinates on the\ncontig; ``cds_start``/``cds_end`` are 1-based transcript (cDNA) coordinates.\n``exon_id`` is the ordinal of the exon in stranded (transcript) order.\n\nThe original positional access (``exon[0]``, tuple unpacking) still works, so\nthis is a drop-in for the plain list it replaces.",
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "integer",
+          "title": "alt_start",
+          "description": "0-based genomic start of the exon on the contig."
+        },
+        {
+          "type": "integer",
+          "title": "alt_end",
+          "description": "0-based genomic end of the exon on the contig (exclusive)."
+        },
+        {
+          "type": "integer",
+          "title": "exon_id",
+          "description": "Exon ordinal in stranded (transcript) order, starting at 0."
+        },
+        {
+          "type": "integer",
+          "title": "cds_start",
+          "description": "1-based transcript (cDNA) start coordinate of the exon."
+        },
+        {
+          "type": "integer",
+          "title": "cds_end",
+          "description": "1-based transcript (cDNA) end coordinate of the exon."
+        },
+        {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "gap",
+          "description": "Alignment gap as a cdot 'gap' string (e.g. `'M196 I1 M61'`) or `None` if the exon aligns cleanly."
+        }
+      ],
+      "minItems": 5
+    },
+    "Gene": {
+      "title": "Gene",
+      "description": "Gene-level metadata (present when the source provided gene info).",
+      "type": "object",
+      "properties": {
+        "gene_symbol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "aliases": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "biotype": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "hgnc": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "map_location": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "transcripts": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Transcript accessions belonging to this gene (when provided)."
+        }
+      },
+      "required": []
+    }
+  }
+}

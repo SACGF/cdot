@@ -27,7 +27,7 @@ Example::
 from __future__ import annotations
 
 import gzip
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import msgspec
 
@@ -65,10 +65,15 @@ class Exon(msgspec.Struct, array_like=True, forbid_unknown_fields=False):
     this is a drop-in for the plain list it replaces.
     """
     alt_start: int
+    """0-based genomic start of the exon on the contig."""
     alt_end: int
+    """0-based genomic end of the exon on the contig (exclusive)."""
     exon_id: int
+    """Exon ordinal in stranded (transcript) order, starting at 0."""
     cds_start: int
+    """1-based transcript (cDNA) start coordinate of the exon."""
     cds_end: int
+    """1-based transcript (cDNA) end coordinate of the exon."""
     gap: Optional[str] = None
     """Alignment gap as a cdot 'gap' string (e.g. ``'M196 I1 M61'``) or ``None`` if the exon aligns cleanly."""
 
@@ -93,9 +98,13 @@ class GenomeBuild(_DictAccessStruct, forbid_unknown_fields=False):
     """Source annotation file the transcript was extracted from."""
     # cds_* / start / stop are absent for non-coding transcripts and some sources
     cds_start: Optional[int] = None
+    """0-based genomic CDS start on the contig (coding transcripts only)."""
     cds_end: Optional[int] = None
+    """0-based genomic CDS end on the contig (coding transcripts only)."""
     start: Optional[int] = None
+    """0-based genomic start of the transcript on the contig."""
     stop: Optional[int] = None
+    """0-based genomic end of the transcript on the contig."""
     tag: Optional[str] = None
     """Comma-separated tags (e.g. ``'MANE_Select,Ensembl_canonical'``); typically Ensembl only."""
     note: Optional[str] = None
@@ -149,6 +158,8 @@ class CdotData(msgspec.Struct, forbid_unknown_fields=False):
     genome_builds: List[str]
     transcripts: Dict[str, Transcript] = {}
     genes: Dict[str, Gene] = {}
+    metadata: Optional[Dict[str, Any]] = None
+    """Release provenance (input_files, method, sys.argv, url_counts, ...); freeform, present in merged release files."""
 
 
 def loads(data: bytes | str) -> CdotData:

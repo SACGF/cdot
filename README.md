@@ -38,7 +38,6 @@ Optional extras:
 
 ```
 pip install cdot[fasta]   # local genome FASTA sequence fetching (pysam) - needed for the PyHGVS example below
-pip install cdot[typed]   # typed JSON models (cdot.models, msgspec)
 ```
 
 (`hgvs` is a core dependency, so the biocommons HGVS examples work out of the box.)
@@ -104,7 +103,17 @@ See [wiki for more details](https://github.com/SACGF/cdot/wiki/cdot-vs-UTA)
 
 ## Q. How do you store transcripts in JSON?
 
-See [wiki page](https://github.com/SACGF/cdot/wiki/Transcript-JSON-format) for the format.
+See the **[JSON data format reference](docs/json_data_format.md)** for a full description of every field, with a machine-readable [JSON Schema](docs/cdot-json-schema.json) alongside it. There's also a [wiki page](https://github.com/SACGF/cdot/wiki/Transcript-JSON-format).
+
+You can also read the data with typed Python objects (no extra install required):
+
+```python
+from cdot import models
+
+data = models.load("cdot-0.2.32.refseq.GRCh38.json.gz")
+tx = data.transcripts["NM_001637.3"]
+print(tx.gene_name, tx.protein)
+```
 
 We think a standard for JSON gene/transcript information would be a great thing, and am keen to collaborate to make it happen!
 
