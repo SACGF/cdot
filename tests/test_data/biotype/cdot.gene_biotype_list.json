@@ -1,0 +1,27 @@
+{
+  "transcripts": {
+    "NM_000001.1": {
+      "id": "NM_000001.1",
+      "gene_name": "FAKE1",
+      "gene_version": "1",
+      "biotype": ["protein_coding"],
+      "genome_builds": {
+        "GRCh38": {
+          "contig": "NC_000001.11",
+          "strand": "+",
+          "exons": [[100, 200, 0, 1, 100, null]]
+        }
+      }
+    }
+  },
+  "genes": {
+    "FAKE1": {
+      "gene_symbol": "FAKE1",
+      "biotype": ["mRNA", "protein_coding"],
+      "description": "fake gene for biotype test",
+      "url": "https://example.com/fake"
+    }
+  },
+  "cdot_version": "0.2.20",
+  "genome_builds": ["GRCh38"]
+}

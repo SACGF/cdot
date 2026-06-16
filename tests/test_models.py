@@ -14,6 +14,10 @@ except ImportError:
 THIS_DIR = os.path.dirname(abspath(getsourcefile(lambda: 0)))
 REFSEQ_JSON = os.path.join(THIS_DIR, "test_data/cdot.refseq.grch37.json")
 ENSEMBL_JSON = os.path.join(THIS_DIR, "test_data/cdot.ensembl.grch38.json")
+# Minimal fake files differing only in gene biotype representation (issue #111):
+# the comma-separated str form (<= 0.2.19) and the list form (>= 0.2.20).
+GENE_BIOTYPE_STR_JSON = os.path.join(THIS_DIR, "test_data/biotype/cdot.gene_biotype_str.json")
+GENE_BIOTYPE_LIST_JSON = os.path.join(THIS_DIR, "test_data/biotype/cdot.gene_biotype_list.json")
 
 
 @unittest.skipUnless(HAVE_MSGSPEC, "msgspec not installed")
@@ -71,7 +75,8 @@ class TestModels(unittest.TestCase):
         self.assertEqual(gene.map_location, "3q21.3")
         self.assertEqual(gene.hgnc, "4171")
         self.assertIn("MONOMAC", gene.aliases)
-        self.assertEqual(gene.biotype, "protein_coding")
+        # Legacy (<= 0.2.19) str biotype is normalised to list[str] on load - see issue #111
+        self.assertEqual(gene.biotype, ["protein_coding"])
 
     def test_load_ensembl_build_fields(self):
         """Ensembl builds carry a 'tag' and (in this data) no start/stop."""
@@ -82,6 +87,30 @@ class TestModels(unittest.TestCase):
         self.assertIsNone(build.start)
         self.assertIsNone(build.stop)
         self.assertEqual(tx.biotype, ["mRNA", "protein_coding"])
+
+    def test_gene_biotype_backwards_compatible(self):
+        """Old (str) and new (list) gene biotype both normalise to list[str] - issue #111.
+
+        Gene biotype switched from a comma-separated str (<= 0.2.19) to a list (>= 0.2.20)
+        without a detectable schema bump, so both forms appear in the wild.
+        """
+        expected = ["mRNA", "protein_coding"]
+
+        str_data = models.load(GENE_BIOTYPE_STR_JSON)
+        self.assertEqual(str_data.cdot_version, "0.2.19")
+        self.assertEqual(str_data.genes["FAKE1"].biotype, expected)
+
+        list_data = models.load(GENE_BIOTYPE_LIST_JSON)
+        self.assertEqual(list_data.cdot_version, "0.2.20")
+        self.assertEqual(list_data.genes["FAKE1"].biotype, expected)
+
+    def test_gene_from_dict_normalises_biotype(self):
+        """The on-demand gene_from_dict path also normalises legacy str biotype."""
+        self.assertEqual(models.gene_from_dict({"biotype": "protein_coding"}).biotype, ["protein_coding"])
+        self.assertEqual(models.gene_from_dict({"biotype": ["mRNA"]}).biotype, ["mRNA"])
+        # Empty / absent biotype stays falsy rather than becoming ['']
+        self.assertEqual(models.gene_from_dict({"biotype": ""}).biotype, [])
+        self.assertIsNone(models.gene_from_dict({}).biotype)
 
     def test_transcript_from_dict(self):
         """On-demand path: build a typed Transcript from a plain dict."""

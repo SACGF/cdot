@@ -11,6 +11,7 @@
 
 ### Changed
 
+- #111 - Gene `biotype` changed from comma-separated str (<= 0.2.19) to list (0.2.20) without a schema bump; `cdot.models` now accepts both forms and normalises legacy str biotype to `list[str]` on load
 - #88 get_acs_for_protein_seq should return list not None
 - #83 Ensembl files missing protein - breaking c_to_p (only affects data not client code)
 - #17 RefSeq missing MT transcripts (only affects data not client code)

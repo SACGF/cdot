@@ -140,7 +140,10 @@ class Gene(_DictAccessStruct, forbid_unknown_fields=False):
     """Gene-level metadata (present when the source provided gene info)."""
     gene_symbol: Optional[str] = None
     aliases: Optional[str] = None
-    # biotype is a list[str] in current releases but a bare str in older data (<=0.2.10)
+    # gene biotype is a list[str] in current releases but a comma-separated bare str
+    # in older data (<= 0.2.19; it became a list in 0.2.20 - see issue #111). The
+    # data schema int wasn't bumped, so old and new releases are indistinguishable by
+    # version - we accept both forms and normalise to list[str] in __post_init__.
     biotype: Optional[Union[List[str], str]] = None
     description: Optional[str] = None
     hgnc: Optional[str] = None
@@ -150,6 +153,12 @@ class Gene(_DictAccessStruct, forbid_unknown_fields=False):
     source: Optional[List[str]] = None
     transcripts: Optional[List[str]] = None
     """Transcript accessions belonging to this gene (when provided)."""
+
+    def __post_init__(self):
+        # Convert the legacy comma-separated str biotype (<= 0.2.19) to a list so
+        # consumers always see list[str], regardless of which release produced the data.
+        if isinstance(self.biotype, str):
+            self.biotype = [b for b in self.biotype.split(",") if b]
 
 
 class CdotData(msgspec.Struct, forbid_unknown_fields=False):
