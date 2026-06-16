@@ -46,7 +46,7 @@ Rationale: cdot is a tool + data resource — the classic Application Note scope
 - [ ] Does VariantValidator support T2T? Confirm before claiming "first HGVS resource"
 - [ ] Does TARK support T2T? Same check
 - [ ] #36 (CanonicalTranscriptSelector) — must be implemented before submission; it's in the abstract
-- [ ] #100 — cdotlib.org migration from cdot.cc — URL in paper must be stable at submission
+- [ ] #100 — cdotlib.org migration from cdot.cc — code/docs references swapped; remaining: persist cdot_rest settings + cdot.cc→cdotlib.org redirect so URL in paper is stable at submission
 - [ ] Zenodo DOI for data files — register before submission
 - [ ] Corresponding author and co-author list
 - [ ] Cover letter: mention production use in VariantGrid/Shariant

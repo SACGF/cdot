@@ -114,9 +114,9 @@ class RESTPyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):
         super().__init__()
         if url is None:
             if secure:
-                url = "https://cdot.cc"
+                url = "https://cdotlib.org"
             else:
-                url = "http://cdot.cc"
+                url = "http://cdotlib.org"
         self.url = url
         self.transcripts = {}
 

@@ -479,9 +479,9 @@ class RESTDataProvider(AbstractJSONDataProvider):
         super().__init__(assemblies=assemblies, mode=mode, cache=cache, seqfetcher=seqfetcher)
         if url is None:
             if secure:
-                url = "https://cdot.cc"
+                url = "https://cdotlib.org"
             else:
-                url = "http://cdot.cc"
+                url = "http://cdotlib.org"
         self.url = url
         self.transcripts = {}
         self.genes = {}

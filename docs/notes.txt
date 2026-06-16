@@ -4,7 +4,7 @@ RefSeq and Ensembl transcripts are versioned (eg NM_153253.3 is version 3). Exon
 
 We provide a REST web API for retrieving RefSeq and Ensembl transcript version data https://github.com/SACGF/cdot_rest
 
-This is hosted here: http://cdot.cc/ - though we have obtained new url cdotlib.org - will move it there soon 
+This is hosted here: https://cdotlib.org/ (previously cdot.cc)
 
 And have written integration code for the two most popular Python HGVS libraries: BioCommons HGVS and Counsyl pyHGVS.
 
