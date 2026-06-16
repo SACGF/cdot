@@ -2,7 +2,7 @@
 
 ### Added
 
-- #62 - Run the test suite in GitHub Actions CI (`.github/workflows/tests.yml`) on push/PR across Python 3.9–3.12 (dev/infra only, no client code change)
+- #62 - Run the test suite in GitHub Actions CI (`.github/workflows/tests.yml`) on push/PR across Python 3.10–3.14 (dev/infra only, no client code change)
 - #86 Ensembl Tark Data Provider implementation 
 - #70 Use Snakemake to build transcripts (only affects data not client code)
 - #27 - HGVS cleaning: new `cdot.hgvs.clean` module (`clean_hgvs`, `get_best_transcript_version`) - cdot can now fix common bad HGVS formatting and report warnings
@@ -23,6 +23,7 @@
 
 - #27 - Gene HGVS resolution now matches RefSeq space-form tags (`MANE Select`) against the underscore-form tag priority, and retries a lowercase gene symbol (eg `brca2`) uppercased after a case-sensitive lookup miss
 - #27 - `resolve_gene_hgvs` / `fix_hgvs` take a `prefer_consortium` arg (`Consortium.REFSEQ` default, or `ENSEMBL`/`None`) that **hard-filters** the resolved transcript's consortium - with a preference set you never get the other consortium back (eg `BRCA2` → `NM_000059.4` not `ENST00000380152.8`); errors if the preferred consortium has no transcript for the gene rather than crossing over; pass `None` to allow either
+- #62 - Dropped Python 3.9 support (`requires-python` is now `>=3.10`); 3.9 reached end-of-life in Oct 2025 and the `build` extra's HTSeq>=2.1.2 requires 3.10+
 - #111 - Gene `biotype` changed from comma-separated str (<= 0.2.19) to list (0.2.20) without a schema bump; `cdot.models` now accepts both forms and normalises legacy str biotype to `list[str]` on load
 - #88 get_acs_for_protein_seq should return list not None
 - #83 Ensembl files missing protein - breaking c_to_p (only affects data not client code)
