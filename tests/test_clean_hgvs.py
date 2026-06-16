@@ -138,6 +138,18 @@ CLEAN_CASES = [
     ("NM_003560.2(PLA2G6):c.2221C>T",            "NM_003560.2(PLA2G6):c.2221C>T",             set()),
     # Gene symbol run together with transcript (no parens)
     ("NM_003560.2PLA2G6:c.2221C>T",              "NM_003560.2(PLA2G6):c.2221C>T",             set()),
+    # #112 — trailing stray quote (search-box / copy-paste artifact)
+    ("NM_000059.4:c.316+5G>A'",                  "NM_000059.4:c.316+5G>A",                     {C.STRIPPED_SURROUNDING_PUNCTUATION}),
+    # #112 — wrapping quotes both ends
+    ("'NM_001754.5(RUNX1):c.1415T>C'",           "NM_001754.5(RUNX1):c.1415T>C",              {C.STRIPPED_SURROUNDING_PUNCTUATION}),
+    # #112 — trailing separator
+    ("NM_000059.4:c.316+5G>A;",                  "NM_000059.4:c.316+5G>A",                     {C.STRIPPED_SURROUNDING_PUNCTUATION}),
+    # #112 — doubled dot in transcript version
+    ("NM_000059..4:c.316+5G>A",                  "NM_000059.4:c.316+5G>A",                     {C.FIXED_DOUBLE_DOT}),
+    # #112 — doubled dot after kind
+    ("NM_001754.5(RUNX1):c..1415T>C",            "NM_001754.5(RUNX1):c.1415T>C",              {C.FIXED_DOUBLE_DOT}),
+    # #112 — misplaced colon in transcript prefix
+    ("NM:_000059.4:c.316+5G>A",                  "NM_000059.4:c.316+5G>A",                     {C.FIXED_PREFIX_COLON}),
 ]
 
 

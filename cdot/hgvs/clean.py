@@ -44,6 +44,9 @@ class HGVSFixCode(Enum):
     ADDED_N_PREFIX               = "added_n_prefix"
     LOWERCASED_MUTATION_TYPE     = "lowercased_mutation_type"
     STRIPPED_UNBALANCED_BRACKETS = "stripped_unbalanced_brackets"
+    STRIPPED_SURROUNDING_PUNCTUATION = "stripped_surrounding_punctuation"
+    FIXED_DOUBLE_DOT             = "fixed_double_dot"
+    FIXED_PREFIX_COLON           = "fixed_prefix_colon"
     ADDED_TRANSCRIPT_UNDERSCORE  = "added_transcript_underscore"
     UPPERCASED_BASES             = "uppercased_bases"
     ADDED_MISSING_KIND           = "added_missing_kind"
@@ -76,8 +79,11 @@ class HGVSCleanOp(Enum):
     """
     STRIP_PROTEIN_SUFFIX     = "strip_protein_suffix"
     STRIP_WHITESPACE         = "strip_whitespace"
+    STRIP_SURROUNDING_PUNCTUATION = "strip_surrounding_punctuation"
     FIX_DOUBLE_COLON         = "fix_double_colon"
+    FIX_DOUBLE_DOT           = "fix_double_dot"
     FIX_DOUBLE_UNDERSCORE    = "fix_double_underscore"
+    FIX_PREFIX_COLON         = "fix_prefix_colon"
     FIX_DOUBLE_KIND          = "fix_double_kind"
     ADD_N_PREFIX             = "add_n_prefix"
     LOWERCASE_MUTATION_TYPE  = "lowercase_mutation_type"
@@ -166,6 +172,9 @@ _GENE_IN_PARENS = re.compile(r"^(.+)\((.*)\)$")
 
 _INS_INTEGER = re.compile(r".*ins\d+$", re.IGNORECASE)
 _INS_EMPTY   = re.compile(r".*ins$",    re.IGNORECASE)
+
+# Misplaced colon between an mRNA/RNA prefix and its underscore, e.g. "NM:_000059"
+_PREFIX_COLON_UNDERSCORE = re.compile(r"^(N[MR]|X[MR]):_", re.IGNORECASE)
 
 
 # ---------------------------------------------------------------------------
@@ -330,6 +339,21 @@ def _op_strip_whitespace(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
+def _op_strip_surrounding_punctuation(s: str) -> tuple[str, list[HGVSFix]]:
+    # Strip stray wrapping quotes/backticks and trailing separators left by
+    # copy/paste or search boxes, e.g. "NM_000059.4:c.123A>G'" or
+    # "NM_000059.4:c.123A>G;". No valid HGVS string starts/ends with these.
+    s2 = s.strip().strip("'\"`").rstrip("/;").strip()
+    if s2 != s:
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.STRIPPED_SURROUNDING_PUNCTUATION,
+            message="Stripped surrounding quotes/punctuation",
+            original=s, fixed=s2,
+        )]
+    return s, []
+
+
 def _op_fix_double_colon(s: str) -> tuple[str, list[HGVSFix]]:
     if "::" in s:
         s2 = s.replace("::", ":")
@@ -341,6 +365,18 @@ def _op_fix_double_colon(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
+def _op_fix_double_dot(s: str) -> tuple[str, list[HGVSFix]]:
+    # Collapse doubled dots, e.g. "NM_000059..4" or "c..123" → single dot
+    if ".." in s:
+        s2 = re.sub(r"\.\.+", ".", s)
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.FIXED_DOUBLE_DOT,
+            message="Fixed doubled dot '..'", original=s, fixed=s2,
+        )]
+    return s, []
+
+
 def _op_fix_double_underscore(s: str) -> tuple[str, list[HGVSFix]]:
     if "__" in s:
         s2 = s.replace("__", "_")
@@ -348,6 +384,19 @@ def _op_fix_double_underscore(s: str) -> tuple[str, list[HGVSFix]]:
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.ADDED_TRANSCRIPT_UNDERSCORE,
             message="Fixed double underscore '__'", original=s, fixed=s2,
+        )]
+    return s, []
+
+
+def _op_fix_prefix_colon(s: str) -> tuple[str, list[HGVSFix]]:
+    # Misplaced colon in the transcript prefix, e.g. "NM:_000059.4" → "NM_000059.4"
+    s2 = _PREFIX_COLON_UNDERSCORE.sub(lambda m: m.group(1) + "_", s)
+    if s2 != s:
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.FIXED_PREFIX_COLON,
+            message="Fixed misplaced colon in transcript prefix",
+            original=s, fixed=s2,
         )]
     return s, []
 
@@ -502,8 +551,11 @@ def _op_add_missing_kind(s: str) -> tuple[str, list[HGVSFix]]:
 _PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
     (HGVSCleanOp.STRIP_PROTEIN_SUFFIX,      _op_strip_protein_suffix),
     (HGVSCleanOp.STRIP_WHITESPACE,          _op_strip_whitespace),
+    (HGVSCleanOp.STRIP_SURROUNDING_PUNCTUATION, _op_strip_surrounding_punctuation),
     (HGVSCleanOp.FIX_DOUBLE_COLON,          _op_fix_double_colon),
+    (HGVSCleanOp.FIX_DOUBLE_DOT,            _op_fix_double_dot),
     (HGVSCleanOp.FIX_DOUBLE_UNDERSCORE,     _op_fix_double_underscore),
+    (HGVSCleanOp.FIX_PREFIX_COLON,          _op_fix_prefix_colon),
     (HGVSCleanOp.FIX_DOUBLE_KIND,           _op_fix_double_kind),
     (HGVSCleanOp.ADD_N_PREFIX,              _op_add_n_prefix),
     (HGVSCleanOp.LOWERCASE_MUTATION_TYPE,   _op_lowercase_mutation_type),
