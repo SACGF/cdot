@@ -315,6 +315,12 @@ class LocalDataProvider(AbstractJSONDataProvider):
             transcript_data = self._get_transcript(transcript_id)
             cds_start_i = transcript_data.get("start_codon")
             cds_end_i = transcript_data.get("stop_codon")
+            # Return the canonical versioned accession from the record (matching
+            # get_tx_ac_tags_for_gene), falling back to the id we already have if
+            # absent. For versionless-id providers this yields eg "NM_000059.4"
+            # rather than "NM_000059"; for already-versioned providers (eg
+            # JSONDataProvider) it equals transcript_id, so it's a no-op.
+            accession = transcript_data.get("id") or transcript_id
             for build_data in transcript_data["genome_builds"].values():
                 contig, tx_start, tx_end, _ = self._get_contig_start_end_strand(build_data)
                 length = tx_end - tx_start
@@ -322,7 +328,7 @@ class LocalDataProvider(AbstractJSONDataProvider):
                     "hgnc": gene,
                     "cds_start_i": cds_start_i,
                     "cds_end_i": cds_end_i,
-                    "tx_ac": transcript_id,
+                    "tx_ac": accession,
                     "alt_ac": contig,
                     "alt_aln_method": self.NCBI_ALN_METHOD,
                 }
