@@ -17,7 +17,9 @@ from cdot.hgvs.gene_hgvs import (
     _parse_gene_only_hgvs,
     _parse_versioned_transcript,
     _rank_transcripts_by_tags,
+    consortium_of,
     fix_hgvs,
+    rank_transcripts_for_gene,
     resolve_gene_hgvs,
     resolve_transcript_version,
 )
@@ -184,6 +186,56 @@ def test_consortium_of():
     assert _consortium_of("ENST00000380152.8") == Consortium.ENSEMBL
     assert _consortium_of("NM_000059.4") == Consortium.REFSEQ
     assert _consortium_of("XR_001.1") == Consortium.REFSEQ
+
+
+def test_consortium_of_public_alias():
+    # Promoted from _consortium_of (#114); the private name stays as an alias.
+    assert consortium_of is _consortium_of
+    assert consortium_of("ENST00000380152.8") == Consortium.ENSEMBL
+    assert consortium_of("NM_000059.4") == Consortium.REFSEQ
+
+
+# ---------------------------------------------------------------------------
+# rank_transcripts_for_gene — the ranking core split out of resolution (#114)
+# ---------------------------------------------------------------------------
+
+def test_rank_transcripts_for_gene_returns_full_ordered_list(refseq_mixed_provider):
+    # prefer_consortium=None keeps both consortiums so we get the full ranking
+    ranked, fixes = rank_transcripts_for_gene(
+        "BRCA2", refseq_mixed_provider, "GRCh38", prefer_consortium=None,
+    )
+    assert [tx_ac for tx_ac, _tags, _matched in ranked] == [
+        "ENST00000380152.8", "NM_000059.4",
+    ]
+    assert all(matched == "MANE_Select" for _tx, _tags, matched in ranked)
+    assert fixes == []
+
+
+def test_rank_transcripts_for_gene_consortium_hard_filter(refseq_mixed_provider):
+    ranked, fixes = rank_transcripts_for_gene(
+        "BRCA2", refseq_mixed_provider, "GRCh38", prefer_consortium=Consortium.REFSEQ,
+    )
+    assert [tx_ac for tx_ac, _tags, _matched in ranked] == ["NM_000059.4"]
+    assert fixes == []
+
+
+def test_rank_transcripts_for_gene_no_transcript_errors(refseq_mixed_provider):
+    ranked, fixes = rank_transcripts_for_gene(
+        "NOSUCHGENE", refseq_mixed_provider, "GRCh38",
+    )
+    assert ranked == []
+    assert fixes[-1].severity == E
+    assert fixes[-1].code == C.NO_TRANSCRIPT_FOR_GENE
+
+
+def test_rank_transcripts_for_gene_preferred_consortium_absent_errors(refseq_mixed_provider):
+    # ENSEMBLONLY has only an Ensembl transcript; prefer=REFSEQ must error, not cross over
+    ranked, fixes = rank_transcripts_for_gene(
+        "ENSEMBLONLY", refseq_mixed_provider, "GRCh38", prefer_consortium=Consortium.REFSEQ,
+    )
+    assert ranked == []
+    assert fixes[-1].code == C.NO_TRANSCRIPT_FOR_GENE
+    assert "refseq" in fixes[-1].message.lower()
 
 
 def test_filter_by_consortium_refseq():
@@ -622,3 +674,41 @@ def test_rest_provider_get_tx_ac_tags_for_gene_empty(monkeypatch):
     dp = RESTDataProvider(url="https://example.org")
     monkeypatch.setattr(dp, "_get_from_url", lambda url: None)  # 404 → None
     assert dp.get_tx_ac_tags_for_gene("NOPE", "GRCh38") == []
+
+
+# ---------------------------------------------------------------------------
+# LocalDataProvider tag hooks: _get_transcript_tags signature + batch hook (#114)
+# ---------------------------------------------------------------------------
+
+def test_get_transcript_tags_signature_takes_tx_ac(ensembl_provider):
+    # #114 item 4: _get_transcript_tags now receives tx_ac explicitly so overrides
+    # don't have to re-derive it from transcript_data.
+    tx_ac = "ENST00000617537.5"
+    transcript_data = ensembl_provider._get_transcript(tx_ac)
+    tags = ensembl_provider._get_transcript_tags(tx_ac, transcript_data, "GRCh38")
+    assert "MANE_Select" in tags
+
+
+def test_get_tx_ac_tags_for_gene_uses_batch_hook(ensembl_provider, monkeypatch):
+    # #114 item 5: get_tx_ac_tags_for_gene must source tags via the overridable
+    # batch hook _get_tags_by_tx_ac, so a subclass can answer in one query.
+    calls = {}
+
+    def fake_batch(tx_acs, genome_build):
+        calls["tx_acs"] = list(tx_acs)
+        calls["genome_build"] = genome_build
+        return {tx_ac: ["MANE_Select"] for tx_ac in tx_acs}
+
+    monkeypatch.setattr(ensembl_provider, "_get_tags_by_tx_ac", fake_batch)
+    result = ensembl_provider.get_tx_ac_tags_for_gene("AOAH", "GRCh38")
+
+    assert calls["genome_build"] == "GRCh38"
+    assert calls["tx_acs"]  # got the gene's accessions in one call
+    assert all(tags == ["MANE_Select"] for _tx_ac, tags in result)
+
+
+def test_get_tags_by_tx_ac_default_loops_per_transcript_hook(ensembl_provider):
+    # Default batch implementation defers to the per-transcript hook.
+    tx_acs = ensembl_provider._get_transcript_ids_for_gene("AOAH")
+    by_ac = ensembl_provider._get_tags_by_tx_ac(list(tx_acs), "GRCh38")
+    assert "MANE_Select" in by_ac["ENST00000617537.5"]

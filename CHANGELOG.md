@@ -1,5 +1,13 @@
 ## [unreleased]
 
+### Added
+
+- #114 - Public HGVS ranking primitives + provider hooks (to let consumers stop importing private symbols / re-implementing ranking): `rank_transcript_versions` (the full version ordering behind `get_best_transcript_version`) and `rank_transcripts_for_gene` (the gene→transcript lookup/uppercase-retry/consortium-filter/tag-ranking core split out of `resolve_gene_hgvs`, returning the full ranked candidate list); `consortium_of` (promoted from `_consortium_of`); `HGVSFix.__str__` plus `messages`/`warning_messages`/`error_messages` helpers; an overridable batch tag hook `_get_tags_by_tx_ac(tx_acs, genome_build)` on data providers (default loops the per-transcript hook) so subclasses can answer in one query instead of N+1; and `cdot.hgvs` now also re-exports `Consortium`, `DEFAULT_CONSORTIUM`, `HGVSCleanOp`, and `ALL_CLEAN_OPS`
+
+### Changed
+
+- #114 - `_get_transcript_tags` now takes `tx_ac` explicitly (`_get_transcript_tags(tx_ac, transcript_data, genome_build)`) so overrides don't have to re-derive the accession from `transcript_data["id"]`
+
 ## [0.2.27] - 2026-06-16
 
 ### Added

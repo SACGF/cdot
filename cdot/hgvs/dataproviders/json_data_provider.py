@@ -330,7 +330,7 @@ class LocalDataProvider(AbstractJSONDataProvider):
 
         return [x[1] for x in sorted(tx_list, key=lambda x: x[0], reverse=True)]
 
-    def _get_transcript_tags(self, transcript_data: dict, genome_build: str) -> list[str]:
+    def _get_transcript_tags(self, tx_ac: str, transcript_data: dict, genome_build: str) -> list[str]:
         """
         Return the tag list for a single transcript in the given genome build.
 
@@ -340,22 +340,38 @@ class LocalDataProvider(AbstractJSONDataProvider):
         Override this method in a subclass to supplement or replace the cdot tag
         data with information from an external source (e.g. a database table that
         stores MANE/canonical status separately from the transcript JSON).  The
-        override receives the full transcript dict and the build name, so it can
-        fall back to the cdot data when the external source has no entry.
+        override receives the accession, the full transcript dict, and the build
+        name, so it can fall back to the cdot data when the external source has no
+        entry. (To answer for many accessions in one query, override
+        :meth:`_get_tags_by_tx_ac` instead.)
 
         Example override (Django)::
 
-            def _get_transcript_tags(self, transcript_data, genome_build):
-                tags = super()._get_transcript_tags(transcript_data, genome_build)
+            def _get_transcript_tags(self, tx_ac, transcript_data, genome_build):
+                tags = super()._get_transcript_tags(tx_ac, transcript_data, genome_build)
                 if not tags:
                     # supplement from DB MANE table
-                    tx_ac = transcript_data.get("id", "")
                     tags = MyMANEModel.tags_for(tx_ac, genome_build)
                 return tags
         """
         build_data = transcript_data["genome_builds"].get(genome_build, {})
         tag_str = build_data.get("tag", "")
         return [t.strip() for t in tag_str.split(",") if t.strip()] if tag_str else []
+
+    def _get_tags_by_tx_ac(self, tx_acs: list[str], genome_build: str) -> dict[str, list[str]]:
+        """
+        Return {tx_ac: tags} for the given accessions in the given genome build.
+
+        The default loops :meth:`_get_transcript` + :meth:`_get_transcript_tags`
+        per accession. Override in a subclass that can answer for all accessions
+        in a single query (e.g. a Django provider with a MANE table) to avoid the
+        N+1 query pattern on the gene-symbol resolution path.
+        """
+        result = {}
+        for tx_ac in tx_acs:
+            transcript_data = self._get_transcript(tx_ac)
+            result[tx_ac] = self._get_transcript_tags(tx_ac, transcript_data, genome_build)
+        return result
 
     def get_tx_ac_tags_for_gene(self, gene: str, genome_build: str) -> list[tuple[str, list[str]]]:
         """
@@ -365,10 +381,11 @@ class LocalDataProvider(AbstractJSONDataProvider):
         tags is a list of tag strings (e.g. ['MANE_Select', 'basic']).
         Empty list if the transcript has no tags for that build.
 
-        Tag data comes from :meth:`_get_transcript_tags`, which can be overridden
+        Tag data comes from :meth:`_get_tags_by_tx_ac` (which by default defers to
+        the per-transcript :meth:`_get_transcript_tags`); either can be overridden
         in subclasses to supplement the cdot JSON with an external source.
         """
-        tx_list = []
+        lengths = []
         for transcript_id in self._get_transcript_ids_for_gene(gene):
             transcript_data = self._get_transcript(transcript_id)
             build_data = transcript_data["genome_builds"].get(genome_build)
@@ -378,11 +395,11 @@ class LocalDataProvider(AbstractJSONDataProvider):
             # the genomic span (which would include introns). Exons are
             # [alt_start, alt_end, ...] so each exon's length is alt_end - alt_start.
             length = sum(exon[1] - exon[0] for exon in build_data["exons"])
-            tags = self._get_transcript_tags(transcript_data, genome_build)
-            tx_list.append((length, transcript_id, tags))
+            lengths.append((length, transcript_id))
 
-        tx_list.sort(key=lambda x: x[0], reverse=True)
-        return [(tx_ac, tags) for _, tx_ac, tags in tx_list]
+        tags_by_ac = self._get_tags_by_tx_ac([tx_ac for _, tx_ac in lengths], genome_build)
+        lengths.sort(key=lambda x: x[0], reverse=True)
+        return [(tx_ac, tags_by_ac.get(tx_ac, [])) for _, tx_ac in lengths]
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
         """ return transcripts that overlap given region """

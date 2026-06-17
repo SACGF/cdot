@@ -16,7 +16,11 @@ from cdot.hgvs.clean import (
     VersionStrategy,
     _rank_versions,
     clean_hgvs,
+    error_messages,
     get_best_transcript_version,
+    messages,
+    rank_transcript_versions,
+    warning_messages,
 )
 
 C = HGVSFixCode
@@ -337,6 +341,47 @@ def test_rank_versions_exact_match_not_special():
     # so it sorts before v=5 (distance=2, prefer_later=False).
     result = _rank_versions(3, [1, 2, 3, 5], VersionStrategy.UP_THEN_DOWN)
     assert result == [3, 5, 2, 1]
+
+
+def test_rank_transcript_versions_public_name():
+    # Promoted from _rank_versions (#114); the private name stays as an alias.
+    assert rank_transcript_versions is _rank_versions
+    # Strategy defaults to UP_THEN_DOWN
+    assert rank_transcript_versions(4, [1, 2, 3, 5, 6]) == [5, 6, 3, 2, 1]
+
+
+# ---------------------------------------------------------------------------
+# HGVSFix.__str__ and message helpers (#114)
+# ---------------------------------------------------------------------------
+
+def _sample_fixes() -> list[HGVSFix]:
+    return [
+        HGVSFix(W, C.STRIPPED_WHITESPACE, "Removed whitespace"),
+        HGVSFix(E, C.NO_COLON, "No colon ':' found in HGVS string"),
+        HGVSFix(W, C.UPPERCASED_TRANSCRIPT, "Upper cased transcript"),
+    ]
+
+
+def test_hgvs_fix_str_is_message():
+    fix = HGVSFix(W, C.STRIPPED_WHITESPACE, "Removed whitespace")
+    assert str(fix) == "Removed whitespace"
+
+
+def test_warning_messages():
+    assert warning_messages(_sample_fixes()) == [
+        "Removed whitespace", "Upper cased transcript",
+    ]
+
+
+def test_error_messages():
+    assert error_messages(_sample_fixes()) == ["No colon ':' found in HGVS string"]
+
+
+def test_messages_all_and_filtered():
+    fixes = _sample_fixes()
+    assert messages(fixes) == [f.message for f in fixes]  # no severity → all
+    assert messages(fixes, W) == warning_messages(fixes)
+    assert messages(fixes, E) == error_messages(fixes)
 
 
 # ---------------------------------------------------------------------------

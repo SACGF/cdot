@@ -47,10 +47,18 @@ class Consortium(Enum):
 DEFAULT_CONSORTIUM: Consortium = Consortium.REFSEQ
 
 
-def _consortium_of(tx_ac: str) -> Consortium:
-    """Ensembl transcripts start with 'ENST'; everything else (NM_/NR_/XM_/XR_/LRG)
-    is treated as RefSeq for tie-breaking purposes."""
+def consortium_of(tx_ac: str) -> Consortium:
+    """Return the annotation consortium an accession belongs to.
+
+    Ensembl transcripts start with 'ENST'; everything else (NM_/NR_/XM_/XR_/LRG)
+    is treated as RefSeq for tie-breaking purposes. Exposed so consumers can
+    label/group results by consortium and map cdot's Consortium onto their own enum.
+    """
     return Consortium.ENSEMBL if tx_ac.startswith("ENST") else Consortium.REFSEQ
+
+
+# Backwards-compatible alias for the previous private name.
+_consortium_of = consortium_of
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +104,7 @@ def _filter_by_consortium(
     consortium: Consortium,
 ) -> list[tuple[str, list[str]]]:
     """Keep only transcripts from the given consortium (hard filter)."""
-    return [t for t in tx_and_tags if _consortium_of(t[0]) == consortium]
+    return [t for t in tx_and_tags if consortium_of(t[0]) == consortium]
 
 
 def _rank_transcripts_by_tags(
@@ -131,6 +139,95 @@ def _rank_transcripts_by_tags(
 
 
 # ---------------------------------------------------------------------------
+# Public: rank_transcripts_for_gene
+# ---------------------------------------------------------------------------
+
+def rank_transcripts_for_gene(
+    gene_symbol: str,
+    data_provider,
+    genome_build: str,
+    tag_priority: list[str] = DEFAULT_TAG_PRIORITY,
+    prefer_consortium: Optional[Consortium] = DEFAULT_CONSORTIUM,
+) -> tuple[list[tuple[str, list[str], Optional[str]]], list[HGVSFix]]:
+    """
+    Look up the transcripts of a gene symbol and return them ranked best-first.
+
+    This is the gene→transcript *ranking* core, split out of the gene→transcript
+    *resolution* done by :func:`resolve_gene_hgvs`. It performs the gene lookup
+    (with an uppercase-gene retry after a case-sensitive miss), the consortium
+    hard-filter, and the MANE/canonical tag ranking — but does NOT collapse to a
+    single transcript or rewrite any HGVS string.
+
+    Returns:
+        (ranked, fixes)
+        ``ranked`` is ``[(tx_ac, tags, matched_tag_or_None), ...]`` best-first
+        (see :func:`_rank_transcripts_by_tags`). It is empty if no transcript
+        could be found, in which case ``fixes`` carries an ERROR-level HGVSFix.
+        ``fixes`` may also carry a WARNING UPPERCASED_GENE_SYMBOL fix if the
+        gene symbol had to be uppercased to find a match.
+
+    A consumer wanting the single best transcript takes ``ranked[0]``; a consumer
+    running a multi-transcript search uses the whole ordered list. Either way it
+    avoids re-implementing the lookup/uppercase/consortium/tag logic.
+
+    tag_priority and prefer_consortium behave as documented on
+    :func:`resolve_gene_hgvs`.
+    """
+    fixes: list[HGVSFix] = []
+
+    tx_and_tags = data_provider.get_tx_ac_tags_for_gene(gene_symbol, genome_build)
+
+    # Gene lookups are case-sensitive; gene symbols are conventionally uppercase
+    # (some legitimately have lowercase parts, e.g. "C7orf26", so we only retry
+    # uppercased after an exact-case miss rather than uppercasing unconditionally).
+    if not tx_and_tags and gene_symbol != gene_symbol.upper():
+        uc_gene_symbol = gene_symbol.upper()
+        tx_and_tags = data_provider.get_tx_ac_tags_for_gene(uc_gene_symbol, genome_build)
+        if tx_and_tags:
+            fixes.append(HGVSFix(
+                severity=HGVSFixSeverity.WARNING,
+                code=HGVSFixCode.UPPERCASED_GENE_SYMBOL,
+                message=f"Uppercased gene symbol '{gene_symbol}' to '{uc_gene_symbol}'",
+                original=gene_symbol,
+                fixed=uc_gene_symbol,
+            ))
+            gene_symbol = uc_gene_symbol
+
+    if not tx_and_tags:
+        fixes.append(HGVSFix(
+            severity=HGVSFixSeverity.ERROR,
+            code=HGVSFixCode.NO_TRANSCRIPT_FOR_GENE,
+            message=f"No transcripts found for gene '{gene_symbol}' in {genome_build}",
+        ))
+        return [], fixes
+
+    # Consortium is a hard filter: with a preference set we never return a
+    # transcript from the other consortium. If the preferred consortium has
+    # none (but the other does), error with an actionable message rather than
+    # crossing over.
+    if prefer_consortium is not None:
+        filtered = _filter_by_consortium(tx_and_tags, prefer_consortium)
+        if not filtered:
+            other = (Consortium.ENSEMBL if prefer_consortium == Consortium.REFSEQ
+                     else Consortium.REFSEQ)
+            fixes.append(HGVSFix(
+                severity=HGVSFixSeverity.ERROR,
+                code=HGVSFixCode.NO_TRANSCRIPT_FOR_GENE,
+                message=(
+                    f"No {prefer_consortium.value} transcript found for gene "
+                    f"'{gene_symbol}' in {genome_build} ({len(tx_and_tags)} "
+                    f"{other.value} transcript(s) available). Pass "
+                    f"prefer_consortium=Consortium.{other.name} or None to use them."
+                ),
+            ))
+            return [], fixes
+        tx_and_tags = filtered
+
+    ranked = _rank_transcripts_by_tags(tx_and_tags, tag_priority)
+    return ranked, fixes
+
+
+# ---------------------------------------------------------------------------
 # Public: resolve_gene_hgvs
 # ---------------------------------------------------------------------------
 
@@ -145,6 +242,11 @@ def resolve_gene_hgvs(
     """
     If hgvs_string contains a gene symbol but no transcript (e.g. "BRCA2:c.36del"),
     look up the best available transcript from data_provider and substitute it.
+
+    This is a thin wrapper over :func:`rank_transcripts_for_gene`: it takes the
+    top-ranked transcript, applies the fallback_to_longest policy, and rewrites
+    the HGVS string. Consumers that need the full candidate list (e.g. a
+    multi-transcript search) should call rank_transcripts_for_gene directly.
 
     Returns:
         (resolved_string, fixes)
@@ -173,61 +275,24 @@ def resolve_gene_hgvs(
         # resolved = "NM_000059.4:c.36del"
         # fixes[0].message = "Resolved gene symbol 'BRCA2' to NM_000059.4 (MANE Select)"
     """
-    fixes: list[HGVSFix] = []
-
     gene_symbol, allele = _parse_gene_only_hgvs(hgvs_string)
     if gene_symbol is None:
-        return hgvs_string, fixes  # already has transcript — nothing to do
+        return hgvs_string, []  # already has transcript — nothing to do
 
-    tx_and_tags = data_provider.get_tx_ac_tags_for_gene(gene_symbol, genome_build)
+    ranked, fixes = rank_transcripts_for_gene(
+        gene_symbol, data_provider, genome_build,
+        tag_priority=tag_priority,
+        prefer_consortium=prefer_consortium,
+    )
+    if not ranked:
+        return hgvs_string, fixes  # lookup failed — fixes carries the ERROR
 
-    # Gene lookups are case-sensitive; gene symbols are conventionally uppercase
-    # (some legitimately have lowercase parts, e.g. "C7orf26", so we only retry
-    # uppercased after an exact-case miss rather than uppercasing unconditionally).
-    if not tx_and_tags and gene_symbol != gene_symbol.upper():
-        uc_gene_symbol = gene_symbol.upper()
-        tx_and_tags = data_provider.get_tx_ac_tags_for_gene(uc_gene_symbol, genome_build)
-        if tx_and_tags:
-            fixes.append(HGVSFix(
-                severity=HGVSFixSeverity.WARNING,
-                code=HGVSFixCode.UPPERCASED_GENE_SYMBOL,
-                message=f"Uppercased gene symbol '{gene_symbol}' to '{uc_gene_symbol}'",
-                original=gene_symbol,
-                fixed=uc_gene_symbol,
-            ))
-            gene_symbol = uc_gene_symbol
+    # The uppercase-gene retry may have changed the effective symbol; reflect it
+    # in the resolution message.
+    for f in fixes:
+        if f.code == HGVSFixCode.UPPERCASED_GENE_SYMBOL:
+            gene_symbol = f.fixed
 
-    if not tx_and_tags:
-        fixes.append(HGVSFix(
-            severity=HGVSFixSeverity.ERROR,
-            code=HGVSFixCode.NO_TRANSCRIPT_FOR_GENE,
-            message=f"No transcripts found for gene '{gene_symbol}' in {genome_build}",
-        ))
-        return hgvs_string, fixes
-
-    # Consortium is a hard filter: with a preference set we never return a
-    # transcript from the other consortium. If the preferred consortium has
-    # none (but the other does), error with an actionable message rather than
-    # crossing over.
-    if prefer_consortium is not None:
-        filtered = _filter_by_consortium(tx_and_tags, prefer_consortium)
-        if not filtered:
-            other = (Consortium.ENSEMBL if prefer_consortium == Consortium.REFSEQ
-                     else Consortium.REFSEQ)
-            fixes.append(HGVSFix(
-                severity=HGVSFixSeverity.ERROR,
-                code=HGVSFixCode.NO_TRANSCRIPT_FOR_GENE,
-                message=(
-                    f"No {prefer_consortium.value} transcript found for gene "
-                    f"'{gene_symbol}' in {genome_build} ({len(tx_and_tags)} "
-                    f"{other.value} transcript(s) available). Pass "
-                    f"prefer_consortium=Consortium.{other.name} or None to use them."
-                ),
-            ))
-            return hgvs_string, fixes
-        tx_and_tags = filtered
-
-    ranked = _rank_transcripts_by_tags(tx_and_tags, tag_priority)
     best_tx, _best_tags, matched_tag = ranked[0]
 
     if matched_tag is None and not fallback_to_longest:

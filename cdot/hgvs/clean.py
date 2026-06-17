@@ -111,6 +111,28 @@ class HGVSFix:
     original: Optional[str] = None  # before-value, if applicable
     fixed: Optional[str] = None     # after-value, if applicable
 
+    def __str__(self) -> str:
+        return self.message
+
+
+def messages(fixes: list[HGVSFix], severity: Optional[HGVSFixSeverity] = None) -> list[str]:
+    """Return the messages of ``fixes``, optionally filtered to one severity.
+
+    Saves consumers repeating ``[f.message for f in fixes if f.severity == ...]``
+    at every call site.
+    """
+    return [f.message for f in fixes if severity is None or f.severity == severity]
+
+
+def warning_messages(fixes: list[HGVSFix]) -> list[str]:
+    """Return the messages of all WARNING-level fixes."""
+    return messages(fixes, HGVSFixSeverity.WARNING)
+
+
+def error_messages(fixes: list[HGVSFix]) -> list[str]:
+    """Return the messages of all ERROR-level fixes."""
+    return messages(fixes, HGVSFixSeverity.ERROR)
+
 
 # ---------------------------------------------------------------------------
 # Transcript prefix helpers
@@ -761,30 +783,38 @@ class VersionStrategy(Enum):
     LATEST       = "latest"        # highest available, ignoring requested version
 
 
-def _rank_versions(
-    requested: int,
-    available: list[int],
-    strategy: VersionStrategy,
+def rank_transcript_versions(
+    requested_version: int,
+    available_versions: list[int],
+    strategy: VersionStrategy = VersionStrategy.UP_THEN_DOWN,
 ) -> list[int]:
     """
-    Return available versions sorted by preference given the strategy.
+    Return ``available_versions`` ordered best-first for the strategy.
+
+    This is the full ordering behind :func:`get_best_transcript_version` (which
+    returns only the single best). Callers that try candidate versions in turn
+    want the whole ranking, so it is exposed here.
 
     Ported from HGVSMatcher._get_sort_key_transcript_version_and_methods()
     in vg_code/hgvs/hgvs_matcher.py (minus the method/ClinGen sorting,
     which is VG-specific).
     """
     if strategy == VersionStrategy.LATEST:
-        return sorted(available, reverse=True)
+        return sorted(available_versions, reverse=True)
 
     def sort_key(v: int) -> tuple:
-        distance = abs(requested - v)
-        prefer_later = v < requested  # False=later, True=earlier → sort asc = later first
+        distance = abs(requested_version - v)
+        prefer_later = v < requested_version  # False=later, True=earlier → sort asc = later first
         if strategy == VersionStrategy.CLOSEST:
             return (distance, prefer_later)
         else:  # UP_THEN_DOWN
             return (prefer_later, distance)
 
-    return sorted(available, key=sort_key)
+    return sorted(available_versions, key=sort_key)
+
+
+# Backwards-compatible alias for the previous private name.
+_rank_versions = rank_transcript_versions
 
 
 def get_best_transcript_version(
@@ -822,7 +852,7 @@ def get_best_transcript_version(
             f"No versions of {accession} are available in the data provider"
         )
 
-    ranked = _rank_versions(requested_version, available_versions, strategy)
+    ranked = rank_transcript_versions(requested_version, available_versions, strategy)
     best = ranked[0]
     fix = HGVSFix(
         severity=HGVSFixSeverity.WARNING,
