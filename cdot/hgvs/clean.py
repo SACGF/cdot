@@ -182,7 +182,9 @@ _TRANSCRIPT_NO_UNDERSCORE = re.compile(r"^(NM|NC)(\d+)", re.IGNORECASE)
 # Lenient pattern — matches HGVS strings whether or not they have a transcript,
 # gene symbol, version, colon, or dot.  Used to reconstruct the canonical form.
 _HGVS_CLEAN_PATTERN = re.compile(
-    r"^((?P<transcript_prefix>NR|NM|NC|ENST|LRG|XR)(?P<transcript_value>[0-9_]*)"
+    # transcript_value allows an optional LRG transcript/protein suffix (eg the
+    # "t1" in "LRG_308t1") so the suffix isn't mis-parsed as the gene symbol.
+    r"^((?P<transcript_prefix>NR|NM|NC|ENST|LRG|XR)(?P<transcript_value>[0-9_]*(?:[tp][0-9]+)?)"
     r"(\.(?P<transcript_version>[0-9]+))?)?"
     r"([(]?(?P<gene_symbol>[^):\.]{2,8})[)]?)?"
     r":?(?P<letter>c|g|n|p)[.]?(?P<nomen>[^:\.]*)$",
@@ -219,9 +221,19 @@ _GENE_WRAPPER = re.compile(
     rf"^({_TX_PREFIX}[\w.]+):\(?([A-Za-z][A-Za-z0-9-]+)\)?:?([cgnmp][.,])", re.IGNORECASE)
 # Stray colon inside the gene parens, e.g. "(RAD51C:)" -> "(RAD51C)"
 _GENE_PARENS_COLON = re.compile(r"\(([A-Za-z][A-Za-z0-9-]*):\)")
+# Parens wrapping the whole accession, e.g. "(NM_000548.3):c." -> "NM_000548.3:c."
+_PARENS_WRAPPED_ACCESSION = re.compile(rf"^\(({_TX_PREFIX}[\w.]+)\)(?=:)", re.IGNORECASE)
+# Missing colon between a (gene) wrapper and the kind, e.g.
+# "MYB(NM_001130173.2)c.559T>C" -> "MYB(NM_001130173.2):c.559T>C" (the
+# gene/transcript swap is then done by _fix_gene_transcript).
+_MISSING_COLON_BEFORE_KIND = re.compile(r"(\([^)]+\))([cgnmp]\.)", re.IGNORECASE)
 
 # Comma used in place of the c./g. dot, e.g. ":c,1811" -> ":c.1811"
 _KIND_COMMA = re.compile(r":([cgnmp]),", re.IGNORECASE)
+# Colon used in place of the kind dot, e.g. ":c:1811" -> ":c.1811". The
+# lookahead keeps this from touching a normal ":c." (the second char is a dot,
+# not a coordinate).
+_KIND_COLON = re.compile(r":([cgnmp]):(?=[\d*?(\-])", re.IGNORECASE)
 # Period used in place of the substitution '>', e.g. "1030C.T" -> "1030C>T"
 _SUB_PERIOD = re.compile(r"([ACGT])\.([ACGT])$", re.IGNORECASE)
 
@@ -632,8 +644,12 @@ def _op_fix_gene_wrapper(s: str) -> tuple[str, list[HGVSFix]]:
     # Normalise a gene symbol wedged between extra colons / stray parens:
     #   "tx:(GENE):c."  "tx:(GENE)c."  "tx:GENE:c."  -> "tx(GENE):c."
     #   "tx(GENE:):c."                               -> "tx(GENE):c."
+    #   "(NM_000548.3):c."                           -> "NM_000548.3:c."
+    #   "MYB(NM_001130173.2)c."                      -> "MYB(NM_001130173.2):c."
     s2 = _GENE_PARENS_COLON.sub(r"(\1)", s)
     s2 = _GENE_WRAPPER.sub(r"\1(\2):\3", s2)
+    s2 = _PARENS_WRAPPED_ACCESSION.sub(r"\1", s2)
+    s2 = _MISSING_COLON_BEFORE_KIND.sub(r"\1:\2", s2)
     if s2 != s:
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
@@ -645,9 +661,10 @@ def _op_fix_gene_wrapper(s: str) -> tuple[str, list[HGVSFix]]:
 
 
 def _op_fix_separator_typo(s: str) -> tuple[str, list[HGVSFix]]:
-    # Comma in place of the kind dot ("c,1811" -> "c.1811") and period in place
-    # of the substitution '>' ("1030C.T" -> "1030C>T").
+    # Comma ("c,1811") or colon ("c:1811") in place of the kind dot, and period
+    # in place of the substitution '>' ("1030C.T" -> "1030C>T").
     s2 = _KIND_COMMA.sub(r":\1.", s)
+    s2 = _KIND_COLON.sub(r":\1.", s2)
     s2 = _SUB_PERIOD.sub(r"\1>\2", s2)
     if s2 != s:
         return s2, [HGVSFix(
