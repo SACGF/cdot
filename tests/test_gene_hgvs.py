@@ -8,7 +8,7 @@ import os
 import pytest
 
 from cdot.hgvs.clean import HGVSFixCode, HGVSFixSeverity, HGVSInputError, VersionStrategy
-from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
+from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider, LocalDataProvider
 from cdot.hgvs.gene_hgvs import (
     DEFAULT_TAG_PRIORITY,
     Consortium,
@@ -591,6 +591,129 @@ def test_json_provider_tags_ranked_by_exonic_not_genomic_length():
     dp = JSONDataProvider([io.StringIO(json.dumps(data))])
     ranked = dp.get_tx_ac_tags_for_gene("GENEX", "GRCh38")
     assert [tx_ac for tx_ac, _tags in ranked] == ["COMPACT.1", "WIDE_SPAN.1"]
+
+
+# ---------------------------------------------------------------------------
+# LocalDataProvider.get_tx_ac_tags_for_gene — returns the canonical versioned
+# accession (transcript_data["id"]) even when _get_transcript_ids_for_gene
+# yields a versionless id (#114)
+# ---------------------------------------------------------------------------
+
+class _VersionlessLocalProvider(LocalDataProvider):
+    """Minimal LocalDataProvider whose gene→tx map yields *versionless* ids
+    (like a store keyed without version) while each record carries the canonical
+    versioned accession in its ``"id"`` field.
+
+    Exercises the real get_tx_ac_tags_for_gene / _get_tags_by_tx_ac /
+    _get_transcript_tags path. _get_transcript resolves a lookup by either the
+    versionless id (from _get_transcript_ids_for_gene) or the versioned id (what
+    get_tx_ac_tags_for_gene now ranks by).
+    """
+    def __init__(self, gene_to_tx_ids, records):
+        # Deliberately skip AbstractJSONDataProvider.__init__ (assembly loading);
+        # the gene→tags path under test doesn't need it.
+        self._gene_to_tx_ids = gene_to_tx_ids
+        self._records = records
+
+    def _get_transcript(self, tx_ac):
+        if tx_ac in self._records:
+            return self._records[tx_ac]
+        for rec in self._records.values():
+            if rec.get("id") == tx_ac:
+                return rec
+        return None
+
+    def _get_transcript_ids_for_gene(self, gene):
+        return self._gene_to_tx_ids.get(gene, [])
+
+    def _get_gene(self, gene):
+        raise NotImplementedError
+
+    def _get_contig_interval_tree(self, alt_ac):
+        raise NotImplementedError
+
+    def get_tx_for_gene(self, gene):
+        raise NotImplementedError
+
+    def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
+        raise NotImplementedError
+
+
+def _versionless_record(tx_id, gene, tag):
+    build = {
+        "contig": "NC_000013.11", "strand": "+", "url": None,
+        "cds_start": None, "cds_end": None,
+        "exons": [[0, 100, 1, None, None, None]],
+    }
+    if tag is not None:
+        build["tag"] = tag
+    rec = {"gene_name": gene, "genome_builds": {"GRCh38": build}}
+    if tx_id is not None:
+        rec["id"] = tx_id
+    return rec
+
+
+def test_get_tx_ac_tags_for_gene_returns_versioned_id_from_record():
+    # gene map yields versionless "NM_000059", record carries id "NM_000059.4"
+    dp = _VersionlessLocalProvider(
+        {"BRCA2": ["NM_000059"]},
+        {"NM_000059": _versionless_record("NM_000059.4", "BRCA2", "MANE Select")},
+    )
+    result = dp.get_tx_ac_tags_for_gene("BRCA2", "GRCh38")
+    # Returns the canonical versioned accession, with tags resolved against it
+    assert result == [("NM_000059.4", ["MANE Select"])]
+
+
+def test_rank_transcripts_for_gene_versionless_provider_yields_versioned():
+    dp = _VersionlessLocalProvider(
+        {"BRCA2": ["NM_000059"]},
+        {"NM_000059": _versionless_record("NM_000059.4", "BRCA2", "MANE Select")},
+    )
+    ranked, fixes = rank_transcripts_for_gene("BRCA2", dp, "GRCh38")
+    assert fixes == []
+    assert len(ranked) == 1
+    tx_ac, tags, matched = ranked[0]
+    assert tx_ac == "NM_000059.4"            # versioned, not "NM_000059"
+    assert tags == ["MANE Select"]           # tags intact
+    assert matched == "MANE_Select"          # matched_tag intact
+
+
+def test_resolve_gene_hgvs_versionless_provider_rewrites_to_versioned():
+    dp = _VersionlessLocalProvider(
+        {"BRCA2": ["NM_000059"]},
+        {"NM_000059": _versionless_record("NM_000059.4", "BRCA2", "MANE Select")},
+    )
+    resolved, fixes = resolve_gene_hgvs("BRCA2:c.36del", dp, "GRCh38")
+    assert resolved == "NM_000059.4:c.36del"
+    assert any(f.code == C.RESOLVED_GENE_TO_TRANSCRIPT for f in fixes)
+    resolve_fix = next(f for f in fixes if f.code == C.RESOLVED_GENE_TO_TRANSCRIPT)
+    assert resolve_fix.fixed == "NM_000059.4"
+
+
+def test_get_tx_ac_tags_for_gene_falls_back_to_id_in_hand_when_no_id():
+    # Record has no "id" → fall back to the id from _get_transcript_ids_for_gene
+    dp = _VersionlessLocalProvider(
+        {"BRCA2": ["NM_FALLBACK"]},
+        {"NM_FALLBACK": _versionless_record(None, "BRCA2", "MANE Select")},
+    )
+    result = dp.get_tx_ac_tags_for_gene("BRCA2", "GRCh38")
+    assert result == [("NM_FALLBACK", ["MANE Select"])]
+
+
+def test_get_tx_ac_tags_for_gene_skips_transcript_with_no_data_for_build():
+    # A transcript with no genome_builds entry for the build is skipped, while
+    # the one with data is still returned by its versioned accession.
+    dp = _VersionlessLocalProvider(
+        {"BRCA2": ["NM_000059", "NM_OTHER"]},
+        {
+            "NM_000059": _versionless_record("NM_000059.4", "BRCA2", "MANE Select"),
+            # No GRCh38 build for this one
+            "NM_OTHER": {"id": "NM_OTHER.1", "gene_name": "BRCA2",
+                         "genome_builds": {"GRCh37": {"exons": [[0, 100, 1, None, None, None]]}}},
+        },
+    )
+    result = dp.get_tx_ac_tags_for_gene("BRCA2", "GRCh38")
+    assert result == [("NM_000059.4", ["MANE Select"])]
 
 
 # ---------------------------------------------------------------------------

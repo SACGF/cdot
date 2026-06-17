@@ -384,6 +384,14 @@ class LocalDataProvider(AbstractJSONDataProvider):
         Tag data comes from :meth:`_get_tags_by_tx_ac` (which by default defers to
         the per-transcript :meth:`_get_transcript_tags`); either can be overridden
         in subclasses to supplement the cdot JSON with an external source.
+
+        The accession ranked, looked up and returned is the canonical versioned
+        accession from the record (``transcript_data["id"]``, e.g.
+        ``"NM_000059.4"``), not the id yielded by
+        :meth:`_get_transcript_ids_for_gene` (which may be versionless, e.g.
+        ``"NM_000059"``). When a record has no ``"id"`` we fall back to the id in
+        hand. Providers whose ids are already versioned (e.g. JSONDataProvider)
+        are unaffected, as ``transcript_data["id"]`` equals that id.
         """
         lengths = []
         for transcript_id in self._get_transcript_ids_for_gene(gene):
@@ -391,11 +399,14 @@ class LocalDataProvider(AbstractJSONDataProvider):
             build_data = transcript_data["genome_builds"].get(genome_build)
             if build_data is None:
                 continue
+            # Rank/look-up/return the canonical versioned accession from the
+            # record, falling back to the id we already have if absent.
+            accession = transcript_data.get("id") or transcript_id
             # Spliced (exonic) transcript length - the sum of exon lengths, NOT
             # the genomic span (which would include introns). Exons are
             # [alt_start, alt_end, ...] so each exon's length is alt_end - alt_start.
             length = sum(exon[1] - exon[0] for exon in build_data["exons"])
-            lengths.append((length, transcript_id))
+            lengths.append((length, accession))
 
         tags_by_ac = self._get_tags_by_tx_ac([tx_ac for _, tx_ac in lengths], genome_build)
         lengths.sort(key=lambda x: x[0], reverse=True)

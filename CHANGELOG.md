@@ -7,6 +7,7 @@
 ### Changed
 
 - #114 - `_get_transcript_tags` now takes `tx_ac` explicitly (`_get_transcript_tags(tx_ac, transcript_data, genome_build)`) so overrides don't have to re-derive the accession from `transcript_data["id"]`
+- #114 - Gene→transcript resolution now returns the canonical versioned accession: `LocalDataProvider.get_tx_ac_tags_for_gene` ranks, looks tags up by, and returns `transcript_data["id"]` (eg `NM_000059.4`) instead of whatever `_get_transcript_ids_for_gene` yielded - so providers whose gene→tx map is versionless (eg `NM_000059`) now resolve `BRCA2:c.36del` → `NM_000059.4:c.36del` (matching `resolve_gene_hgvs`'s documented output) rather than dropping the version; falls back to the id in hand when a record has no `"id"`. Providers whose ids are already versioned (eg `JSONDataProvider`) are unchanged
 
 ## [0.2.27] - 2026-06-16
 
