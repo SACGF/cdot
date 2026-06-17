@@ -1,7 +1,13 @@
-# Implementation
+# Methods
 
-*This is the main body section for an Application Note. Weave benchmarks in inline rather than a separate Results section.*
-*Target: ~1,200 words across 4–5 subsections.*
+*Full Original Paper (Bioinformatics) — Methods section. See `claude/paper_plan.md`.*
+*Target: ~1,200–1,600 words. Subsections: Data sources & generation · JSON format · String cleaning (`clean_hgvs()`) · Access & client libraries · Canonical transcript selection.*
+
+> **RESTRUCTURE TODO (full-paper switch):**
+> - **ADD** a "String cleaning (`clean_hgvs()`)" subsection — currently absent (see plan §4, §5).
+>   Synthesised examples only (public NM_000059.4 BRCA2 / NM_001754.5 RUNX1); never corpus strings.
+> - **MOVE OUT** the benchmark/coverage/resolution prose ("Coverage and ClinVar benchmark") to
+>   `results.md` — Methods describes *how*, Results reports *numbers*.
 
 ---
 

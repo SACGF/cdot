@@ -1,7 +1,8 @@
 # cdot Paper — Working Directory
 
-Target journal: **Bioinformatics (Oxford)**
-Article type: **Application Note** (≤4 pages / ~2,600 words, or ~2,000 words + 1 figure)
+Target journal: **Bioinformatics (Oxford)** — DECIDED 2026-06-17
+Article type: **Original Paper** (full article; not an Application Note). See `claude/paper_plan.md`.
+Structure: Abstract · Introduction · Methods · Results · Discussion · Figures.
 
 ## Files
 
@@ -10,7 +11,8 @@ Article type: **Application Note** (≤4 pages / ~2,600 words, or ~2,000 words +
 | `bioinformatics_submission_guide.md` | Journal requirements |
 | `abstract.md` | Abstract (Summary / Availability / Contact) |
 | `introduction.md` | Background and problem statement (~400 words) |
-| `implementation.md` | Tool description + inline benchmarks (~1,200 words) |
+| `methods.md` | Methods: data generation, JSON format, `clean_hgvs()`, access/clients, canonical selection |
+| `results.md` | Results: coverage + ClinVar resolution, cleaning recovery + taxonomy, version fallback, speed, gap/T2T |
 | `discussion.md` | Positioning, limitations, future (~300 words) |
 | `figures.md` | Figure descriptions (target: 2 main figures) |
 | `references.md` | Formatted reference list |

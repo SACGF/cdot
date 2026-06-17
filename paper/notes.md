@@ -1,12 +1,20 @@
 # Working Notes
 
+> **⚠️ SUPERSEDED (2026-06-17):** The Application-Note decision and the ~2,600-word budget below are
+> **obsolete**. The paper is now a **full Bioinformatics Original Paper** (Abstract · Introduction ·
+> Methods · Results · Discussion). See `claude/paper_plan.md` for the live plan. The "Numbers to fill
+> in" and checklists below remain useful; ignore the word-count table.
+
 ---
 
-## Article type decision
+## Article type decision  *(SUPERSEDED — kept for history)*
 
-**Application Note** (≤4 pages / ~2,600 words, or ~2,000 words + 1 figure).
+~~**Application Note** (≤4 pages / ~2,600 words, or ~2,000 words + 1 figure).~~
 
-Rationale: cdot is a tool + data resource — the classic Application Note scope. The Hart 2015 biocommons/hgvs paper (the tool cdot integrates with) was itself a Bioinformatics Application Note. A tight 4-page paper with strong numbers is more impactful than a padded 7-page paper.
+Original rationale (no longer applies after the cleaning + taxonomy + benchmark material was added):
+cdot is a tool + data resource — the classic Application Note scope. The Hart 2015 biocommons/hgvs
+paper was itself a Bioinformatics Application Note. **Now superseded:** the breadth (coverage +
+cleaning + entry-error taxonomy + benchmarks) justifies a full Original Paper.
 
 ---
 

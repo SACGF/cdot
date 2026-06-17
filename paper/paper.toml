@@ -3,7 +3,8 @@ name        = "cdot"
 sections    = [
     "abstract.md",
     "introduction.md",
-    "implementation.md",
+    "methods.md",
+    "results.md",
     "discussion.md",
     "figures.md",
 ]
