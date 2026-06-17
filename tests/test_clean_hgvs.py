@@ -174,9 +174,9 @@ CLEAN_CASES = [
     # uppercase mutation type — only the allele must be lowercased, not the gene.
     ("NM_000208.4(INSR):c.215_216DEL",           "NM_000208.4(INSR):c.215_216del",            {C.LOWERCASED_MUTATION_TYPE}),
     # #112 — colon used in place of the kind dot ("c:" -> "c.")
-    ("NM_000540.2:c:8254G>T",                    "NM_000540.2:c.8254G>T",                      {C.FIXED_SEPARATOR_TYPO}),
+    ("NM_000059.4:c:123A>G",                     "NM_000059.4:c.123A>G",                       {C.FIXED_SEPARATOR_TYPO}),
     # #112 — parens wrapping the whole accession
-    ("(NM_000548.3):c.2732_2733insA",            "NM_000548.3:c.2732_2733insA",                {C.FIXED_GENE_WRAPPER}),
+    ("(NM_001754.5):c.1415T>C",                  "NM_001754.5:c.1415T>C",                      {C.FIXED_GENE_WRAPPER}),
 ]
 
 
@@ -296,8 +296,8 @@ ALREADY_VALID = [
     "NC_000023.11:g.(31180435_31200854)_(33274278_33357726)del",
     # #112 — LRG transcript references (the "t1"/"p1" suffix must survive
     # structure reconstruction, not be mistaken for the gene symbol).
-    "LRG_308t1(PALB2):c.3113G>A",
-    "LRG_256t1(MPZ):c.244T>C",
+    "LRG_199t1(RUNX1):c.1415T>C",
+    "LRG_199t2(BRCA2):c.316+5G>A",
 ]
 
 

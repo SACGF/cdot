@@ -183,7 +183,7 @@ _TRANSCRIPT_NO_UNDERSCORE = re.compile(r"^(NM|NC)(\d+)", re.IGNORECASE)
 # gene symbol, version, colon, or dot.  Used to reconstruct the canonical form.
 _HGVS_CLEAN_PATTERN = re.compile(
     # transcript_value allows an optional LRG transcript/protein suffix (eg the
-    # "t1" in "LRG_308t1") so the suffix isn't mis-parsed as the gene symbol.
+    # "t1" in "LRG_199t1") so the suffix isn't mis-parsed as the gene symbol.
     r"^((?P<transcript_prefix>NR|NM|NC|ENST|LRG|XR)(?P<transcript_value>[0-9_]*(?:[tp][0-9]+)?)"
     r"(\.(?P<transcript_version>[0-9]+))?)?"
     r"([(]?(?P<gene_symbol>[^):\.]{2,8})[)]?)?"
@@ -221,10 +221,10 @@ _GENE_WRAPPER = re.compile(
     rf"^({_TX_PREFIX}[\w.]+):\(?([A-Za-z][A-Za-z0-9-]+)\)?:?([cgnmp][.,])", re.IGNORECASE)
 # Stray colon inside the gene parens, e.g. "(RAD51C:)" -> "(RAD51C)"
 _GENE_PARENS_COLON = re.compile(r"\(([A-Za-z][A-Za-z0-9-]*):\)")
-# Parens wrapping the whole accession, e.g. "(NM_000548.3):c." -> "NM_000548.3:c."
+# Parens wrapping the whole accession, e.g. "(NM_000059.4):c." -> "NM_000059.4:c."
 _PARENS_WRAPPED_ACCESSION = re.compile(rf"^\(({_TX_PREFIX}[\w.]+)\)(?=:)", re.IGNORECASE)
 # Missing colon between a (gene) wrapper and the kind, e.g.
-# "MYB(NM_001130173.2)c.559T>C" -> "MYB(NM_001130173.2):c.559T>C" (the
+# "BRCA1(NM_000059.4)c.123A>G" -> "BRCA1(NM_000059.4):c.123A>G" (the
 # gene/transcript swap is then done by _fix_gene_transcript).
 _MISSING_COLON_BEFORE_KIND = re.compile(r"(\([^)]+\))([cgnmp]\.)", re.IGNORECASE)
 
@@ -644,8 +644,8 @@ def _op_fix_gene_wrapper(s: str) -> tuple[str, list[HGVSFix]]:
     # Normalise a gene symbol wedged between extra colons / stray parens:
     #   "tx:(GENE):c."  "tx:(GENE)c."  "tx:GENE:c."  -> "tx(GENE):c."
     #   "tx(GENE:):c."                               -> "tx(GENE):c."
-    #   "(NM_000548.3):c."                           -> "NM_000548.3:c."
-    #   "MYB(NM_001130173.2)c."                      -> "MYB(NM_001130173.2):c."
+    #   "(NM_000059.4):c."                           -> "NM_000059.4:c."
+    #   "BRCA1(NM_000059.4)c."                       -> "BRCA1(NM_000059.4):c."
     s2 = _GENE_PARENS_COLON.sub(r"(\1)", s)
     s2 = _GENE_WRAPPER.sub(r"\1(\2):\3", s2)
     s2 = _PARENS_WRAPPED_ACCESSION.sub(r"\1", s2)

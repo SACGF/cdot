@@ -3,7 +3,7 @@
 ### Added
 
 - #114 - Public HGVS ranking primitives + provider hooks (to let consumers stop importing private symbols / re-implementing ranking): `rank_transcript_versions` (the full version ordering behind `get_best_transcript_version`) and `rank_transcripts_for_gene` (the gene→transcript lookup/uppercase-retry/consortium-filter/tag-ranking core split out of `resolve_gene_hgvs`, returning the full ranked candidate list); `consortium_of` (promoted from `_consortium_of`); `HGVSFix.__str__` plus `messages`/`warning_messages`/`error_messages` helpers; an overridable batch tag hook `_get_tags_by_tx_ac(tx_acs, genome_build)` on data providers (default loops the per-transcript hook) so subclasses can answer in one query instead of N+1; and `cdot.hgvs` now also re-exports `Consortium`, `DEFAULT_CONSORTIUM`, `HGVSCleanOp`, and `ALL_CLEAN_OPS`
-- #112 - HGVS cleaning: new ops driven by the search-log corpus - colon used in place of the kind dot (`:c:1811` → `:c.1811`), parens wrapping the whole accession (`(NM_000548.3):c.…` → `NM_000548.3:c.…`), and a gene-first wrapper missing the colon before the kind (`MYB(NM_…)c.…` → `NM_…(MYB):c.…`)
+- #112 - HGVS cleaning: new ops driven by the search-log corpus - colon used in place of the kind dot (`:c:123` → `:c.123`), parens wrapping the whole accession (`(NM_000059.4):c.…` → `NM_000059.4:c.…`), and a gene-first wrapper missing the colon before the kind (`BRCA1(NM_…)c.…` → `NM_…(BRCA1):c.…`)
 
 ### Changed
 
@@ -13,7 +13,7 @@
 
 ### Fixed
 
-- #112 - HGVS cleaning no longer mangles LRG transcript references: the `t1`/`p1` transcript/protein suffix (eg `LRG_308t1(PALB2):c.3113G>A`) is preserved through structure reconstruction instead of being mistaken for the gene symbol
+- #112 - HGVS cleaning no longer mangles LRG transcript references: the `t1`/`p1` transcript/protein suffix (eg `LRG_199t1(RUNX1):c.1415T>C`) is preserved through structure reconstruction instead of being mistaken for the gene symbol
 
 ## [0.2.27] - 2026-06-16
 
