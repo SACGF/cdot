@@ -16,7 +16,8 @@
 ## Original Paper (not our target, for reference)
 
 - **Page limit**: 7 pages (~5,000 words)
-- **Abstract**: Motivation / Results / Availability / Contact / Supplementary Information
+- **Abstract**: Motivation / Results / Availability / Contact / Supplementary
+  Information
 
 ---
 
@@ -47,4 +48,5 @@
 
 ## Data Availability Statement
 
-> The cdot JSON.gz data files are available at cdotlib.org and [Zenodo DOI]. All data are versioned and publicly accessible without registration.
+> The cdot JSON.gz data files are available at cdotlib.org and [Zenodo DOI]. All data
+are versioned and publicly accessible without registration.

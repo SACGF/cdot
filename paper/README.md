@@ -1,7 +1,8 @@
 # cdot Paper — Working Directory
 
 Target journal: **Bioinformatics (Oxford)** — DECIDED 2026-06-17
-Article type: **Original Paper** (full article; not an Application Note). See `claude/paper_plan.md`.
+Article type: **Original Paper** (full article; not an Application Note). See
+`claude/paper_plan.md`.
 Structure: Abstract · Introduction · Methods · Results · Discussion · Figures.
 
 ## Files

@@ -1,8 +1,11 @@
 # Working Notes
 
-> **⚠️ SUPERSEDED (2026-06-17):** The Application-Note decision and the ~2,600-word budget below are
-> **obsolete**. The paper is now a **full Bioinformatics Original Paper** (Abstract · Introduction ·
-> Methods · Results · Discussion). See `claude/paper_plan.md` for the live plan. The "Numbers to fill
+> **⚠️ SUPERSEDED (2026-06-17):** The Application-Note decision and the ~2,600-word
+budget below are
+> **obsolete**. The paper is now a **full Bioinformatics Original Paper** (Abstract ·
+Introduction ·
+> Methods · Results · Discussion). See `claude/paper_plan.md` for the live plan. The
+"Numbers to fill
 > in" and checklists below remain useful; ignore the word-count table.
 
 ---
@@ -11,9 +14,12 @@
 
 ~~**Application Note** (≤4 pages / ~2,600 words, or ~2,000 words + 1 figure).~~
 
-Original rationale (no longer applies after the cleaning + taxonomy + benchmark material was added):
-cdot is a tool + data resource — the classic Application Note scope. The Hart 2015 biocommons/hgvs
-paper was itself a Bioinformatics Application Note. **Now superseded:** the breadth (coverage +
+Original rationale (no longer applies after the cleaning + taxonomy + benchmark material
+was added):
+cdot is a tool + data resource — the classic Application Note scope. The Hart 2015
+biocommons/hgvs
+paper was itself a Bioinformatics Application Note. **Now superseded:** the breadth
+(coverage +
 cleaning + entry-error taxonomy + benchmarks) justifies a full Original Paper.
 
 ---
@@ -45,7 +51,8 @@ cleaning + entry-error taxonomy + benchmarks) justifies a full Original Paper.
 | Page budget (4 pages) | ~2,600 words | — |
 | Remaining budget | ~550 words | — |
 
-*~550 words of slack. Keep for figure legends, captions, and any result detail that needs expanding once real numbers are in.*
+*~550 words of slack. Keep for figure legends, captions, and any result detail that
+needs expanding once real numbers are in.*
 
 ---
 
@@ -53,8 +60,11 @@ cleaning + entry-error taxonomy + benchmarks) justifies a full Original Paper.
 
 - [ ] Does VariantValidator support T2T? Confirm before claiming "first HGVS resource"
 - [ ] Does TARK support T2T? Same check
-- [ ] #36 (CanonicalTranscriptSelector) — must be implemented before submission; it's in the abstract
-- [ ] #100 — cdotlib.org migration from cdot.cc — code/docs references swapped; remaining: persist cdot_rest settings + cdot.cc→cdotlib.org redirect so URL in paper is stable at submission
+- [ ] #36 (CanonicalTranscriptSelector) — must be implemented before submission; it's in
+  the abstract
+- [ ] #100 — cdotlib.org migration from cdot.cc — code/docs references swapped;
+  remaining: persist cdot_rest settings + cdot.cc→cdotlib.org redirect so URL in paper
+  is stable at submission
 - [ ] Zenodo DOI for data files — register before submission
 - [ ] Corresponding author and co-author list
 - [ ] Cover letter: mention production use in VariantGrid/Shariant
@@ -66,8 +76,10 @@ cleaning + entry-error taxonomy + benchmarks) justifies a full Original Paper.
 - Application Note, not Original Paper
 - cdot_rest = same paper; pyreference = 1 paragraph in Discussion (cut for word count)
 - SeqRepo analogy: use explicitly
-- Speed benchmark goes to Supplementary Figure S1 to save main figure space for Figure 1 (coverage + ClinVar)
-- pyreference mention cut from discussion draft (word count); can add back if under budget
+- Speed benchmark goes to Supplementary Figure S1 to save main figure space for Figure 1
+  (coverage + ClinVar)
+- pyreference mention cut from discussion draft (word count); can add back if under
+  budget
 
 ---
 
