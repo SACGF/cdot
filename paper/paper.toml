@@ -11,6 +11,9 @@ sections    = [
 supplementary = [
     "supplementary.md",
 ]
+# The render always reads facts from here. Both Snakemake modes populate it:
+# `full` regenerates them from data/runs; `quick` copies the committed stored
+# results from paper/empirical_results/ into it. See paper/README.md.
 facts_dir    = "../output/facts"
 output_dir   = "../output"
 bibliography = "references.bib"

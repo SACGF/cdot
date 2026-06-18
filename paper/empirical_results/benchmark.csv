@@ -1,0 +1,2 @@
+cdot_local_min_tps,cdot_local_max_tps,cdot_rest_tps,cdot_rest_prefetch_tps,uta_local_tps,uta_remote_tps,grch38_load_time_s
+540,665,39,731,24,0.1,10.6

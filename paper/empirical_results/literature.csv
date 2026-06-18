@@ -1,0 +1,2 @@
+clinvar_variants,hgvs_error_rate_pct,lof_agreement_pct,brca2_accuracy_pct,uta_count,uta_remote_tps,mane_coverage_pct,seqrepo_speedup_fold
+3000000,50,44,32,141000,1,97,1300

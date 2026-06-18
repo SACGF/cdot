@@ -44,7 +44,18 @@ HAVE_DATA    = any(p and Path(p).exists() for p in FILES.values())
 HAVE_CLINVAR = bool(CLINVAR_CSV and Path(CLINVAR_CSV).exists())
 
 PYTHON = ".venv/bin/python"
-VIBE   = ".venv/bin/vibepaper --config paper/paper.toml"
+VIBE   = ".venv/bin/vibepaper build --config paper/paper.toml"
+
+# The render always reads facts from GEN_FACTS (= paper.toml facts_dir = output/facts).
+# How GEN_FACTS gets populated is the only difference between the two build modes:
+#   FULL  - regenerate the facts there from production data / benchmark runs.
+#   QUICK - copy the committed stored results from EMPIRICAL into there.
+# EMPIRICAL is the checked-in snapshot of measured results (NOT "facts" - those are
+# the generated templating values); `full` refreshes it after a successful run.
+EMPIRICAL  = "paper/empirical_results"
+GEN_FACTS  = "output/facts"
+FACT_FILES = ["literature.csv", "coverage.csv", "benchmark.csv",
+              "clinvar.csv", "cleaning.csv", "sources.csv"]
 
 PAPER_SOURCES = [
     "paper/abstract.md",
@@ -59,32 +70,47 @@ PAPER_SOURCES = [
     "paper/paper.toml",
 ]
 
-FACTS = [
-    "output/facts/literature.csv",
-    "output/facts/coverage.csv",
-    "output/facts/benchmark.csv",
-    "output/facts/clinvar.csv",
-    "output/facts/cleaning.csv",
-]
-
 # ---------------------------------------------------------------------------
 # Rules
 # ---------------------------------------------------------------------------
 
 rule all:
-    """Default target: build the paper."""
-    input: "output/.paper_built"
+    """Default target: the fast (quick) build."""
+    input: "output/.paper_built_quick"
 
 
-rule paper:
-    """Render templates and build the Word document via vibepaper."""
+rule quick:
+    """QUICK build: copy the committed stored results from paper/empirical_results/
+    into the facts dir (output/facts/), then render - exactly where a real benchmark
+    run would write them, so the render path is identical. No production data, no
+    private corpus, no network. Seconds. This is the default."""
+    input:
+        sources  = PAPER_SOURCES,
+        stored   = [f"{EMPIRICAL}/{f}" for f in FACT_FILES],
+    output:
+        touch("output/.paper_built_quick"),
+    shell:
+        "mkdir -p {GEN_FACTS} && cp {EMPIRICAL}/*.csv {GEN_FACTS}/ && {VIBE}"
+
+
+rule full:
+    """FULL build: regenerate every fact into output/facts/ from scratch, render,
+    then refresh the committed paper/empirical_results/ snapshot. Reproducible facts
+    (coverage, ClinVar resolution, throughput, cleaning injection, sources) are
+    recomputed - several need --config data_dir=... (and clinvar_hgvs_csv=...,
+    uta_uri=...). The Tier-2 cleaning constants (production rescue rates + residual
+    taxonomy in results.md) come from the private cdot_private corpus and are
+    transcribed by hand; see paper/README.md. Slow (the full-ClinVar throughput
+    runs take ~1.5 h each)."""
     input:
         sources = PAPER_SOURCES,
-        facts   = FACTS,
+        facts   = [f"{GEN_FACTS}/{f}" for f in FACT_FILES],
     output:
-        touch("output/.paper_built"),
+        touch("output/.paper_built_full"),
     shell:
-        "{VIBE}"
+        # render from the freshly regenerated facts; only refresh the committed
+        # snapshot once the render succeeds, so a botched run can't corrupt it
+        "{VIBE} && cp {GEN_FACTS}/*.csv {EMPIRICAL}/"
 
 
 rule literature:
@@ -146,8 +172,9 @@ rule benchmark:
     """Benchmark local JSON throughput and load time.
 
     Requires --config data_dir=/path/to/data pointing to a GRCh38 RefSeq JSON.gz.
-    Without data, writes the known cdot_local_min/max_tps=500/1000 and uta_remote_tps=1;
-    grch38_load_time_s stays 0 until benchmarked.
+    Without data, writes the measured throughput facts below (HGVS/s, GRCh38 RefSeq,
+    identical biocommons engine + shared local SeqRepo; see analysis/benchmark_resolution.py
+    and analysis/compare_providers.py). These are frozen measurements, not placeholders.
     """
     output: "output/facts/benchmark.csv"
     run:
@@ -158,15 +185,18 @@ rule benchmark:
             uta_flag = f"--uta-uri {config['uta_uri']}" if "uta_uri" in config else ""
             shell(f"{PYTHON} analysis/compute_benchmark.py --refseq-grch38 {grch38} {uta_flag}")
         else:
-            print("WARNING: refseq_grch38 not found — writing partial benchmark.csv (load time = 0)")
-            print("  Run with --config data_dir=/path/to/data to benchmark load time and REST throughput.")
+            print("No data_dir — writing the frozen measured benchmark facts to benchmark.csv")
+            # Measured HGVS/s (GRCh38 RefSeq, biocommons engine, shared local SeqRepo):
+            # local JSON 540 (500-set) -> 665 (full 3.66M ClinVar); REST 39 cold, 731 after a
+            # batch prefetch; local UTA 24; public remote UTA 0.1. See R5 / Table 2.
             row = {
-                "cdot_local_min_tps": 500,
-                "cdot_local_max_tps": 1000,
-                "cdot_rest_tps":      0,
-                "uta_local_tps":      0,
-                "uta_remote_tps":     1,
-                "grch38_load_time_s": 0,
+                "cdot_local_min_tps":      540,
+                "cdot_local_max_tps":      665,
+                "cdot_rest_tps":           39,
+                "cdot_rest_prefetch_tps":  731,
+                "uta_local_tps":           24,
+                "uta_remote_tps":          0.1,
+                "grch38_load_time_s":      10.6,
             }
             with open(output[0], "w", newline="") as fh:
                 writer = csv.DictWriter(fh, fieldnames=list(row))
@@ -208,3 +238,12 @@ rule cleaning:
     output: "output/facts/cleaning.csv"
     shell:
         "{PYTHON} analysis/inject_and_clean.py"
+
+
+rule sources:
+    """Count annotation releases ingested per consortium/build (the sources.*_releases
+    facts in Methods) from generate_transcript_data/cdot_transcripts.yaml - the
+    committed source list. No production data needed."""
+    output: "output/facts/sources.csv"
+    shell:
+        "{PYTHON} analysis/compute_sources.py"
