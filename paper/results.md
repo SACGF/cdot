@@ -150,13 +150,16 @@ transcript lookup is the remaining bottleneck.
 
 **[Tier 1]** At scale, a single local-JSON process resolved the entire set of 3,660,452
 unique ClinVar (g.HGVS, c.HGVS) pairs in ~92 minutes (665 HGVS/s; 99.3% produced a
-genomic coordinate, 98.8% matched the ClinVar genomic HGVS exactly). The same exhaustive
-pass is impractical against the public remote UTA database (extrapolated at hundreds of
-days from its ~0.1 HGVS/s), and the REST provider with batch cache-warming sustains
-comparable throughput to local JSON. (`analysis/build_clinvar_pairs.py` builds the pair
-set by joining ClinVar's variant_summary with the ClinVar VCF; the residual ~1%
-non-exact/error rate is dominated by genomic-HGVS normalisation differences between the
-ClinVar source string and the biocommons output, not resolution failures.)
+genomic coordinate, 98.8% matched the ClinVar genomic HGVS exactly). The REST provider
+matched this over the network: after one batch cache-warming pass (21,277 distinct
+transcripts warmed in ~6 s) it resolved the same set in ~83 minutes (731 HGVS/s) —
+marginally faster than local JSON, since warmed lookups hit a flat in-memory cache
+rather than the interval-tree index. The same exhaustive pass is impractical against the
+public remote UTA database (extrapolated at hundreds of days from its ~0.1 HGVS/s).
+(`analysis/build_clinvar_pairs.py` builds the pair set by joining ClinVar's
+variant_summary with the ClinVar VCF; the residual ~1% non-exact/error rate is dominated
+by genomic-HGVS normalisation differences between the ClinVar source string and the
+biocommons output, not resolution failures.)
 
 ## R6 — Alignment-gap correctness and T2T uniqueness
 
