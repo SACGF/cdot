@@ -177,6 +177,9 @@ CLEAN_CASES = [
     ("NM_000059.4:c:123A>G",                     "NM_000059.4:c.123A>G",                       {C.FIXED_SEPARATOR_TYPO}),
     # #112 — parens wrapping the whole accession
     ("(NM_001754.5):c.1415T>C",                  "NM_001754.5:c.1415T>C",                      {C.FIXED_GENE_WRAPPER}),
+    # #112 — genomic accession wedged into the gene-symbol parenthetical slot
+    ("NM_000059.4(NC_000013.11):c.68del",        "NM_000059.4:c.68del",                        {C.DROPPED_GENOMIC_REF_IN_PARENS}),
+    ("NM_001754.5(NG_042763.1):c.1415T>C",       "NM_001754.5:c.1415T>C",                      {C.DROPPED_GENOMIC_REF_IN_PARENS}),
 ]
 
 
@@ -230,6 +233,33 @@ def test_drop_del_dup_count_requires_range():
     cleaned, fixes = clean_hgvs("NM_000059.4:c.123del5", validate=False)
     assert cleaned == "NM_000059.4:c.123del5"
     assert C.DROPPED_DEL_DUP_COUNT not in codes(fixes)
+
+
+def test_drop_genomic_ref_in_parens():
+    # #112 — a genomic accession (NC_/NG_/NW_) sitting in the gene-symbol
+    # parenthetical slot is not a gene symbol; dropping it lets the string parse.
+    for genomic in ("NC_000013.11", "NG_012772.3", "NW_009646201.1"):
+        bad = f"NM_000059.4({genomic}):c.68del"
+        cleaned, fixes = clean_hgvs(bad, validate=False)
+        assert cleaned == "NM_000059.4:c.68del", f"Input: {bad!r}"
+        assert C.DROPPED_GENOMIC_REF_IN_PARENS in codes(fixes)
+
+
+def test_drop_genomic_ref_in_parens_keeps_real_gene_symbol():
+    # A real gene symbol in the parens must be kept, not dropped.
+    cleaned, fixes = clean_hgvs("NM_000059.4(BRCA2):c.68del", validate=False)
+    assert cleaned == "NM_000059.4(BRCA2):c.68del"
+    assert C.DROPPED_GENOMIC_REF_IN_PARENS not in codes(fixes)
+
+
+def test_drop_genomic_ref_in_parens_collapses_genomic_selector_form():
+    # The "genomic reference, transcript selector" form NC_(NM_) is first
+    # swapped to NM_(NC_) by the gene/transcript step, then the redundant
+    # genomic parenthetical is dropped — collapsing to the same parseable
+    # transcript reference (a semantically equivalent simplification).
+    cleaned, fixes = clean_hgvs("NC_000013.11(NM_000059.4):c.68del", validate=False)
+    assert cleaned == "NM_000059.4:c.68del"
+    assert C.DROPPED_GENOMIC_REF_IN_PARENS in codes(fixes)
 
 
 def test_clean_hgvs_protein_suffix():

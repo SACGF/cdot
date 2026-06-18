@@ -1,5 +1,9 @@
 ## [unreleased]
 
+### Added
+
+- #112 - HGVS cleaning: new op that drops a genomic accession (`NC_`/`NG_`/`NW_`) wrongly placed in the gene-symbol parenthetical slot, eg `NM_000059.4(NC_000013.11):c.68del` → `NM_000059.4:c.68del`, so the string parses. Selectable as `HGVSCleanOp.DROP_GENOMIC_REF_IN_PARENS`; reported as an `HGVSFix` (`DROPPED_GENOMIC_REF_IN_PARENS`)
+
 ## [0.2.28] - 2026-06-18
 
 ### Added

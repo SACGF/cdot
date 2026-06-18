@@ -51,6 +51,7 @@ class HGVSFixCode(Enum):
     FIXED_GENE_WRAPPER           = "fixed_gene_wrapper"
     FIXED_SEPARATOR_TYPO         = "fixed_separator_typo"
     DROPPED_DEL_DUP_COUNT        = "dropped_del_dup_count"
+    DROPPED_GENOMIC_REF_IN_PARENS = "dropped_genomic_ref_in_parens"
     ADDED_TRANSCRIPT_UNDERSCORE  = "added_transcript_underscore"
     UPPERCASED_BASES             = "uppercased_bases"
     ADDED_MISSING_KIND           = "added_missing_kind"
@@ -101,6 +102,7 @@ class HGVSCleanOp(Enum):
     UPPERCASE_BASES          = "uppercase_bases"
     ADD_MISSING_KIND         = "add_missing_kind"
     FIX_GENE_TRANSCRIPT      = "fix_gene_transcript"
+    DROP_GENOMIC_REF_IN_PARENS = "drop_genomic_ref_in_parens"
 
 
 @dataclass(frozen=True)
@@ -243,6 +245,19 @@ _SUB_PERIOD = re.compile(r"([ACGT])\.([ACGT])$", re.IGNORECASE)
 # single-position "c.123del5" (delete 5 bases). delins/ins are excluded — they
 # genuinely need the inserted sequence, so they stay flagged as errors.
 _DEL_DUP_RANGE_COUNT = re.compile(r"(\d+_\d[\d+\-_*]*(?:del|dup))\d+$", re.IGNORECASE)
+
+# A genomic accession (NC_/NG_/NW_) wedged into the gene-symbol parenthetical
+# slot of a transcript reference, e.g. "NM_000059.4(NC_000013.11):c.68del". A
+# genomic accession is not a gene symbol, so the parser rejects it; dropping the
+# parenthetical (the transcript alone is a complete reference) makes it parse.
+# Only fires when the part *before* the parens is a transcript and the part
+# *inside* is genomic — this deliberately does NOT touch the valid HGVS form
+# "NC_000013.11(NM_000059.4):c.68del" (genomic reference, transcript selector),
+# where the parenthetical holds the transcript, not the genomic accession.
+_GENOMIC_REF_IN_GENE_PARENS = re.compile(
+    r"^((?:NM_|NR_|XM_|XR_|ENST|LRG_)[\w.]+)\((?:NC_|NG_|NW_)\d[\w.]*\)(?=:)",
+    re.IGNORECASE,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -692,6 +707,23 @@ def _op_drop_del_dup_count(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
+def _op_drop_genomic_ref_in_parens(s: str) -> tuple[str, list[HGVSFix]]:
+    # Drop a genomic accession sitting in the gene-symbol parenthetical slot,
+    # e.g. "NM_000059.4(NC_000013.11):c.68del" -> "NM_000059.4:c.68del". The
+    # transcript on its own is a complete reference, so the genomic accession is
+    # redundant and (being neither a gene symbol nor a valid selector here) only
+    # blocks parsing.
+    s2 = _GENOMIC_REF_IN_GENE_PARENS.sub(r"\1", s)
+    if s2 != s:
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.DROPPED_GENOMIC_REF_IN_PARENS,
+            message="Dropped genomic accession from the gene-symbol parentheses",
+            original=s, fixed=s2,
+        )]
+    return s, []
+
+
 # Canonical pipeline: (op, function), in the order they must run.
 # clean_hgvs() filters this by the caller's `ops` set but never reorders it.
 _PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
@@ -715,6 +747,11 @@ _PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
     (HGVSCleanOp.UPPERCASE_BASES,           _op_uppercase_bases),
     (HGVSCleanOp.ADD_MISSING_KIND,          _op_add_missing_kind),
     (HGVSCleanOp.FIX_GENE_TRANSCRIPT,       _fix_gene_transcript),
+    # Runs after the gene/transcript swap: an "NC_…(NM_…)" genomic-reference form
+    # is normalised to "NM_…(NC_…)" by that step, so dropping the genomic
+    # parenthetical here collapses both the broken and the swapped form to the
+    # same parseable transcript reference.
+    (HGVSCleanOp.DROP_GENOMIC_REF_IN_PARENS, _op_drop_genomic_ref_in_parens),
 ]
 
 # All cleaning ops — the default for clean_hgvs(). Use set algebra for a
