@@ -64,6 +64,7 @@ FACTS = [
     "output/facts/coverage.csv",
     "output/facts/benchmark.csv",
     "output/facts/clinvar.csv",
+    "output/facts/cleaning.csv",
 ]
 
 # ---------------------------------------------------------------------------
@@ -193,3 +194,17 @@ rule clinvar:
                 writer = csv.DictWriter(fh, fieldnames=list(row))
                 writer.writeheader()
                 writer.writerow(row)
+
+
+rule cleaning:
+    """Tier-1 reproducible injection cleaning benchmark (issue #112).
+
+    Runs on public ClinVar c.HGVS committed to this repo (no data_dir needed).
+    Writes both the rich fact JSON and the single-row cleaning.csv used by the
+    paper templates. The injection weights are frozen constants citing the
+    aggregate production rescue-op distribution (Tier 2) — no corpus data is
+    read; see analysis/inject_and_clean.py.
+    """
+    output: "output/facts/cleaning.csv"
+    shell:
+        "{PYTHON} analysis/inject_and_clean.py"

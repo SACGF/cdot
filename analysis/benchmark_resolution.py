@@ -4,11 +4,24 @@
 Answers the three paper questions over real ClinVar (g.HGVS, c.HGVS) pairs:
 
   1. RESOLUTION  - of real c.HGVS, how many convert to the correct genomic coord?
-  2. RECOVERY    - of strings that fail, how many do clean_hgvs() / version-bumping rescue?
+  2. RECOVERY    - how many failing strings does fix_hgvs() rescue, and via which mode?
   3. SPEED       - throughput (HGVS/s) and provider load time.
 
 Ground truth: the g.HGVS column (from ClinVar CLNHGVS). A c->g conversion is "correct"
 if it reproduces that g.HGVS.
+
+Recovery (--recovery) routes every string through the single combined entry point
+fix_hgvs() (clean_hgvs -> resolve_gene_hgvs -> version-bump fallback) and attributes
+each rescue to a failure mode by reading the HGVSFix codes it returns. Two passes:
+  * as-is    - run fix_hgvs() on the pairs unchanged; rescues + false-rescues + a
+               regression guard. This is the production-mode measurement: on clean
+               input nothing fires, so feed messy data to see real per-mode numbers.
+  * degraded - degrade each clean pair per mode (inject a formatting error / request
+               an absent transcript version), then fix_hgvs() -> resolve and score
+               against ground truth, with a false-rescue count. Exercises the rescue
+               path on the (already-clean) committed test data.
+Note: the "more transcripts" (coverage) mode is NOT a string repair - it needs a
+provider swap (run with --uta vs cdot and compare no_data), not fix_hgvs().
 
 Provider is pluggable so we isolate the data-layer contribution (the biocommons engine
 is held constant). Defaults to cdot REST (cdotlib.org) so it runs with no local data.
@@ -20,7 +33,7 @@ Usage:
     # local JSON (after downloading a release json.gz)
     python analysis/benchmark_resolution.py pairs.tsv --json cdot-X.refseq.grch38.json.gz
 
-    # add the recovery experiments
+    # add the unified fix_hgvs() recovery passes (as-is + degraded)
     python analysis/benchmark_resolution.py pairs.tsv --rest --recovery
 
 Input file: TSV with two columns  g.HGVS <TAB> c.HGVS  (one variant per line).
@@ -38,7 +51,8 @@ from hgvs.assemblymapper import AssemblyMapper
 from hgvs.exceptions import HGVSDataNotAvailableError, HGVSInvalidVariantError
 
 from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider, FastaSeqFetcher
-from cdot.hgvs.clean import clean_hgvs, get_best_transcript_version, VersionStrategy
+from cdot.hgvs.clean import HGVSFixCode, HGVSFixSeverity, VersionStrategy
+from cdot.hgvs.gene_hgvs import fix_hgvs
 
 
 def build_provider(args):
@@ -47,7 +61,23 @@ def build_provider(args):
     seqfetcher = FastaSeqFetcher(*args.fasta) if args.fasta else None
     seq_label = "fasta" if args.fasta else "ncbi"
     if args.uta:
-        return hgvs.dataproviders.uta.connect(), f"uta_remote/{seq_label}"
+        # NOTE: do NOT attach cdot's --fasta FastaSeqFetcher to UTA. That fetcher
+        # reconstructs transcript (NM_) sequence from the genome using *cdot's*
+        # exon data; bare UTA has none, so every transcript-sequence request
+        # raises HGVSDataNotAvailableError and is mis-counted as no_data (it made
+        # a clean UTA run look like 85% no_data — a pure artifact). Stock UTA must
+        # use its own SeqRepo/remote seqfetcher. Set HGVS_SEQREPO_DIR for a fast,
+        # offline, transcript-capable baseline; otherwise it falls back to the
+        # (slow) remote bioutils seqfetcher.
+        if args.fasta:
+            print("  (--fasta ignored for --uta: cdot's genome fetcher can't serve "
+                  "transcript sequence; UTA uses SeqRepo/remote)")
+        provider = hgvs.dataproviders.uta.connect()
+        import os
+        seq_src = "seqrepo" if os.environ.get("HGVS_SEQREPO_DIR") else "remote"
+        uta_url = os.environ.get("UTA_DB_URL", "")
+        loc = "local" if ("localhost" in uta_url or "127.0.0.1" in uta_url) else "remote"
+        return provider, f"uta_{loc}/{seq_src}"
     if args.json:
         return JSONDataProvider([args.json], seqfetcher=seqfetcher), f"cdot_json({Path(args.json).name})/{seq_label}"
     # default: REST
@@ -102,83 +132,104 @@ def run_resolution(am, hp, pairs, show_incorrect=False):
     return counts, times, wall
 
 
-# ---- recovery: cleaning -----------------------------------------------------
+# ---- unified recovery via fix_hgvs ------------------------------------------
+#
+# fix_hgvs() is the single combined entry point: clean_hgvs -> resolve_gene_hgvs
+# -> resolve_transcript_version (version bump). It returns the repaired string
+# plus the list of HGVSFix applied, so we attribute each rescue to a failure
+# mode just by reading the fix codes returned — no separate per-mode pipeline.
 
-def _corrupt_variants(c_hgvs):
-    """Yield (category, corrupted_string) for each clean.py fix category."""
-    m = re.match(r"([A-Za-z]+_?\d+\.\d+):(c\..+)", c_hgvs)
+# WARNING-level fix codes grouped by the failure mode they address.
+_VERSION_CODES = {HGVSFixCode.USED_ADJACENT_VERSION}
+_GENE_CODES = {HGVSFixCode.RESOLVED_GENE_TO_TRANSCRIPT, HGVSFixCode.UPPERCASED_GENE_SYMBOL}
+
+
+def _mode_of(code):
+    if code in _VERSION_CODES:
+        return "version_bump"
+    if code in _GENE_CODES:
+        return "gene_resolution"
+    return "cleaning"  # every other WARNING code is a clean_hgvs() string fix
+
+
+def _fix_and_classify(am, hp, provider, build, g_hgvs, c_input, version_fallback):
+    """Run fix_hgvs() then resolve. Returns (bucket, fixed_string, modes_fired)."""
+    try:
+        fixed, fixes = fix_hgvs(c_input, provider, build, version_fallback=version_fallback)
+    except Exception as e:  # noqa: BLE001 - benchmark keeps going
+        logging.debug("fix_hgvs error on %s: %s", c_input, e)
+        return "error", c_input, set()
+    modes = {_mode_of(f.code) for f in fixes if f.severity == HGVSFixSeverity.WARNING}
+    bucket, _converted = classify(am, hp, g_hgvs, fixed)
+    return bucket, fixed, modes
+
+
+def run_asis(am, hp, provider, build, pairs, version_fallback):
+    """Production-mode pass: run fix_hgvs() on each pair as-is and read what the
+    returned fixes rescued. Also guards against regressions (a string that
+    resolved correctly before fix_hgvs but not after)."""
+    agg = {"n": len(pairs), "baseline_correct": 0, "fixed_correct": 0,
+           "rescued": 0, "regressed": 0, "false_rescue": 0,
+           "by_mode": {}}
+    for g_hgvs, c_hgvs in pairs:
+        base_bucket, _ = classify(am, hp, g_hgvs, c_hgvs)
+        fbucket, _fixed, modes = _fix_and_classify(
+            am, hp, provider, build, g_hgvs, c_hgvs, version_fallback)
+        if base_bucket == "correct":
+            agg["baseline_correct"] += 1
+        if fbucket == "correct":
+            agg["fixed_correct"] += 1
+        for m in modes:
+            agg["by_mode"].setdefault(m, {"fired": 0, "rescued": 0, "false_rescue": 0})["fired"] += 1
+        if base_bucket != "correct" and fbucket == "correct":
+            agg["rescued"] += 1
+            for m in modes:
+                agg["by_mode"][m]["rescued"] += 1
+        if base_bucket == "correct" and fbucket != "correct":
+            agg["regressed"] += 1
+        if fbucket == "incorrect":
+            agg["false_rescue"] += 1
+            for m in modes:
+                agg["by_mode"][m]["false_rescue"] += 1
+    return agg
+
+
+def _degrade(c_hgvs):
+    """Yield (mode, category, degraded_string) — only degradations that keep the
+    SAME transcript, so the ground-truth g.HGVS still applies after repair."""
+    m = re.match(r"([A-Za-z]+_?\d+)\.(\d+):(c\..+)", c_hgvs)
     if not m:
         return
-    tx, rest = m.groups()
-    yield "stripped_whitespace", f"{tx} {rest}"          # space instead of colon
-    yield "lowercase_transcript", f"{tx.lower()}:{rest}"
-    yield "missing_kind", f"{tx}:{rest[2:]}"             # drop the "c."
-    yield "double_colon", f"{tx}: :{rest}"
-    yield "unbalanced_bracket", f"{tx}):{rest}"
+    base, ver, rest = m.group(1), m.group(2), m.group(3)
+    tx = f"{base}.{ver}"
+    # cleaning — string-formatting damage clean_hgvs() should fully reverse
+    yield "cleaning", "whitespace", f"{tx} {rest}"
+    yield "cleaning", "lowercase_tx", f"{tx.lower()}:{rest}"
+    yield "cleaning", "missing_kind", f"{tx}:{rest[2:]}"   # drop the "c."
+    yield "cleaning", "double_colon", f"{tx}::{rest}"
+    # version bump — request a version that is (almost certainly) absent, forcing
+    # the adjacent-version fallback; correct iff the chosen version reproduces g.
+    yield "version_bump", "absent_version", f"{base}.99:{rest}"
 
 
-def run_cleaning(am, hp, pairs):
-    """For each variant, corrupt it per category, clean it, check it now resolves."""
-    per_cat = {}
-    for _g, c_hgvs in pairs:
-        for cat, broken in _corrupt_variants(c_hgvs):
-            d = per_cat.setdefault(cat, {"n": 0, "resolved_raw": 0, "cleaned_ok": 0, "resolved_clean": 0})
+def run_degraded(am, hp, provider, build, pairs, version_fallback):
+    """Exercise the fix_hgvs() rescue path on (clean) test data by degrading each
+    pair per mode, then scoring the repaired string against the ground-truth g."""
+    cats = {}
+    for g_hgvs, c_hgvs in pairs:
+        for mode, cat, broken in _degrade(c_hgvs):
+            d = cats.setdefault((mode, cat),
+                                {"n": 0, "resolved": 0, "correct": 0, "false_rescue": 0})
             d["n"] += 1
-            # does the broken string parse as-is?
-            try:
-                hp.parse_hgvs_variant(broken)
-                d["resolved_raw"] += 1
-            except Exception:
-                pass
-            cleaned, _fixes = clean_hgvs(broken)
-            if cleaned == c_hgvs:
-                d["cleaned_ok"] += 1
-            try:
-                hp.parse_hgvs_variant(cleaned)
-                d["resolved_clean"] += 1
-            except Exception:
-                pass
-    return per_cat
-
-
-# ---- recovery: version bumping ----------------------------------------------
-
-def run_version_bump(provider, pairs):
-    """Drop the exact requested version; does get_best_transcript_version find a neighbour?"""
-    stats = {"n": 0, "had_alternatives": 0, "rescued": 0, "no_alternatives": 0}
-    seen = set()
-    for _g, c_hgvs in pairs:
-        m = re.match(r"([A-Za-z]+_?\d+)\.(\d+):", c_hgvs)
-        if not m:
-            continue
-        base, ver = m.group(1), int(m.group(2))
-        if base in seen:
-            continue
-        seen.add(base)
-        # discover available versions by probing the provider
-        available = []
-        for v in range(1, 12):
-            try:
-                provider._get_transcript(f"{base}.{v}")
-                available.append(v)
-            except Exception:
-                pass
-        if not available:
-            continue
-        stats["n"] += 1
-        # simulate the requested version being absent
-        remaining = [v for v in available if v != ver]
-        if not remaining:
-            stats["no_alternatives"] += 1
-            continue
-        stats["had_alternatives"] += 1
-        try:
-            best, fix = get_best_transcript_version(base, ver, remaining, VersionStrategy.UP_THEN_DOWN)
-            if best in remaining:
-                stats["rescued"] += 1
-        except Exception:
-            pass
-    return stats
+            bucket, _fixed, _modes = _fix_and_classify(
+                am, hp, provider, build, g_hgvs, broken, version_fallback)
+            if bucket in ("correct", "incorrect"):
+                d["resolved"] += 1
+            if bucket == "correct":
+                d["correct"] += 1
+            elif bucket == "incorrect":
+                d["false_rescue"] += 1
+    return cats
 
 
 def pct(n, d):
@@ -248,21 +299,28 @@ def main():
                "throughput_hgvs_per_s": round(total / wall, 1), "wall_s": round(wall, 2)}
 
     if args.recovery:
-        print("\n== Recovery: cleaning (inject corruption -> clean_hgvs -> resolves?) ==")
-        cleaning = run_cleaning(am, hp, pairs)
-        for cat, d in sorted(cleaning.items()):
-            print(f"  {cat:<22} n={d['n']:<4} parsed_broken={pct(d['resolved_raw'], d['n']):>6} "
-                  f"cleaned_to_orig={pct(d['cleaned_ok'], d['n']):>6} "
-                  f"parsed_after_clean={pct(d['resolved_clean'], d['n']):>6}")
-        results["cleaning"] = cleaning
+        vf = VersionStrategy.UP_THEN_DOWN
 
-        print("\n== Recovery: version bumping (drop requested version -> find neighbour?) ==")
-        vb = run_version_bump(provider, pairs)
-        print(f"  transcripts tested      : {vb['n']}")
-        print(f"  had alternative versions: {vb['had_alternatives']}  ({pct(vb['had_alternatives'], vb['n'])})")
-        print(f"  rescued by bump         : {vb['rescued']}  ({pct(vb['rescued'], vb['n'])})")
-        print(f"  no alternatives in data : {vb['no_alternatives']}")
-        results["version_bump"] = vb
+        print("\n== Recovery (as-is): fix_hgvs() on each pair, attributed by the fixes returned ==")
+        asis = run_asis(am, hp, provider, args.build, pairs, vf)
+        print(f"  baseline correct  : {asis['baseline_correct']:>5}  ({pct(asis['baseline_correct'], asis['n'])})")
+        print(f"  after fix_hgvs    : {asis['fixed_correct']:>5}  ({pct(asis['fixed_correct'], asis['n'])})")
+        print(f"  rescued by fix    : {asis['rescued']:>5}  ({pct(asis['rescued'], asis['n'])})")
+        print(f"  false-rescue      : {asis['false_rescue']:>5}  (resolved, but to the wrong g.)")
+        print(f"  regressed         : {asis['regressed']:>5}  (was correct, broken by fix_hgvs)")
+        for mode, d in sorted(asis["by_mode"].items()):
+            print(f"    mode {mode:<16} fired={d['fired']:<4} rescued={d['rescued']:<4} false_rescue={d['false_rescue']}")
+        if not asis["by_mode"]:
+            print("    (no fixes fired — test pairs are already clean; see the degraded pass below)")
+        results["recovery_asis"] = asis
+
+        print("\n== Recovery (degraded): degrade per mode -> fix_hgvs() -> resolve vs ground truth ==")
+        degraded = run_degraded(am, hp, provider, args.build, pairs, vf)
+        for (mode, cat), d in sorted(degraded.items()):
+            print(f"  {mode:<14} {cat:<16} n={d['n']:<4} "
+                  f"correct={pct(d['correct'], d['n']):>6} "
+                  f"false_rescue={pct(d['false_rescue'], d['n']):>6}")
+        results["recovery_degraded"] = {f"{m}/{c}": d for (m, c), d in degraded.items()}
 
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)

@@ -50,6 +50,12 @@ test = [
     "msgspec",
     "pysam",
 ]
+# Build the manuscript and regenerate its reproducible facts
+# (paper/Snakefile + analysis/*.py). Not needed to use cdot as a library.
+paper = [
+    "snakemake",
+    "vibepaper",
+]
 
 [project.urls]
 Homepage = "https://github.com/SACGF/cdot"
