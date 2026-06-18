@@ -22,6 +22,7 @@ from cdot.hgvs.gene_hgvs import (
     rank_transcripts_for_gene,
     resolve_gene_hgvs,
     resolve_transcript_version,
+    UnsafeVersionPolicy,
 )
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
@@ -508,6 +509,93 @@ def test_resolve_version_unsupported_provider_errors():
     assert resolved == "NM_000059.1:c.36del"
     assert fixes[0].severity == E
     assert fixes[0].code == C.NO_TRANSCRIPT_VERSIONS
+
+
+# ---------------------------------------------------------------------------
+# resolve_transcript_version — coordinate-safety check (#28)
+#
+# A real JSONDataProvider (which implements is_version_substitution_safe) backs
+# these, so the substitution is checked structurally before it is applied. The
+# requested version sits only in GRCh37, the substitution candidates in GRCh38, so
+# the build-independent structure decides the verdict (matching the cross-build
+# result in claude/version_bump_experiment.md).
+# ---------------------------------------------------------------------------
+
+def _safety_build(exons, contig="NC_000013.11"):
+    return {"contig": contig, "strand": "+", "url": None,
+            "cds_start": None, "cds_end": None, "exons": exons}
+
+
+def _safety_tx(acc, stop_codon, exons, build):
+    return {"id": acc, "gene_name": "BRCA2", "start_codon": 0, "stop_codon": stop_codon,
+            "genome_builds": {build: _safety_build(exons)}}
+
+
+# Same transcript layout (CDS 1..30, split at 11) on two genomic placements; and a
+# CDS-length-changed layout that is NOT coordinate-safe.
+_SAFE_EXONS  = [[100, 110, 0, 1, 10, None], [200, 220, 1, 11, 30, None]]
+_SAFE_MOVED  = [[900, 910, 0, 1, 10, None], [2000, 2020, 1, 11, 30, None]]
+_UNSAFE_EXONS = [[100, 110, 0, 1, 10, None], [200, 223, 1, 11, 33, None]]  # cds_len 33
+
+
+def _safety_provider(requested_exons, requested_stop):
+    """Provider with requested .2 in GRCh37 only, and .3/.4 in GRCh38."""
+    import io
+    import json
+    data = {"cdot_version": "0.2.33", "genome_builds": ["GRCh37", "GRCh38"],
+            "transcripts": {
+                "NM_000059.2": _safety_tx("NM_000059.2", requested_stop, requested_exons, "GRCh37"),
+                "NM_000059.3": _safety_tx("NM_000059.3", 30, _SAFE_MOVED, "GRCh38"),
+                "NM_000059.4": _safety_tx("NM_000059.4", 30, _SAFE_MOVED, "GRCh38"),
+            }}
+    return JSONDataProvider([io.StringIO(json.dumps(data))])
+
+
+def test_resolve_version_coord_safe_substitutes():
+    dp = _safety_provider(_SAFE_EXONS, 30)   # requested .2 same structure as .3
+    resolved, fixes = resolve_transcript_version(
+        "NM_000059.2:c.36del", dp, genome_build="GRCh38")
+    assert resolved == "NM_000059.3:c.36del"
+    assert fixes[0].severity == W
+    assert fixes[0].code == C.USED_ADJACENT_VERSION_COORD_SAFE
+
+
+def test_resolve_version_unsafe_refuses_by_default():
+    dp = _safety_provider(_UNSAFE_EXONS, 33)  # requested .2 differs in CDS length
+    resolved, fixes = resolve_transcript_version(
+        "NM_000059.2:c.36del", dp, genome_build="GRCh38")
+    assert resolved == "NM_000059.2:c.36del"   # unchanged — refused
+    assert fixes[0].severity == E
+    assert fixes[0].code == C.REFUSED_UNSAFE_VERSION
+
+
+def test_resolve_version_unsafe_substitute_policy_warns():
+    dp = _safety_provider(_UNSAFE_EXONS, 33)
+    resolved, fixes = resolve_transcript_version(
+        "NM_000059.2:c.36del", dp, genome_build="GRCh38",
+        on_unsafe_version=UnsafeVersionPolicy.SUBSTITUTE)
+    assert resolved == "NM_000059.3:c.36del"   # substituted under SUBSTITUTE policy
+    assert fixes[0].severity == W
+    assert fixes[0].code == C.USED_ADJACENT_VERSION_COORD_UNVERIFIED
+
+
+def test_fix_hgvs_version_fallback_unsafe_refuses_by_default():
+    dp = _safety_provider(_UNSAFE_EXONS, 33)
+    result, fixes = fix_hgvs(
+        "NM_000059.2:c.36del", data_provider=dp, genome_build="GRCh38",
+        version_fallback=VersionStrategy.UP_THEN_DOWN)
+    assert result == "NM_000059.2:c.36del"
+    assert any(f.code == C.REFUSED_UNSAFE_VERSION for f in fixes)
+
+
+def test_fix_hgvs_version_fallback_unsafe_substitute_opt_in():
+    dp = _safety_provider(_UNSAFE_EXONS, 33)
+    result, fixes = fix_hgvs(
+        "NM_000059.2:c.36del", data_provider=dp, genome_build="GRCh38",
+        version_fallback=VersionStrategy.UP_THEN_DOWN,
+        on_unsafe_version=UnsafeVersionPolicy.SUBSTITUTE)
+    assert result == "NM_000059.3:c.36del"
+    assert any(f.code == C.USED_ADJACENT_VERSION_COORD_UNVERIFIED for f in fixes)
 
 
 # ---------------------------------------------------------------------------
