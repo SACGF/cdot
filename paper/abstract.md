@@ -10,17 +10,21 @@ Supplementary Information*
 
 HGVS transcript notation is the clinical standard for variant description, underpinning
 >{{ literature.clinvar_variants | commas }} ClinVar submissions and ACMG/AMP
-classification guidelines. Resolving HGVS to genomic coordinates requires versioned
-transcript data, yet the dominant resource (UTA) requires PostgreSQL infrastructure,
-lacks Ensembl support, and covers only ~{{ literature.uta_count | commas }} transcript
-alignments. cdot provides {{ coverage.total_count | commas }} versioned
-transcript/genome alignments from RefSeq and Ensembl across GRCh37, GRCh38, and
-T2T-CHM13v2.0 as compact JSON files loadable at
+classification guidelines. cdot is built around a single goal: resolve as many
+real-world HGVS strings as possible. Resolving HGVS to genomic coordinates requires
+versioned transcript data, yet the dominant resource (UTA) requires PostgreSQL
+infrastructure, lacks Ensembl support, and covers only
+~{{ literature.uta_count | commas }} transcript alignments. cdot provides
+{{ coverage.total_count | commas }} versioned transcript/genome alignments from RefSeq
+and Ensembl across GRCh37, GRCh38, and T2T-CHM13v2.0 as compact JSON files loadable at
 {{ benchmark.cdot_local_min_tps | commas }}–{{ benchmark.cdot_local_max_tps | commas }}
-transcripts/second, with no database required. Python integrations are provided for both
-major HGVS libraries (biocommons/hgvs and PyHGVS). cdot stores MANE Select and Ensembl
-canonical tags enabling programmatic canonical transcript selection, and is the first
-HGVS resource to support the T2T-CHM13v2.0 assembly.
+transcripts/second, with no database required. To recover the malformed strings that
+reach clinical search boxes and importers, cdot adds a parser-independent cleaning step
+(`clean_hgvs()`) that repairs common formatting errors before resolution. Python
+integrations are provided for both major HGVS libraries (biocommons/hgvs and PyHGVS).
+cdot stores MANE Select and Ensembl canonical tags enabling programmatic canonical
+transcript selection, and is the first HGVS resource to support the T2T-CHM13v2.0
+assembly.
 
 **Availability and Implementation:**
 

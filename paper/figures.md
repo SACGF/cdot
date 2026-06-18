@@ -51,8 +51,10 @@ tight, drop this and describe the architecture in text.*
 
 ## Supplementary Figures
 
-**Figure S1.** Speed benchmark: throughput (transcripts/second) for cdot local, cdot
-REST, UTA local, UTA remote. Log-scale bar chart.
+**Figure S1.** Speed benchmark: throughput (HGVS/s) for the five configurations in
+Results Table 2 — UTA remote, UTA local, cdot REST, cdot REST after `prefetch()`, cdot
+local — with the sequence layer held constant (shared local SeqRepo). Log-scale bar
+chart.
 
 **Figure S2.** Historical RefSeq coverage: cumulative unique NM_ accession versions by
 annotation release year. Motivates multi-release ingestion.
@@ -66,3 +68,6 @@ GRCh37/GRCh38.
 - *Figure 1 requires ClinVar benchmark data (#5) and Snakemake summary stats*
 - *Speed numbers for Figure S1 need a scripted benchmark (commit the script)*
 - *Consider combining panels A and B into one clean figure with a shared colour palette*
+- *Two in-text tables now live in Results: Table 1 (production fix distribution, R2,
+  Tier 2 — fill from `cdot_private/output/`) and Table 2 (throughput by backend, R5,
+  Tier 1). Figure-vs-table numbering across R2/R3 still needs a final reconciliation pass.*

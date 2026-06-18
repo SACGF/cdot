@@ -9,22 +9,36 @@ selection.*
 
 ## Data sources and generation
 
-cdot processes transcript annotation from three sources, applied in priority order:
+cdot draws on three transcript-annotation sources, merged into a single dataset per
+build. We download the complete run of historical releases directly from the RefSeq and
+Ensembl FTP sites rather than only the current annotation, because resolving historical
+HGVS strings depends on it: a clinical report from 2015 may reference an NM_ version that
+was retired in a later RefSeq release but is still cited in patient records and ClinVar
+submissions. The releases are combined in chronological order, with each newer release
+overwriting older entries for the same transcript version. This ordering matters beyond
+simple recency — older files are sometimes less complete than later ones (for example,
+early RefSeq GFF3 releases omitted the transcript/genome alignment-gap CIGAR strings that
+later releases include), so letting newer data win improves the merged result rather than
+merely keeping the latest version.
 
-1. **RefSeq GFF3**: multiple historical NCBI annotation releases for GRCh37 and GRCh38
-   (see Supplementary Table S1). Ingesting multiple releases is essential for resolving
-   historical HGVS strings: a clinical report from 2015 may reference an NM_ version
-   that was retired in subsequent RefSeq releases but is still cited in patient records
-   and ClinVar submissions.
+1. **RefSeq GFF3**: {{ sources.refseq_grch37_releases | int }} GRCh37,
+   {{ sources.refseq_grch38_releases | int }} GRCh38, and
+   {{ sources.refseq_t2t_releases | int }} T2T-CHM13v2.0 historical NCBI annotation
+   releases (Supplementary Table S1).
 
-2. **Ensembl GTF**: releases 75–81 (GRCh37) and 76–115 (GRCh38), plus T2T-CHM13v2.0
-   releases (Supplementary Table S2). Ensembl coverage adds
+2. **Ensembl GTF**: {{ sources.ensembl_grch37_releases | int }} GRCh37,
+   {{ sources.ensembl_grch38_releases | int }} GRCh38, and
+   {{ sources.ensembl_t2t_releases | int }} T2T-CHM13v2.0 releases (Supplementary
+   Table S2). We use Ensembl GTF rather than GFF3 because the GFF3 files omit transcript
+   protein versions. Ensembl coverage adds
    {{ coverage.ensembl_unique_count | commas }} transcript accessions absent from
    RefSeq.
 
-3. **UTA CSV**: the Universal Transcript Archive CSV dump provides alignments for
-   accessions predating the oldest available GFF3/GTF files; overridden by official
-   annotation where available.
+3. **UTA**: the Universal Transcript Archive is included because UTA computes its own
+   transcript-to-genome alignments, so it holds alignments for some accessions that were
+   never published in any RefSeq GFF3 or Ensembl GTF release; these fill gaps for
+   accessions predating the oldest available annotation files and are overridden by
+   official annotation where available.
 
 A Snakemake pipeline parses each source using `GFF3Parser` or `GTFParser` (HTSeq-based),
 normalises contig names via bioutils, extracts CDS boundaries from start/stop codon
@@ -138,8 +152,10 @@ occasional lookups without downloading the full file.
 
 **biocommons/hgvs integration**: cdot implements
 `biocommons.hgvs.dataproviders.interface.Interface`, providing `get_tx_info`,
-`get_tx_exons`, `get_tx_seq`, `get_tx_mapping_options`, and related methods. This makes
-cdot a drop-in replacement for UTA in any biocommons/hgvs pipeline:
+`get_tx_exons`, `get_tx_seq`, `get_tx_mapping_options`, and related methods. This is the
+same data-provider interface implemented by other tools such as hgvs-weaver
+[@HgvsWeaver], so cdot serves as a drop-in replacement for UTA in any biocommons/hgvs
+pipeline:
 
 ```python
 from cdot.hgvs.dataproviders import JSONDataProvider
@@ -150,11 +166,9 @@ Sequence data is supplied by SeqRepo or cdot's `FastaSeqFetcher` (local genome F
 enabling fully offline operation without SeqRepo's installation overhead.
 
 **PyHGVS integration**: `JSONPyHGVSTranscriptFactory` provides a transcript factory for
-the Counsyl PyHGVS library, adding alignment gap support that PyHGVS lacks natively.
-This fixes incorrect coordinate conversion for the fraction of RefSeq transcripts with
-documented indels relative to the genome, the class of error responsible for the
-{{ literature.brca2_accuracy_pct | dp(0) }}% BRCA2 accuracy reported by @Munz2015 in
-tools without gap support.
+the Counsyl PyHGVS library, exposing the same cdot transcript data to PyHGVS-based
+pipelines. PyHGVS is no longer actively maintained, so new development targets the
+biocommons/hgvs path; the PyHGVS factory is retained for legacy compatibility.
 
 ## Canonical transcript selection
 
@@ -172,7 +186,9 @@ canonical transcript selection aligned to the MANE standard [@Morales2022; @Wrig
   `results.md` R1; Methods describes how, Results reports the numbers.*
 - *String-cleaning subsection: examples synthesised from public NM_000059.4 (BRCA2) /
   NM_001754.5 (RUNX1) only, never corpus strings (CLAUDE.md / plan §3).*
-- *The PyHGVS/gap support paragraph is important; don't cut it*
+- *Gap-correctness framing removed per feedback: cdot stores per-exon gaps (JSON-format
+  detail) but applying them is a downstream-library concern, not promoted as a cdot
+  result. PyHGVS paragraph trimmed to legacy-compatibility only.*
 - *Canonical transcript section requires #36 to be implemented*
 - *If over word count, the UTA CSV baseline source paragraph can be moved to
   supplementary*
