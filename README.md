@@ -101,7 +101,7 @@ Resolving real ClinVar c.HGVS to genomic coordinates (GRCh38, biocommons HGVS, l
 
 `prefetch()` warms every transcript in one batch round-trip up front, so bulk resolution over the REST
 service runs almost entirely from cache - closing most of the gap to local JSON.gz (~16x faster end-to-end
-on 500 variants). Reproduce with `analysis/benchmark_resolution.py`.
+on 500 variants). Reproduce with `paper/scripts/benchmark_resolution.py`.
 
 ## Q. Where can I download the JSON.gz files?
 

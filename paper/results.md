@@ -83,7 +83,7 @@ from `cdot_private/output/cleaning_analysis_20260617.txt`.)*
 | **Total unique queries rescued** | **1,621** | **100%** |
 
 **[Tier 1] Injection safety check.** As a reproducible control,
-`analysis/inject_and_clean.py` injects each `clean_hgvs()` fix category into a seeded
+`paper/scripts/inject_and_clean.py` injects each `clean_hgvs()` fix category into a seeded
 sample of clean, parseable ClinVar c.HGVS strings committed to this repo and confirms the
 cleaner recovers the canonical target with **{{ cleaning.inject_regressions | int }}
 regressions** — no already-valid string is ever broken (Supplementary Table S5). Because
@@ -136,7 +136,7 @@ version_fallback=...)`): when a requested transcript version is absent from the 
 data, the nearest available version is substituted under a configurable up-then-down,
 closest, or latest policy, and the substitution is always reported as an `HGVSFix` so
 the caller decides whether to accept it. In the end-to-end ablation
-(`analysis/benchmark_resolution.py`), removing the requested version from each test
+(`paper/scripts/benchmark_resolution.py`), removing the requested version from each test
 variant and resolving through the fallback recovered the correct genomic coordinate with
 no false rescues (a false rescue being a substitution that resolves to a different
 coordinate). This is a client-layer feature rather than a backend one: biocommons/hgvs
@@ -182,7 +182,7 @@ transcripts warmed in ~6 s) it resolved the same set in ~83 minutes (731 HGVS/s)
 marginally faster than local JSON because warmed lookups hit a flat in-memory cache
 instead of the interval-tree index. The same exhaustive pass is impractical against the
 public remote UTA database (extrapolated at hundreds of days from its ~0.1 HGVS/s).
-(`analysis/build_clinvar_pairs.py` builds the pair set by joining ClinVar's
+(`paper/scripts/build_clinvar_pairs.py` builds the pair set by joining ClinVar's
 variant_summary with the ClinVar VCF; the residual ~1% non-exact/error rate is dominated
 by genomic-HGVS normalisation differences between the ClinVar source string and the
 biocommons output, not resolution failures.)

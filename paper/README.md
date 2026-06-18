@@ -70,11 +70,11 @@ What each fact comes from (see the rules in `paper/Snakefile`):
 
 | Fact CSV | Source | Needs |
 |---|---|---|
-| `coverage.csv` | `analysis/compute_coverage.py` over the release JSON.gz files | `data_dir` |
-| `sources.csv` | `analysis/compute_sources.py` over `cdot_transcripts.yaml` | committed (none) |
-| `cleaning.csv` | `analysis/inject_and_clean.py` (Tier-1 injection benchmark) | committed test data (none) |
-| `benchmark.csv` | measured throughput (`analysis/benchmark_resolution.py`, `compare_providers.py`) | recorded as frozen measurements in the rule |
-| `clinvar.csv` | `analysis/benchmark_resolution.py` (cdot vs UTA resolution) | `data_dir`, `uta_uri`, SeqRepo |
+| `coverage.csv` | `paper/scripts/compute_coverage.py` over the release JSON.gz files | `data_dir` |
+| `sources.csv` | `paper/scripts/compute_sources.py` over `cdot_transcripts.yaml` | committed (none) |
+| `cleaning.csv` | `paper/scripts/inject_and_clean.py` (Tier-1 injection benchmark) | committed test data (none) |
+| `benchmark.csv` | measured throughput (`paper/scripts/benchmark_resolution.py`, `paper/scripts/compare_providers.py`) | recorded as frozen measurements in the rule |
+| `clinvar.csv` | `paper/scripts/benchmark_resolution.py` (cdot vs UTA resolution) | `data_dir`, `uta_uri`, SeqRepo |
 | `literature.csv` | static constants from published papers | none |
 
 The full-scale ClinVar throughput runs take ~1.5 h each — see `claude/benchmark_plan.md`.

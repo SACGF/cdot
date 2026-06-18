@@ -20,7 +20,7 @@ Do **NOT** add changelog entries for things a client-code user never sees: docum
 
 **The `cdot_private` repo holds real-world data — never copy examples from it into this repo.** It is checked out as a sibling directory (`../cdot_private`, github.com/SACGF/cdot_private) and contains a corpus of real search-bar HGVS strings (`combined_search_hgvs.csv`, built by its `process_search_hgvs.py`) plus `analyze_cleaning.py`, which runs that corpus through `cdot.hgvs.clean.clean_hgvs` to report rescue rates and failure patterns (issue #112). Use it to find what cleaning should handle, but **no example string sourced from `cdot_private` may ever appear in this repo's tests, comments, docstrings, or changelog** — synthesise equivalents from the standard public examples already used in the tests (eg `NM_000059.4` BRCA2, `NM_001754.5` RUNX1).
 
-**Benchmarking.** `analysis/benchmark_resolution.py` resolves real ClinVar (g.HGVS, c.HGVS) pairs (in `tests/test_data/clinvar_hgvs/`) through a pluggable provider (REST/JSON/UTA) to measure resolution accuracy, recovery (cleaning + version-bump), and speed; supports `--prefetch` and a local `--fasta`. This is how the README performance numbers are produced.
+**Benchmarking.** `paper/scripts/benchmark_resolution.py` resolves real ClinVar (g.HGVS, c.HGVS) pairs (in `tests/test_data/clinvar_hgvs/`) through a pluggable provider (REST/JSON/UTA) to measure resolution accuracy, recovery (cleaning + version-bump), and speed; supports `--prefetch` and a local `--fasta`. This is how the README performance numbers are produced.
 
 ## Commands
 
