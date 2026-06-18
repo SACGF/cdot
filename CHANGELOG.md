@@ -1,5 +1,7 @@
 ## [unreleased]
 
+## [0.2.28] - 2026-06-18
+
 ### Added
 
 - #114 - Public HGVS ranking primitives + provider hooks (to let consumers stop importing private symbols / re-implementing ranking): `rank_transcript_versions` (the full version ordering behind `get_best_transcript_version`) and `rank_transcripts_for_gene` (the gene→transcript lookup/uppercase-retry/consortium-filter/tag-ranking core split out of `resolve_gene_hgvs`, returning the full ranked candidate list); `consortium_of` (promoted from `_consortium_of`); `HGVSFix.__str__` plus `messages`/`warning_messages`/`error_messages` helpers; an overridable batch tag hook `_get_tags_by_tx_ac(tx_acs, genome_build)` on data providers (default loops the per-transcript hook) so subclasses can answer in one query instead of N+1; and `cdot.hgvs` now also re-exports `Consortium`, `DEFAULT_CONSORTIUM`, `HGVSCleanOp`, and `ALL_CLEAN_OPS`
@@ -276,7 +278,9 @@ All other changes in this release were for data (and contained in data_v0.2.26)
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.26...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.28...HEAD
+[0.2.28]: https://github.com/SACGF/cdot/compare/v0.2.27...v0.2.28
+[0.2.27]: https://github.com/SACGF/cdot/compare/v0.2.26...v0.2.27
 [0.2.26]: https://github.com/SACGF/cdot/compare/v0.2.21...v0.2.26
 [0.2.21]: https://github.com/SACGF/cdot/compare/v0.2.20...v0.2.21
 [0.2.20]: https://github.com/SACGF/cdot/compare/v0.2.19...v0.2.20
