@@ -55,7 +55,8 @@ VIBE   = ".venv/bin/vibepaper build --config paper/paper.toml"
 EMPIRICAL  = "paper/empirical_results"
 GEN_FACTS  = "output/facts"
 FACT_FILES = ["literature.csv", "coverage.csv", "benchmark.csv",
-              "clinvar.csv", "cleaning.csv", "sources.csv", "historical.csv"]
+              "clinvar.csv", "cleaning.csv", "sources.csv", "historical.csv",
+              "version_stability.csv"]
 
 PAPER_SOURCES = [
     "paper/abstract.md",
@@ -286,3 +287,66 @@ rule historical:
             writer.writeheader()
             writer.writerow(row)
         print(f"Written: {output[0]}")
+
+
+rule version_stability:
+    """Tier-1 reproducible transcript-version stability facts (R5; C2 experiment).
+
+    How often a transcript version bump is coordinate-preserving, and the pivotal
+    structure⇔drift equivalence behind cdot's safe-version-fallback check. Computed
+    by paper/scripts/compute_version_stability.py over the *released* cdot JSON.gz
+    files (deterministic given --sample/--seed), reusing the packaged
+    cdot.hgvs.version_safety helpers — so a referee can regenerate it from public
+    release files.
+
+    With single-build GRCh38 data present it recomputes; the all-builds files
+    (needed for the cross-build numbers) are taken from --config
+    refseq_allbuilds=... ensembl_allbuilds=.... Without data it writes the frozen
+    measured constants below (GRCh38, --sample 12000 --seed 1, cdot 0.2.33).
+    """
+    output: "output/facts/version_stability.csv"
+    run:
+        import os, csv
+        os.makedirs("output/facts", exist_ok=True)
+        rs38 = FILES.get("refseq_grch38", "")
+        en38 = FILES.get("ensembl_grch38", "")
+        if rs38 and Path(rs38).exists():
+            flags = [f"--refseq-grch38 {rs38}"]
+            if en38 and Path(en38).exists():
+                flags.append(f"--ensembl-grch38 {en38}")
+            for key in ("refseq_allbuilds", "ensembl_allbuilds"):
+                p = data_file(key)
+                if p and Path(p).exists():
+                    flags.append(f"--{key.replace('_', '-')} {p}")
+            shell(f"{PYTHON} paper/scripts/compute_version_stability.py {' '.join(flags)}")
+        else:
+            print("No data_dir — writing the frozen measured version-stability facts")
+            row = {
+                "sample_n":                              12000,
+                "build":                                 "GRCh38",
+                "refseq_pairs":                          17162,
+                "refseq_preserving_pct":                 97.8,
+                "refseq_full_drift_pct":                 2.1,
+                "refseq_partial_drift_pct":              0.1,
+                "refseq_pervariant_safety":              0.981,
+                "refseq_accessions_drift_pct":           2.9,
+                "refseq_top5_drift_share_pct":           100.0,
+                "ensembl_pairs":                         12812,
+                "ensembl_preserving_pct":                85.0,
+                "ensembl_full_drift_pct":                12.1,
+                "ensembl_partial_drift_pct":             2.9,
+                "ensembl_pervariant_safety":             0.907,
+                "ensembl_accessions_drift_pct":          15.5,
+                "ensembl_top5_drift_share_pct":          34.7,
+                "refseq_struct_portable_pct":            99.5,
+                "refseq_drift_struct_flagged_pct":       100.0,
+                "refseq_struct_unchanged_preserved_pct": 100.0,
+                "ensembl_struct_portable_pct":           99.8,
+                "ensembl_drift_struct_flagged_pct":      99.3,
+                "ensembl_struct_unchanged_preserved_pct": 99.9,
+            }
+            with open(output[0], "w", newline="") as fh:
+                writer = csv.DictWriter(fh, fieldnames=list(row))
+                writer.writeheader()
+                writer.writerow(row)
+            print(f"Written: {output[0]}")
