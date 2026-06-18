@@ -12,10 +12,30 @@ form a complete offline HGVS processing stack.
 
 cdot also integrates Ensembl TARK, the Ensembl transcript archive: its
 `EnsemblTarkDataProvider` is, to our knowledge, the only client that exposes TARK through
-the biocommons/hgvs data-provider interface, letting existing HGVS pipelines query TARK
-without bespoke code. Beyond what TARK's REST service offers, cdot adds RefSeq coverage,
-fully offline operation, and support for T2T-CHM13v2.0. VariantValidator [@Freeman2018],
-which provides web-based HGVS validation built on biocommons/hgvs, is complementary: cdot
-could serve as VariantValidator's data backend, combining cdot's coverage with
-VariantValidator's validation logic.
+the biocommons/hgvs data-provider interface. This lets a pipeline draw transcript data
+straight from Ensembl's own official REST source when that authoritative provenance is
+required, without bespoke code. Beyond what TARK's REST service offers, cdot's own data
+adds RefSeq coverage, fully offline operation, and support for T2T-CHM13v2.0. Tools such
+as VariantValidator [@Freeman2018] and Mutalyzer [@Lefter2021], both built on
+biocommons/hgvs, are widely used to check HGVS correctness; cdot is complementary to them,
+supplying the transcript-coordinate layer rather than validating descriptions.
+
+Beyond HGVS resolution, the JSON representation is useful in its own right. It parses far
+faster than the GTF/GFF files it is built from and loads trivially over HTTP, so cdot
+doubles as a lightweight, queryable gene/transcript reference. We publish the per-release
+JSON for each annotation version on the GitHub releases page, where a single file is a
+much faster-loading drop-in for the corresponding GTF/GFF. Because the REST API returns
+JSON quickly and in batches, downstream software can query transcript coordinates on
+demand instead of bundling large annotation downloads — convenient for thin clients, and
+for AI agents that call the API directly. Ensembl offers a public REST service, but only
+for Ensembl transcripts and only at the latest version of each; cdot serves both RefSeq
+and Ensembl and retains historical versions.
+
+By design, cdot separates unambiguous string cleaning, which is safe to apply
+automatically, from heuristics that can be wrong — choosing an adjacent transcript
+version, or mapping a gene symbol to a canonical transcript — which are opt-in, never
+applied silently, and always reported as an `HGVSFix` the caller can inspect or reject.
+A general limitation is that resolution is only as current as the ingested annotation
+releases: a transcript version published after the most recent ingested release is not
+covered until the dataset is regenerated.
 

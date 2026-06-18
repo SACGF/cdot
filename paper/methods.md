@@ -42,14 +42,20 @@ merely keeping the latest version.
 
 A Snakemake pipeline parses each source using `GFF3Parser` or `GTFParser` (HTSeq-based),
 normalises contig names via bioutils, extracts CDS boundaries from start/stop codon
-features, and serialises to gzip-compressed JSON. Gene-symbol-to-HGNC-ID mappings come
-from GENCODE HGNC files.
+features, and serialises to gzip-compressed JSON. Gene-level metadata — symbols, HGNC
+IDs, and biotypes — is drawn from the HGNC dataset and NCBI RefSeq gene-info files and
+attached to each transcript.
 
 ## JSON format
 
 Each transcript entry stores shared metadata (`gene_name`, `hgnc`, `biotype`, transcript
 accession and version) plus a `genome_builds` dict keyed by assembly name (e.g.
-`"GRCh38"`). Build-specific fields include `contig`, `strand`, `cds_start`, `cds_end`,
+`"GRCh38"`). The build is always a dict key, even in a single-build file, so the format
+is identical whether a file stands in for one GTF/GFF for a single assembly or carries
+several builds at once: the same structure lets a single-build file act as a drop-in
+GTF/GFF replacement and lets the REST API return a transcript's GRCh37, GRCh38, and
+T2T-CHM13v2.0 alignments together in one response, with no reshaping when builds are
+combined. Build-specific fields include `contig`, `strand`, `cds_start`, `cds_end`,
 and `exons`, a list of 6-tuples `[alt_start, alt_end, exon_id, cds_start, cds_end,
 gap]`. The `gap` field stores the GFF3 gap string (e.g. `"M196 I1 M61"`) for transcripts
 with indels relative to the genome; the Python client converts this to HGVS CIGAR format
@@ -112,7 +118,10 @@ operations group into:
   missing `:` or `.`, uppercasing the accession prefix and lowercasing the kind letter),
   and a final step that detects and repairs the common clinical mistake of swapping the
   gene symbol and transcript accession (`BRCA2(NM_000059.4):c.…` →
-  `NM_000059.4(BRCA2):c.…`).
+  `NM_000059.4(BRCA2):c.…`). The standard HGVS gene-in-parentheses form
+  (`NM_000059.4(BRCA2):c.…`) is itself valid and is parsed by biocommons/hgvs unchanged;
+  these operations target only the non-standard variants of it — accession and gene
+  transposed, or the separating colon or dot missing.
 
 Each repair is reported as an `HGVSFix` carrying a severity (`WARNING` for an
 unambiguous correction), a stable machine-readable code, a human-readable message, and
@@ -125,26 +134,25 @@ than formatting noise. By default cleaning never raises and always returns its b
 attempt, though callers may opt into raising on the first error.
 
 A separate, opt-in helper, `get_best_transcript_version()`, addresses
-transcript-version drift: when the requested accession version is absent from a caller's
-data, it returns the best available adjacent version (under a configurable up-then-down,
-closest, or latest strategy) as a reported `HGVSFix`. It never substitutes a version
-automatically; the caller decides whether to accept the change and rewrite the string,
-which keeps control of HGVS compatibility with the user. Examples in this section are
+transcript-version drift. Unlike the cleaning operations above, which are unambiguous
+formatting corrections, substituting a different transcript version is a heuristic that
+can be wrong — a coordinate may shift, or the variant may not exist, in the substituted
+version — so it is never applied automatically. When the requested accession version is
+absent from a caller's data, it returns the best available adjacent version (under a
+configurable up-then-down, closest, or latest strategy) as a reported `HGVSFix`, and the
+caller decides whether to accept the change and rewrite the string, which keeps control
+of HGVS compatibility with the user. Examples in this section are
 synthesised from the public ClinVar transcripts NM_000059.4 (BRCA2) and NM_001754.5
 (RUNX1).
 
 ## Access and client libraries
 
 **Local JSON**: `JSONDataProvider` loads a JSON.gz file into memory on initialisation
-(typically {{ benchmark.grch38_load_time_s | dp(1) }} seconds for GRCh38 RefSeq),
+(typically ~{{ benchmark.grch38_load_time_s | dp(0) }} seconds for GRCh38 RefSeq),
 building interval trees for region queries and dictionaries for transcript and gene
-lookup. Transcript retrieval is O(1). Throughput of
+lookup. Transcript retrieval is then O(1), giving throughput of
 {{ benchmark.cdot_local_min_tps | commas }}–{{ benchmark.cdot_local_max_tps | commas }}
-transcripts/second is
-{{ benchmark.cdot_local_min_tps | commas }}–{{ benchmark.cdot_local_max_tps | commas }}×
-faster than UTA remote access (~{{ literature.uta_remote_tps }} transcript/second),
-comparable to SeqRepo's {{ literature.seqrepo_speedup_fold }}× speedup over remote
-sequence retrieval [@Hart2020].
+transcripts/second (Results, Table 2).
 
 **REST API**: `cdot_rest` (https://github.com/SACGF/cdot_rest) serves the same JSON data
 at cdotlib.org. `RESTDataProvider` fetches transcripts on demand, suitable for
@@ -164,6 +172,13 @@ hdp = JSONDataProvider(["cdot.0.2.33.refseq.grch38.json.gz"])
 
 Sequence data is supplied by SeqRepo or cdot's `FastaSeqFetcher` (local genome FASTA),
 enabling fully offline operation without SeqRepo's installation overhead.
+`FastaSeqFetcher` reconstructs transcript sequence by splicing the transcript's exon
+ranges out of the genome FASTA. This reproduces an Ensembl transcript exactly, but is not
+guaranteed to match a RefSeq transcript, whose curated sequence can differ from the
+genome at a small number of positions. In practice variants are usually called against a
+genome-mapped read alignment, so any such discrepancy lies in the reference the variant
+was already described against; where exact RefSeq transcript sequence is required, SeqRepo
+provides it.
 
 **PyHGVS integration**: `JSONPyHGVSTranscriptFactory` provides a transcript factory for
 the Counsyl PyHGVS library, exposing the same cdot transcript data to PyHGVS-based
@@ -175,8 +190,11 @@ biocommons/hgvs path; the PyHGVS factory is retained for legacy compatibility.
 cdot's `CanonicalTranscriptSelector` maps gene symbols to MANE Select (or MANE Plus
 Clinical) transcript accessions, enabling gene-name HGVS lookup, a common requirement
 in clinical reporting pipelines that receive a gene name rather than a transcript
-accession. To our knowledge this is the first HGVS data provider to expose programmatic
-canonical transcript selection aligned to the MANE standard [@Morales2022; @Wright2023].
+accession. For example, a pipeline given `BRCA1:c.68_69del` with no transcript can look
+up the MANE Select accession for BRCA1 (`NM_007294.4`) and resolve
+`NM_007294.4(BRCA1):c.68_69del` against the genome. To our knowledge this is the first
+HGVS data provider to expose programmatic canonical transcript selection aligned to the
+MANE standard [@Morales2022; @Wright2023].
 
 ---
 
