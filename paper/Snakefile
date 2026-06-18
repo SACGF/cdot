@@ -165,7 +165,7 @@ rule coverage:
                 for name, path in FILES.items()
                 if path and Path(path).exists()
             )
-            shell(f"{PYTHON} analysis/compute_coverage.py {flags}")
+            shell(f"{PYTHON} paper/scripts/compute_coverage.py {flags}")
 
 
 rule benchmark:
@@ -173,8 +173,8 @@ rule benchmark:
 
     Requires --config data_dir=/path/to/data pointing to a GRCh38 RefSeq JSON.gz.
     Without data, writes the measured throughput facts below (HGVS/s, GRCh38 RefSeq,
-    identical biocommons engine + shared local SeqRepo; see analysis/benchmark_resolution.py
-    and analysis/compare_providers.py). These are frozen measurements, not placeholders.
+    identical biocommons engine + shared local SeqRepo; see paper/scripts/benchmark_resolution.py
+    and paper/scripts/compare_providers.py). These are frozen measurements, not placeholders.
     """
     output: "output/facts/benchmark.csv"
     run:
@@ -183,7 +183,7 @@ rule benchmark:
         grch38 = FILES.get("refseq_grch38", "")
         if grch38 and Path(grch38).exists():
             uta_flag = f"--uta-uri {config['uta_uri']}" if "uta_uri" in config else ""
-            shell(f"{PYTHON} analysis/compute_benchmark.py --refseq-grch38 {grch38} {uta_flag}")
+            shell(f"{PYTHON} paper/scripts/compute_benchmark.py --refseq-grch38 {grch38} {uta_flag}")
         else:
             print("No data_dir — writing the frozen measured benchmark facts to benchmark.csv")
             # Measured HGVS/s (GRCh38 RefSeq, biocommons engine, shared local SeqRepo):
@@ -215,7 +215,7 @@ rule clinvar:
         import os, csv
         os.makedirs("output/facts", exist_ok=True)
         if HAVE_CLINVAR:
-            shell(f"{PYTHON} analysis/investigate_fails.py {CLINVAR_CSV}")
+            shell(f"{PYTHON} paper/scripts/investigate_fails.py {CLINVAR_CSV}")
         else:
             print("WARNING: no clinvar_hgvs_csv configured — writing placeholder zeros to clinvar.csv")
             print("  Run with --config clinvar_hgvs_csv=/path/to/file to compute real values.")
@@ -233,11 +233,11 @@ rule cleaning:
     Writes both the rich fact JSON and the single-row cleaning.csv used by the
     paper templates. The injection weights are frozen constants citing the
     aggregate production rescue-op distribution (Tier 2) — no corpus data is
-    read; see analysis/inject_and_clean.py.
+    read; see paper/scripts/inject_and_clean.py.
     """
     output: "output/facts/cleaning.csv"
     shell:
-        "{PYTHON} analysis/inject_and_clean.py"
+        "{PYTHON} paper/scripts/inject_and_clean.py"
 
 
 rule sources:
@@ -246,4 +246,4 @@ rule sources:
     committed source list. No production data needed."""
     output: "output/facts/sources.csv"
     shell:
-        "{PYTHON} analysis/compute_sources.py"
+        "{PYTHON} paper/scripts/compute_sources.py"

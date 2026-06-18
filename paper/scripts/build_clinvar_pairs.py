@@ -8,7 +8,7 @@ variant_summary's ReferenceAllele/AlternateAllele are often "na", so we take the
 ground-truth g.HGVS from the VCF's CLNHGVS (which is already normalised HGVS and
 matches the biocommons c_to_g output), and the c.HGVS from variant_summary.
 
-Used to scale analysis/benchmark_resolution.py beyond the small committed test
+Used to scale paper/scripts/benchmark_resolution.py beyond the small committed test
 sets (paper throughput/coverage numbers). The output TSV is large and
 data-derived, so it lives under a data dir and is NOT committed (only this
 builder is).
@@ -17,7 +17,7 @@ variant_summary Name: ``NM_000059.4(BRCA2):c.9976A>T (p.Lys3326Ter)``
   -> c.HGVS ``NM_000059.4:c.9976A>T`` (gene paren + protein suffix stripped)
 
 Usage:
-    python analysis/build_clinvar_pairs.py variant_summary.txt.gz clinvar.vcf.gz out.tsv [--max N]
+    python paper/scripts/build_clinvar_pairs.py variant_summary.txt.gz clinvar.vcf.gz out.tsv [--max N]
 """
 import argparse
 import gzip

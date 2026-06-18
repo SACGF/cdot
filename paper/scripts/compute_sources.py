@@ -8,14 +8,14 @@ list of every RefSeq GFF3 / Ensembl GTF release cdot merges, per genome build.
 This is what Supplementary Tables S1/S2 enumerate, so the counts match the paper.
 
 Usage:
-    python analysis/compute_sources.py
+    python paper/scripts/compute_sources.py
 """
 import csv
 from pathlib import Path
 
 import yaml
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parent.parent.parent
 YAML = REPO / "generate_transcript_data" / "cdot_transcripts.yaml"
 OUT = REPO / "output" / "facts" / "sources.csv"
 

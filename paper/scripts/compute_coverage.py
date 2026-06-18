@@ -6,7 +6,7 @@ Per CLAUDE.md, do NOT run against full datasets during development — use produ
 data files on a dedicated run.
 
 Usage:
-    python analysis/compute_coverage.py \
+    python paper/scripts/compute_coverage.py \
         --refseq-grch37 cdot.refseq.grch37.json.gz \
         --refseq-grch38 cdot.refseq.grch38.json.gz \
         --refseq-t2t    cdot.refseq.t2t.json.gz \

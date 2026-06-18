@@ -2,7 +2,7 @@
 """Print a side-by-side table from benchmark_resolution.py --out JSON files.
 
 Usage:
-    python analysis/compare_providers.py output/facts/compare/*.json
+    python paper/scripts/compare_providers.py output/facts/compare/*.json
 """
 import json
 import sys

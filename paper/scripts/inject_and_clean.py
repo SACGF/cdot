@@ -35,8 +35,8 @@ repo, per CLAUDE.md.
 
 Usage::
 
-    python analysis/inject_and_clean.py                 # use committed sample
-    python analysis/inject_and_clean.py --regenerate     # rebuild sample list
+    python paper/scripts/inject_and_clean.py                 # use committed sample
+    python paper/scripts/inject_and_clean.py --regenerate     # rebuild sample list
 """
 
 import argparse
@@ -54,12 +54,12 @@ from cdot.hgvs.clean import clean_hgvs
 # Paths
 # ---------------------------------------------------------------------------
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parent.parent.parent
 SOURCE_TSVS = [
     REPO / "tests/test_data/clinvar_hgvs/clinvar_hgvs_500.tsv",          # RefSeq
     REPO / "tests/test_data/clinvar_hgvs/clinvar_hgvs_ensembl_500.tsv",  # Ensembl
 ]
-SAMPLE_FILE = REPO / "analysis/clean_injection_sample.txt"
+SAMPLE_FILE = Path(__file__).resolve().parent / "clean_injection_sample.txt"
 FACTS_DIR = REPO / "output/facts"
 
 SEED = 112  # issue #112 — fixed for reproducibility
@@ -311,9 +311,9 @@ def load_sample(parser, regenerate):
     pool = build_sample(parser)
     SAMPLE_FILE.write_text(
         "# Seeded sample of clean public ClinVar c.HGVS strings for the\n"
-        "# Tier-1 injection cleaning benchmark (analysis/inject_and_clean.py).\n"
+        "# Tier-1 injection cleaning benchmark (paper/scripts/inject_and_clean.py).\n"
         f"# Source: {', '.join(p.name for p in SOURCE_TSVS)}; seed={SEED}.\n"
-        "# Regenerate with: python analysis/inject_and_clean.py --regenerate\n"
+        "# Regenerate with: python paper/scripts/inject_and_clean.py --regenerate\n"
         + "\n".join(pool)
         + "\n"
     )

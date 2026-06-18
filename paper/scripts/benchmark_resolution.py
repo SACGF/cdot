@@ -28,13 +28,13 @@ is held constant). Defaults to cdot REST (cdotlib.org) so it runs with no local 
 
 Usage:
     # quick: REST over the committed test pairs
-    python analysis/benchmark_resolution.py tests/test_data/clinvar_hgvs/clinvar_hgvs_100.tsv --rest
+    python paper/scripts/benchmark_resolution.py tests/test_data/clinvar_hgvs/clinvar_hgvs_100.tsv --rest
 
     # local JSON (after downloading a release json.gz)
-    python analysis/benchmark_resolution.py pairs.tsv --json cdot-X.refseq.grch38.json.gz
+    python paper/scripts/benchmark_resolution.py pairs.tsv --json cdot-X.refseq.grch38.json.gz
 
     # add the unified fix_hgvs() recovery passes (as-is + degraded)
-    python analysis/benchmark_resolution.py pairs.tsv --rest --recovery
+    python paper/scripts/benchmark_resolution.py pairs.tsv --rest --recovery
 
 Input file: TSV with two columns  g.HGVS <TAB> c.HGVS  (one variant per line).
 """

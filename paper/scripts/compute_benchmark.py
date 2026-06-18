@@ -4,7 +4,7 @@
 Writes output/facts/benchmark.csv.
 
 Usage:
-    python analysis/compute_benchmark.py \
+    python paper/scripts/compute_benchmark.py \
         --refseq-grch38 cdot.refseq.grch38.json.gz \
         [--uta-uri postgresql://uta_admin@localhost/uta/uta_20210129]
 
