@@ -146,6 +146,73 @@ Conditioning on an agreeing bracket, even consortium barely matters (NM 0.994,
 XM 0.996, ENST 0.961). So the practical decision variable is **bracketing**, with
 consortium/gap as fallbacks when you can't bracket.
 
+### (6) Per-c.-coordinate bracketing — the clinically relevant check
+
+The right question isn't "is the whole bump safe" but "does *this variant's* `c.X`
+map identically across the versions I hold". For each absent-middle triple we
+checked, per coding base: does the bracket agree at that position
+(`g_lo(X) == g_hi(X)`), and is substituting the neighbour correct
+(`g_lo(X) == g_mid(X)`)?
+
+| | RefSeq | Ensembl |
+|---|---|---|
+| coverage: positions where the bracket agrees | **97.3%** | 80.4% |
+| **precision: P(substitute correct \| position agrees)** | **0.9957** | 0.9587 |
+| false-accepts (agree but actually wrong) | 0.4% of accepted | 4.1% |
+| precision, `NM_` only | 0.9921 | — |
+| precision, `XM_` only | 0.9963 | — |
+
+**Surprise: the per-position check is strong but NOT a hard guarantee.** ~0.4%
+(RefSeq) / 4.1% (Ensembl) of bracket-agreeing positions still differ from the
+requested version. The cause is genuine **transient-revert** versions: the
+coordinate goes A → B → A, so the two stable flanking versions agree with each
+other but the requested middle one differs. A bracket *cannot see this* — it
+doesn't hold the transient version. Examples (public): `XM_011541114.2→3→4`,
+`XM_017000822.1→2→3` each contribute ~15,600 agree-but-wrong bases (long
+predicted transcripts that flickered). It happens in curated `NM_` too (0.79%),
+not just predicted `XM_`.
+
+**This is the ceiling on bracketing certainty.** Refusing more (see Q2) cannot
+push past it, because a transient version you don't hold is invisible to any
+bracket. To beat it you'd have to actually hold the requested version — at which
+point you wouldn't be substituting.
+
+### Q2 — trade false-negatives for certainty?
+
+Yes, up to that ceiling. Tightening the accept rule raises precision at the cost
+of coverage:
+
+| accept rule (RefSeq) | precision | coverage |
+|---|---|---|
+| accept all (no check) | 0.981 | 100% |
+| accept iff position-bracket agrees | **0.9957** | 97.3% |
+
+Refusing the 2.7% of positions where the bracket disagrees lifts precision from
+0.981 to 0.996. Of those refused, 46.7% would actually have been fine
+(false-refusals) — the price of caution. But precision plateaus at the
+transient-revert ceiling (~0.996 RefSeq, ~0.96 Ensembl); no bracket-based
+refusal can exceed it. Consortium/gap gating trims a little more but the
+dominant residual is reverts, which gating doesn't touch.
+
+### (7) Is drift concentrated in certain transcripts? — Q3
+
+Yes, strongly — especially RefSeq.
+
+| | RefSeq | Ensembl |
+|---|---|---|
+| accessions that ever drift | **2.9%** | 15.5% |
+| top 1% of accessions hold … of all drift | 41% | 9.8% |
+| top 5% of accessions hold … | **100%** | 34.7% |
+| top 10% of accessions hold … | 100% | 65.8% |
+| repeat offenders (>1 drift) | 9.6% of drifters | 3.6% |
+| mean #versions: drifting vs stable accs | 2.79 vs 2.42 | 2.15 vs 2.05 |
+
+For RefSeq, **all** drift lives in ≤5% of accessions, and the worst 1% holds 41%.
+Drifting accessions are slightly higher-churn (more versions). **Implication: a
+precomputed "known-unstable transcripts" blocklist would capture essentially all
+RefSeq drift risk** — a cheap, deterministic defence-in-depth alongside the
+per-position bracket check. Ensembl drift is more diffuse but still top-heavy.
+
 ## Q5 — A stored-odds model, and is it clinically acceptable?
 
 ### Feasible? Yes.
@@ -165,13 +232,19 @@ Two refinements make it much stronger than a single global odds:
 
 2. **Make the check position-specific, not transcript-global.** The real
    question is "does *this variant's* `c.X` map identically across the versions I
-   hold", not "is the whole bump preserving". Because drift is monotone (§3), if
-   you hold flanking versions and `c.X` maps to the same genomic coordinate in
-   both, that variant is safe **regardless of global drift** — even a partial-drift
-   bump is fine for positions outside the moved segment. This converts a ~99.5%
-   probabilistic statement into a near-deterministic per-variant check. (The
-   script currently measures transcript-global preservation; a per-variant
-   bracketing check is a small, recommended extension.)
+   hold", not "is the whole bump preserving". A partial-drift bump is still fine
+   for positions outside the moved segment, so the per-position check has high
+   coverage (97.3% RefSeq) and higher precision (0.9957) than the transcript-wide
+   number. **But it is not a guarantee** (§6): transient-revert versions (A→B→A)
+   make a bracket agree while the requested version differs, capping precision at
+   ~0.996 (RefSeq) / ~0.96 (Ensembl). So it is a strong gate, not a deterministic
+   one.
+
+3. **Add a known-unstable blocklist (§7).** Drift is so concentrated that ≤5% of
+   RefSeq accessions hold *all* of it. Precomputing that blocklist gives a cheap,
+   deterministic second line of defence that also catches the transient-revert
+   cases the bracket misses (those flickering accessions are exactly the ones a
+   blocklist would flag).
 
 ### Clinically acceptable?
 
@@ -191,19 +264,22 @@ clinical context.** Reasons:
 
 A defensible clinical policy:
 1. **Always try the exact requested version first** (cdot usually has it).
-2. If absent, **auto-accept only on a passing position-specific bracketing
-   check** (flanking held versions both map *this variant's* coordinate
-   identically) — deterministic, not probabilistic.
+2. If absent, gate a substitution on the **position-specific bracket check**
+   (flanking held versions both map *this variant's* coordinate identically)
+   **AND** the accession not being on the known-unstable blocklist. This catches
+   both partial drift (bracket) and transient reverts (blocklist).
 3. Otherwise **refuse / route to human review**; never substitute silently.
    cdot already surfaces every substitution as an `HGVSFix` — keep that, and
-   attach the computed odds + bracket status as evidence for the reviewer.
+   attach the bracket status + stored odds as evidence for the reviewer.
 4. Use the stored odds for triage/ranking and transparency, **not** as the sole
    auto-commit gate.
 
-In short: the odds are real and computable, bracketing makes them strong, and a
-*position-specific* bracket check is strong enough to auto-accept; but the
-appropriate clinical default remains "exact version, else human-visible warning",
-with odds as supporting evidence rather than an automatic decision.
+In short: the odds are real and computable, and a *position-specific* bracket
+check (plus a blocklist) is a strong gate — but not a perfect one, because
+transient-revert versions are invisible to any bracket that doesn't hold the
+requested version. The appropriate clinical default therefore remains "exact
+version, else human-visible warning", with the bracket check + odds as supporting
+evidence rather than a fully automatic decision.
 
 ## Limitations / next steps
 
@@ -214,10 +290,13 @@ with odds as supporting evidence rather than an automatic decision.
   here).
 - Gapped-alignment subset is tiny (RefSeq) or absent (Ensembl); the 63.6%
   gap→drift figure rests on 44 RefSeq pairs.
-- The script measures transcript-global preservation; the **position-specific
-  bracketing check** (the clinically interesting one) is a recommended extension.
+- "Safe/correct" = reproduces the *requested* version's mapping. A transient
+  version that RefSeq later reverted is counted as a substitution failure even
+  though the stable neighbour may be the biologically *better* coordinate — this
+  is the conservative choice (it flags "we changed what the variant said").
 - Single deterministic measurement (no model, no sequence fetch). If this becomes
-  a paper figure, the per-variant check + GRCh37 replication are the obvious adds.
+  a paper figure, GRCh37/T2T replication and a materialised blocklist are the
+  obvious adds.
 
 ## Reproduce
 

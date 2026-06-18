@@ -165,6 +165,39 @@ def preserved_fraction(a, b):
     return same / total if total else None
 
 
+def _eq_at(a, b, off):
+    """True if signatures a and b map CDS offset `off` to the same genome."""
+    if a["contig"] != b["contig"] or a["strand"] != b["strand"]:
+        return False
+    return genomic_at(a, off) == genomic_at(b, off)
+
+
+def per_position_bracket(lo, mid, hi):
+    """Per-c.-coordinate bracket test for one (lo, missing-mid, hi) triple.
+
+    For each coding offset over the shared range, classify by whether the bracket
+    AGREES at that position (g_lo == g_hi) and whether substituting the lower
+    neighbour is CORRECT at that position (g_lo == g_mid).  Returns base counts
+    keyed by (agree, correct_lo, correct_hi).  Uses breakpoint intervals so it is
+    O(exons): the maps are unit-slope linear, so equality is constant on each
+    sub-interval and need only be checked at its left edge.
+    """
+    L = min(lo["cds_len"], mid["cds_len"], hi["cds_len"])
+    if L <= 0:
+        return None
+    bps = sorted({0, L} | {o for s in (lo, mid, hi) for o in s["bounds"] if 0 < o < L})
+    out = Counter()
+    for x0, x1 in zip(bps, bps[1:]):
+        length = x1 - x0
+        if length <= 0:
+            continue
+        agree = _eq_at(lo, hi, x0)
+        correct_lo = _eq_at(lo, mid, x0)
+        correct_hi = _eq_at(hi, mid, x0)
+        out[(agree, correct_lo, correct_hi)] += length
+    return out
+
+
 def classify_bump(a, b):
     """Categorise a consecutive-version bump from its two signatures."""
     if a["contig"] != b["contig"]:
@@ -371,6 +404,38 @@ def main():
                 combo[key][0] += safe
                 combo[key][1] += 1
 
+    # ---- (6) per-c.-coordinate bracketing -------------------------------
+    # The clinically relevant check: not "is the whole bump safe" but "does THIS
+    # variant's c. position map identically across the versions I hold".
+    pp = Counter()  # (agree, correct_lo, correct_hi) -> coding bases
+    pp_by_prefix = defaultdict(Counter)
+    for acc in sigs:
+        vs = sorted(sigs[acc])
+        if any(sigs[acc][v]["has_gap"] for v in vs):
+            continue
+        prefix = acc[:4] if acc.startswith("ENST") else acc[:3]
+        S = sigs[acc]
+        for i in range(1, len(vs) - 1):
+            r = per_position_bracket(S[vs[i - 1]], S[vs[i]], S[vs[i + 1]])
+            if r:
+                pp.update(r)
+                pp_by_prefix[prefix].update(r)
+
+    # ---- (7) is drift concentrated in certain transcripts? --------------
+    acc_pairs = Counter()
+    acc_drifts = Counter()
+    acc_nver = {}
+    for acc in sigs:
+        vs = sorted(sigs[acc])
+        if any(sigs[acc][v]["has_gap"] for v in vs):
+            continue
+        acc_nver[acc] = len(vs)
+        S = sigs[acc]
+        for v_lo, v_hi in zip(vs, vs[1:]):
+            acc_pairs[acc] += 1
+            if preserved_fraction(S[v_lo], S[v_hi]) < 1.0:
+                acc_drifts[acc] += 1
+
     # ---- report ----------------------------------------------------------
     def pct(x, d):
         return f"{100*x/d:.1f}%" if d else "n/a"
@@ -464,6 +529,53 @@ def main():
     for prefix in sorted({k[0] for k in combo if len(k) == 2 and k[1] in ("agree", "disagree")}):
         show((prefix, "agree"), f"{prefix} + bracket agree")
         show((prefix, "disagree"), f"{prefix} + bracket disagree")
+
+    print("\n(6) Per-c.-coordinate bracketing (does THIS variant's position agree?)")
+    pp_total = sum(pp.values())
+    if pp_total:
+        agree = sum(v for k, v in pp.items() if k[0])
+        agree_correct = sum(v for k, v in pp.items() if k[0] and k[1])
+        agree_wrong = agree - agree_correct
+        dis = pp_total - agree
+        dis_correct_lo = sum(v for k, v in pp.items() if not k[0] and k[1])
+        print(f"    coding bases tested            : {pp_total:,}")
+        print(f"    bracket agrees at the position : {agree:,} ({pct(agree, pp_total)})  <- coverage")
+        print(f"    P(substitute correct | position-agree) : {agree_correct/agree:.6f}" if agree else "    n/a")
+        print(f"    false-accepts (agree but wrong): {agree_wrong:,} "
+              f"({pct(agree_wrong, agree) if agree else 'n/a'} of accepted)")
+        print(f"    refused (position disagrees)   : {dis:,} ({pct(dis, pp_total)})")
+        print(f"      of those, lower-neighbour was actually correct (false refusals): "
+              f"{pct(dis_correct_lo, dis) if dis else 'n/a'}")
+        print("    by consortium  (coverage | precision = P(correct|agree)):")
+        for prefix, c in sorted(pp_by_prefix.items()):
+            tot = sum(c.values())
+            ag = sum(v for k, v in c.items() if k[0])
+            agc = sum(v for k, v in c.items() if k[0] and k[1])
+            print(f"      {prefix:5s} coverage={pct(ag, tot):>6}  "
+                  f"precision={agc/ag:.6f}  (false-accepts {ag-agc:,})" if ag else f"      {prefix}: n/a")
+
+    print("\n(7) Concentration of drift across transcripts")
+    n_acc = len(acc_pairs)
+    n_acc_drift = sum(1 for a in acc_drifts if acc_drifts[a] > 0)
+    total_drift = sum(acc_drifts.values())
+    total_pairs = sum(acc_pairs.values())
+    print(f"    accessions with >=1 clean pair : {n_acc:,}")
+    print(f"    accessions that ever drift     : {n_acc_drift:,} ({pct(n_acc_drift, n_acc)})")
+    print(f"    total drifting pairs           : {total_drift:,} of {total_pairs:,}")
+    if n_acc_drift:
+        multi = sum(1 for a in acc_drifts if acc_drifts[a] > 1)
+        print(f"    repeat offenders (>1 drift)    : {multi:,} ({pct(multi, n_acc_drift)} of drifters)")
+        ranked = sorted(acc_drifts.values(), reverse=True)
+        for top_pct in (0.01, 0.05, 0.10):
+            k = max(1, int(top_pct * n_acc))
+            share = sum(ranked[:k]) / total_drift if total_drift else 0
+            print(f"    top {int(top_pct*100):>2d}% of accessions hold {share*100:4.1f}% of all drift")
+        # does churn (many versions) predict drift?
+        dv = [acc_nver[a] for a in acc_drifts if acc_drifts[a] > 0]
+        sv = [acc_nver[a] for a in acc_pairs if acc_drifts[a] == 0]
+        if dv and sv:
+            print(f"    mean #versions: drifting accs {sum(dv)/len(dv):.2f} "
+                  f"vs stable accs {sum(sv)/len(sv):.2f}")
 
     print("\n    most-drifted consecutive pairs (public accessions):")
     for frac, acc, v_lo, v_hi, cls in sorted(worst)[:8]:
