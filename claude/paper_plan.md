@@ -102,33 +102,31 @@ stub added. `paper/notes.md` carries a SUPERSEDED banner.
 
 ## 5. New / changed work items
 
+> Done & removed: `analysis/inject_and_clean.py` (Tier-1 injection benchmark script — exists);
+> String-cleaning Methods subsection (written in `paper/methods.md`).
+
 **Scripts & data (this repo, `analysis/`):**
-1. [ ] `analysis/inject_and_clean.py` — Tier-1 injection benchmark. Input: public ClinVar c.HGVS
-   (commit a seeded sample list). Inject each `clean.py` fix category at weights derived from the
-   aggregate real distribution (weights are constants, sourced from Tier 2, *cited* not shipped).
-   Output a machine-readable fact JSON: recovery % per class, overall, **regression count (expect 0)**.
-2. [ ] Wire its output into `output/facts/` so Fig 2 / Table S5 regenerate from facts.
-3. [ ] Version-bump sub-benchmark (drop requested version → `get_best_transcript_version()` →
+1. [ ] Wire `inject_and_clean.py` output into `output/facts/` so Fig 2 / Table S5 regenerate from facts.
+2. [ ] Version-bump sub-benchmark (drop requested version → `get_best_transcript_version()` →
    rescue % + false-rescue %). (`benchmark_plan.md` Table 3.2.)
-4. [ ] Larger ClinVar resolution run (1k/10k via VEP recipe) so resolution numbers are not just the
+3. [ ] Larger ClinVar resolution run (1k/10k via VEP recipe) so resolution numbers are not just the
    "easy" 100-set (`benchmark_plan.md` §6a caveat). Keep seed + accession list committed.
-5. [ ] Taxonomy figure data: aggregate counts already in
+4. [ ] Taxonomy figure data: aggregate counts already in
    `cdot_private/output/residual_classification_summary.txt` — copy as *numbers only* into a
    Tier-2 constants block; synthesise example strings from public transcripts.
 
 **Manuscript (`paper/`):**
-6. [ ] Add the String-cleaning Methods subsection (no real examples — synthesised only).
-7. [ ] Promote Results to its own section; weave Tier 1 vs Tier 2 with explicit reproducibility flags.
-8. [ ] `paper/private_facts.md` (or constants block) for the Tier-2 numbers + caveat text.
-9. [ ] Ethics/data-availability statement covering the aggregate search-log use.
-10. [ ] Update `figures.md` (Fig 2 = cleaning) and `supplementary.md` (S5–S7).
+5. [ ] Promote Results to its own section; weave Tier 1 vs Tier 2 with explicit reproducibility flags.
+6. [ ] `paper/private_facts.md` (or constants block) for the Tier-2 numbers + caveat text.
+7. [ ] Ethics/data-availability statement covering the aggregate search-log use.
+8. [ ] Update `figures.md` (Fig 2 = cleaning) and `supplementary.md` (S5–S7).
 
 **Optional (deferred, post-benchmark-lock):**
-11. [ ] `cdot_rest` `POST /clean` endpoint + minimal demo UI (stateless, no query logging).
+9. [ ] `cdot_rest` `POST /clean` endpoint + minimal demo UI (stateless, no query logging).
 
-**Carried from existing checklists (`notes.md`, `paper_thoughts.md`):** #36 CanonicalTranscriptSelector,
-#100 cdotlib.org live, #55 FastaSeqFetcher fix (gap-correctness claim), #62 CI, Zenodo DOI,
-confirm T2T-novelty + Münz gap attribution.
+**Carried from existing checklists (`notes.md`, `paper_thoughts.md`):** #55 FastaSeqFetcher fix
+(gap-correctness claim), Zenodo DOI, confirm T2T-novelty + Münz gap attribution.
+*(Done: #36 gene/canonical resolution, #100 cdotlib.org live, #62 CI.)*
 
 ## 6. Methodology notes to state explicitly (referee-proofing)
 

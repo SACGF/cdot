@@ -29,17 +29,6 @@ Organised around what's needed to publish in Bioinformatics. Items are grouped b
 - Produce a table suitable for the paper: error type, count, % of total failures, example.
 - Check: what fraction of "transcript not found" failures have an adjacent version in cdot (version fallback coverage)?
 
-### B3. Canonical transcript API / CanonicalTranscriptSelector (#36)
-
-**Why:** Without this, gene-only HGVS (e.g. `BRCA2:c.5946delT`) cannot be resolved — one of the failure modes the paper claims cdot addresses. The data is already stored (MANE tags since v0.2.12, Ensembl canonical since v0.2.30).
-
-**What to do:**
-- Implement `CanonicalTranscriptSelector` in `cdot/hgvs/dataproviders/`.
-- Priority order: MANE Select > MANE Plus Clinical > RefSeq Select > Ensembl canonical.
-- Expose as `get_canonical_tx_for_gene(gene, genome_build)` on the data provider.
-- Add tests: at minimum one MANE Select (RefSeq) and one Ensembl canonical case.
-- Wire into `RESTDataProvider` so it works via cdotlib.org too.
-
 ### B4. Pipeline summary statistics (Snakemake)
 
 **Why:** The paper needs exact, reproducible transcript counts by source, genome build, and biotype. "1.3M+" needs to be a real, citeable number.
@@ -49,25 +38,6 @@ Organised around what's needed to publish in Bioinformatics. Items are grouped b
 - Fields: source, genome_build, biotype, transcript_count, versioned_transcript_count.
 - Also emit: count of codon-conflict discards, count of UTA-only transcripts.
 - Use this to produce the coverage comparison table (cdot vs UTA vs TARK).
-
-### B5. Domain migration to cdotlib.org (#100)
-
-**Why:** The URL in the paper must be stable and not blocked by institutional firewalls. `cdot.cc` is confirmed blocked at SA Path.
-
-**What to do:**
-- Deploy REST server on cdotlib.org (Dave).
-- Set up HTTP 301 redirect from cdot.cc → cdotlib.org.
-- Update default URLs in `RESTDataProvider` and `RESTPyHGVSTranscriptFactory`.
-- Update README and any docs.
-
-### B6. CI for tests (#62)
-
-**Why:** Bioinformatics reviewers expect a test suite with CI. Cannot credibly claim correctness without it.
-
-**What to do:**
-- Add GitHub Actions workflow running `python -m pytest tests/` on push/PR.
-- Matrix: Python 3.10, 3.11, 3.12.
-- No changes needed to the existing test suite — it already passes.
 
 ### B7. Documentation site (MkDocs + mkdocs-material)
 
@@ -88,15 +58,6 @@ Organised around what's needed to publish in Bioinformatics. Items are grouped b
   - `data-generation.md` — how to build your own JSON.gz files from RefSeq/Ensembl GTF/GFF3; Snakemake pipeline; source priority; adding a new genome build or species
 
 **Note:** `data-generation.md` is important — users with non-human organisms or custom assemblies need to know how to run the pipeline themselves. This is also where to document the merge strategy and source priority order (#95).
-
-### B8. Python version and build dependencies (#104)
-
-**Why:** Cannot publish a tool paper if `pip install cdot` is broken.
-
-**What to do:**
-- Audit `setup.cfg` for broken or overly pinned dependencies.
-- Verify clean install on Python 3.10, 3.11, 3.12.
-- Fix any issues found.
 
 ---
 
@@ -158,12 +119,8 @@ Genes with −1 frameshifting (e.g. `NM_015068.3` / PEG10) have incorrect protei
 |----|------|--------|-------------------|
 | B1 | ClinVar resolution rate benchmark | High | Yes — primary figure |
 | B2 | Search-log cleaning figures from notebook | Low | Yes — key motivation figure |
-| B3 | CanonicalTranscriptSelector API | Medium | Yes — gene-only HGVS use case |
 | B4 | Snakemake pipeline summary stats | Medium | Yes — transcript count figures |
-| B5 | Domain migration to cdotlib.org | Low (infra) | Yes — URL stability |
-| B6 | CI for tests | Low | Yes — reviewer expectation |
 | B7 | Documentation site (MkDocs) | Medium | Yes — citable URL for paper |
-| B8 | Python/build dependencies | Low | Yes — installability |
 | S1 | T2T novelty verification | Low | No — but changes abstract claims |
 | S2 | BRCA2 gap support verification | Medium | No — but supports key claim |
 | S3 | Version fallback coverage analysis | Low | No — strengthens coverage argument |
