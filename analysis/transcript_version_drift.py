@@ -2,12 +2,27 @@
 """
 Transcript-version drift study (cdot paper, item C2 — EXPLORE ONLY).
 
-Question: when a transcript accession gets a new version (e.g. NM_000059.3 ->
-NM_000059.4), how often does a given coding (c.) position still map to the *same*
-genomic coordinate?  If a version bump is coordinate-preserving, substituting an
-adjacent version (cdot's opt-in `get_best_transcript_version`) is safe; if it
-moves c. positions to different g. coordinates, the substitution silently changes
-what the variant means.
+Core question: when a transcript accession gets a new version (e.g. NM_000059.3
+-> NM_000059.4), how often does a given coding (c.) position still map to the
+*same* genomic coordinate?  If a version bump is coordinate-preserving,
+substituting an adjacent version (cdot's opt-in `get_best_transcript_version`) is
+safe; if it moves c. positions to different g. coordinates, the substitution
+silently changes what the variant means.
+
+This script answers four things:
+
+  (1) Pairwise drift over consecutive versions: what fraction of bumps preserve
+      every coding coordinate, and when they drift, by what mechanism.
+  (2) Bump categorisation: identical map / extended-but-compatible / partial
+      drift / full drift — separating "sequence bump that didn't touch the
+      alignment" from "bump that moved coordinates".
+  (3) Oscillation vs one-way: walking each accession's whole version chain, does
+      a coordinate mapping ever *revert* to an earlier one, or does drift only
+      ever move forward?  (If it never reverts, two agreeing versions guarantee
+      everything between them agrees.)
+  (4) Bracketing / interpolation: if you hold versions on *both sides* of an
+      absent one and they agree, is the missing one safe?  And can a single held
+      version's features (consortium, alignment gaps) predict bump safety?
 
 Method (pure cdot JSON, no sequence, no biocommons needed):
   * cdot's merged single-build JSON keeps *all* historical versions of an
@@ -18,18 +33,23 @@ Method (pure cdot JSON, no sequence, no biocommons needed):
   * c.X anchors at the start codon (transcript-level "start_codon", a 0-based
     count of pre-CDS bases), so n_pos(c.X) = start_codon + X.  Anchoring at the
     start codon means UTR-only edits are automatically "preserving" — drift is
-    reported only when the *coding* exon structure moves in genomic space.
-  * For each consecutive (v_n, v_{n+1}) pair we map every CDS position c.1 ..
-    c.(min CDS length) through both versions and count how many land on a
-    different genomic coordinate.
+    reported only when the *coding* alignment moves in genomic space.
+  * We summarise each version's CDS c.->g. map as an exact signature: the
+    genomic coordinate at every coding-exon boundary.  Two maps are piecewise
+    linear with unit slope, so they agree on a sub-interval iff they agree at its
+    left breakpoint — making exact comparison and exact preserved-fraction cheap
+    (O(exons), not O(bases)).
 
-Outputs summary statistics over the sampled accessions.  Standalone — NOT wired
-into Snakemake or the paper.
+NOTE: cdot stores the genome *alignment*, not the transcript sequence.  A version
+bump happens for sequence reasons, but only the part of that change that alters
+the alignment can move a coordinate — which is exactly what this measures.
+
+Standalone — NOT wired into Snakemake or the paper.
 
 Usage:
   python analysis/transcript_version_drift.py \
       --json /data/cdot_data/refseq/cdot-0.2.33.refseq.GRCh38.json.gz \
-      --build GRCh38 --sample 3000 [--seed 0] [--max-cds 30000]
+      --build GRCh38 --sample 12000 [--seed 0]
 """
 import argparse
 import gzip
@@ -46,116 +66,134 @@ def load_transcripts(path):
         return json.load(fh)["transcripts"]
 
 
-def build_segments(gb):
-    """Return (segments, has_gap, strand, contig) for one genome build.
+def cds_signature(t, build):
+    """Exact signature of a version's CDS coding-coordinate map, or None.
 
-    segments: list of (tx_start, tx_end, g_start, g_end) in transcript order.
-    Linear within each exon; gaps (alignment indels vs the genome) make the
-    linear assumption wrong, so we flag the transcript instead of trusting it.
+    Returns a dict:
+      contig, strand, cds_len,
+      segs:  sorted list of (cds_offset_start, genomic_at_that_offset)  — one per
+             coding exon segment; within a segment genomic advances by the strand
+             sign, so genomic(off) = g0 + sign*(off - off0).
+      bounds: tuple of the segment-start offsets (the breakpoints).
+      has_gap: True if any exon carries an alignment gap (linear map inexact).
+      canon: a hashable canonical form for exact-equality / revert detection.
     """
-    strand = gb["strand"]
-    contig = gb["contig"]
-    segs = []
-    has_gap = False
-    for exon in gb["exons"]:
-        g_start, g_end, _exon_id, tx_start, tx_end, gap = exon
-        if gap:
-            has_gap = True
-        segs.append((tx_start, tx_end, g_start, g_end))
-    return segs, has_gap, strand, contig
-
-
-def tx_to_genomic(segs, strand, p):
-    """Map a 1-based spliced-transcript position to a 0-based genomic coordinate."""
-    for tx_start, tx_end, g_start, g_end in segs:
-        if tx_start <= p <= tx_end:
-            offset = p - tx_start
-            if strand == "+":
-                return g_start + offset
-            return g_end - 1 - offset
-    return None  # position outside the exon span (shouldn't happen for valid c.)
-
-
-def cds_length(t):
+    gb = t["genome_builds"].get(build)
+    if not gb:
+        return None
     sc = t.get("start_codon")
     ec = t.get("stop_codon")
     if sc is None or ec is None:
         return None
-    return ec - sc  # includes the stop codon; fine for a relative comparison
-
-
-def compare_pair(t_lo, t_hi, build, max_cds):
-    """Compare two versions of one accession over their shared CDS c. range.
-
-    Returns a dict of metrics, or None if not comparable (missing build, no CDS).
-    """
-    gb_lo = t_lo["genome_builds"].get(build)
-    gb_hi = t_hi["genome_builds"].get(build)
-    if not gb_lo or not gb_hi:
+    cds_len = ec - sc
+    if cds_len <= 0:
         return None
 
-    len_lo = cds_length(t_lo)
-    len_hi = cds_length(t_hi)
-    if not len_lo or not len_hi or len_lo <= 0 or len_hi <= 0:
-        return None
+    strand = gb["strand"]
+    contig = gb["contig"]
+    sign = 1 if strand == "+" else -1
+    cds_lo = sc + 1          # first CDS tx position (1-based)
+    cds_hi = sc + cds_len    # last CDS tx position
 
-    segs_lo, gap_lo, strand_lo, contig_lo = build_segments(gb_lo)
-    segs_hi, gap_hi, strand_hi, contig_hi = build_segments(gb_hi)
-
-    sc_lo = t_lo["start_codon"]
-    sc_hi = t_hi["start_codon"]
-
-    overlap = min(len_lo, len_hi)
-    if overlap > max_cds:
-        overlap = max_cds  # cap pathological lengths for speed
-
-    diff = 0
-    compared = 0
-    first_diff_c = None
-    for x in range(1, overlap + 1):
-        g_lo = tx_to_genomic(segs_lo, strand_lo, sc_lo + x)
-        g_hi = tx_to_genomic(segs_hi, strand_hi, sc_hi + x)
-        if g_lo is None or g_hi is None:
+    segs = []
+    has_gap = False
+    for g_start, g_end, _eid, tx_start, tx_end, gap in gb["exons"]:
+        if gap:
+            has_gap = True
+        a = max(tx_start, cds_lo)
+        b = min(tx_end, cds_hi)
+        if a > b:
             continue
-        compared += 1
-        same = (g_lo == g_hi) and (contig_lo == contig_hi) and (strand_lo == strand_hi)
-        if not same:
-            diff += 1
-            if first_diff_c is None:
-                first_diff_c = x
+        # genomic at the lower CDS tx position within this exon
+        off_in_exon = a - tx_start
+        g_at_a = (g_start + off_in_exon) if sign == 1 else (g_end - 1 - off_in_exon)
+        cds_off = a - cds_lo
+        segs.append((cds_off, g_at_a))
 
-    if compared == 0:
+    if not segs:
         return None
-
+    segs.sort()
+    bounds = tuple(s[0] for s in segs)
+    canon = (contig, strand, cds_len, tuple(segs))
     return {
-        "compared": compared,
-        "diff": diff,
-        "preserved_frac": (compared - diff) / compared,
-        "cds_len_changed": len_lo != len_hi,
-        "contig_changed": contig_lo != contig_hi,
-        "strand_changed": strand_lo != strand_hi,
-        "start_codon_changed": sc_lo != sc_hi,
-        "has_gap": gap_lo or gap_hi,
-        "first_diff_c": first_diff_c,
+        "contig": contig, "strand": strand, "cds_len": cds_len,
+        "sign": sign, "segs": segs, "bounds": bounds,
+        "has_gap": has_gap, "canon": canon,
     }
+
+
+def genomic_at(sig, off):
+    """Genomic coordinate of CDS offset `off` (0-based) under signature `sig`."""
+    segs = sig["segs"]
+    # last segment whose start <= off
+    lo, hi = 0, len(segs) - 1
+    idx = 0
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if segs[mid][0] <= off:
+            idx = mid
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    off0, g0 = segs[idx]
+    return g0 + sig["sign"] * (off - off0)
+
+
+def preserved_fraction(a, b):
+    """Exact fraction of shared CDS offsets where a and b map to the same genome.
+
+    Returns a float in [0,1], or None if not comparable.  0.0 if the contig or
+    strand differs (a wholesale relocation — nothing is preserved).
+    """
+    if a is None or b is None:
+        return None
+    if a["contig"] != b["contig"] or a["strand"] != b["strand"]:
+        return 0.0
+    L = min(a["cds_len"], b["cds_len"])
+    if L <= 0:
+        return None
+    bps = sorted({0, L} | {o for o in a["bounds"] if 0 < o < L}
+                            | {o for o in b["bounds"] if 0 < o < L})
+    same = total = 0
+    for x0, x1 in zip(bps, bps[1:]):
+        length = x1 - x0
+        if length <= 0:
+            continue
+        total += length
+        if genomic_at(a, x0) == genomic_at(b, x0):
+            same += length
+    return same / total if total else None
+
+
+def classify_bump(a, b):
+    """Categorise a consecutive-version bump from its two signatures."""
+    if a["contig"] != b["contig"]:
+        return "relocated_contig"
+    if a["strand"] != b["strand"]:
+        return "relocated_strand"
+    frac = preserved_fraction(a, b)
+    if frac == 1.0:
+        # whole shared range identical; did the CDS length change at the ends?
+        return "identical_map" if a["cds_len"] == b["cds_len"] else "extended_compatible"
+    if frac == 0.0:
+        return "full_drift"
+    return "partial_drift"
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", required=True)
     ap.add_argument("--build", default="GRCh38")
-    ap.add_argument("--sample", type=int, default=3000,
+    ap.add_argument("--sample", type=int, default=12000,
                     help="number of multi-version accessions to sample (0 = all)")
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--max-cds", type=int, default=30000)
     args = ap.parse_args()
 
     print(f"Loading {args.json} ...", flush=True)
     tx = load_transcripts(args.json)
     print(f"  {len(tx):,} transcript versions", flush=True)
 
-    # Group versions by accession (only RefSeq/Ensembl mRNA-style coding accessions
-    # with a CDS are interesting; non-coding (NR_/XR_) have no c. coordinates).
+    # Group coding accessions (need a CDS / c. coordinates) by accession.
     by_acc = defaultdict(dict)
     for key, t in tx.items():
         m = ACC_RE.match(key)
@@ -163,7 +201,7 @@ def main():
             continue
         acc, ver = m.group("acc"), int(m.group("ver"))
         if not acc.startswith(("NM_", "XM_", "ENST")):
-            continue  # need a CDS / c. coordinates
+            continue
         if t.get("start_codon") is None or t.get("stop_codon") is None:
             continue
         by_acc[acc][ver] = t
@@ -173,107 +211,213 @@ def main():
 
     accs = sorted(multi)
     if args.sample and args.sample < len(accs):
-        rng = random.Random(args.seed)
-        accs = rng.sample(accs, args.sample)
+        accs = random.Random(args.seed).sample(accs, args.sample)
     print(f"  analysing {len(accs):,} accessions", flush=True)
 
-    results = []
-    skipped_gap = 0
+    # Precompute per-version signatures.
+    sigs = {}  # acc -> {ver: sig}
     for acc in accs:
-        versions = sorted(multi[acc])
-        for v_lo, v_hi in zip(versions, versions[1:]):
-            r = compare_pair(multi[acc][v_lo], multi[acc][v_hi], args.build, args.max_cds)
-            if r is None:
-                continue
-            r["acc"] = acc
-            r["v_lo"] = v_lo
-            r["v_hi"] = v_hi
-            results.append(r)
+        d = {}
+        for ver, t in multi[acc].items():
+            s = cds_signature(t, args.build)
+            if s is not None:
+                d[ver] = s
+        if len(d) > 1:
+            sigs[acc] = d
 
-    n = len(results)
-    if n == 0:
-        print("No comparable pairs found.")
-        return
+    # ---- (1)+(2) consecutive-pair drift and bump categorisation ----------
+    pair_class = Counter()
+    fracs = []
+    drift_mech = Counter()
+    by_prefix = defaultdict(lambda: Counter())
+    gap_drift = Counter()       # (held_has_gap, drifted) -> n
+    worst = []
+    consec_pairs = 0
+    for acc in sigs:
+        vs = sorted(sigs[acc])
+        prefix = acc[:4] if acc.startswith("ENST") else acc[:3]
+        for v_lo, v_hi in zip(vs, vs[1:]):
+            a, b = sigs[acc][v_lo], sigs[acc][v_hi]
+            if a["has_gap"] or b["has_gap"]:
+                continue  # linear map inexact for gapped alignments
+            consec_pairs += 1
+            cls = classify_bump(a, b)
+            pair_class[cls] += 1
+            frac = preserved_fraction(a, b)
+            fracs.append(frac)
+            drifted = frac < 1.0
+            by_prefix[prefix][cls] += 1
+            gap_drift[(a["has_gap"], drifted)] += 1
+            if drifted:
+                if a["contig"] != b["contig"]:
+                    drift_mech["contig changed"] += 1
+                if a["strand"] != b["strand"]:
+                    drift_mech["strand changed"] += 1
+                if a["cds_len"] != b["cds_len"]:
+                    drift_mech["CDS length changed"] += 1
+                worst.append((frac, acc, v_lo, v_hi, cls))
 
-    # ---- summary ----------------------------------------------------------
-    with_gap = [r for r in results if r["has_gap"]]
-    clean = [r for r in results if not r["has_gap"]]  # linear map is exact
+    # ---- single-version predictor: does an alignment gap flag instability? --
+    # A gapped alignment means the transcript sequence doesn't co-linearly match
+    # the genome (indels vs the reference) — a plausible a-priori risk signal you
+    # can read off the *one* version you hold.  "map changed" here uses gap-aware
+    # canonical equality, so it stays valid for gapped pairs (where the precise
+    # preserved-fraction would be unreliable).
+    gap_pred = Counter()   # (held_has_gap, map_changed) -> n
+    n_versions = n_gap_versions = 0
+    for acc in sigs:
+        vs = sorted(sigs[acc])
+        for v in vs:
+            n_versions += 1
+            if sigs[acc][v]["has_gap"]:
+                n_gap_versions += 1
+        for v_lo, v_hi in zip(vs, vs[1:]):
+            a, b = sigs[acc][v_lo], sigs[acc][v_hi]
+            changed = (a["canon"], a["has_gap"]) != (b["canon"], b["has_gap"])
+            gap_pred[(a["has_gap"], changed)] += 1
 
-    fully_preserved = [r for r in clean if r["diff"] == 0]
-    fully_diverged = [r for r in clean if r["preserved_frac"] == 0.0]
-    partial = [r for r in clean if 0.0 < r["preserved_frac"] < 1.0]
+    # ---- (3) oscillation / one-way over the whole version chain ----------
+    chains_total = 0
+    chains_stable = 0           # mapping identical across ALL versions
+    chains_with_revert = 0      # a canonical map reappears after changing away
+    transitions = []
+    for acc in sigs:
+        vs = sorted(sigs[acc])
+        if any(sigs[acc][v]["has_gap"] for v in vs):
+            continue
+        canons = [sigs[acc][v]["canon"] for v in vs]
+        chains_total += 1
+        ntrans = sum(1 for x, y in zip(canons, canons[1:]) if x != y)
+        transitions.append(ntrans)
+        if ntrans == 0:
+            chains_stable += 1
+        # revert: a canon equals one seen before but not the immediately prior one
+        seen = set()
+        prev = None
+        reverted = False
+        for c in canons:
+            if c != prev and c in seen:
+                reverted = True
+                break
+            seen.add(c)
+            prev = c
+        if reverted:
+            chains_with_revert += 1
 
-    fracs = sorted(r["preserved_frac"] for r in clean)
+    # ---- (4) bracketing / interpolation ---------------------------------
+    # For every interior version v_i with both neighbours present, treat v_i as
+    # the absent "requested" version.  Does the bracket (v_{i-1}, v_{i+1})
+    # agreeing predict that v_i agrees with its lower neighbour (the substitute)?
+    br_total = 0
+    br_bracket_agree = 0
+    br_mid_safe_given_agree = 0
+    br_mid_safe_given_disagree = 0
+    br_disagree = 0
+    # Stronger: across ALL agreeing (lo,hi) pairs, are ALL intermediates consistent?
+    strong_brackets = 0
+    strong_brackets_consistent = 0
+    for acc in sigs:
+        vs = sorted(sigs[acc])
+        if any(sigs[acc][v]["has_gap"] for v in vs):
+            continue
+        S = sigs[acc]
+        for i in range(1, len(vs) - 1):
+            lo, mid, hi = vs[i - 1], vs[i], vs[i + 1]
+            br_total += 1
+            agree = preserved_fraction(S[lo], S[hi]) == 1.0
+            mid_safe = preserved_fraction(S[lo], S[mid]) == 1.0
+            if agree:
+                br_bracket_agree += 1
+                if mid_safe:
+                    br_mid_safe_given_agree += 1
+            else:
+                br_disagree += 1
+                if mid_safe:
+                    br_mid_safe_given_disagree += 1
+        # strong bracket test over all pairs
+        for x in range(len(vs)):
+            for y in range(x + 2, len(vs)):
+                if preserved_fraction(S[vs[x]], S[vs[y]]) == 1.0:
+                    strong_brackets += 1
+                    inner_ok = all(
+                        preserved_fraction(S[vs[x]], S[vs[z]]) == 1.0
+                        for z in range(x + 1, y)
+                    )
+                    if inner_ok:
+                        strong_brackets_consistent += 1
 
+    # ---- report ----------------------------------------------------------
     def pct(x, d):
         return f"{100*x/d:.1f}%" if d else "n/a"
 
-    def quantile(sorted_vals, q):
-        if not sorted_vals:
-            return float("nan")
-        i = min(len(sorted_vals) - 1, int(q * (len(sorted_vals) - 1)))
-        return sorted_vals[i]
+    n = consec_pairs
+    print("\n" + "=" * 72)
+    print("TRANSCRIPT-VERSION DRIFT  —  " + args.json.split("/")[-1])
+    print("=" * 72)
+    print(f"build {args.build} | accessions {len(sigs):,} | "
+          f"consecutive clean pairs {n:,} (gapped pairs excluded)")
 
-    print("\n" + "=" * 70)
-    print("TRANSCRIPT-VERSION DRIFT — consecutive-version pairs")
-    print("=" * 70)
-    print(f"build                       : {args.build}")
-    print(f"accessions analysed         : {len(accs):,}")
-    print(f"consecutive pairs compared  : {n:,}")
-    print(f"  pairs with alignment gaps : {len(with_gap):,} "
-          f"(linear map inexact — excluded from %s below)")
-    print(f"  clean pairs (exact map)   : {len(clean):,}")
-    print()
-    print("Over CLEAN pairs (genomic c.->g. comparison is exact):")
-    print(f"  fully coordinate-preserving (every c. base same g.) : "
-          f"{len(fully_preserved):,} ({pct(len(fully_preserved), len(clean))})")
-    print(f"  partially preserving (some c. bases drift)          : "
-          f"{len(partial):,} ({pct(len(partial), len(clean))})")
-    print(f"  fully diverged (no c. base shares a g. coord)       : "
-          f"{len(fully_diverged):,} ({pct(len(fully_diverged), len(clean))})")
-    print()
-    mean_frac = sum(fracs) / len(fracs)
-    print(f"  mean   preserved fraction : {mean_frac:.4f}")
-    print(f"  median preserved fraction : {quantile(fracs, 0.5):.4f}")
-    print(f"  p05 / p25 preserved frac  : {quantile(fracs, 0.05):.4f} / {quantile(fracs, 0.25):.4f}")
-    print()
-    # Mechanism breakdown over the pairs that drift at all.
-    drifting = [r for r in clean if r["diff"] > 0]
-    print(f"Among {len(drifting):,} drifting clean pairs:")
-    print(f"  contig changed            : {sum(r['contig_changed'] for r in drifting):,}")
-    print(f"  strand changed            : {sum(r['strand_changed'] for r in drifting):,}")
-    print(f"  start_codon (CDS) shifted : {sum(r['start_codon_changed'] for r in drifting):,}")
-    print(f"  CDS length changed        : {sum(r['cds_len_changed'] for r in drifting):,}")
-    print()
-    # For the *non*-drifting pairs, did anything change at all?
-    sc_shift_preserved = sum(r["start_codon_changed"] for r in fully_preserved)
-    print(f"Among {len(fully_preserved):,} fully-preserving clean pairs:")
-    print(f"  start_codon shifted but g. preserved (UTR-only edit) : {sc_shift_preserved:,}")
-    print()
-    # Curated (NM_) vs predicted (XM_) split — the safety question that matters
-    # clinically is whether *curated* RefSeq bumps preserve coordinates.
-    print("By accession class (clean pairs):")
-    for prefix in ("NM_", "XM_", "ENST"):
-        sub = [r for r in clean if r["acc"].startswith(prefix)]
-        if not sub:
-            continue
-        pres = sum(1 for r in sub if r["diff"] == 0)
-        div = sum(1 for r in sub if r["preserved_frac"] == 0.0)
-        print(f"  {prefix:5s} pairs={len(sub):>6,}  "
-              f"fully-preserving={pct(pres, len(sub))}  "
-              f"fully-diverged={pct(div, len(sub))}")
-    print()
-    # Worst offenders for context (no private data — these are public accessions).
-    worst = sorted(drifting, key=lambda r: r["preserved_frac"])[:10]
-    print("Most-drifted example pairs (public accessions):")
-    for r in worst:
-        print(f"  {r['acc']}.{r['v_lo']}->{r['v_hi']}  "
-              f"preserved={r['preserved_frac']:.3f}  "
-              f"diff={r['diff']}/{r['compared']}  "
-              f"first_diff=c.{r['first_diff_c']}  "
-              f"{'CDSlen ' if r['cds_len_changed'] else ''}"
-              f"{'contig ' if r['contig_changed'] else ''}")
-    print("=" * 70)
+    print("\n(1) Consecutive-bump categories")
+    for cls in ["identical_map", "extended_compatible", "partial_drift",
+                "full_drift", "relocated_contig", "relocated_strand"]:
+        if pair_class.get(cls):
+            print(f"    {cls:20s} {pair_class[cls]:>7,}  ({pct(pair_class[cls], n)})")
+    preserving = pair_class["identical_map"] + pair_class["extended_compatible"]
+    drifting = n - preserving
+    print(f"    -> coordinate-preserving (any c. base safe): {preserving:,} ({pct(preserving, n)})")
+    print(f"    -> drifting                                : {drifting:,} ({pct(drifting, n)})")
+    if fracs:
+        print(f"    mean preserved fraction {sum(fracs)/len(fracs):.4f} | "
+              f"median {sorted(fracs)[len(fracs)//2]:.4f}")
+
+    print("\n    by consortium / accession class:")
+    for prefix, c in sorted(by_prefix.items()):
+        tot = sum(c.values())
+        pres = c["identical_map"] + c["extended_compatible"]
+        print(f"      {prefix:5s} pairs={tot:>7,}  "
+              f"preserving={pct(pres, tot)}  "
+              f"partial={pct(c['partial_drift'], tot)}  "
+              f"full={pct(c['full_drift'], tot)}  "
+              f"relocated={pct(c['relocated_contig']+c['relocated_strand'], tot)}")
+
+    print("\n    drift mechanism (among drifting pairs):")
+    for k, v in drift_mech.most_common():
+        print(f"      {k:22s} {v:,}")
+
+    print("\n(2b) Single-version predictor: alignment gap")
+    print(f"    versions carrying an alignment gap: {n_gap_versions:,}/{n_versions:,} "
+          f"({pct(n_gap_versions, n_versions)})")
+    for flag in (True, False):
+        chg = gap_pred[(flag, True)]
+        tot = chg + gap_pred[(flag, False)]
+        print(f"    held version has_gap={str(flag):5s}: next bump changes map "
+              f"{chg:,}/{tot:,} ({pct(chg, tot)})")
+
+    print("\n(3) Oscillation vs one-way (full version chains, gap-free)")
+    print(f"    chains analysed                : {chains_total:,}")
+    print(f"    stable across ALL versions     : {chains_stable:,} ({pct(chains_stable, chains_total)})")
+    print(f"    chains with >=1 revert (oscillation): "
+          f"{chains_with_revert:,} ({pct(chains_with_revert, chains_total)})")
+    if transitions:
+        print(f"    mean map-changes per chain     : {sum(transitions)/len(transitions):.3f}")
+
+    print("\n(4) Bracketing / interpolation")
+    print(f"    interior versions tested       : {br_total:,}")
+    if br_total:
+        base = (br_mid_safe_given_agree + br_mid_safe_given_disagree) / br_total
+        print(f"    base rate P(mid safe)          : {base:.4f}")
+        print(f"    bracket (lo,hi) agree          : {br_bracket_agree:,} ({pct(br_bracket_agree, br_total)})")
+        print(f"    P(mid safe | bracket agree)    : "
+              f"{br_mid_safe_given_agree/br_bracket_agree:.4f}" if br_bracket_agree else "    n/a")
+        print(f"    P(mid safe | bracket disagree) : "
+              f"{br_mid_safe_given_disagree/br_disagree:.4f}" if br_disagree else "    n/a")
+    print(f"    strong test: agreeing (lo,hi) pairs = {strong_brackets:,}; "
+          f"all intermediates also agree = {pct(strong_brackets_consistent, strong_brackets)}")
+
+    print("\n    most-drifted consecutive pairs (public accessions):")
+    for frac, acc, v_lo, v_hi, cls in sorted(worst)[:8]:
+        print(f"      {acc}.{v_lo}->{v_hi}  preserved={frac:.3f}  {cls}")
+    print("=" * 72)
 
 
 if __name__ == "__main__":
