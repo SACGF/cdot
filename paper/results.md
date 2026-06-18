@@ -51,12 +51,12 @@ build script, random seed, and resolution harness are committed.
 The headline test of cleaning is its effect on a real production query stream; a
 reproducible injection benchmark provides a supporting safety check.
 
-**[Tier 2: production validation, not reproducible] — headline.** Run over a corpus of
+**[Tier 2: production validation, not reproducible] Headline result.** Run over a corpus of
 **N = 32,752** real search-bar HGVS queries pooled from production clinical and research
 variant-curation platforms, `clean_hgvs()` raised the fraction parseable by
 biocommons/hgvs from **91.5%** as-submitted to **96.4%** after cleaning: a **+4.9%**
 absolute gain (≈1,600 additional strings rescued) with **0 regressions** (no
-already-valid string was broken). This is the result that matters operationally — it
+already-valid string was broken). This is the result that matters operationally: it
 measures what cleaning recovers from genuinely messy, human-entered input rather than
 from synthetic errors. The rescues break down by fix type as shown in Table 1; they are
 dominated by whitespace removal and base re-casing, followed by protein-suffix stripping
@@ -67,8 +67,8 @@ They are reported as frozen constants (source: `cdot_private/output/`, issue #11
 
 **Table 1. Fixes applied across the production corpus (N = 32,752).** Each row is a
 `clean_hgvs()` fix category, with the number of rescued queries in which it fired and that
-number as a share of the 1,621 rescued queries. Categories overlap — a single query may
-need several fixes — so the counts sum to more than the total. *(Tier 2; frozen constants
+number as a share of the 1,621 rescued queries. Categories overlap (a single query may
+need several fixes), so the counts sum to more than the total. *(Tier 2; frozen constants
 from `cdot_private/output/cleaning_analysis_20260617.txt`.)*
 
 | Fix category | Rescued queries | % of rescued |
@@ -86,7 +86,7 @@ from `cdot_private/output/cleaning_analysis_20260617.txt`.)*
 `paper/scripts/inject_and_clean.py` injects each `clean_hgvs()` fix category into a seeded
 sample of clean, parseable ClinVar c.HGVS strings committed to this repo and confirms the
 cleaner recovers the canonical target with **{{ cleaning.inject_regressions | int }}
-regressions** — no already-valid string is ever broken (Supplementary Table S5). Because
+regressions**: no already-valid string is ever broken (Supplementary Table S5). Because
 this benchmark injects the very errors it then repairs, its recovery rate is not an
 independent measure of real-world performance and is reported in the supplement only; its
 purpose here is to demonstrate the no-regression guarantee on which the production result
@@ -147,8 +147,8 @@ applied automatically, preserving exact-version semantics by default.
 
 ## R5: Throughput
 
-**[Tier 1]** To compare transcript backends fairly we held the sequence layer constant —
-every configuration was served by the *same local SeqRepo* — so the only thing that
+**[Tier 1]** To compare transcript backends fairly we held the sequence layer constant
+(every configuration was served by the *same local SeqRepo*), so the only thing that
 varies across rows of Table 2 is the transcript-data layer itself (Figure S1).
 
 **Table 2. End-to-end HGVS resolution throughput by transcript backend**, sequence layer
@@ -156,8 +156,8 @@ held constant (shared local SeqRepo), identical biocommons/hgvs engine. *(Tier 1
 
 | Configuration | Throughput (HGVS/s) |
 |---|---|
-| UTA — public remote database | ~{{ benchmark.uta_remote_tps | dp(1) }} |
-| UTA — local PostgreSQL | ~{{ benchmark.uta_local_tps | int }} |
+| UTA: public remote database | ~{{ benchmark.uta_remote_tps | dp(1) }} |
+| UTA: local PostgreSQL | ~{{ benchmark.uta_local_tps | int }} |
 | cdot REST (on demand) | ~{{ benchmark.cdot_rest_tps | int }} |
 | cdot REST (after one batch `prefetch()`) | ~{{ benchmark.cdot_rest_prefetch_tps | int }} |
 | cdot local JSON | {{ benchmark.cdot_local_min_tps | int }}–{{ benchmark.cdot_local_max_tps | int }} |

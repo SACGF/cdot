@@ -60,4 +60,4 @@ provides the same local, offline access to transcript coordinates that SeqRepo
 *Now 4 short paragraphs: (1) problem, (2) existing tools/gaps, (3) Shariant motivation +
 focus thesis, (4) cdot's approach. If it runs long, the Shariant and approach paragraphs
 can be merged. Münz/BRCA2 gap framing removed (gap correctness is a downstream library
-concern, not a cdot result — feedback).*
+concern, not a cdot result, per feedback).*

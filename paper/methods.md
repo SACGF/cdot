@@ -16,7 +16,7 @@ HGVS strings depends on it: a clinical report from 2015 may reference an NM_ ver
 was retired in a later RefSeq release but is still cited in patient records and ClinVar
 submissions. The releases are combined in chronological order, with each newer release
 overwriting older entries for the same transcript version. This ordering matters beyond
-simple recency — older files are sometimes less complete than later ones (for example,
+simple recency: older files are sometimes less complete than later ones (for example,
 early RefSeq GFF3 releases omitted the transcript/genome alignment-gap CIGAR strings that
 later releases include), so letting newer data win improves the merged result rather than
 merely keeping the latest version.
