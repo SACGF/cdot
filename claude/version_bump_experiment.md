@@ -213,6 +213,68 @@ precomputed "known-unstable transcripts" blocklist would capture essentially all
 RefSeq drift risk** — a cheap, deterministic defence-in-depth alongside the
 per-position bracket check. Ensembl drift is more diffuse but still top-heavy.
 
+## Cross-build: can we use info from other genome builds?
+
+**Yes — and it gives a better check than genomic bracketing.** Script:
+`analysis/transcript_version_crossbuild.py`, run on the single all-builds RefSeq
+and Ensembl files (each version record carries a `genome_builds` dict spanning
+GRCh37/GRCh38/T2T — the same view cdot REST returns for an accession).
+`--target GRCh38 --other GRCh37 --sample 12000 --seed 1`.
+
+The pivotal fact: a version's **intrinsic structure** (CDS length + the
+coding-exon lengths *in transcript coordinates*) is **build-independent** — only
+the genomic placement changes between builds. So another build's copy of a
+version tells you that version's c. structure even when you can't place it in the
+target build.
+
+| measurement | RefSeq | Ensembl |
+|---|---|---|
+| (X1) versions absent from GRCh38 that pooling builds adds | +1,338 | +10,408 |
+| (X1) internal GRCh38 version-gaps filled by GRCh37 | 8.6% | 0% |
+| (X2) same version, intrinsic structure identical across builds | **99.5%** | 99.8% |
+| (X3) cross-build concordance of the preserve/drift call | **100.0%** | n/a* |
+| (X4) drifting bumps flagged by an intrinsic-structure change | **100%** | 99.3% |
+| (X4) …specifically a CDS-length change | 98.0% | 98.8% |
+| (X4 converse) bumps with unchanged structure that are genomically preserved | **100%** | 99.9% |
+
+\* Ensembl GRCh37 is a frozen separate release lineage, so almost no version is
+present in *both* builds (X3 has 0 comparable pairs); that is itself why pooling
+builds adds so many Ensembl versions (10,408) — they're build-siloed.
+
+What this means:
+
+1. **Other builds supply versions the target build lacks** (X1). For RefSeq the
+   direct "fill an internal bracket gap" rate is modest (8.6%), but pooling still
+   adds >1,300 versions; for Ensembl the lineages are disjoint so it adds a huge
+   number but they won't fill a *GRCh38* bracket.
+
+2. **A version's structure is build-portable** (X2, ~99.5%) and **the drift call
+   is build-concordant** (X3, 100% RefSeq). Whether a bump moves coordinates is a
+   property of the *transcript change*, not the build — so GRCh37 corroborates
+   GRCh38 essentially perfectly.
+
+3. **The big one (X4): intrinsic-structure change ⟺ genomic drift, almost
+   exactly.** Every RefSeq drift (100%) and 99.3% of Ensembl drifts carry an
+   intrinsic-structure change; conversely, 100% (RefSeq) / 99.9% (Ensembl) of
+   structure-unchanged bumps are genomically preserved. Since intrinsic structure
+   is build-independent and REST returns it for every version in every build:
+
+   > **The robust safety check is structural, not genomic: does the requested
+   > version's intrinsic CDS structure match the version I'd substitute?** Read
+   > both structures from REST's all-build view; identical → safe (~100%
+   > precision); changed → drift, refuse.
+
+   This is simpler than genomic bracketing (no flanking pair needed — just the
+   requested version's structure vs the substitute's) **and it breaks the
+   transient-revert ceiling**: a transient version absent from the target build is
+   read from another build, where its changed structure (98% a CDS-length change)
+   exposes it — exactly the case genomic bracketing was blind to.
+
+Caveat: a bump that only *extends* the CDS (same shared region, longer) counts as
+a structure change and would be conservatively refused even though a variant in
+the shared region is fine (RefSeq 0% of bumps, Ensembl 5.7%). That's an
+acceptable false-negative for a safety gate.
+
 ## Q5 — A stored-odds model, and is it clinically acceptable?
 
 ### Feasible? Yes.
@@ -246,6 +308,13 @@ Two refinements make it much stronger than a single global odds:
    cases the bracket misses (those flickering accessions are exactly the ones a
    blocklist would flag).
 
+4. **Use the all-build structural check (Cross-build section).** This is the
+   strongest lever: a bump is coordinate-preserving iff the intrinsic CDS
+   structure is unchanged (~100% equivalence), the structure is build-portable
+   (~99.5%) and REST returns it for every version in every build. Comparing the
+   requested version's structure to the substitute's is near-deterministic, needs
+   no flanking pair, and catches the transient reverts the genomic bracket can't.
+
 ### Clinically acceptable?
 
 Short version: **a stored probability is useful for triage and transparency, but
@@ -263,23 +332,29 @@ clinical context.** Reasons:
   heterogeneity may differ. Odds are a prior, not a guarantee.
 
 A defensible clinical policy:
-1. **Always try the exact requested version first** (cdot usually has it).
-2. If absent, gate a substitution on the **position-specific bracket check**
-   (flanking held versions both map *this variant's* coordinate identically)
-   **AND** the accession not being on the known-unstable blocklist. This catches
-   both partial drift (bracket) and transient reverts (blocklist).
-3. Otherwise **refuse / route to human review**; never substitute silently.
-   cdot already surfaces every substitution as an `HGVSFix` — keep that, and
-   attach the bracket status + stored odds as evidence for the reviewer.
-4. Use the stored odds for triage/ranking and transparency, **not** as the sole
-   auto-commit gate.
+1. **Always try the exact requested version first** (cdot/REST usually has it,
+   in *some* build).
+2. If absent from the target build, **fetch the requested version's structure
+   from any build (REST all-build view) and compare its intrinsic CDS structure
+   to the substitute's.** Identical → the substitution is safe (~100% precision,
+   transient reverts included); changed → refuse. This structural check is the
+   primary gate — it is build-portable, needs no flanking pair, and is the only
+   method here that catches transient reverts.
+3. If the requested version exists in *no* build (so no structure to compare),
+   fall back to the **position-specific genomic bracket check** plus the
+   **known-unstable blocklist** (§6/§7), and treat the result as probabilistic.
+4. Otherwise **refuse / route to human review**; never substitute silently. cdot
+   already surfaces every substitution as an `HGVSFix` — keep that and attach the
+   structure/bracket evidence and stored odds for the reviewer.
 
-In short: the odds are real and computable, and a *position-specific* bracket
-check (plus a blocklist) is a strong gate — but not a perfect one, because
-transient-revert versions are invisible to any bracket that doesn't hold the
-requested version. The appropriate clinical default therefore remains "exact
-version, else human-visible warning", with the bracket check + odds as supporting
-evidence rather than a fully automatic decision.
+In short: with REST's all-build view the safety question becomes largely
+*deterministic* — a bump is coordinate-preserving iff the transcript's intrinsic
+CDS structure is unchanged, and that structure is readable for the requested
+version from whatever build holds it. This is strong enough to gate an automatic
+substitution; the genomic bracket + odds + blocklist remain the fallback for the
+residual case where the requested version is absent everywhere. Even so, the
+prudent clinical default stays "exact version, else human-visible warning", with
+these checks as the evidence behind any automatic decision.
 
 ## Limitations / next steps
 
@@ -301,8 +376,17 @@ evidence rather than a fully automatic decision.
 ## Reproduce
 
 ```bash
+# single-build drift, bracketing, concentration (§1-7)
 python analysis/transcript_version_drift.py \
     --json /data/cdot_data/refseq/cdot-0.2.33.refseq.GRCh38.json.gz \
     --build GRCh38 --sample 12000 --seed 1
 # and the ensembl/…ensembl.GRCh38.json.gz equivalent
+
+# cross-build availability / structure-portability / equivalence (X1-X4)
+python analysis/transcript_version_crossbuild.py \
+    --json /data/cdot_data/refseq/cdot-0.2.33.all-builds-refseq-grch37_grch38_t2t-chm13v2.0.json.gz \
+    --target GRCh38 --other GRCh37 --sample 12000 --seed 1
+# and the ensembl all-builds equivalent
 ```
+Console outputs saved at `/tmp/c2_{refseq,ensembl}.GRCh38.txt` and
+`/tmp/c2_crossbuild_{refseq,ensembl}.txt`.
