@@ -138,6 +138,43 @@ class TestModels(unittest.TestCase):
         self.assertEqual(build["ccds"], "CCDS123.1")
         self.assertEqual(build.get("source"), "BestRefSeq")
 
+    def test_loads_accepts_genome_build_source_str_or_list(self):
+        """Regression: genome_builds[...].source is a str in early 0.2.32 data but a
+        list (e.g. ['BestRefSeq']) from 0.2.33 on. The strict msgspec loads() path
+        - the one JSONDataProvider uses - must accept both. Before the fix, the list
+        form failed to load with msgspec 'Expected `str | null`, got `array`', so
+        every current production JSON.gz file was unloadable."""
+        def _payload(source):
+            return json.dumps({
+                "cdot_version": "0.2.33",
+                "genome_builds": ["GRCh38"],
+                "transcripts": {
+                    "NM_FAKE.1": {
+                        "id": "NM_FAKE.1",
+                        "genome_builds": {
+                            "GRCh38": {
+                                "contig": "NC_000001.11",
+                                "strand": "+",
+                                "exons": [[100, 200, 1, 0, 100, None]],
+                                "source": source,
+                            }
+                        },
+                    }
+                },
+            })
+
+        # 0.2.33+ list form - this is exactly what regressed
+        list_data = models.loads(_payload(["BestRefSeq"]))
+        self.assertEqual(
+            list_data.transcripts["NM_FAKE.1"].genome_builds["GRCh38"].source,
+            ["BestRefSeq"])
+
+        # early 0.2.32 str form must still load
+        str_data = models.loads(_payload("BestRefSeq"))
+        self.assertEqual(
+            str_data.transcripts["NM_FAKE.1"].genome_builds["GRCh38"].source,
+            "BestRefSeq")
+
     def test_transcript_from_dict(self):
         """On-demand path: build a typed Transcript from a plain dict."""
         with open(REFSEQ_JSON) as f:
