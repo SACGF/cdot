@@ -59,6 +59,11 @@ am.c_to_g(var_c)
 
 [more Biocommons examples](docs/examples_biocommons.md):
 
+> **Tip:** cdot provides many transcripts that aren't in SeqRepo, so the default sequence fetcher will
+> raise `HGVSDataNotAvailableError` for them. You almost always want to supply a
+> [`FastaSeqFetcher`](docs/fasta_seqfetcher.md) (chained after SeqRepo) so every cdot transcript
+> resolves against a local genome FASTA.
+
 For fixing messy HGVS input and fast bulk processing, see [Advanced usage](docs/advanced_usage.md).
 
 [PyHGVS](https://github.com/counsyl/hgvs) example (needs `pip install cdot[fasta]` for pysam):

@@ -7,11 +7,17 @@ Needs the `fasta` extra: `pip install cdot[fasta]` (brings in `pysam`).
 biocommons HGVS uses [SeqRepo](https://github.com/biocommons/biocommons.seqrepo) to retrieve genome
 and transcript sequences.
 
-cdot collects as many transcripts as possible, and some of these are not in SeqRepo - meaning you
-can't resolve them using the [biocommons HGVS](https://github.com/biocommons/hgvs/) library.
+cdot collects as many transcripts as possible, and many of these are not in SeqRepo - meaning you
+can't resolve them using the [biocommons HGVS](https://github.com/biocommons/hgvs/) library out of
+the box (you get `HGVSDataNotAvailableError`).
 
 `FastaSeqFetcher` is a SeqRepo replacement that builds transcript sequences by pasting together exons
 from the genome. This means every cdot transcript becomes resolvable.
+
+**Recommendation:** because cdot routinely provides transcripts SeqRepo doesn't have, you almost
+always want a `FastaSeqFetcher`. The safest setup is to chain it *after* SeqRepo (see
+[`ChainedSeqFetcher`](#usage) below) so you keep SeqRepo sequences where they exist and only fall
+back to genome-built sequences for the transcripts SeqRepo is missing.
 
 > **Warning: transcript sequences may differ from the genome sequence - do this at your own risk!**
 > (See [Transcript vs genome differences](#warnings--transcript-vs-genome-differences) below.)
