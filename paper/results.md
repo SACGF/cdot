@@ -179,8 +179,11 @@ unique ClinVar (g.HGVS, c.HGVS) pairs in ~92 minutes (665 HGVS/s; 99.3% produced
 genomic coordinate, 98.8% matched the ClinVar genomic HGVS exactly). The REST provider
 matched this over the network: after one batch cache-warming pass (21,277 distinct
 transcripts warmed in ~6 s) it resolved the same set in ~83 minutes (731 HGVS/s),
-marginally faster than local JSON because warmed lookups hit a flat in-memory cache
-instead of the interval-tree index. The same exhaustive pass is impractical against the
+effectively matching local JSON: once the cache is warm both providers resolve from an
+in-memory dict with no further network I/O, so throughput is bounded by the shared
+sequence layer. The marginal difference is within run-to-run variance, plausibly because
+the warmed REST cache holds only the few thousand transcripts the set actually touches
+whereas local JSON holds the entire dataset in memory. The same exhaustive pass is impractical against the
 public remote UTA database (extrapolated at hundreds of days from its ~0.1 HGVS/s).
 (`paper/scripts/build_clinvar_pairs.py` builds the pair set by joining ClinVar's
 variant_summary with the ClinVar VCF; the residual ~1% non-exact/error rate is dominated
