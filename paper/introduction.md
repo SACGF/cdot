@@ -7,8 +7,8 @@ their gaps, (3) cdot's approach.*
 
 HGVS nomenclature [@DenDunnen2016] is the international standard for describing sequence
 variants in clinical reports, databases, and publications. Converting HGVS descriptions
-to genomic coordinates requires authoritative, versioned transcript data — a transcript
-accession like `NM_000492.3` encodes not just a gene but a specific sequence version,
+to genomic coordinates requires authoritative, versioned transcript data. A transcript
+accession such as `NM_000492.3` specifies both a gene and a particular sequence version,
 and coordinate conversion is only possible with the matching alignment. The clinical
 scale of this requirement is large: ClinVar holds
 >{{ literature.clinvar_variants | commas }} variants described in HGVS notation
@@ -21,10 +21,11 @@ between RefSeq and Ensembl annotation sets in ANNOVAR [@McCarthy2014], and tools
 proper alignment gap support correctly annotate only
 {{ literature.brca2_accuracy_pct | dp(0) }}% of BRCA2 variants [@Munz2015].
 
-The two dominant Python HGVS libraries — biocommons/hgvs [@Hart2015; @Wang2018] and
-PyHGVS — both rely on external data providers. The Universal Transcript Archive (UTA),
+The two dominant Python HGVS libraries, biocommons/hgvs [@Hart2015; @Wang2018] and
+PyHGVS, both rely on external data providers. The Universal Transcript Archive (UTA),
 the standard backend for biocommons/hgvs, stores transcript alignments in PostgreSQL.
-This creates three barriers: a database installation requirement (or dependence on a
+UTA imposes three practical barriers: a database installation requirement (or dependence
+on a
 remote server frequently blocked by clinical firewalls); limited coverage
 (~{{ literature.uta_count | commas }} versioned alignments, RefSeq only); and slow
 remote access (~{{ literature.uta_remote_tps }} transcript/second). Ensembl transcripts,
@@ -34,16 +35,15 @@ with indels relative to the reference genome.
 
 cdot addresses these gaps. We generate compact JSON files from all available RefSeq GFF3
 and Ensembl GTF annotation releases, covering {{ coverage.total_count | commas }}
-versioned transcript alignments across GRCh37, GRCh38, and — for the first time in an
-HGVS resource — T2T-CHM13v2.0 [@Nurk2022]. Files load locally in seconds and serve
+versioned transcript alignments across GRCh37 and GRCh38, and, for the first time in an
+HGVS resource, T2T-CHM13v2.0 [@Nurk2022]. Files load locally in seconds and serve
 queries at
 {{ benchmark.cdot_local_min_tps | commas }}–{{ benchmark.cdot_local_max_tps | commas }}
 transcripts/second; a REST API (cdotlib.org) is available for on-demand access. cdot
-plays the same role in the biocommons ecosystem for transcript coordinates as SeqRepo
-[@Hart2020] plays for biological sequences: local, high-performance, offline-capable
-access without database infrastructure.
+provides the same local, offline access to transcript coordinates that SeqRepo
+[@Hart2020] provides for biological sequences, without database infrastructure.
 
 ---
 
-*Keep this to 3 paragraphs. If it runs long, cut the McCarthy/Münz sentence — move that
+*Keep this to 3 paragraphs. If it runs long, cut the McCarthy/Münz sentence; move that
 detail to implementation.*

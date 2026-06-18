@@ -5,15 +5,15 @@
 
 ---
 
-## Figure 1 — Transcript coverage and ClinVar resolution
+## Figure 1: Transcript coverage and ClinVar resolution
 
 **Type**: Two-panel figure
 
-**Panel A** — Grouped bar chart: transcript counts by source (cdot RefSeq, cdot Ensembl,
+**Panel A.** Grouped bar chart: transcript counts by source (cdot RefSeq, cdot Ensembl,
 UTA) × genome build (GRCh37, GRCh38, T2T). Log scale on Y-axis. Annotate with "9×" arrow
 from UTA to cdot combined.
 
-**Panel B** — Stacked bar chart or paired bars: ClinVar HGVS resolution rate for cdot vs
+**Panel B.** Stacked bar chart or paired bars: ClinVar HGVS resolution rate for cdot vs
 UTA. Break the cdot bar into: resolved by RefSeq GRCh38 / resolved by Ensembl GRCh38 /
 resolved by GRCh37 / unresolved. Show UTA as comparison.
 
@@ -26,12 +26,12 @@ variant descriptions. cdot resolves {{ clinvar.cdot_resolution_pct | dp(1) }}% v
 {{ clinvar.uta_resolution_pct | dp(1) }}% for UTA, with additional coverage from Ensembl
 and historical RefSeq annotation releases.`
 
-*This is the single most important figure — it encapsulates both the coverage and
+*This is the single most important figure; it encapsulates both the coverage and
 practical utility arguments.*
 
 ---
 
-## Figure 2 — Architecture (optional; use if word count allows)
+## Figure 2: Architecture (optional; use if word count allows)
 
 **Type**: Schematic
 
@@ -51,13 +51,13 @@ tight, drop this and describe the architecture in text.*
 
 ## Supplementary Figures
 
-**Figure S1** — Speed benchmark: throughput (transcripts/second) for cdot local, cdot
+**Figure S1.** Speed benchmark: throughput (transcripts/second) for cdot local, cdot
 REST, UTA local, UTA remote. Log-scale bar chart.
 
-**Figure S2** — Historical RefSeq coverage: cumulative unique NM_ accession versions by
+**Figure S2.** Historical RefSeq coverage: cumulative unique NM_ accession versions by
 annotation release year. Motivates multi-release ingestion.
 
-**Figure S3** — T2T unique transcripts: genes present in T2T-CHM13v2.0 but absent from
+**Figure S3.** T2T unique transcripts: genes present in T2T-CHM13v2.0 but absent from
 GRCh37/GRCh38.
 
 ---

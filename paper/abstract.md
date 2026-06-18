@@ -2,7 +2,7 @@
 
 *Application Note abstract format: Summary / Availability and Implementation / Contact /
 Supplementary Information*
-*Target: ~150 words. One paragraph per heading — no sub-bullets.*
+*Target: ~150 words. One paragraph per heading, no sub-bullets.*
 
 ---
 
@@ -17,7 +17,7 @@ alignments. cdot provides {{ coverage.total_count | commas }} versioned
 transcript/genome alignments from RefSeq and Ensembl across GRCh37, GRCh38, and
 T2T-CHM13v2.0 as compact JSON files loadable at
 {{ benchmark.cdot_local_min_tps | commas }}–{{ benchmark.cdot_local_max_tps | commas }}
-transcripts/second — no database required. Python integrations are provided for both
+transcripts/second, with no database required. Python integrations are provided for both
 major HGVS libraries (biocommons/hgvs and PyHGVS). cdot stores MANE Select and Ensembl
 canonical tags enabling programmatic canonical transcript selection, and is the first
 HGVS resource to support the T2T-CHM13v2.0 assembly.

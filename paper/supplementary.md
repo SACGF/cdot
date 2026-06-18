@@ -7,7 +7,7 @@
 
 ## Supplementary Tables
 
-### Table S1 — RefSeq GFF3 annotation releases
+### Table S1: RefSeq GFF3 annotation releases
 
 | Genome build | Annotation release | Transcripts added |
 |-------------|-------------------|------------------|
@@ -17,7 +17,7 @@
 
 *Generated from Snakemake pipeline summary stats.*
 
-### Table S2 — Ensembl GTF releases
+### Table S2: Ensembl GTF releases
 
 | Genome build | Ensembl release | Transcript count |
 |-------------|-----------------|-----------------|
@@ -25,7 +25,7 @@
 | GRCh38 | 76–115 | ... |
 | T2T-CHM13v2.0 | ... | ... |
 
-### Table S3 — JSON schema fields (v0.2.33)
+### Table S3: JSON schema fields (v0.2.33)
 
 | Field | Level | Description |
 |-------|-------|-------------|
@@ -43,7 +43,7 @@
 | `refseq_select` | build | RefSeq Select flag |
 | `ensembl_canonical` | build | Ensembl canonical flag |
 
-### Table S4 — ClinVar benchmark details
+### Table S4: ClinVar benchmark details
 
 Breakdown of [N] ClinVar HGVS variants tested: counts by resolution source (RefSeq
 GRCh38, Ensembl GRCh38, GRCh37, unresolved), and failure reason (unknown accession,
@@ -53,11 +53,11 @@ unknown version, parse error).
 
 ## Supplementary Figures
 
-**Figure S1** — Speed benchmark: throughput (transcripts/second) for cdot local, cdot
+**Figure S1.** Speed benchmark: throughput (transcripts/second) for cdot local, cdot
 REST, UTA remote, UTA local. Log-scale bar chart.
 
-**Figure S2** — Cumulative unique NM_ accession versions by RefSeq annotation release
+**Figure S2.** Cumulative unique NM_ accession versions by RefSeq annotation release
 year. Motivates ingestion of multiple historical releases.
 
-**Figure S3** — T2T-CHM13v2.0 unique transcripts: genes present in T2T but absent from
+**Figure S3.** T2T-CHM13v2.0 unique transcripts: genes present in T2T but absent from
 GRCh37/GRCh38, annotated by chromosomal location.
