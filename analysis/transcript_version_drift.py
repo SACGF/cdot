@@ -233,6 +233,7 @@ def main():
     gap_drift = Counter()       # (held_has_gap, drifted) -> n
     worst = []
     consec_pairs = 0
+    bases_preserved = bases_total = 0   # per-variant (length-weighted) safety
     for acc in sigs:
         vs = sorted(sigs[acc])
         prefix = acc[:4] if acc.startswith("ENST") else acc[:3]
@@ -245,6 +246,9 @@ def main():
             pair_class[cls] += 1
             frac = preserved_fraction(a, b)
             fracs.append(frac)
+            overlap = min(a["cds_len"], b["cds_len"])
+            bases_total += overlap
+            bases_preserved += round(frac * overlap)
             drifted = frac < 1.0
             by_prefix[prefix][cls] += 1
             gap_drift[(a["has_gap"], drifted)] += 1
@@ -346,6 +350,27 @@ def main():
                     if inner_ok:
                         strong_brackets_consistent += 1
 
+    # ---- (5) do the rules stack? joint conditioning ---------------------
+    # Same interior-version test as (4), but stratified by consortium and by
+    # alignment-gap presence so we can read combined odds, e.g. P(mid safe |
+    # bracket agrees AND no gap).  Gapped versions are kept here (rare) so the
+    # gap cells are populated; preserved_fraction is approximate for them.
+    combo = defaultdict(lambda: [0, 0])  # key -> [safe, total]
+    for acc in sigs:
+        vs = sorted(sigs[acc])
+        S = sigs[acc]
+        prefix = acc[:4] if acc.startswith("ENST") else acc[:3]
+        for i in range(1, len(vs) - 1):
+            lo, mid, hi = vs[i - 1], vs[i], vs[i + 1]
+            any_gap = S[lo]["has_gap"] or S[mid]["has_gap"] or S[hi]["has_gap"]
+            agree = preserved_fraction(S[lo], S[hi]) == 1.0
+            safe = preserved_fraction(S[lo], S[mid]) == 1.0
+            gk = "gap" if any_gap else "nogap"
+            bk = "agree" if agree else "disagree"
+            for key in [("all",), (gk,), (bk,), (gk, bk), (prefix, bk), (prefix, gk, bk)]:
+                combo[key][0] += safe
+                combo[key][1] += 1
+
     # ---- report ----------------------------------------------------------
     def pct(x, d):
         return f"{100*x/d:.1f}%" if d else "n/a"
@@ -369,6 +394,10 @@ def main():
     if fracs:
         print(f"    mean preserved fraction {sum(fracs)/len(fracs):.4f} | "
               f"median {sorted(fracs)[len(fracs)//2]:.4f}")
+    if bases_total:
+        print(f"    per-variant safety (CDS-base-weighted preserved): "
+              f"{bases_preserved/bases_total:.4f}  "
+              f"({bases_preserved:,}/{bases_total:,} coding bases)")
 
     print("\n    by consortium / accession class:")
     for prefix, c in sorted(by_prefix.items()):
@@ -413,6 +442,28 @@ def main():
               f"{br_mid_safe_given_disagree/br_disagree:.4f}" if br_disagree else "    n/a")
     print(f"    strong test: agreeing (lo,hi) pairs = {strong_brackets:,}; "
           f"all intermediates also agree = {pct(strong_brackets_consistent, strong_brackets)}")
+
+    print("\n(5) Do the rules stack?  P(mid safe | conditions)")
+
+    def show(key, label):
+        safe, tot = combo.get(key, [0, 0])
+        if tot:
+            print(f"    {label:34s} {safe/tot:.4f}  (n={tot:,})")
+        else:
+            print(f"    {label:34s} n/a")
+
+    show(("all",), "unconditional")
+    show(("nogap",), "no gap")
+    show(("gap",), "has gap")
+    show(("agree",), "bracket agree")
+    show(("disagree",), "bracket disagree")
+    show(("nogap", "agree"), "no gap + bracket agree")
+    show(("nogap", "disagree"), "no gap + bracket disagree")
+    show(("gap", "agree"), "has gap + bracket agree")
+    show(("gap", "disagree"), "has gap + bracket disagree")
+    for prefix in sorted({k[0] for k in combo if len(k) == 2 and k[1] in ("agree", "disagree")}):
+        show((prefix, "agree"), f"{prefix} + bracket agree")
+        show((prefix, "disagree"), f"{prefix} + bracket disagree")
 
     print("\n    most-drifted consecutive pairs (public accessions):")
     for frac, acc, v_lo, v_hi, cls in sorted(worst)[:8]:
