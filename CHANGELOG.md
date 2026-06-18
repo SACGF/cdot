@@ -2,7 +2,13 @@
 
 ### Added
 
+- #28, #112 - Coordinate-safety check for the opt-in transcript-version fallback. Before substituting an adjacent version, cdot now tests whether the substitution is *coordinate-preserving* — i.e. whether a coding `c.` position still maps to the same genomic coordinate — using the requested and substitute versions' build-independent **intrinsic CDS structure** (CDS length + coding-exon-segment lengths in transcript coordinates). New `intrinsic_cds_structure()` (in `cdot.hgvs.version_safety`) and a provider method `is_version_substitution_safe(accession, requested_version, substitute_version, genome_build) -> (safe, reason)` (on `JSONDataProvider`/`RESTDataProvider`). Because the structure is build-independent, the requested version's structure is read from *any* build that holds it (all-builds JSON / REST `/transcript/<ac>`), so the check still decides when the requested version is absent from the target build but present in another; only when it exists in no build does it fall back to a genomic-bracket heuristic. `resolve_transcript_version` / `fix_hgvs(..., version_fallback=...)` now emit a richer `HGVSFix` distinguishing a structure-verified-safe substitution (`USED_ADJACENT_VERSION_COORD_SAFE`) from one where the coordinate may have moved
+- #28 - `get_tx_versions(accession, genome_build=None)` gained an optional `genome_build` argument that restricts the returned versions to those placeable in that build (the version-fallback candidate pool), so the fallback no longer offers a version that can't be mapped in the target build
 - #112 - HGVS cleaning: new op that drops a genomic accession (`NC_`/`NG_`/`NW_`) wrongly placed in the gene-symbol parenthetical slot, eg `NM_000059.4(NC_000013.11):c.68del` → `NM_000059.4:c.68del`, so the string parses. Selectable as `HGVSCleanOp.DROP_GENOMIC_REF_IN_PARENS`; reported as an `HGVSFix` (`DROPPED_GENOMIC_REF_IN_PARENS`)
+
+### Changed
+
+- #28 - **Behaviour change to the opt-in version fallback:** when a substitution is not structure-verified coordinate-safe (the CDS structure differs, or could not be verified), the default is now to **refuse** it — the string is left unchanged with an ERROR `HGVSFix` (`REFUSED_UNSAFE_VERSION`), rather than silently substituting. Pass `on_unsafe_version=UnsafeVersionPolicy.SUBSTITUTE` to `resolve_transcript_version` / `fix_hgvs` to substitute anyway with a `USED_ADJACENT_VERSION_COORD_UNVERIFIED` WARNING. Providers that cannot assess safety are unaffected (still a plain `USED_ADJACENT_VERSION` WARNING). The fallback remains entirely opt-in (off unless `version_fallback=` is set)
 
 ## [0.2.28] - 2026-06-18
 
