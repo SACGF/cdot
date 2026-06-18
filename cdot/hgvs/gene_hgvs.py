@@ -10,6 +10,7 @@ fix_hgvs() is the single combined entry point that chains clean_hgvs() and
 resolve_gene_hgvs() in one call — the recommended function for most callers.
 """
 
+import inspect
 from enum import Enum
 from typing import Optional
 
@@ -45,6 +46,29 @@ class Consortium(Enum):
 # RefSeq is the default: clinical/diagnostic HGVS overwhelmingly uses NM_
 # transcripts, and biocommons HGVS is typically driven with RefSeq accessions.
 DEFAULT_CONSORTIUM: Consortium = Consortium.REFSEQ
+
+
+class UnsafeVersionPolicy(Enum):
+    """What the adjacent-version fallback does when a substitution is NOT
+    structure-verified coordinate-safe (the substitute's intrinsic CDS structure
+    differs from the requested version's, or it could not be verified).
+
+    REFUSE (default): do not substitute — leave the string unchanged and report an
+        ERROR (``REFUSED_UNSAFE_VERSION``), which becomes an ``HGVSInputError`` under
+        ``raise_on_errors=True``. Preserves exact-version semantics; a coordinate
+        that may have moved is never applied automatically.
+    SUBSTITUTE: apply the substitution anyway but report a WARNING
+        (``USED_ADJACENT_VERSION_COORD_UNVERIFIED``) that the coordinate may have
+        moved, leaving the caller to decide.
+
+    A substitution that IS structure-verified safe is always applied (with a
+    ``USED_ADJACENT_VERSION_COORD_SAFE`` WARNING) regardless of this policy.
+    """
+    REFUSE = "refuse"
+    SUBSTITUTE = "substitute"
+
+
+DEFAULT_UNSAFE_VERSION_POLICY: UnsafeVersionPolicy = UnsafeVersionPolicy.REFUSE
 
 
 def consortium_of(tx_ac: str) -> Consortium:
@@ -343,10 +367,30 @@ def _parse_versioned_transcript(hgvs_string: str) -> Optional[tuple[str, int]]:
     return base, int(version)
 
 
+def _get_tx_versions(data_provider, versionless: str, genome_build: Optional[str]) -> list[int]:
+    """Call ``get_tx_versions``, passing ``genome_build`` only if the provider accepts it.
+
+    The build kwarg was added later (so the fallback substitutes among versions
+    placeable in the target build, not all builds); older / external providers
+    implement ``get_tx_versions(accession)`` only, so we introspect rather than
+    assume the wider signature.
+    """
+    if genome_build is not None:
+        try:
+            params = inspect.signature(data_provider.get_tx_versions).parameters
+        except (ValueError, TypeError):
+            params = {}
+        if "genome_build" in params:
+            return data_provider.get_tx_versions(versionless, genome_build=genome_build)
+    return data_provider.get_tx_versions(versionless)
+
+
 def resolve_transcript_version(
     hgvs_string: str,
     data_provider,
     strategy: VersionStrategy = VersionStrategy.UP_THEN_DOWN,
+    genome_build: Optional[str] = None,
+    on_unsafe_version: UnsafeVersionPolicy = DEFAULT_UNSAFE_VERSION_POLICY,
 ) -> tuple[str, list[HGVSFix]]:
     """
     If hgvs_string names a transcript version that the data provider doesn't have,
@@ -356,20 +400,37 @@ def resolve_transcript_version(
     Returns:
         (resolved_string, fixes)
         fixes is empty if the requested version exists (non-destructive) or if the
-        string carries no versioned transcript. A WARNING USED_ADJACENT_VERSION fix
-        is returned when a substitution is made; an ERROR NO_TRANSCRIPT_VERSIONS fix
-        (string unchanged) if the provider has no version of the accession at all.
+        string carries no versioned transcript. When a substitution is made the fix
+        depends on whether it is coordinate-safe (see below); an ERROR
+        NO_TRANSCRIPT_VERSIONS fix (string unchanged) if the provider has no version
+        of the accession at all.
 
     The data provider must implement ``get_tx_versions(accession)`` (JSONDataProvider
     and RESTDataProvider do). Providers that can't enumerate versions raise
     NotImplementedError, which is surfaced as an ERROR fix.
 
+    Coordinate-safety (#28): if the provider implements
+    ``is_version_substitution_safe`` (JSONDataProvider / RESTDataProvider do, via the
+    build-independent intrinsic CDS structure), the substitution is checked before it
+    is applied:
+
+      * structure-verified safe → substitute, WARNING USED_ADJACENT_VERSION_COORD_SAFE;
+      * not safe and on_unsafe_version=SUBSTITUTE → substitute anyway, WARNING
+        USED_ADJACENT_VERSION_COORD_UNVERIFIED ("coordinate may have moved");
+      * not safe and on_unsafe_version=REFUSE (default) → string unchanged, ERROR
+        REFUSED_UNSAFE_VERSION.
+
+    ``genome_build`` is only needed for the genomic-bracket fallback inside the safety
+    check (the residual case where the requested version is absent from every build);
+    the structural check itself is build-independent. Providers without the safety
+    check fall back to a plain WARNING USED_ADJACENT_VERSION (unchanged behaviour).
+
     Example::
 
         # data provider has NM_000059 versions [3, 4] but not the requested .2
         resolved, fixes = resolve_transcript_version("NM_000059.2:c.36del", dp)
-        # resolved = "NM_000059.4:c.36del"
-        # fixes[0].code = USED_ADJACENT_VERSION
+        # resolved = "NM_000059.4:c.36del"  (if .4 is structure-verified safe)
+        # fixes[0].code = USED_ADJACENT_VERSION_COORD_SAFE
     """
     parsed = _parse_versioned_transcript(hgvs_string)
     if parsed is None:
@@ -377,7 +438,7 @@ def resolve_transcript_version(
     versionless, requested_version = parsed
 
     try:
-        available_versions = data_provider.get_tx_versions(versionless)
+        available_versions = _get_tx_versions(data_provider, versionless, genome_build)
     except NotImplementedError as e:
         return hgvs_string, [HGVSFix(
             severity=HGVSFixSeverity.ERROR,
@@ -402,7 +463,44 @@ def resolve_transcript_version(
     resolved = hgvs_string.replace(
         f"{versionless}.{requested_version}", f"{versionless}.{best}", 1
     )
-    return resolved, [fix]
+
+    safety = getattr(data_provider, "is_version_substitution_safe", None)
+    if safety is None:
+        # Provider can't assess coordinate-safety — keep the plain substitution fix.
+        return resolved, [fix]
+
+    safe, reason = safety(versionless, requested_version, best, genome_build)
+    moved = (f"Transcript version {versionless}.{requested_version} not found; "
+             f"using .{best} instead")
+    if safe:
+        return resolved, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.USED_ADJACENT_VERSION_COORD_SAFE,
+            message=f"{moved} (coordinate-safe: {reason})",
+            original=f"{versionless}.{requested_version}",
+            fixed=f"{versionless}.{best}",
+        )]
+    if on_unsafe_version == UnsafeVersionPolicy.SUBSTITUTE:
+        return resolved, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.USED_ADJACENT_VERSION_COORD_UNVERIFIED,
+            message=f"{moved} — coordinate may have moved ({reason})",
+            original=f"{versionless}.{requested_version}",
+            fixed=f"{versionless}.{best}",
+        )]
+    # REFUSE (default): do not substitute; leave the string unchanged.
+    return hgvs_string, [HGVSFix(
+        severity=HGVSFixSeverity.ERROR,
+        code=HGVSFixCode.REFUSED_UNSAFE_VERSION,
+        message=(
+            f"Transcript version {versionless}.{requested_version} not found and the "
+            f"nearest available version .{best} is not coordinate-safe ({reason}); "
+            f"not substituting. Pass on_unsafe_version=UnsafeVersionPolicy.SUBSTITUTE "
+            f"to override."
+        ),
+        original=f"{versionless}.{requested_version}",
+        fixed=f"{versionless}.{best}",
+    )]
 
 
 # ---------------------------------------------------------------------------
@@ -419,6 +517,7 @@ def fix_hgvs(
     ops: Optional[set] = None,
     prefer_consortium: Optional[Consortium] = DEFAULT_CONSORTIUM,
     version_fallback: Optional[VersionStrategy] = None,
+    on_unsafe_version: UnsafeVersionPolicy = DEFAULT_UNSAFE_VERSION_POLICY,
 ) -> tuple[str, list[HGVSFix]]:
     """
     Clean and resolve an HGVS string in one call.
@@ -442,8 +541,12 @@ def fix_hgvs(
     version_fallback (default None = off) opts in to adjacent transcript-version
     fallback: if set to a VersionStrategy and a data_provider is supplied, an
     HGVS string whose exact transcript version isn't in the data is rewritten to
-    the best available version, with a WARNING (see resolve_transcript_version).
-    Only needs a data_provider, not a genome_build.
+    the best available version (see resolve_transcript_version). If the provider can
+    assess coordinate-safety, a structure-verified-safe substitution is applied with
+    a WARNING; otherwise on_unsafe_version decides (REFUSE by default → ERROR, string
+    unchanged; SUBSTITUTE → apply with a "coordinate may have moved" WARNING). A
+    genome_build, if supplied, is used only for the genomic-bracket fallback inside
+    that check.
 
     Example — gene-only input resolved via MANE::
 
@@ -477,6 +580,7 @@ def fix_hgvs(
     if version_fallback is not None and data_provider is not None:
         result, version_fixes = resolve_transcript_version(
             result, data_provider, strategy=version_fallback,
+            genome_build=genome_build, on_unsafe_version=on_unsafe_version,
         )
         fixes.extend(version_fixes)
 

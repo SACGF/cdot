@@ -64,9 +64,16 @@ class AbstractJSONDataProvider(Interface):
     def _get_gene(self, gene):
         pass
 
-    def get_tx_versions(self, accession: str) -> list[int]:
+    def get_tx_versions(self, accession: str, genome_build: str = None) -> list[int]:
         """ Return every stored integer version for a versionless transcript accession,
             ascending (eg "NM_000059" -> [3, 4]). Empty list if the accession is unknown.
+
+            If ``genome_build`` is given, restrict to versions that have coordinates in
+            that build (an all-builds store can hold versions placeable only in an older
+            build). This is the candidate pool the version fallback substitutes among, so
+            passing the target build keeps it from substituting a version that can't be
+            mapped there - and lets the coordinate-safety check read the absent requested
+            version's structure from another build (see is_version_substitution_safe).
 
             Used by cdot.hgvs.gene_hgvs.resolve_transcript_version() to substitute an
             adjacent version when the requested one isn't available. Subclasses that can
@@ -75,6 +82,91 @@ class AbstractJSONDataProvider(Interface):
             unaffected.
         """
         raise NotImplementedError("This data provider cannot enumerate transcript versions")
+
+    def is_version_substitution_safe(self, accession: str, requested_version: int,
+                                     substitute_version: int,
+                                     genome_build: str = None) -> tuple[bool, str]:
+        """Is substituting ``substitute_version`` for ``requested_version`` coordinate-safe?
+
+        Returns ``(safe, reason)``.  "Safe" means every coding (c.) position of the
+        requested transcript version maps to the *same* genomic coordinate under the
+        substitute, so the substitution does not silently change what a variant means.
+
+        Primary check (structural, near-deterministic — see
+        :mod:`cdot.hgvs.version_safety`): compare the two versions' build-independent
+        intrinsic CDS structure.  The requested version's structure is read from
+        *any* build that holds it (via :meth:`_get_transcript`), so the check still
+        decides when the requested version is absent from ``genome_build`` but present
+        in another — JSON all-builds files and the REST ``/transcript/<ac>`` view both
+        supply this.  Identical structure → safe (~100% precision, transient reverts
+        included); a CDS-length or coding-exon-structure change → not safe.
+
+        Fallback (only when the requested version exists in no build the provider can
+        see, so there is no structure to compare): a position-specific *genomic
+        bracket* — if the held versions immediately below and above the gap agree at
+        every coding base in ``genome_build``, the missing version is treated as safe
+        (probabilistic); otherwise not safe.  Needs ``get_tx_versions`` and a
+        ``genome_build``; without them the verdict is an honest "cannot verify".
+
+        Used by :func:`cdot.hgvs.gene_hgvs.resolve_transcript_version`; a not-safe
+        verdict is surfaced (never silently applied) per its ``on_unsafe_version``
+        policy.
+        """
+        from cdot.hgvs.version_safety import (
+            intrinsic_cds_structure, describe_structure_change,
+        )
+
+        sub = self._get_transcript(f"{accession}.{substitute_version}")
+        if sub is None:
+            return False, f"substitute version .{substitute_version} not found"
+
+        req = self._get_transcript(f"{accession}.{requested_version}")
+        if req is not None:
+            req_struct = intrinsic_cds_structure(req, genome_build)
+            sub_struct = intrinsic_cds_structure(sub, genome_build)
+            if req_struct is None or sub_struct is None:
+                # One side has no usable CDS structure (non-coding / malformed) —
+                # fall through to the genomic bracket rather than guess.
+                return self._genomic_bracket_safe(accession, requested_version, genome_build)
+            if req_struct == sub_struct:
+                return True, "identical CDS structure"
+            return False, describe_structure_change(req_struct, sub_struct)
+
+        # Requested version absent from every build the provider can see.
+        return self._genomic_bracket_safe(accession, requested_version, genome_build)
+
+    def _genomic_bracket_safe(self, accession: str, requested_version: int,
+                              genome_build: str) -> tuple[bool, str]:
+        """Genomic-bracket fallback for a requested version present in no build.
+
+        Brackets the absent version with the nearest held versions below and above
+        it (that are placeable in ``genome_build``); if their genomic CDS maps agree
+        everywhere, the gap is treated as coordinate-safe (probabilistic).
+        """
+        from cdot.hgvs.version_safety import cds_genomic_map, genomic_maps_fully_agree
+
+        if genome_build is None:
+            return False, ("requested version absent from all builds; "
+                           "cannot verify (no genome build for bracket fallback)")
+        try:
+            versions = self.get_tx_versions(accession)
+        except NotImplementedError:
+            return False, "requested version absent from all builds; cannot verify structure"
+
+        def _map(v):
+            t = self._get_transcript(f"{accession}.{v}")
+            return cds_genomic_map(t, genome_build) if t is not None else None
+
+        below = [v for v in versions if v < requested_version]
+        above = [v for v in versions if v > requested_version]
+        lo_map = next((m for v in sorted(below, reverse=True) if (m := _map(v))), None)
+        hi_map = next((m for v in sorted(above) if (m := _map(v))), None)
+        if lo_map is None or hi_map is None:
+            return False, ("requested version absent and cannot bracket it in "
+                           f"{genome_build}; coordinate unverified")
+        if genomic_maps_fully_agree(lo_map, hi_map):
+            return True, "flanking versions agree (genomic bracket; probabilistic)"
+        return False, "flanking versions disagree; coordinate may have moved"
 
     def _get_transcript_coordinates_for_contig(self, transcript, alt_ac):
         assembly = self.assembly_by_contig.get(alt_ac)
@@ -491,14 +583,17 @@ class JSONDataProvider(LocalDataProvider):
     def _get_transcript(self, tx_ac):
         return self.transcripts.get(tx_ac)
 
-    def get_tx_versions(self, accession: str) -> list[int]:
+    def get_tx_versions(self, accession: str, genome_build: str = None) -> list[int]:
         prefix = accession + "."  # so "NM_000059" doesn't also match "NM_0000591"
         versions = []
-        for tx_ac in self.transcripts:
+        for tx_ac, transcript in self.transcripts.items():
             if tx_ac.startswith(prefix):
                 _base, _dot, version = tx_ac.rpartition(".")
-                if version.isdigit():
-                    versions.append(int(version))
+                if not version.isdigit():
+                    continue
+                if genome_build is not None and genome_build not in transcript["genome_builds"]:
+                    continue
+                versions.append(int(version))
         return sorted(versions)
 
     def _get_gene(self, gene):
@@ -581,11 +676,15 @@ class RESTDataProvider(AbstractJSONDataProvider):
         self.transcripts[tx_ac] = transcript
         return transcript
 
-    def get_tx_versions(self, accession: str) -> list[int]:
+    def get_tx_versions(self, accession: str, genome_build: str = None) -> list[int]:
         """ For a versionless accession (eg "NM_000059") the /transcript/<ac> endpoint returns
             an object containing every stored version, keyed by full accession. We parse the
             versions out and warm the cache with each versioned transcript as a bonus (so a
             following _get_transcript() for the chosen version is a hit).
+
+            If genome_build is given, only versions with coordinates in that build are
+            returned (the cache is still warmed with all of them, so the cross-build
+            structural safety check can read an absent version's structure).
             See https://cdotlib.org/static/api-docs.html
         """
         versions = []
@@ -593,8 +692,12 @@ class RESTDataProvider(AbstractJSONDataProvider):
             for full_ac, transcript in data.items():
                 self.transcripts[full_ac] = transcript  # warm cache
                 _base, _dot, version = full_ac.rpartition(".")
-                if version.isdigit():
-                    versions.append(int(version))
+                if not version.isdigit():
+                    continue
+                if genome_build is not None and (
+                        transcript is None or genome_build not in transcript["genome_builds"]):
+                    continue
+                versions.append(int(version))
         return sorted(versions)
 
     # Default ids-per-request for the batch endpoint. The server caps how many

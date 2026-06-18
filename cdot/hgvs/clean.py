@@ -62,6 +62,12 @@ class HGVSFixCode(Enum):
     UPPERCASED_GENE_SYMBOL       = "uppercased_gene_symbol"
     # Transcript version fallback (WARNING on substitution, ERROR if none available)
     USED_ADJACENT_VERSION        = "used_adjacent_version"
+    # Version fallback with a structural coordinate-safety verdict (#28). The plain
+    # USED_ADJACENT_VERSION above is still emitted when no safety check could be run
+    # (eg a provider that can't read the requested version's structure).
+    USED_ADJACENT_VERSION_COORD_SAFE        = "used_adjacent_version_coord_safe"
+    USED_ADJACENT_VERSION_COORD_UNVERIFIED  = "used_adjacent_version_coord_unverified"
+    REFUSED_UNSAFE_VERSION                  = "refused_unsafe_version"
     NO_TRANSCRIPT_VERSIONS       = "no_transcript_versions"
     # Gene → transcript resolution (WARNING on success, ERROR on failure)
     RESOLVED_GENE_TO_TRANSCRIPT  = "resolved_gene_to_transcript"
@@ -888,6 +894,13 @@ def get_best_transcript_version(
     The caller is responsible for deciding whether to use the substituted
     version and for updating the HGVS string accordingly.  This function
     never silently changes anything — the caller must act on the returned fix.
+
+    This picks a version from a bare ``list[int]`` and is deliberately
+    structure-agnostic: it has no transcript records, so it cannot judge whether
+    the substitution is *coordinate-safe*.  That check lives in the provider-aware
+    layer — ``resolve_transcript_version`` calls the data provider's
+    ``is_version_substitution_safe`` and upgrades this plain USED_ADJACENT_VERSION
+    fix to a coordinate-safe / unverified / refused outcome (#28).
 
     Example::
 
