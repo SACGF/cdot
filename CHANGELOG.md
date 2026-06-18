@@ -19,6 +19,7 @@
 
 - #112 - HGVS cleaning no longer mangles LRG transcript references: the `t1`/`p1` transcript/protein suffix (eg `LRG_199t1(RUNX1):c.1415T>C`) is preserved through structure reconstruction instead of being mistaken for the gene symbol
 - `JSONDataProvider` can now load 0.2.33+ data: the genome-build `source` field is accepted as either a string (early 0.2.32 data) or a list (eg `['BestRefSeq']`, 0.2.33 on). Previously `msgspec` rejected the list form with `Expected 'str | null', got 'array'`, so current production JSON.gz files failed to load. Mirrors the existing str-or-list handling of `biotype`
+- #108, #109 - `RESTDataProvider.prefetch()` now respects server request-size limits: it POSTs the accession list to the batch `/transcripts` endpoint in chunks of `batch_size` (default `PREFETCH_BATCH_SIZE=1000`) instead of one giant request, and if a chunk is still rejected as too large (HTTP 413/414) it automatically halves the chunk and retries. Previously prefetching a large set (eg whole-ClinVar warming, ~tens of thousands of accessions) sent every id in a single POST and failed against the server's limit. Small inputs are unchanged (one request); the no-batch-endpoint fallback to concurrent singles is preserved
 
 ## [0.2.27] - 2026-06-16
 

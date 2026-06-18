@@ -141,6 +141,64 @@ def test_prefetch_concurrent_failure_stores_none(dp, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# prefetch() - server request-size limits (chunking + 413/414 auto-shrink)
+# ---------------------------------------------------------------------------
+
+def test_prefetch_chunks_to_respect_server_limit(dp, monkeypatch):
+    # 25 accessions with batch_size=10 -> 3 POSTs (10 + 10 + 5), all cached.
+    accs = [f"NM_{i:06d}.1" for i in range(25)]
+    sizes = []
+
+    def fake_post(url, json_body):
+        ids = json_body["ids"]
+        sizes.append(len(ids))
+        return {ac: {"id": ac} for ac in ids}
+
+    monkeypatch.setattr(dp, "_post_to_url", fake_post)
+    n = dp.prefetch(accs, batch_size=10)
+    assert sizes == [10, 10, 5]      # chunked, not one giant request
+    assert n == 25
+    assert dp._get_transcript("NM_000024.1") == {"id": "NM_000024.1"}
+
+
+def test_prefetch_halves_chunk_on_payload_too_large(dp, monkeypatch):
+    # Server rejects >4 ids with 413; client must auto-shrink and still complete.
+    import requests
+
+    def fake_post(url, json_body):
+        ids = json_body["ids"]
+        if len(ids) > 4:
+            resp = requests.Response()
+            resp.status_code = 413
+            raise requests.HTTPError("Payload Too Large", response=resp)
+        return {ac: {"id": ac} for ac in ids}
+
+    monkeypatch.setattr(dp, "_post_to_url", fake_post)
+    accs = [f"NM_{i:06d}.1" for i in range(10)]
+    n = dp.prefetch(accs, batch_size=8)   # 8 -> 413 -> shrink to 4 -> succeeds
+    assert n == 10
+    assert all(dp.transcripts[ac] == {"id": ac} for ac in accs)
+
+
+def test_prefetch_chunked_missing_endpoint_falls_back_for_remainder(dp, monkeypatch):
+    # First chunk works, then the endpoint "disappears" (None) -> concurrent fallback for the rest.
+    accs = sorted(f"NM_{i:06d}.1" for i in range(15))
+    calls = {"post": 0}
+
+    def fake_post(url, json_body):
+        calls["post"] += 1
+        if calls["post"] == 1:
+            return {ac: {"id": ac} for ac in json_body["ids"]}
+        return None  # endpoint gone
+
+    monkeypatch.setattr(dp, "_post_to_url", fake_post)
+    monkeypatch.setattr(dp, "_get_from_url", lambda url: {"id": url.rsplit("/", 1)[1]})
+    n = dp.prefetch(accs, batch_size=10)
+    assert n == 15  # 10 via batch + 5 via concurrent singles
+    assert all(dp.transcripts[ac] == {"id": ac} for ac in accs)
+
+
+# ---------------------------------------------------------------------------
 # prefetch_from_hgvs()
 # ---------------------------------------------------------------------------
 

@@ -597,7 +597,13 @@ class RESTDataProvider(AbstractJSONDataProvider):
                     versions.append(int(version))
         return sorted(versions)
 
-    def prefetch(self, tx_acs, batch=True, max_workers=10):
+    # Default ids-per-request for the batch endpoint. The server caps how many
+    # accessions one POST /transcripts may carry (too many -> 413/414 or a server
+    # error), so we chunk rather than sending the whole list at once. Conservative
+    # enough for the public cdotlib.org server; tune via prefetch(batch_size=...).
+    PREFETCH_BATCH_SIZE = 1000
+
+    def prefetch(self, tx_acs, batch=True, batch_size=None, max_workers=10):
         """ Read-ahead cache warming: populate self.transcripts up front.
 
             The biocommons HGVS Interface is one-transcript-at-a-time, and each c_to_g makes a
@@ -605,30 +611,49 @@ class RESTDataProvider(AbstractJSONDataProvider):
             When you know the transcripts up front (eg bulk HGVS processing) calling this first
             means every later _get_transcript() is a cache hit - no Interface change required.
 
-            By default this POSTs the whole accession list to the batch /transcripts endpoint in
-            a single round-trip. Accessions may be versionless (eg "NM_000059"), in which case
-            the server expands them to every available version - useful for warming the
-            version-bump path. Servers without the batch endpoint fall back to a concurrent
-            thread-pool of single /transcript/<ac> requests (set batch=False to force this).
+            By default this POSTs the accession list to the batch /transcripts endpoint in
+            chunks of ``batch_size`` (default :attr:`PREFETCH_BATCH_SIZE`), because the server
+            limits how many ids one request may carry - sending all of them at once fails on
+            large inputs (eg whole-ClinVar warming). If a chunk is still rejected as too large
+            (HTTP 413/414) the chunk size is automatically halved and retried, so callers don't
+            have to know the server's exact limit. Accessions may be versionless (eg
+            "NM_000059"), in which case the server expands them to every available version -
+            useful for warming the version-bump path. Servers without the batch endpoint fall
+            back to a concurrent thread-pool of single /transcript/<ac> requests (set
+            batch=False to force this).
 
             Already-cached accessions are skipped. Missing/404 transcripts are stored as None,
             matching _get_transcript. Returns the number of transcripts added to the cache.
         """
-        to_fetch = {ac for ac in tx_acs if ac not in self.transcripts}
+        to_fetch = sorted(ac for ac in tx_acs if ac not in self.transcripts)
         if not to_fetch:
             return 0
+        if not batch:
+            return self._prefetch_concurrent(set(to_fetch), max_workers=max_workers)
 
-        if batch:
-            data = self._post_to_url(self.url + "/transcripts", {"ids": sorted(to_fetch)})
-            if data is not None:
-                # Keyed by full accession: versionless ids expand to all their versions,
-                # versioned misses come back as null. Drop straight into the cache.
-                for tx_ac, transcript in data.items():
-                    self.transcripts[tx_ac] = transcript
-                return len(data)
-            # else: no batch endpoint on this server - fall through to concurrent singles
-
-        return self._prefetch_concurrent(to_fetch, max_workers=max_workers)
+        size = batch_size or self.PREFETCH_BATCH_SIZE
+        added = 0
+        i = 0
+        while i < len(to_fetch):
+            chunk = to_fetch[i:i + size]
+            try:
+                data = self._post_to_url(self.url + "/transcripts", {"ids": chunk})
+            except requests.HTTPError as e:
+                status = e.response.status_code if e.response is not None else None
+                if status in (413, 414) and size > 1:
+                    size = max(1, size // 2)  # request too large - shrink and retry this chunk
+                    continue
+                raise
+            if data is None:
+                # No batch endpoint on this server - fall back to concurrent singles for the rest.
+                return added + self._prefetch_concurrent(set(to_fetch[i:]), max_workers=max_workers)
+            # Keyed by full accession: versionless ids expand to all their versions,
+            # versioned misses come back as null. Drop straight into the cache.
+            for tx_ac, transcript in data.items():
+                self.transcripts[tx_ac] = transcript
+            added += len(data)
+            i += len(chunk)
+        return added
 
     def _prefetch_concurrent(self, to_fetch, max_workers=10):
         """ Fallback pre-warm: fire one /transcript/<ac> per accession concurrently. Turns N
