@@ -183,9 +183,61 @@ coordinate). This is a client-layer feature rather than a backend one: biocommon
 has no adjacent-version fallback regardless of its data provider, so a UTA-backed pipeline
 gains nothing here even though UTA itself stores several versions per transcript. cdot's
 multi-release depth gives the fallback more versions to choose from, and it is never
-applied automatically, preserving exact-version semantics by default.
+applied automatically, preserving exact-version semantics by default. Whether a given
+substitution is *coordinate-safe* — and how cdot decides — is the subject of R5.
 
-## R5: Throughput
+## R5: Transcript-version stability and safe version fallback  *(Figure S4)*
+
+**[Tier 1]** The version fallback (R4) is only safe if substituting an adjacent version
+does not move the variant: a coding `c.` position must still map to the same genomic
+coordinate. We measured this directly on the released cdot data
+(`paper/scripts/compute_version_stability.py`, GRCh38, a
+{{ version_stability.sample_n | commas }}-accession sample), exploiting the fact that
+cdot stores the genome *alignment* rather than the sequence — so a version bump can only
+move a coordinate if it changes that alignment. Across consecutive RefSeq version bumps
+({{ version_stability.refseq_pairs | commas }} pairs),
+{{ version_stability.refseq_preserving_pct | dp(1) }}% preserved every coding coordinate;
+for Ensembl ({{ version_stability.ensembl_pairs | commas }} pairs)
+{{ version_stability.ensembl_preserving_pct | dp(1) }}%. Weighting by coding base (the
+chance a *random* variant is unaffected) safety is higher still —
+{{ version_stability.refseq_pervariant_safety | dp(3) }} (RefSeq) and
+{{ version_stability.ensembl_pervariant_safety | dp(3) }} (Ensembl) — and the genuinely
+dangerous case, a *partial* bump that mis-places some variants but not others, is rare
+({{ version_stability.refseq_partial_drift_pct | dp(1) }}% of RefSeq bumps,
+{{ version_stability.ensembl_partial_drift_pct | dp(1) }}% Ensembl); when a coordinate
+does move it is almost always the whole CDS, driven by a re-annotation of the coding
+region. Drift is also highly concentrated: only
+{{ version_stability.refseq_accessions_drift_pct | dp(1) }}% of RefSeq accessions ever
+drift, and the worst-affected 5% hold {{ version_stability.refseq_top5_drift_share_pct | dp(0) }}%
+of it.
+
+**The pivotal result** is that this is predictable from a single version, with no
+flanking pair or genomic context. A transcript version's **intrinsic CDS structure** —
+its CDS length plus the lengths of its coding-exon segments in transcript coordinates —
+is **build-independent** (identical across GRCh37/GRCh38/T2T for
+{{ version_stability.refseq_struct_portable_pct | dp(1) }}% of RefSeq and
+{{ version_stability.ensembl_struct_portable_pct | dp(1) }}% of Ensembl versions), and a
+change in that structure is almost exactly equivalent to a genomic-coordinate drift:
+every drifting RefSeq bump ({{ version_stability.refseq_drift_struct_flagged_pct | dp(0) }}%)
+and {{ version_stability.ensembl_drift_struct_flagged_pct | dp(1) }}% of drifting Ensembl
+bumps carry an intrinsic-structure change, while conversely
+{{ version_stability.refseq_struct_unchanged_preserved_pct | dp(0) }}% (RefSeq) /
+{{ version_stability.ensembl_struct_unchanged_preserved_pct | dp(1) }}% (Ensembl) of
+structure-unchanged bumps are genomically preserved. Because the structure is
+build-independent and cdot returns every version in every build, the requested version's
+structure can be read even when it is absent from the target build — so the safety
+question becomes essentially deterministic, and it catches the transient-revert versions
+(a coordinate that goes A→B→A) that a genomic-bracket check cannot see.
+
+cdot ships this as the safety gate behind the version fallback
+(`intrinsic_cds_structure()` and the data-provider method
+`is_version_substitution_safe()`): when the requested version is absent, the substitute
+is applied only if its intrinsic CDS structure matches the requested version's, reported
+as a coordinate-safe `HGVSFix`; a structural mismatch — or a version absent from every
+build, where only a probabilistic genomic-bracket check remains — is refused by default
+rather than silently substituted, preserving exact-variant semantics.
+
+## R6: Throughput
 
 **[Tier 1]** To compare transcript backends fairly we held the sequence layer constant
 (every configuration was served by the *same local SeqRepo*), so the only thing that
@@ -230,7 +282,7 @@ variant_summary with the ClinVar VCF; the residual ~1% non-exact/error rate is d
 by genomic-HGVS normalisation differences between the ClinVar source string and the
 biocommons output, not resolution failures.)
 
-## R6: T2T-CHM13v2.0 coverage
+## R7: T2T-CHM13v2.0 coverage
 
 **[Tier 1]** cdot is the first HGVS resource to cover the T2T-CHM13v2.0 assembly,
 contributing {{ coverage.t2t_unique_count | commas }} transcript-version alignments that

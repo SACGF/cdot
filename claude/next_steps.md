@@ -46,18 +46,24 @@ and report how often a bump (a) fires, (b) still resolves, (c) lands on a *diffe
 coordinate. Cheap, Tier-1 — but expect a near-null result. The interesting version question
 is C2, not this.
 
-## C2. Transcript-version drift study (the real version question — explore next)
-How often is a version bump actually *safe*? Walk adjacent transcript-version pairs (same
-accession, consecutive versions) across cdot's historical data and measure how many c.
-positions map to a **different** g. coordinate (exon-boundary / CDS-offset drift). Output:
-distribution of "fraction of c. bases whose g. coordinate is unchanged across a version
-bump", per transcript/gene; how often a bump is coordinate-preserving vs not.
-- Genuinely novel ("not sure anyone has measured this"); could become its own figure/section.
-- **For now: explore only.** Write a standalone analysis script, run it on available local
-  data, and **report findings back** — do **NOT** wire it into Snakemake or the paper yet.
-- Local data (see memory `benchmark-data-locations`): cdot JSON at `/data/cdot_data/`
-  (refseq/ensembl/all-builds), genome FASTA, local UTA, SeqRepo. Use test-scale subsets;
-  per CLAUDE.md never run the full GTF/GFF generation pipeline.
+## C2. Transcript-version drift study — DONE (implemented in core + paper)
+How often is a version bump actually *safe*? Explored, then implemented. The pivotal
+finding: a bump is coordinate-preserving **iff** the version's build-independent intrinsic
+CDS structure (CDS length + coding-exon-segment lengths in transcript coordinates) is
+unchanged — RefSeq 100%/100%, Ensembl 99.3%/99.9% equivalence; structure portable across
+builds ~99.5%. Full write-up in `claude/version_bump_experiment.md`; analysis scripts
+`analysis/transcript_version_{drift,crossbuild}.py`.
+
+Shipped:
+- **Core (#28):** `cdot/hgvs/version_safety.py` (`intrinsic_cds_structure`), provider method
+  `is_version_substitution_safe(...)`, build-aware `get_tx_versions(ac, genome_build)`, and
+  the safety gate wired into `resolve_transcript_version` / `fix_hgvs(version_fallback=...)`
+  with `UnsafeVersionPolicy` (default REFUSE). New `HGVSFix` codes COORD_SAFE /
+  COORD_UNVERIFIED / REFUSED_UNSAFE_VERSION. Changelog + tests added; pushed to main.
+- **Paper:** Tier-1 fact `paper/scripts/compute_version_stability.py` →
+  `version_stability.csv` (+ Snakefile rule, committed snapshot), Results **R5**
+  ("Transcript-version stability and safe version fallback", Throughput→R6, T2T→R7), and
+  Figure S4.
 
 ## Done / no-action
 - **B1** framed in-paper (Methods contrasts unambiguous cleaning vs opt-in, never-automatic

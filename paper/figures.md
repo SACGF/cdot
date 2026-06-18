@@ -62,6 +62,24 @@ annotation release year. Motivates multi-release ingestion.
 **Figure S3.** T2T unique transcripts: genes present in T2T-CHM13v2.0 but absent from
 GRCh37/GRCh38.
 
+**Figure S4.** Transcript-version stability (Results R5). **Panel A.** Distribution of the
+per-bump preserved fraction (the share of coding bases whose genomic coordinate is
+unchanged across a consecutive version bump), RefSeq vs Ensembl: a tall spike at 1.0
+(coordinate-preserving) with a small tail at 0.0 (whole-CDS relocation) and almost nothing
+in between (partial drift is rare). **Panel B.** The structure⇔drift equivalence: among
+bumps that drift genomically, the fraction flagged by a change in the build-independent
+intrinsic CDS structure ({{ version_stability.refseq_drift_struct_flagged_pct | dp(0) }}%
+RefSeq, {{ version_stability.ensembl_drift_struct_flagged_pct | dp(1) }}% Ensembl); and
+conversely, among structure-unchanged bumps, the fraction that are genomically preserved
+({{ version_stability.refseq_struct_unchanged_preserved_pct | dp(0) }}% /
+{{ version_stability.ensembl_struct_unchanged_preserved_pct | dp(1) }}%). **Legend:**
+`Transcript-version coordinate stability across consecutive version bumps (GRCh38, cdot
+0.2.33, a {{ version_stability.sample_n | commas }}-accession sample). (A) Per-bump
+preserved-coordinate fraction; mass concentrates at 1.0 (preserving) with a thin
+whole-CDS-relocation tail. (B) A change in a version's build-independent intrinsic CDS
+structure is almost exactly equivalent to a genomic-coordinate drift, which is what makes
+cdot's safe-version-fallback check (is_version_substitution_safe) near-deterministic.`
+
 ---
 
 *Notes:*
@@ -69,5 +87,5 @@ GRCh37/GRCh38.
 - *Speed numbers for Figure S1 need a scripted benchmark (commit the script)*
 - *Consider combining panels A and B into one clean figure with a shared colour palette*
 - *Two in-text tables now live in Results: Table 1 (production fix distribution, R2,
-  Tier 2; fill from `cdot_private/output/`) and Table 2 (throughput by backend, R5,
+  Tier 2; fill from `cdot_private/output/`) and Table 2 (throughput by backend, R6,
   Tier 1). Figure-vs-table numbering across R2/R3 still needs a final reconciliation pass.*

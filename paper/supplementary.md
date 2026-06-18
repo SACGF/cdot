@@ -61,3 +61,8 @@ year. Motivates ingestion of multiple historical releases.
 
 **Figure S3.** T2T-CHM13v2.0 unique transcripts: genes present in T2T but absent from
 GRCh37/GRCh38, annotated by chromosomal location.
+
+**Figure S4.** Transcript-version stability (Results R5): (A) distribution of the per-bump
+preserved-coordinate fraction (RefSeq vs Ensembl), and (B) the equivalence between a
+build-independent intrinsic-CDS-structure change and a genomic-coordinate drift, which
+underpins cdot's safe-version-fallback check.
