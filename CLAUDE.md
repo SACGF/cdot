@@ -92,4 +92,4 @@ Commit only as the configured git user. Do NOT add `Co-Authored-By: Claude` trai
 
 ## GitHub Comments
 When writing any comment on a GitHub issue or pull request, always preface it with 🤖 Written by Claude.
-Do NOT close GitHub issues. Issues must go through a testing lifecycle before being closed by the user.
+Do NOT close GitHub issues unless instructed by the user.
