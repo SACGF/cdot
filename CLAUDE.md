@@ -87,6 +87,9 @@ Schema versioning (`cdot/__init__.py`) uses major.minor; clients validate compat
 
 The same team works on the REST server - http://github.com/SACGF/cdot_rest the REST API docs are here: https://cdotlib.org/static/api-docs.html 
 
+## Git Commits
+Commit only as the configured git user. Do NOT add `Co-Authored-By: Claude` trailers or any `Claude-Session` / Claude attribution lines to commit messages.
+
 ## GitHub Comments
 When writing any comment on a GitHub issue or pull request, always preface it with 🤖 Written by Claude.
 Do NOT close GitHub issues. Issues must go through a testing lifecycle before being closed by the user.

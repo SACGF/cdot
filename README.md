@@ -31,7 +31,7 @@ pip install cdot
 Optional extras:
 
 ```
-pip install cdot[fasta]   # local genome FASTA sequence fetching (pysam) - needed for the PyHGVS example below
+pip install 'cdot[fasta]'   # local genome FASTA sequence fetching (pysam) - needed for the PyHGVS example below. Quotes are required in zsh (macOS default).
 ```
 
 (`hgvs` is a core dependency, so the biocommons HGVS examples work out of the box.)
@@ -66,7 +66,7 @@ am.c_to_g(var_c)
 
 For fixing messy HGVS input and fast bulk processing, see [Advanced usage](docs/advanced_usage.md).
 
-[PyHGVS](https://github.com/counsyl/hgvs) example (needs `pip install cdot[fasta]` for pysam):
+[PyHGVS](https://github.com/counsyl/hgvs) example (needs `pip install 'cdot[fasta]'` for pysam):
 
 ```
 import pyhgvs

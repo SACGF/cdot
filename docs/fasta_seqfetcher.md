@@ -1,6 +1,6 @@
 # FastaSeqFetcher - local FASTA sequence fetching
 
-Needs the `fasta` extra: `pip install cdot[fasta]` (brings in `pysam`).
+Needs the `fasta` extra: `pip install 'cdot[fasta]'` (brings in `pysam`).
 
 ## Background
 
