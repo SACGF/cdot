@@ -14,57 +14,6 @@ CSVs) have been removed; see "Completed" at the bottom for the IDs, so nothing i
 
 ## STRENGTHENS THE PAPER — non-blocking but important
 
-### A1. Single ClinVar parse/resolution pass (shared infra for R5b + R6)
-
-**Why:** Several paper scripts each walk all of ClinVar (`build_clinvar_pairs.py`,
-`benchmark_resolution.py`, `compute_coverage.py`, `compute_benchmark.py`). R5b and R6
-below both need another full resolution pass. Adding two more is wasteful and risks the
-numbers drifting out of sync between sections. One pass that emits a per-variant results
-table, consumed by every downstream analysis, is faster and guarantees consistency.
-
-**What to do:**
-- Build one resolution pass over the ClinVar (g.HGVS, c.HGVS) pairs that writes a
-  per-variant results table (parquet/CSV): `g_hgvs, c_hgvs, tx, version, bucket
-  (correct/incorrect/no_data/error), converted_g, fix_codes`.
-- Point R5b, R6, coverage, and benchmark at that artifact rather than re-resolving.
-- Scope the refactor to what R5b/R6 touch; do NOT big-bang rewrite all four scripts.
-- Constraint (CLAUDE.md): never run against full datasets in dev — use
-  `tests/test_data/clinvar_hgvs/` for verification; the full pass is a dedicated run.
-
-### R5b. Empirical ClinVar validation of safe version substitution
-
-**Why:** R5 (`compute_version_stability.py` + `cdot/hgvs/version_safety.py`) proves
-*structurally* that a version bump is coordinate-preserving iff the intrinsic CDS
-structure is unchanged. R5b is the empirical complement: demonstrate end-to-end on real
-variants that every substitution our check calls "safe" actually preserves the genomic
-coordinate. This turns the Tier-1 structural claim into an observed zero-error rate and
-is the strongest reviewer defense of the safe-fallback feature. (The benchmark's degraded
-`absent_version` mode forces `.99` fallbacks but does NOT isolate the safe-identified
-subset, so it cannot make this claim.)
-
-**What to do:**
-- From the A1 results table, for each ClinVar c.HGVS where another version exists and
-  `is_version_substitution_safe` calls the V→W substitution safe, resolve under W and
-  confirm the g.HGVS is byte-identical to resolving under V.
-- Headline fact: `N safe substitutions, K coordinate changes` (expect K = 0). Any K > 0
-  is a real bug to chase. Emit to `output/facts/`.
-
-### R6. Categorize the ClinVar genomic-match failures (the 1.2%)
-
-**Why:** 98.8% of c→g conversions reproduce ClinVar's CLNHGVS exactly. A reviewer will
-ask what the residual 1.2% are. Strong prior: most "incorrect" cases are *representation*
-differences (3'-shift vs ClinVar normalization, equivalent del/dup/inv spellings,
-ref-base disagreements), not cdot coordinate errors. Categorizing likely shows true
-accuracy is well above 98.8%, which strengthens the paper rather than weakening it.
-
-**What to do:**
-- From the A1 results table, take the `incorrect` bucket and re-normalize both the cdot
-  conversion and the ClinVar g.HGVS, then bucket each: normalization-equivalent /
-  ref-base / gap-related / build / genuine-disagreement.
-- Use deterministic rules for the bucketing (structured equivalences), not an LLM.
-- Note: `investigate_fails.py` is a stale PyHGVS/GRCh37 stub — replace it, don't extend.
-- Report the breakdown and the corrected "genuine error" rate as a fact.
-
 ### R7. Versionless transcript resolution in `get_best_transcript_version` (new issue)
 
 **Why:** A client / code feature (changelog-worthy), not paper analysis, but motivated by
@@ -99,10 +48,66 @@ we can pick one with a WARNING.
 
 | ID | Task | Effort | Blocks submission |
 |----|------|--------|-------------------|
-| A1 | Single ClinVar parse/resolution pass | Medium | No — shared infra for R5b/R6 |
-| R5b | Empirical validation of safe version bumps | Medium | No — but strong reviewer defense |
-| R6 | Categorize the 1.2% genomic-match failures | Low | No — likely raises true accuracy |
 | R7 | Versionless transcript resolution (REFUSE on ambiguity) | Medium | No — client feature + changelog |
 | S2 | BRCA2 gap verification (demoted, post-paper) | Medium | No — dropped from paper framing |
 | F3 | Automated data-release regeneration | Medium | No — backs a Discussion sentence |
+
+---
+
+## Completed
+
+- **A1. Single ClinVar parse/resolution pass.** `paper/scripts/resolve_clinvar_pass.py`
+  resolves the (g.HGVS, c.HGVS) pairs exactly once and writes the per-variant results
+  table `g_hgvs, c_hgvs, tx, version, bucket, converted_g, fix_codes` (CSV by default,
+  parquet if pyarrow is installed) to a `--out` path under gitignored `output/`. `bucket`
+  is the baseline raw resolution (no cleaning/version bump) scored against the ClinVar
+  CLNHGVS, which is what R5b and R6 build on; `fix_codes` is opt-in (`--with-fixes`, off
+  by default since it doubles the work and fires nothing on clean ClinVar). Pluggable
+  provider shared with `benchmark_resolution.py` (REST default, `--json` for the offline
+  full run). R5b/R6 consume this table instead of re-resolving. Verified on
+  `tests/test_data/clinvar_hgvs/` (10/10 correct via REST).
+
+- **R5b. Empirical validation of safe version substitution.**
+  `paper/scripts/validate_safe_versions.py` reads the A1 table, and for every resolved
+  variant whose transcript has another version W that `is_version_substitution_safe`
+  calls safe, resolves the variant under W and compares to the stored under-V coordinate
+  (`converted_g`, so V is not re-resolved). Emits `n_safe_substitutions` and
+  `n_coordinate_changes` (the headline K, expect 0) to
+  `output/facts/version_safety_validation.csv`. Verified end-to-end on the 10-variant
+  table (9 variants with alt versions, 11 safe substitutions, K=0); the change-detector
+  was confirmed to fire (K=1) on a deliberately-wrong stored coordinate, so the zero is
+  real, not trivial.
+
+- **R6. Categorize the ClinVar genomic-match failures.**
+  `paper/scripts/categorize_genomic_mismatches.py` reads the A1 table's `incorrect` rows
+  and buckets each with deterministic rules (no LLM): `normalization_equivalent` /
+  `ref_base` / `build` / `gap_related` (positions differ after normalisation and the
+  cited transcript has an alignment gap) / `genuine_disagreement` / `unparseable`. Emits
+  the breakdown plus the corrected genuine-error rate to
+  `output/facts/genomic_mismatch.csv`. Replaces the stale PyHGVS/GRCh37
+  `investigate_fails.py` stub (still wired into the Snakefile `clinvar` rule — repoint
+  that when the facts are promoted into the paper). All six categories verified on
+  crafted public-coordinate cases plus the gapped test transcript `NM_001637.3`.
+
+- **S4. Per-source / failure-reason breakdown (Supplementary Table S4).**
+  `paper/scripts/summarize_clinvar_pass.py` aggregates the A1 table into the S4 breakdown:
+  per source (RefSeq vs Ensembl) the resolved/matched/no_data/error counts, plus an
+  optional `--split-no-data` enrichment (needs a provider) that splits unresolved into
+  unknown-accession vs unknown-version. Pure aggregation, instant, no provider for the
+  base table. Writes `output/facts/clinvar_source_breakdown.csv` (+ a `_failure_reasons`
+  file when split). This is the cdot-only full-ClinVar view (the R1 cdot-vs-UTA numbers
+  stay sampled because UTA gates them). **Caveat baked into the script and to be stated in
+  the paper:** ClinVar is dominated by a few large (largely US) labs citing current RefSeq
+  versions, so S4 is a scale sanity check, not an unbiased transcript sample; the Shariant
+  historical corpus (R1 Tier 2) is the unbiased complement. Fills the S4 stub in
+  `supplementary.md` once the full run produces real numbers (paper-template wiring is the
+  remaining step). Verified on the 10-variant table and a synthetic mixed-source table
+  (no_data split correctly separates unknown-accession from unknown-version).
+
+Notes from the "what else needs a full ClinVar run" review (2026-06-19): **R4** (version-
+fallback false-rescue) is already done. its ablation is `benchmark_resolution.py
+--recovery` (`absent_version` degraded mode) and the R4 Results section is written;
+running it at full ClinVar scale would only restate R5b. The injection-cleaning benchmark
+(R2 Tier-1) could be scaled from its seeded sample to full ClinVar to harden the "0
+regressions" claim, but it is supplement-only and low marginal value.
 
