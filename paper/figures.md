@@ -10,8 +10,8 @@
 **Type**: Two-panel figure
 
 **Panel A.** Grouped bar chart: transcript counts by source (cdot RefSeq, cdot Ensembl,
-UTA) × genome build (GRCh37, GRCh38, T2T). Log scale on Y-axis. Annotate with "9×" arrow
-from UTA to cdot combined.
+UTA) × genome build (GRCh37, GRCh38, T2T). Log scale on Y-axis. Annotate with the
+fold-increase from UTA to cdot combined ({{ coverage.improvement_fold | fmt('.1f') }}×).
 
 **Panel B.** Stacked bar chart or paired bars: ClinVar HGVS resolution rate for cdot vs
 UTA. Break the cdot bar into: resolved by RefSeq GRCh38 / resolved by Ensembl GRCh38 /
@@ -83,9 +83,15 @@ cdot's safe-version-fallback check (is_version_substitution_safe) near-determini
 ---
 
 *Notes:*
+- *Figures are generated from the committed facts CSVs by
+  `paper/scripts/make_figures.py`, which writes PDF + PNG into `paper/figures/`:
+  Figure 1 (coverage + ClinVar resolution), Figure S1 (throughput), Figure S4
+  (version stability). Figures S2 (historical RefSeq coverage by release year) and
+  S3 (T2T-only genes) need per-release production data and are not generated there;
+  produce them alongside a full data build.*
 - *Figure 1 requires ClinVar benchmark data (#5) and Snakemake summary stats*
 - *Speed numbers for Figure S1 need a scripted benchmark (commit the script)*
 - *Consider combining panels A and B into one clean figure with a shared colour palette*
 - *Two in-text tables now live in Results: Table 1 (production fix distribution, R2,
-  Tier 2; fill from `cdot_private/output/`) and Table 2 (throughput by backend, R6,
-  Tier 1). Figure-vs-table numbering across R2/R3 still needs a final reconciliation pass.*
+  Tier 2 production constants) and Table 2 (throughput by backend, R6, Tier 1).
+  Figure-vs-table numbering across R2/R3 still needs a final reconciliation pass.*

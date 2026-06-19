@@ -29,8 +29,8 @@ available one, with a build-independent check that the substitution does not mov
 variant. Python
 integrations are provided for both major HGVS libraries (biocommons/hgvs and PyHGVS).
 cdot stores MANE Select and Ensembl canonical tags enabling gene-symbol HGVS lookup via
-programmatic canonical transcript selection, and is the first HGVS resource to support
-the T2T-CHM13v2.0 assembly.
+programmatic canonical transcript selection, and is the first transcript data source to
+bring the T2T-CHM13v2.0 assembly to the Python HGVS libraries.
 
 **Availability and Implementation:**
 

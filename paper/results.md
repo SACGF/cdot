@@ -132,23 +132,14 @@ depends.
 **[Tier 2: not reproducible].** The 3.4% of the production corpus (1,118 queries; 860
 unique strings) that still fail to parse after cleaning define the ceiling of what
 pure string repair can achieve. Each residual string was assigned to one single-label
-error class under a fixed decision-tree taxonomy. (An eighth class from an earlier
-revision is no longer residual. It was a genomic `NC_`/`NG_` accession in the gene-symbol
-parenthetical slot, e.g. `NM_000059.4(NC_000013.11):c.68del` (57 queries); `clean_hgvs()`
-now drops the stray genomic accession so those strings parse, moving them into the Table 1
-rescues.) Of the seven remaining classes, six are repair-relevant and shown below with
-synthesised examples — with integer-length insertions (where only the inserted *length*,
-never the bases, is supplied) split out from the broader edit-syntax class as a distinct,
-deterministically-identifiable failure mode, giving the seven rows in the table; the
-seventh class was non-HGVS input (81 queries, 7.2% — pasted URLs, report templates, or
-prose) and is excluded from the table as there is nothing in it for cleaning to repair.
+error class under a fixed decision-tree taxonomy. Of the eight classes, the seven
+repair-relevant ones are shown below with synthesised examples; the eighth was non-HGVS
+input (81 queries, 7.2%: pasted URLs, report templates, or prose) and is excluded from
+the table, as there is nothing in it for cleaning to repair.
 
 **Residual error classes after cleaning** (counts and % of the 1,118 residual
 queries; examples synthesised from public BRCA2 `NM_000059.4`). *(Tier 2; frozen
-constants from a deterministic run over the production corpus, with the residual total
-adjusted for the now-repaired genomic-ref-in-parens class, and the integer-length-insertion
-row split deterministically out of the edit-syntax class via cdot's `INS_WITH_INTEGER_LENGTH`
-check.)*
+constants from a deterministic run over the production corpus.)*
 
 | Class | Queries | What it is (*example*) |
 |---|---|---|
@@ -179,14 +170,11 @@ NM_000059.4 / NM_001754.5) illustrate each class; no corpus string is reproduced
 
 ## R4: Transcript version fallback
 
-**[Tier 1]** cdot's opt-in adjacent-version fallback (Methods;
-`get_best_transcript_version()`, surfaced through `fix_hgvs(..., version_fallback=...)`)
-substitutes the nearest available version when a requested one is absent and reports it
-as an `HGVSFix`. In the end-to-end ablation
-(`paper/scripts/benchmark_resolution.py`), removing the requested version from each test
-variant and resolving through the fallback recovered the correct genomic coordinate with
-no false rescues (a false rescue being a substitution that resolves to a different
-coordinate). This is a client-layer feature rather than a backend one: biocommons/hgvs
+**[Tier 1]** The opt-in adjacent-version fallback (Methods) is evaluated by an
+end-to-end ablation (`paper/scripts/benchmark_resolution.py`): removing the requested
+version from each test variant and resolving through the fallback recovered the correct
+genomic coordinate with no false rescues (a false rescue being a substitution that
+resolves to a different coordinate). This is a client-layer feature rather than a backend one: biocommons/hgvs
 has no adjacent-version fallback regardless of its data provider, so a UTA-backed pipeline
 gains nothing here even though UTA itself stores several versions per transcript. cdot's
 multi-release depth gives the fallback more versions to choose from, and it is never
@@ -272,8 +260,9 @@ A GRCh38 RefSeq JSON file loads in ~{{ benchmark.grch38_load_time_s | dp(0) }} s
 resolves at {{ benchmark.cdot_local_min_tps | int }}–{{ benchmark.cdot_local_max_tps |
 int }} HGVS/s through the biocommons engine. The REST provider serves
 ~{{ benchmark.cdot_rest_tps | int }} HGVS/s when each transcript version is fetched in its
-own request, but a single batch `prefetch()`
-round-trip warms the transcript cache and lifts REST to match local throughput. A locally
+own request; batching those lookups into one `prefetch()` request amortises the
+per-request network and processing overhead across the whole set and warms the transcript
+cache, so later lookups are in-memory hits and REST throughput rises to match local. A locally
 loaded UTA running the identical engine reached only
 ~{{ benchmark.uta_local_tps | int }} HGVS/s, and the public remote UTA database only
 ~{{ benchmark.uta_remote_tps | dp(1) }} HGVS/s. cdot's local data layer is thus roughly
@@ -299,9 +288,12 @@ biocommons output, not resolution failures.)
 
 ## R7: T2T-CHM13v2.0 coverage
 
-**[Tier 1]** cdot is the first HGVS resource to cover the T2T-CHM13v2.0 assembly,
-contributing {{ coverage.t2t_unique_count | commas }} transcript-version alignments that
-are absent from UTA and from every other HGVS backend. cdot's JSON format also stores
+**[Tier 1]** cdot is the first transcript data source to bring the T2T-CHM13v2.0 assembly
+to the Python HGVS libraries (biocommons/hgvs and PyHGVS), contributing
+{{ coverage.t2t_unique_count | commas }} transcript-version alignments that are absent
+from UTA and from every other backend these libraries can use. (Ensembl VEP can already
+generate HGVS against T2T, but it is a standalone annotation tool, not a transcript
+backend for these libraries.) cdot's JSON format also stores
 per-exon alignment-gap information (indels of the transcript relative to the genome) so
 that downstream libraries can apply it during coordinate conversion; this is a property
 of the stored data rather than a separate cdot result.

@@ -49,8 +49,8 @@ reference transcript versions long retired from the current annotation.
 
 To do this, cdot generates compact JSON files from all available RefSeq GFF3
 and Ensembl GTF annotation releases, covering {{ coverage.total_count | commas }}
-versioned transcript alignments across GRCh37 and GRCh38, and, for the first time in an
-HGVS resource, T2T-CHM13v2.0 [@Nurk2022]. JSON was chosen deliberately: every major
+versioned transcript alignments across GRCh37 and GRCh38, and, for the first time for the
+Python HGVS libraries, T2T-CHM13v2.0 [@Nurk2022]. JSON was chosen deliberately: every major
 language parses it at high speed with built-in libraries, and it serialises cleanly over
 HTTP, so the same files drive both the in-memory local provider and the REST API without
 a separate data format. Files load locally in seconds and serve queries at

@@ -24,12 +24,14 @@ merely keeping the latest version.
 1. **RefSeq GFF3**: {{ sources.refseq_grch37_releases | int }} GRCh37,
    {{ sources.refseq_grch38_releases | int }} GRCh38, and
    {{ sources.refseq_t2t_releases | int }} T2T-CHM13v2.0 historical NCBI annotation
-   releases (Supplementary Table S1).
+   releases (Supplementary Table S1), running from the earliest archived annotation
+   releases through to the dated RS_2025_08 release (August 2025).
 
 2. **Ensembl GTF**: {{ sources.ensembl_grch37_releases | int }} GRCh37,
    {{ sources.ensembl_grch38_releases | int }} GRCh38, and
-   {{ sources.ensembl_t2t_releases | int }} T2T-CHM13v2.0 releases (Supplementary
-   Table S2). We use Ensembl GTF rather than GFF3 because the GFF3 files omit transcript
+   {{ sources.ensembl_t2t_releases | int }} T2T-CHM13v2.0 releases, spanning Ensembl
+   releases 81 to 115 (Supplementary Table S2). We use Ensembl GTF rather than GFF3
+   because the GFF3 files omit transcript
    protein versions. Ensembl coverage adds
    {{ coverage.ensembl_unique_count | commas }} transcript accessions absent from
    RefSeq.
@@ -89,14 +91,14 @@ PyHGVS) ultimately consumes the result.
 Cleaning is an ordered pipeline of single-purpose operations applied in a fixed
 canonical order. Each operation inspects the string, makes at most one class of change,
 and records an `HGVSFix` if it fired; operations are pure and order-dependent (for
-example, leading junk and surrounding whitespace are stripped before structural
+example, stray leading characters and surrounding whitespace are stripped before structural
 punctuation is examined, and casing is normalised before the gene/transcript
 relationship is resolved). Callers may restrict cleaning to a subset of operations, such
 as an allowlist for conservative use, but selection only filters the pipeline and does
 not reorder it, so the canonical order is preserved regardless of the subset chosen. The
 operations group into:
 
-- **Stripping**: leading junk before the accession (e.g. a `GRCh38.p2` build tag or a
+- **Stripping**: stray leading characters before the accession (e.g. a `GRCh38.p2` build tag or a
   stray `#`/`:`), all internal and surrounding whitespace and non-printable characters,
   wrapping quotes/backticks, trailing separators, and brackets only when unbalanced
   (balanced parentheses are preserved, since they are valid in uncertain-range and
@@ -157,8 +159,9 @@ transcript and gene lookup. Transcript retrieval is then O(1), giving throughput
 transcripts/second (Results, Table 2).
 
 **REST API**: `cdot_rest` (https://github.com/SACGF/cdot_rest) serves the same JSON data
-at cdotlib.org. `RESTDataProvider` fetches transcripts on demand, suitable for
-occasional lookups without downloading the full file.
+at cdotlib.org. `RESTDataProvider` fetches transcripts one request per transcript
+version, suitable for occasional lookups without downloading the full file, and can
+warm its cache with a single batched `prefetch()` request (Results R6).
 
 **biocommons/hgvs integration**: cdot implements
 `biocommons.hgvs.dataproviders.interface.Interface`, providing `get_tx_info`,
@@ -172,7 +175,7 @@ from cdot.hgvs.dataproviders import JSONDataProvider
 hdp = JSONDataProvider(["cdot.0.2.33.refseq.grch38.json.gz"])
 ```
 
-Sequence data is supplied by SeqRepo or cdot's `FastaSeqFetcher` (local genome FASTA),
+Sequence data is supplied by SeqRepo [@Hart2020] or cdot's `FastaSeqFetcher` (local genome FASTA),
 enabling fully offline operation without SeqRepo's installation overhead.
 `FastaSeqFetcher` reconstructs transcript sequence by splicing the transcript's exon
 ranges out of the genome FASTA. This reproduces an Ensembl transcript exactly, but is not
