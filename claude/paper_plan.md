@@ -1,8 +1,10 @@
 # cdot Paper Plan
 
 Working plan for the cdot manuscript. Supersedes the scope decisions in `paper/notes.md`
-(which assumed an Application Note). Sits alongside `claude/paper_thoughts.md` (framing) and
-`claude/benchmark_plan.md` (benchmark methodology). Section drafts live in `paper/*.md`.
+(which assumed an Application Note) and the early framing in the now-deleted
+`claude/paper_thoughts.md` (its only un-superseded content, the author/collaboration
+strategy, was folded into §2). Sits alongside `claude/benchmark_plan.md` (benchmark
+methodology). Section drafts live in `paper/*.md`.
 
 Last updated: 2026-06-17.
 
@@ -49,7 +51,14 @@ clinical and research variant-curation platforms" in the paper; name them in ack
 statement per governance. Report **aggregates only** — no individual query strings.
 
 ### Still open
-- [ ] **Author list / corresponding author** (carried from `notes.md`).
+- [ ] **Author list / corresponding author** (carried from `notes.md`). Collaboration
+  strategy (salvaged from the now-deleted `paper_thoughts.md`):
+  - Core authors: Dave Lawrence; the Shariant team who helped debug HGVS issues.
+  - Consider inviting a biocommons/hgvs maintainer (acknowledges the integration work and
+    broadens community reach).
+  - Consider inviting a clinical genomics collaborator for the real-world case study.
+  - Acknowledgements: NCBI RefSeq team, Ensembl team, biocommons community (plus the
+    platform sources named in §2 per governance).
 - [ ] Optional: second-rater pass on the taxonomy for a Cohen's κ reliability figure (§6).
 
 ## 3. The two-tier fact model (the key privacy mechanism)
