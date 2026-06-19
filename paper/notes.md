@@ -60,8 +60,6 @@ needs expanding once real numbers are in.*
 
 - [ ] Does VariantValidator support T2T? Confirm before claiming "first HGVS resource"
 - [ ] Does TARK support T2T? Same check
-- [ ] #36 (CanonicalTranscriptSelector) — must be implemented before submission; it's in
-  the abstract
 - [ ] #100 — cdotlib.org migration from cdot.cc — code/docs references swapped;
   remaining: persist cdot_rest settings + cdot.cc→cdotlib.org redirect so URL in paper
   is stable at submission
@@ -85,7 +83,6 @@ needs expanding once real numbers are in.*
 
 ## Pre-submission code checklist
 
-- [ ] #36 CanonicalTranscriptSelector implemented
 - [ ] #100 cdotlib.org domain live
 - [ ] #55 FastaSeqFetcher mismatch bug fixed (affects gap correctness claim)
 - [ ] CI running with test suite (#62)

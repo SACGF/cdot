@@ -189,12 +189,15 @@ biocommons/hgvs path; the PyHGVS factory is retained for legacy compatibility.
 
 ## Canonical transcript selection
 
-cdot's `CanonicalTranscriptSelector` maps gene symbols to MANE Select (or MANE Plus
-Clinical) transcript accessions, enabling gene-name HGVS lookup, a common requirement
-in clinical reporting pipelines that receive a gene name rather than a transcript
-accession. For example, a pipeline given `BRCA1:c.68_69del` with no transcript can look
-up the MANE Select accession for BRCA1 (`NM_007294.4`) and resolve
-`NM_007294.4(BRCA1):c.68_69del` against the genome. To our knowledge this is the first
+cdot's `resolve_gene_hgvs()` (in `cdot.hgvs.gene_hgvs`) maps a gene symbol to a MANE
+Select (or MANE Plus Clinical) transcript accession, enabling gene-name HGVS lookup, a
+common requirement in clinical reporting pipelines that receive a gene name rather than a
+transcript accession. The candidate transcripts come from the data provider's
+`get_tx_ac_tags_for_gene()`, which ranks a gene's transcripts by tag priority (MANE
+Select, then MANE Plus Clinical, RefSeq Select, Ensembl canonical, then longest). For
+example, a pipeline given `BRCA1:c.68_69del` with no transcript can look up the MANE
+Select accession for BRCA1 (`NM_007294.4`) and resolve `NM_007294.4(BRCA1):c.68_69del`
+against the genome. To our knowledge this is the first
 HGVS data provider to expose programmatic canonical transcript selection aligned to the
 MANE standard [@Morales2022; @Wright2023]. Picking a single canonical transcript for a
 gene is not unambiguous: the clinically preferred transcript can differ from MANE Select,

@@ -61,10 +61,6 @@ Predictor. *Genome Biol* 2016;17:122. doi:10.1186/s13059-016-0974-4. PMID: 27268
 transcript set for clinical genomics and research. *Nature* 2022;604:310–315.
 doi:10.1038/s41586-022-04558-8. PMID: 35388217
 
-**Münz 2015**: Münz M, Ruark E, Renwick A, et al. CSN and CAVA: variant annotation
-tools for rapid, robust next-generation sequencing analysis in the clinical setting.
-*Genome Med* 2015;7:76. doi:10.1186/s13073-015-0195-6. PMID: 26315209
-
 **Nurk 2022**: Nurk S, Koren S, Rhie A, et al. The complete sequence of a human genome.
 *Science* 2022;376:44–53. doi:10.1126/science.abj6987. PMID: 35357919
 

@@ -45,22 +45,6 @@ assemblies who need to run the pipeline themselves.
 
 ## STRENGTHENS THE PAPER — non-blocking but important
 
-### P0. Paper/plan accuracy fixes before sending out (do first)
-
-**Why:** Found while stripping author-notes; these are wrong-as-written, not future work.
-
-**What to do:**
-- **`CanonicalTranscriptSelector` does not exist.** `paper/methods.md` ("Canonical
-  transcript selection") and `paper/abstract.md` name a class that is not in the code.
-  #36 *is* implemented, but as `cdot.hgvs.gene_hgvs.resolve_gene_hgvs` / `fix_hgvs` and
-  the data-provider method `get_tx_ac_tags_for_gene`. Rename in the paper to the real
-  API (or describe the capability without inventing a class name).
-- **Orphaned `Munz2015` citation.** The gap-accuracy (Münz 2015) framing was removed from
-  the paper body per feedback (see S2), but `references.bib` / `references.md` still carry
-  the entry, cited nowhere. Remove it, or re-cite it somewhere legitimate.
-- `paper/notes.md` still has a stale unchecked `#36 ... must be implemented before
-  submission` line; #36 is done (see CHANGELOG). Update or drop that scratch note.
-
 ### S4. FastaSeqFetcher mismatch detection and documentation (#84, #55)
 
 **Why:** FastaSeqFetcher is the offline sequence path; if it silently returns wrong
@@ -199,7 +183,6 @@ paper as a known limitation.
 
 | ID | Task | Effort | Blocks submission |
 |----|------|--------|-------------------|
-| P0 | Paper accuracy fixes (wrong class name, orphaned cite) | Low | Yes — before sending out |
 | B7 | Documentation site (MkDocs) | Medium | Yes — citable URL for paper |
 | S4 | FastaSeqFetcher mismatch detection | Medium | No |
 | A1 | Single ClinVar parse/resolution pass | Medium | No — shared infra for R5b/R6 |
