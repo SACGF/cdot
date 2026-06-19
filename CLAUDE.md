@@ -22,6 +22,8 @@ Do **NOT** add changelog entries for things a client-code user never sees: docum
 
 **Benchmarking.** `paper/scripts/benchmark_resolution.py` resolves real ClinVar (g.HGVS, c.HGVS) pairs (in `tests/test_data/clinvar_hgvs/`) through a pluggable provider (REST/JSON/UTA) to measure resolution accuracy, recovery (cleaning + version-bump), and speed; supports `--prefetch` and a local `--fasta`. This is how the README performance numbers are produced.
 
+**Avoid AI writing tells in documentation and paper edits.** When writing or editing prose (docs, `README`, `paper/`, comments, commit/PR text), do not use em-dashes. Prefer plain punctuation: commas, periods, parentheses, or a rephrase. Also avoid other common LLM tells: "It's not just X, it's Y" constructions, hedging filler ("it's worth noting", "importantly", "delve"), over-use of bold for emphasis, and formulaic tricolon lists. Write plainly and directly, matching the voice of the surrounding text.
+
 ## Commands
 
 ```bash

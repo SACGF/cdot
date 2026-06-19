@@ -13,7 +13,7 @@ Supplementary Information*
 HGVS nomenclature is the international standard for describing sequence variants in
 clinical reports and the databases that aggregate them. cdot is built around a single
 goal: resolve as many real-world HGVS strings as possible. cdot does not itself perform
-HGVS resolution — it supplies the versioned transcript-to-genome alignment data that the
+HGVS resolution; it supplies the versioned transcript-to-genome alignment data that the
 established HGVS libraries already depend on, extending the existing ecosystem rather
 than replacing it. The dominant such resource, UTA, requires PostgreSQL infrastructure,
 lacks Ensembl support, and covers only ~{{ literature.uta_count | commas }} transcript

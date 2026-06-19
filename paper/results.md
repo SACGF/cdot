@@ -47,7 +47,7 @@ natively (Figure 1; Supplementary Table S4). The benchmark is reproducible: the 
 build script, random seed, and resolution harness are committed.
 
 **[Tier 2: production validation, not reproducible].** The same gap holds on genuinely
-historical clinical data — the data that motivated cdot. We resolved the complete set of
+historical clinical data, the data that motivated cdot. We resolved the complete set of
 {{ historical.n_lines | commas }} unique HGVS descriptions imported into the Australian
 Genomics Shariant variant-sharing platform [@Tudini2022]: real classifications submitted
 by clinical genetic-testing laboratories over many years, each written against whatever
@@ -62,7 +62,7 @@ versus {{ historical.uta_resolved_pct | dp(1) }}% for the same locally loaded UT
 ({{ historical.cdot_only_pct | dp(1) }}% of the corpus),
 {{ historical.cdot_only_historical_pct | dp(0) }}% were RefSeq transcript versions for
 which UTA holds no GRCh38 alignment and {{ historical.cdot_only_ensembl_pct | dp(0) }}%
-were Ensembl transcripts (absent from UTA entirely) — confirming, on the real corpus cdot
+were Ensembl transcripts (absent from UTA entirely), confirming, on the real corpus cdot
 was built to serve, that the resolution gap is driven by historical-version depth plus
 Ensembl coverage. Where the ClinVar comparison above is a sanity check that the
 GTF→JSON→biocommons pipeline works at scale (ClinVar cites current transcript versions,
@@ -79,8 +79,8 @@ reproducible injection benchmark provides a supporting safety check.
 
 **[Tier 2: production validation, not reproducible] Headline result.** The corpus is
 **N = 32,752** real queries typed into the HGVS search box of production clinical and
-research variant-curation platforms — a box users treat as a shortcut to jump straight to
-a variant or its classification, so the strings are whatever a clinician or curator
+research variant-curation platforms. Users treat that box as a shortcut to jump straight
+to a variant or its classification, so the strings are whatever a clinician or curator
 happened to paste or type, not curated HGVS. They arrive carrying the damage of their
 route to the box: stray whitespace and non-printable characters from copying out of Word
 documents and report PDFs and pasting between systems, lost casing, transposed
@@ -131,8 +131,8 @@ depends.
 unique strings) that still fail to parse after cleaning define the ceiling of what
 pure string repair can achieve. Each residual string was assigned to one single-label
 error class under a fixed decision-tree taxonomy. (An eighth class from an earlier
-revision — a genomic `NC_`/`NG_` accession in the gene-symbol parenthetical slot, e.g.
-`NM_000059.4(NC_000013.11):c.68del`, 57 queries — is no longer residual: `clean_hgvs()`
+revision is no longer residual. It was a genomic `NC_`/`NG_` accession in the gene-symbol
+parenthetical slot, e.g. `NM_000059.4(NC_000013.11):c.68del` (57 queries); `clean_hgvs()`
 now drops the stray genomic accession so those strings parse, moving them into the Table 1
 rescues.) Of the seven remaining classes, six are repair-relevant and shown below with
 synthesised examples — with integer-length insertions (where only the inserted *length*,
@@ -147,7 +147,7 @@ constants from `cdot_private/output/`, with the residual total adjusted for the
 now-repaired genomic-ref-in-parens class, and the integer-length-insertion row split
 deterministically out of the edit-syntax class via cdot's `INS_WITH_INTEGER_LENGTH` check.)*
 
-| Class | Queries | What it is — *example* |
+| Class | Queries | What it is (*example*) |
 |---|---|---|
 | Truncated | 284 (25.4%) | cut off before a complete variant — `NM_000059.4:c.68_69` (range, no edit) |
 | No reference | 277 (24.8%) | a bare variant body, no transcript/gene/accession — `c.68_69delAG` |
@@ -163,8 +163,8 @@ string-level repair can invent; the integer-length insertions (2.7%) belong with
 since the inserted bases were never given (only the position and length are recoverable, so
 the variant is not properly resolvable). About 33% (Bad accession + Edit syntax + Trailing /
 concatenated) is in principle fixable and marks the frontier for future cleaning rules.
-The remaining ~7% is a grammar gap — valid HGVS the parser rejects rather than the input
-(Grammar gap class) — and a further ~7% (excluded above) was non-HGVS junk that should
+The remaining ~7% is a grammar gap (valid HGVS the parser rejects rather than the input;
+the Grammar gap class), and a further ~7% (excluded above) was non-HGVS junk that should
 not be parsed at all. Most of what remains is therefore either out of scope for any repair
 or a downstream grammar limitation rather than a cdot deficiency.
 
@@ -190,7 +190,7 @@ has no adjacent-version fallback regardless of its data provider, so a UTA-backe
 gains nothing here even though UTA itself stores several versions per transcript. cdot's
 multi-release depth gives the fallback more versions to choose from, and it is never
 applied automatically, preserving exact-version semantics by default. Whether a given
-substitution is *coordinate-safe* — and how cdot decides — is the subject of R5.
+substitution is *coordinate-safe*, and how cdot decides, is the subject of R5.
 
 ## R5: Transcript-version stability and safe version fallback  *(Figure S4)*
 
@@ -199,15 +199,15 @@ does not move the variant: a coding `c.` position must still map to the same gen
 coordinate. We measured this directly on the released cdot data
 (`paper/scripts/compute_version_stability.py`, GRCh38, a
 {{ version_stability.sample_n | commas }}-accession sample), exploiting the fact that
-cdot stores the genome *alignment* rather than the sequence — so a version bump can only
+cdot stores the genome *alignment* rather than the sequence, so a version bump can only
 move a coordinate if it changes that alignment. Across consecutive RefSeq version bumps
 ({{ version_stability.refseq_pairs | commas }} pairs),
 {{ version_stability.refseq_preserving_pct | dp(1) }}% preserved every coding coordinate;
 for Ensembl ({{ version_stability.ensembl_pairs | commas }} pairs)
 {{ version_stability.ensembl_preserving_pct | dp(1) }}%. Weighting by coding base (the
-chance a *random* variant is unaffected) safety is higher still —
+chance a *random* variant is unaffected), safety is higher still,
 {{ version_stability.refseq_pervariant_safety | dp(3) }} (RefSeq) and
-{{ version_stability.ensembl_pervariant_safety | dp(3) }} (Ensembl) — and the genuinely
+{{ version_stability.ensembl_pervariant_safety | dp(3) }} (Ensembl); and the genuinely
 dangerous case, a *partial* bump that mis-places some variants but not others, is rare
 ({{ version_stability.refseq_partial_drift_pct | dp(1) }}% of RefSeq bumps,
 {{ version_stability.ensembl_partial_drift_pct | dp(1) }}% Ensembl); when a coordinate
@@ -218,8 +218,8 @@ drift, and the worst-affected 5% hold {{ version_stability.refseq_top5_drift_sha
 of it.
 
 **The pivotal result** is that this is predictable from a single version, with no
-flanking pair or genomic context. A transcript version's **intrinsic CDS structure** —
-its CDS length plus the lengths of its coding-exon segments in transcript coordinates —
+flanking pair or genomic context. A transcript version's **intrinsic CDS structure** (its
+CDS length plus the lengths of its coding-exon segments in transcript coordinates)
 is **build-independent** (identical across GRCh37/GRCh38/T2T for
 {{ version_stability.refseq_struct_portable_pct | dp(1) }}% of RefSeq and
 {{ version_stability.ensembl_struct_portable_pct | dp(1) }}% of Ensembl versions), and a
@@ -231,7 +231,7 @@ bumps carry an intrinsic-structure change, while conversely
 {{ version_stability.ensembl_struct_unchanged_preserved_pct | dp(1) }}% (Ensembl) of
 structure-unchanged bumps are genomically preserved. Because the structure is
 build-independent and cdot returns every version in every build, the requested version's
-structure can be read even when it is absent from the target build — so the safety
+structure can be read even when it is absent from the target build, so the safety
 question becomes essentially deterministic, and it catches the transient-revert versions
 (a coordinate that goes A→B→A) that a genomic-bracket check cannot see.
 
@@ -239,8 +239,8 @@ cdot ships this as the safety gate behind the version fallback
 (`intrinsic_cds_structure()` and the data-provider method
 `is_version_substitution_safe()`): when the requested version is absent, the substitute
 is applied only if its intrinsic CDS structure matches the requested version's, reported
-as a coordinate-safe `HGVSFix`; a structural mismatch — or a version absent from every
-build, where only a probabilistic genomic-bracket check remains — is refused by default
+as a coordinate-safe `HGVSFix`; a structural mismatch (or a version absent from every
+build, where only a probabilistic genomic-bracket check remains) is refused by default
 rather than silently substituted, preserving exact-variant semantics.
 
 ## R6: Throughput

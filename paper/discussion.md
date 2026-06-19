@@ -26,14 +26,14 @@ doubles as a lightweight, queryable gene/transcript reference. We publish the pe
 JSON for each annotation version on the GitHub releases page, where a single file is a
 much faster-loading drop-in for the corresponding GTF/GFF. Because the REST API returns
 JSON quickly and in batches, downstream software can query transcript coordinates on
-demand instead of bundling large annotation downloads — convenient for thin clients, and
-for AI agents that call the API directly. Ensembl offers a public REST service, but only
+demand instead of bundling large annotation downloads, which is convenient for thin
+clients, and for AI agents that call the API directly. Ensembl offers a public REST service, but only
 for Ensembl transcripts and only at the latest version of each; cdot serves both RefSeq
 and Ensembl and retains historical versions.
 
 By design, cdot separates unambiguous string cleaning, which is safe to apply
-automatically, from heuristics that can be wrong — choosing an adjacent transcript
-version, or mapping a gene symbol to a canonical transcript — which are opt-in, never
+automatically, from heuristics that can be wrong (choosing an adjacent transcript
+version, or mapping a gene symbol to a canonical transcript), which are opt-in, never
 applied silently, and always reported as an `HGVSFix` the caller can inspect or reject.
 A general limitation is that resolution is only as current as the ingested annotation
 releases: a transcript version published after the most recent ingested release is not

@@ -42,8 +42,8 @@ merely keeping the latest version.
 
 A Snakemake pipeline parses each source using `GFF3Parser` or `GTFParser` (HTSeq-based),
 normalises contig names via bioutils, extracts CDS boundaries from start/stop codon
-features, and serialises to gzip-compressed JSON. Gene-level metadata — symbols, HGNC
-IDs, and biotypes — is drawn from the HGNC dataset and NCBI RefSeq gene-info files and
+features, and serialises to gzip-compressed JSON. Gene-level metadata (symbols, HGNC
+IDs, and biotypes) is drawn from the HGNC dataset and NCBI RefSeq gene-info files and
 attached to each transcript.
 
 ## JSON format
@@ -120,7 +120,7 @@ operations group into:
   gene symbol and transcript accession (`BRCA2(NM_000059.4):c.…` →
   `NM_000059.4(BRCA2):c.…`). The standard HGVS gene-in-parentheses form
   (`NM_000059.4(BRCA2):c.…`) is itself valid and is parsed by biocommons/hgvs unchanged;
-  these operations target only the non-standard variants of it — accession and gene
+  these operations target only the non-standard variants of it: accession and gene
   transposed, or the separating colon or dot missing.
 
 Each repair is reported as an `HGVSFix` carrying a severity (`WARNING` for an
@@ -136,8 +136,8 @@ attempt, though callers may opt into raising on the first error.
 A separate, opt-in helper, `get_best_transcript_version()`, addresses
 transcript-version drift. Unlike the cleaning operations above, which are unambiguous
 formatting corrections, substituting a different transcript version is a heuristic that
-can be wrong — a coordinate may shift, or the variant may not exist, in the substituted
-version — so it is never applied automatically. When the requested accession version is
+can be wrong (a coordinate may shift, or the variant may not exist, in the substituted
+version), so it is never applied automatically. When the requested accession version is
 absent from a caller's data, it returns the best available adjacent version (under a
 configurable up-then-down, closest, or latest strategy) as a reported `HGVSFix`, and the
 caller decides whether to accept the change and rewrite the string, which keeps control
