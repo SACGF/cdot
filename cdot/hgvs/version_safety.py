@@ -7,7 +7,7 @@ substitutes the nearest available version.  That is only safe if the variant's
 coding (c.) position still maps to the *same* genomic coordinate after the
 substitution — otherwise the substitution silently changes what the variant means.
 
-The C2 experiment (see ``claude/version_bump_experiment.md`` and
+The study behind this (see ``docs/transcript_version_safety.md`` and
 ``analysis/transcript_version_drift.py`` / ``analysis/transcript_version_crossbuild.py``)
 established a near-deterministic test for this: a version bump is
 coordinate-preserving **iff** the version's *intrinsic CDS structure* — the CDS

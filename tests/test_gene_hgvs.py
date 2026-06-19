@@ -518,7 +518,7 @@ def test_resolve_version_unsupported_provider_errors():
 # these, so the substitution is checked structurally before it is applied. The
 # requested version sits only in GRCh37, the substitution candidates in GRCh38, so
 # the build-independent structure decides the verdict (matching the cross-build
-# result in claude/version_bump_experiment.md).
+# result in docs/transcript_version_safety.md).
 # ---------------------------------------------------------------------------
 
 def _safety_build(exons, contig="NC_000013.11"):

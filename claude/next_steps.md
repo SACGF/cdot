@@ -51,7 +51,7 @@ How often is a version bump actually *safe*? Explored, then implemented. The piv
 finding: a bump is coordinate-preserving **iff** the version's build-independent intrinsic
 CDS structure (CDS length + coding-exon-segment lengths in transcript coordinates) is
 unchanged — RefSeq 100%/100%, Ensembl 99.3%/99.9% equivalence; structure portable across
-builds ~99.5%. Full write-up in `claude/version_bump_experiment.md`; analysis scripts
+builds ~99.5%. Permanent write-up in `docs/transcript_version_safety.md`; analysis scripts
 `analysis/transcript_version_{drift,crossbuild}.py`.
 
 Shipped:
