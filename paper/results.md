@@ -134,28 +134,34 @@ error class under a fixed decision-tree taxonomy. (An eighth class from an earli
 revision — a genomic `NC_`/`NG_` accession in the gene-symbol parenthetical slot, e.g.
 `NM_000059.4(NC_000013.11):c.68del`, 57 queries — is no longer residual: `clean_hgvs()`
 now drops the stray genomic accession so those strings parse, moving them into the Table 1
-rescues.) Six of the seven remaining classes are repair-relevant and are shown below with
-synthesised examples; the seventh was non-HGVS input (81 queries, 7.2% — pasted URLs,
-report templates, or prose) and is excluded from the table as there is nothing in it for
-cleaning to repair.
+rescues.) Of the seven remaining classes, six are repair-relevant and shown below with
+synthesised examples — with integer-length insertions (where only the inserted *length*,
+never the bases, is supplied) split out from the broader edit-syntax class as a distinct,
+deterministically-identifiable failure mode, giving the seven rows in the table; the
+seventh class was non-HGVS input (81 queries, 7.2% — pasted URLs, report templates, or
+prose) and is excluded from the table as there is nothing in it for cleaning to repair.
 
 **Residual error classes after cleaning** (counts and % of the 1,118 residual
 queries; examples synthesised from public BRCA2 `NM_000059.4`). *(Tier 2; frozen
 constants from `cdot_private/output/`, with the residual total adjusted for the
-now-repaired genomic-ref-in-parens class.)*
+now-repaired genomic-ref-in-parens class, and the integer-length-insertion row split
+deterministically out of the edit-syntax class via cdot's `INS_WITH_INTEGER_LENGTH` check.)*
 
 | Class | Queries | What it is — *example* |
 |---|---|---|
 | Truncated | 284 (25.4%) | cut off before a complete variant — `NM_000059.4:c.68_69` (range, no edit) |
 | No reference | 277 (24.8%) | a bare variant body, no transcript/gene/accession — `c.68_69delAG` |
-| Bad accession | 167 (14.9%) | missing prefix, or misplaced/truncated version — `NM000059:c.68del` |
-| Edit syntax | 143 (12.8%) | malformed or non-standard edit operation — `NM_000059.4:c.68_69del2` (count shorthand) |
+| Bad accession | 167 (14.9%) | missing prefix, or misplaced/truncated version — `000059.4:c.68del` (`NM_` prefix dropped) |
+| Edit syntax | 113 (10.1%) | malformed or non-standard edit operation — `NM_000059.4:c.68AG>T` (multi-base reference in a substitution) |
 | Trailing / concatenated | 85 (7.6%) | extra characters after a complete variant, or several run together — `NM_000059.4:c.68delAG;c.70A>G` |
-| Grammar gap | 81 (7.2%) | legitimate HGVS the biocommons grammar rejects — `NM_000059.4:c.(67_70)del` (uncertain range) |
+| Grammar gap | 81 (7.2%) | legitimate HGVS the biocommons grammar rejects — `NM_000059.4:c.(67+1_68-1)_(70+1_71-1)del` (uncertain-range deletion) |
+| Insertion (length only) | 30 (2.7%) | an insertion given as a base count, not a sequence — `NM_000059.4:c.68_69ins5` (position and length recoverable; inserted bases not) |
 
 The residual falls into three regimes. Just over half (~50%: Truncated + No reference) is
-incomplete or reference-less user input: information the user never supplied, which no
-string-level repair can invent. About 35% (Bad accession + Edit syntax + Trailing /
+incomplete or reference-less user input — information the user never supplied, which no
+string-level repair can invent; the integer-length insertions (2.7%) belong with these,
+since the inserted bases were never given (only the position and length are recoverable, so
+the variant is not properly resolvable). About 33% (Bad accession + Edit syntax + Trailing /
 concatenated) is in principle fixable and marks the frontier for future cleaning rules.
 The remaining ~7% is a grammar gap — valid HGVS the parser rejects rather than the input
 (Grammar gap class) — and a further ~7% (excluded above) was non-HGVS junk that should
