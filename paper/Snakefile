@@ -74,7 +74,6 @@ PAPER_SOURCES = [
     "paper/methods.md",
     "paper/results.md",
     "paper/discussion.md",
-    "paper/figures.md",
     "paper/supplementary.md",
     "paper/references.bib",
     "paper/bioinformatics.csl",

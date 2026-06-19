@@ -1,10 +1,5 @@
 # Introduction
 
-*Target: ~400 words. Three tight paragraphs: (1) problem scale, (2) existing tools and
-their gaps, (3) cdot's approach.*
-
----
-
 HGVS nomenclature [@DenDunnen2016] is the international standard for describing sequence
 variants in clinical reports, databases, and publications. Converting HGVS descriptions
 to genomic coordinates requires authoritative, versioned transcript data. A transcript
@@ -56,10 +51,3 @@ HTTP, so the same files drive both the in-memory local provider and the REST API
 a separate data format. Files load locally in seconds and serve queries at
 {{ benchmark.cdot_local_min_tps | commas }}–{{ benchmark.cdot_local_max_tps | commas }}
 transcripts/second; a REST API (cdotlib.org) is available for on-demand access.
-
----
-
-*Now 4 short paragraphs: (1) problem, (2) existing tools/gaps, (3) Shariant motivation +
-focus thesis, (4) cdot's approach. If it runs long, the Shariant and approach paragraphs
-can be merged. Münz/BRCA2 gap framing removed (gap correctness is a downstream library
-concern, not a cdot result, per feedback).*

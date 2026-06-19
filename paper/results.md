@@ -1,12 +1,5 @@
 # Results
 
-*Full Original Paper (Bioinformatics): Results section. New for the full-paper switch.*
-*Numbers come from the two-tier fact model (plan §3): Tier 1 = reproducible templated
-facts; Tier 2 =
-frozen aggregate constants from the private corpus, flagged non-reproducible.
-Synthesised examples
-only; never corpus strings.*
-
 > **Provenance flags.** Every reported number is tagged **[Tier 1]** (reproducible from
 public data
 > committed to this repo) or **[Tier 2]** (aggregate statistics from a private
@@ -297,9 +290,3 @@ backend for these libraries.) cdot's JSON format also stores
 per-exon alignment-gap information (indels of the transcript relative to the genome) so
 that downstream libraries can apply it during coordinate conversion; this is a property
 of the stored data rather than a separate cdot result.
-
----
-
-*Notes: keep Tier-1/Tier-2 provenance explicit in every reported number. Audit
-"incorrect" buckets
-before reporting (alignment diffs #95). Normalise before string-compare.*

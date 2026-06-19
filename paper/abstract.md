@@ -2,12 +2,6 @@
 
 # Abstract
 
-*Application Note abstract format: Summary / Availability and Implementation / Contact /
-Supplementary Information*
-*Target: ~150 words. One paragraph per heading, no sub-bullets.*
-
----
-
 **Summary:**
 
 HGVS nomenclature is the international standard for describing sequence variants in
@@ -41,8 +35,3 @@ cdotlib.org and [Zenodo DOI].
 
 **Supplementary information:** Supplementary data are available at *Bioinformatics*
 online.
-
----
-
-*Fill in: Zenodo DOI, contact email. Run analysis scripts to populate coverage.csv and
-benchmark.csv.*

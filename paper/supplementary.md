@@ -1,10 +1,5 @@
 # Supplementary Material
 
-*Reference in abstract: "Supplementary data are available at Bioinformatics online."*
-*Submit as a single PDF labelled "Supplementary Data".*
-
----
-
 ## Supplementary Tables
 
 ### Table S1: RefSeq GFF3 annotation releases

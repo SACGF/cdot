@@ -1,10 +1,5 @@
 # Discussion
 
-*Target: ~300 words. Positioning, limitations, future. Do not repeat implementation
-detail.*
-
----
-
 cdot fills a specific gap in the biocommons HGVS stack: comprehensive, versioned,
 multi-source transcript coordinate data accessible without database infrastructure.
 
@@ -37,8 +32,7 @@ version, or mapping a gene symbol to a canonical transcript), which are opt-in, 
 applied silently, and always reported as an `HGVSFix` the caller can inspect or reject.
 A general limitation is that resolution is only as current as the ingested annotation
 releases: a transcript version published after the most recent ingested release is not
-covered until the dataset is regenerated. In practice cdot tracks new releases closely
-and is regenerated regularly (the current data already incorporates RefSeq RS_2025_08 and
-Ensembl 115), so this is normally a short window after each release rather than a lasting
-gap.
+covered until the dataset is regenerated. Automating that regeneration so each new RefSeq
+and Ensembl release is ingested and published as a data release without manual
+intervention is a planned improvement.
 

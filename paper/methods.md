@@ -1,12 +1,5 @@
 # Methods
 
-*Full Original Paper (Bioinformatics): Methods section. See `claude/paper_plan.md`.*
-*Target: ~1,200–1,600 words. Subsections: Data sources & generation · JSON format ·
-String cleaning (`clean_hgvs()`) · Access & client libraries · Canonical transcript
-selection.*
-
----
-
 ## Data sources and generation
 
 cdot draws on three transcript-annotation sources, merged into a single dataset per
@@ -208,18 +201,3 @@ gene is not unambiguous: the clinically preferred transcript can differ from MAN
 and a gene may have more than one transcript of interest. The selection is intended as a
 sensible default for search and gene-name lookup, not an authoritative clinical choice,
 and callers should apply their own discretion where it matters.
-
----
-
-*Notes:*
-- *Fill all bracketed numbers before submission (run compute_coverage.py,
-  compute_benchmark.py, and the ClinVar benchmark). Coverage/ClinVar prose now lives in
-  `results.md` R1; Methods describes how, Results reports the numbers.*
-- *String-cleaning subsection: examples synthesised from public NM_000059.4 (BRCA2) /
-  NM_001754.5 (RUNX1) only, never corpus strings (CLAUDE.md / plan §3).*
-- *Gap-correctness framing removed per feedback: cdot stores per-exon gaps (JSON-format
-  detail) but applying them is a downstream-library concern, not promoted as a cdot
-  result. PyHGVS paragraph trimmed to legacy-compatibility only.*
-- *Canonical transcript section requires #36 to be implemented*
-- *If over word count, the UTA CSV baseline source paragraph can be moved to
-  supplementary*
