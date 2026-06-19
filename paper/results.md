@@ -275,9 +275,7 @@ the warmed REST cache holds only the few thousand transcripts the set actually t
 whereas local JSON holds the entire dataset in memory. The same exhaustive pass is impractical against the
 public remote UTA database (extrapolated at hundreds of days from its ~0.1 HGVS/s).
 (`paper/scripts/build_clinvar_pairs.py` builds the pair set by joining ClinVar's
-variant_summary with the ClinVar VCF; the residual ~1% non-exact/error rate is dominated
-by genomic-HGVS normalisation differences between the ClinVar source string and the
-biocommons output, not resolution failures.)
+variant_summary with the ClinVar VCF)
 
 ## R7: T2T-CHM13v2.0 coverage
 
