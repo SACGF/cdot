@@ -24,7 +24,8 @@ Structure: Abstract · Introduction · Methods · Results · Discussion · Figur
 
 Two build modes. Both render the Markdown sections to `output/cdot_<date>.docx`
 (+ `.md`, + a supplementary doc) with [vibepaper](https://pypi.org/project/vibepaper/);
-install the tooling with `pip install -e '.[paper]'` (adds `vibepaper`, `snakemake`).
+install the tooling with `pip install -e '.[paper]'` (adds `vibepaper`, `snakemake`,
+and `weasyprint` for the optional PDF output).
 
 Numbers in the text are not hard-coded — they are `{{ fact }}` templates filled from
 one-row CSVs ("facts", one per column). The render always reads facts from the
@@ -53,6 +54,31 @@ cp paper/empirical_results/*.csv output/facts/ && \
 
 Use this for editing prose, checking layout, or any rebuild where the numbers
 haven't changed.
+
+### PDF output
+
+By default the build produces `.docx` (+ `.md`) only. To also render
+`output/cdot_<date>.pdf`, use the dedicated `pdf` rule (a quick build plus
+vibepaper's `--pdf`):
+
+```bash
+snakemake -s paper/Snakefile pdf --cores 1
+```
+
+Either form adds `--pdf`, which needs the **weasyprint** toolchain (pulled in by
+`pip install -e '.[paper]'`). Probe whether it's usable first with:
+
+```bash
+.venv/bin/vibepaper build --config paper/paper.toml --is-pdf-available
+```
+
+To attach a PDF to a **full** build (or the quick build by hand), pass
+`--config pdf=true`:
+
+```bash
+snakemake -s paper/Snakefile full --config pdf=true --cores 1 \
+    --config data_dir=/path/to/cdot_data ...
+```
 
 ### Full build — regenerates every fact, then renders
 

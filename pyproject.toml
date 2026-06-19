@@ -52,9 +52,11 @@ test = [
 ]
 # Build the manuscript and regenerate its reproducible facts
 # (paper/Snakefile + analysis/*.py). Not needed to use cdot as a library.
+# weasyprint provides the optional PDF toolchain (vibepaper --pdf / the `pdf` rule).
 paper = [
     "snakemake",
     "vibepaper",
+    "weasyprint",
 ]
 
 [project.urls]

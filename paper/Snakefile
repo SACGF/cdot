@@ -6,6 +6,9 @@ Quickstart — build paper using existing facts CSVs (run from project root):
 Recompute coverage/benchmark from production data, then build:
     snakemake -s paper/Snakefile --cores 1 --config data_dir=/path/to/cdot/data
 
+Build the quick paper AND a PDF (needs the weasyprint toolchain):
+    snakemake -s paper/Snakefile pdf --cores 1
+
 Recompute one facts file:
     snakemake -s paper/Snakefile --cores 1 output/facts/coverage.csv
 
@@ -13,6 +16,8 @@ Config keys (via --config or a config.yaml):
     data_dir         Directory with production JSON.gz files.
     clinvar_hgvs_csv Path to ClinVar HGVS benchmark CSV.
     uta_uri          PostgreSQL URI for UTA, e.g. postgresql://uta_admin@localhost/uta/uta_20210129
+    pdf              Set pdf=true to also render a PDF in the quick/full rules
+                     (e.g. snakemake -s paper/Snakefile full --config pdf=true ...).
 """
 
 from pathlib import Path
@@ -45,6 +50,11 @@ HAVE_CLINVAR = bool(CLINVAR_CSV and Path(CLINVAR_CSV).exists())
 
 PYTHON = ".venv/bin/python"
 VIBE   = ".venv/bin/vibepaper build --config paper/paper.toml"
+
+# Optionally also render a PDF alongside the .docx. `--pdf` errors if the
+# weasyprint toolchain is missing; opt in with --config pdf=true on quick/full,
+# or use the dedicated `pdf` rule.
+PDF_FLAG = "--pdf" if config.get("pdf", False) else ""
 
 # The render always reads facts from GEN_FACTS (= paper.toml facts_dir = output/facts).
 # How GEN_FACTS gets populated is the only difference between the two build modes:
@@ -91,7 +101,23 @@ rule quick:
     output:
         touch("output/.paper_built_quick"),
     shell:
-        "mkdir -p {GEN_FACTS} && cp {EMPIRICAL}/*.csv {GEN_FACTS}/ && {VIBE}"
+        "mkdir -p {GEN_FACTS} && cp {EMPIRICAL}/*.csv {GEN_FACTS}/ && {VIBE} {PDF_FLAG}"
+
+
+rule pdf:
+    """QUICK build that also renders a PDF (output/cdot_<date>.pdf) next to the
+    .docx. Identical to `quick` plus vibepaper --pdf, which needs the weasyprint
+    toolchain (pip install -e '.[paper]', or pip install weasyprint). Probe the
+    toolchain first with:
+        .venv/bin/vibepaper build --config paper/paper.toml --is-pdf-available
+    For a full-build PDF instead, run: snakemake -s paper/Snakefile full --config pdf=true ..."""
+    input:
+        sources = PAPER_SOURCES,
+        stored  = [f"{EMPIRICAL}/{f}" for f in FACT_FILES],
+    output:
+        touch("output/.paper_built_pdf"),
+    shell:
+        "mkdir -p {GEN_FACTS} && cp {EMPIRICAL}/*.csv {GEN_FACTS}/ && {VIBE} --pdf"
 
 
 rule full:
@@ -111,7 +137,7 @@ rule full:
     shell:
         # render from the freshly regenerated facts; only refresh the committed
         # snapshot once the render succeeds, so a botched run can't corrupt it
-        "{VIBE} && cp {GEN_FACTS}/*.csv {EMPIRICAL}/"
+        "{VIBE} {PDF_FLAG} && cp {GEN_FACTS}/*.csv {EMPIRICAL}/"
 
 
 rule literature:
