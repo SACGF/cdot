@@ -18,7 +18,6 @@ Structure: Abstract · Introduction · Methods · Results · Discussion · Figur
 | `figures.md` | Figure descriptions (target: 2 main figures) |
 | `references.md` | Formatted reference list |
 | `supplementary.md` | Supplementary tables and figures |
-| `notes.md` | Working notes, open questions, word count |
 
 ## Building the paper
 

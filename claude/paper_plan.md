@@ -87,7 +87,8 @@ each independent failure mode. Cleaning is now a first-class pillar, not a footn
 
 **File structure (LOCKED + WIRED 2026-06-17).** `paper.toml`, `paper/Snakefile`, `paper/README.md`
 updated to the Original-Paper layout. `implementation.md` → renamed `methods.md`; new `results.md`
-stub added. `paper/notes.md` carries a SUPERSEDED banner.
+stub added. `paper/notes.md` deleted (fully superseded by this plan; its live items were
+folded into §2 and §5).
 
 | Section | File | Current state | Plan |
 |---|---|---|---|
@@ -124,9 +125,12 @@ stub added. `paper/notes.md` carries a SUPERSEDED banner.
 **Optional (deferred, post-benchmark-lock):**
 9. [ ] `cdot_rest` `POST /clean` endpoint + minimal demo UI (stateless, no query logging).
 
-**Carried from existing checklists (`notes.md`, `paper_thoughts.md`):** #55 FastaSeqFetcher fix
-(gap-correctness claim), Zenodo DOI, confirm T2T-novelty + Münz gap attribution.
-*(Done: #36 gene/canonical resolution, #100 cdotlib.org live, #62 CI.)*
+**Carried from existing checklists (`paper_thoughts.md`):** #55 FastaSeqFetcher fix (now
+tracked as next_steps_plan S4), Zenodo DOI, confirm T2T-novelty (VariantValidator + TARK),
+author/corresponding-author list, cover letter (note VariantGrid/Shariant production use),
+Python version bump + build deps (#104).
+*(Done: #36 gene/canonical resolution, #100 cdotlib.org live, #62 CI. Münz/gap-accuracy
+framing was dropped from the paper, so that attribution check is moot.)*
 
 ## 6. Methodology notes to state explicitly (referee-proofing)
 
