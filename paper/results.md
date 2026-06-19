@@ -268,9 +268,9 @@ round-trip warms the transcript cache and lifts REST to match local throughput. 
 loaded UTA running the identical engine reached only
 ~{{ benchmark.uta_local_tps | int }} HGVS/s, and the public remote UTA database only
 ~{{ benchmark.uta_remote_tps | dp(1) }} HGVS/s. cdot's local data layer is thus roughly
-30× faster than a local UTA and orders of magnitude faster than the remote service most
-users reach; once the data layer is local, the remaining bottleneck is sequence fetching
-rather than transcript lookup.
+30× faster than a local UTA running the identical engine; the full set of remote and
+local timings is in Table 2. Once the data layer is local, the remaining bottleneck is
+sequence fetching rather than transcript lookup.
 
 **[Tier 1]** At scale, a single local-JSON process resolved the entire set of 3,660,452
 unique ClinVar (g.HGVS, c.HGVS) pairs in ~92 minutes (665 HGVS/s; 99.3% produced a
