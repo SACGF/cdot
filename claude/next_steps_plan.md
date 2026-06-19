@@ -31,7 +31,8 @@ version-safety write-up) but there is no `mkdocs.yml` and nothing is published.
   - `quickstart.md` — biocommons/hgvs integration, PyHGVS integration, full working code
   - `data-files.md` — how to get JSON.gz files (GitHub releases, `data_release.py`)
   - `clean-hgvs.md` — `clean_hgvs()` and `get_best_transcript_version()` with examples
-  - `canonical.md` — `CanonicalTranscriptSelector`, MANE, resolving gene-only HGVS
+  - `canonical.md` — gene-symbol HGVS resolution (`resolve_gene_hgvs` / `fix_hgvs`),
+    `get_tx_ac_tags_for_gene` tag ranking, MANE, resolving gene-only HGVS (#36)
   - `rest-api.md` — cdotlib.org endpoints, `RESTDataProvider`
   - `data-format.md` — JSON schema, exon 6-tuple, gap encoding (for tool authors)
   - `data-generation.md` — building your own JSON.gz from RefSeq/Ensembl GTF/GFF3;
@@ -44,16 +45,21 @@ assemblies who need to run the pipeline themselves.
 
 ## STRENGTHENS THE PAPER — non-blocking but important
 
-### S2. BRCA2 gap support verification
+### P0. Paper/plan accuracy fixes before sending out (do first)
 
-**Why:** The 32% accuracy claim (Münz 2015) motivates gap support. It is currently cited
-as a Tier-2 literature number (`literature.csv`), not reproduced. Reproducing it would
-turn it into a Tier-1 result.
+**Why:** Found while stripping author-notes; these are wrong-as-written, not future work.
 
 **What to do:**
-- Run the BRCA2 variant set from Münz et al. through biocommons/hgvs with cdot (gap
-  support via `FastaSeqFetcher`) vs without.
-- If reproducible, include as a panel in the benchmarks figure.
+- **`CanonicalTranscriptSelector` does not exist.** `paper/methods.md` ("Canonical
+  transcript selection") and `paper/abstract.md` name a class that is not in the code.
+  #36 *is* implemented, but as `cdot.hgvs.gene_hgvs.resolve_gene_hgvs` / `fix_hgvs` and
+  the data-provider method `get_tx_ac_tags_for_gene`. Rename in the paper to the real
+  API (or describe the capability without inventing a class name).
+- **Orphaned `Munz2015` citation.** The gap-accuracy (Münz 2015) framing was removed from
+  the paper body per feedback (see S2), but `references.bib` / `references.md` still carry
+  the entry, cited nowhere. Remove it, or re-cite it somewhere legitimate.
+- `paper/notes.md` still has a stale unchecked `#36 ... must be implemented before
+  submission` line; #36 is done (see CHANGELOG). Update or drop that scratch note.
 
 ### S4. FastaSeqFetcher mismatch detection and documentation (#84, #55)
 
@@ -142,6 +148,28 @@ we can pick one with a WARNING.
 
 ## POST-PAPER / FUTURE WORK
 
+### S2 (demoted). BRCA2 gap support verification — no longer a paper claim
+
+**Status change:** The paper deliberately removed the gap-correctness framing (per
+feedback): cdot *stores* per-exon gap data, but applying it is a downstream-library
+concern, not promoted as a cdot result (see `results.md` R7, and the now-removed
+intro/methods notes). So reproducing the Münz 32% is no longer a paper-strengthening
+item — it would re-introduce a claim the paper chose not to make. The correctness-of-gap
+concern that *does* still matter (does `FastaSeqFetcher` return wrong sequence for
+gap-flagged transcripts) is covered by **S4**. Keep this only as optional post-paper
+validation; do not add a benchmark-figure panel for it.
+
+### F3. Automated data-release regeneration (stated as planned in Discussion)
+
+**Why:** `discussion.md` now states that automating regeneration, so each new RefSeq and
+Ensembl release is ingested and published as a data release without manual intervention,
+is a planned improvement. The plan should track what the paper promises.
+
+**What to do:**
+- Wire the Snakemake pipeline + release publishing into a scheduled/CI job that detects a
+  new RefSeq/Ensembl release, regenerates the JSON.gz, and publishes a GitHub data release.
+- Not blocking for submission; it backs a forward-looking sentence, not a result.
+
 ### F1. GFF/GTF parser refactor: split by source not format (#101)
 
 The GTFParser/GFF3Parser split follows file format but logic differs by source (RefSeq vs
@@ -171,13 +199,15 @@ paper as a known limitation.
 
 | ID | Task | Effort | Blocks submission |
 |----|------|--------|-------------------|
+| P0 | Paper accuracy fixes (wrong class name, orphaned cite) | Low | Yes — before sending out |
 | B7 | Documentation site (MkDocs) | Medium | Yes — citable URL for paper |
-| S2 | BRCA2 gap support verification | Medium | No — but supports key claim |
 | S4 | FastaSeqFetcher mismatch detection | Medium | No |
 | A1 | Single ClinVar parse/resolution pass | Medium | No — shared infra for R5b/R6 |
 | R5b | Empirical validation of safe version bumps | Medium | No — but strong reviewer defense |
 | R6 | Categorize the 1.2% genomic-match failures | Low | No — likely raises true accuracy |
 | R7 | Versionless transcript resolution (REFUSE on ambiguity) | Medium | No — client feature + changelog |
+| S2 | BRCA2 gap verification (demoted, post-paper) | Medium | No — dropped from paper framing |
+| F3 | Automated data-release regeneration | Medium | No — backs a Discussion sentence |
 | F1 | Parser refactor | High | No |
 | F2 | CDS phase support | Medium | No |
 
