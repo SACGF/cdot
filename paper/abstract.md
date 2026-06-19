@@ -23,11 +23,14 @@ T2T-CHM13v2.0, distributed as a single gzipped JSON file or served on demand ove
 via a REST API (cdotlib.org), with no database required. To recover the malformed
 strings that reach clinical search boxes and importers, cdot adds a parser-independent
 cleaning step
-(`clean_hgvs()`) that repairs common formatting errors before resolution. Python
+(`clean_hgvs()`) that repairs common formatting errors before resolution, and an opt-in
+adjacent-version fallback that substitutes a retired transcript version for the nearest
+available one, with a build-independent check that the substitution does not move the
+variant. Python
 integrations are provided for both major HGVS libraries (biocommons/hgvs and PyHGVS).
-cdot stores MANE Select and Ensembl canonical tags enabling programmatic canonical
-transcript selection, and is the first HGVS resource to support the T2T-CHM13v2.0
-assembly.
+cdot stores MANE Select and Ensembl canonical tags enabling gene-symbol HGVS lookup via
+programmatic canonical transcript selection, and is the first HGVS resource to support
+the T2T-CHM13v2.0 assembly.
 
 **Availability and Implementation:**
 

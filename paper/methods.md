@@ -111,7 +111,8 @@ operations group into:
 - **Casing and prefixes**: uppercasing nucleotides in substitutions and del/ins/dup
   edits (`c.123delg` → `c.123delG`), lowercasing an uppercased mutation type while
   protecting gene symbols that contain those letters (so `NM_000059.4(INSR):c.…` is
-  never corrupted to `insR`), restoring a missing `N` prefix or transcript underscore,
+  never corrupted to `insR`), restoring a missing `N` prefix
+  (`M_000059.4` → `NM_000059.4`) or transcript underscore,
   and adding a missing `c.`/`g.` kind where the accession type makes it unambiguous.
 - **Reconstruction and gene/transcript repair**: a lenient pattern that rebuilds the
   canonical `transcript(gene):kind.variant` shape from a mangled one (inserting a
@@ -141,16 +142,17 @@ version), so it is never applied automatically. When the requested accession ver
 absent from a caller's data, it returns the best available adjacent version (under a
 configurable up-then-down, closest, or latest strategy) as a reported `HGVSFix`, and the
 caller decides whether to accept the change and rewrite the string, which keeps control
-of HGVS compatibility with the user. Examples in this section are
-synthesised from the public ClinVar transcripts NM_000059.4 (BRCA2) and NM_001754.5
-(RUNX1).
+of HGVS compatibility with the user. Before a substitution is accepted, cdot checks
+whether it is coordinate-safe using a build-independent test of the two versions' CDS
+structure (Results R5); the strategy chooses the candidate version, the safety check
+decides whether it can be used.
 
 ## Access and client libraries
 
 **Local JSON**: `JSONDataProvider` loads a JSON.gz file into memory on initialisation
 (typically ~{{ benchmark.grch38_load_time_s | dp(0) }} seconds for GRCh38 RefSeq),
-building interval trees for region queries and dictionaries for transcript and gene
-lookup. Transcript retrieval is then O(1), giving throughput of
+lazily building interval trees for region queries on first use and dictionaries for
+transcript and gene lookup. Transcript retrieval is then O(1), giving throughput of
 {{ benchmark.cdot_local_min_tps | commas }}–{{ benchmark.cdot_local_max_tps | commas }}
 transcripts/second (Results, Table 2).
 
@@ -177,8 +179,12 @@ ranges out of the genome FASTA. This reproduces an Ensembl transcript exactly, b
 guaranteed to match a RefSeq transcript, whose curated sequence can differ from the
 genome at a small number of positions. In practice variants are usually called against a
 genome-mapped read alignment, so any such discrepancy lies in the reference the variant
-was already described against; where exact RefSeq transcript sequence is required, SeqRepo
-provides it.
+was already described against. Where an exact RefSeq transcript sequence is needed, SeqRepo
+supplies it when it has the accession, but it does not hold every version cdot covers.
+`ChainedSeqFetcher` addresses this by trying several sequence sources in a caller-defined
+order, falling through to the next when one cannot supply a sequence, so a pipeline can,
+for example, prefer SeqRepo and fall back to `FastaSeqFetcher` (or the reverse) to
+maximise the fraction of transcripts it can serve.
 
 **PyHGVS integration**: `JSONPyHGVSTranscriptFactory` provides a transcript factory for
 the Counsyl PyHGVS library, exposing the same cdot transcript data to PyHGVS-based
@@ -194,7 +200,11 @@ accession. For example, a pipeline given `BRCA1:c.68_69del` with no transcript c
 up the MANE Select accession for BRCA1 (`NM_007294.4`) and resolve
 `NM_007294.4(BRCA1):c.68_69del` against the genome. To our knowledge this is the first
 HGVS data provider to expose programmatic canonical transcript selection aligned to the
-MANE standard [@Morales2022; @Wright2023].
+MANE standard [@Morales2022; @Wright2023]. Picking a single canonical transcript for a
+gene is not unambiguous: the clinically preferred transcript can differ from MANE Select,
+and a gene may have more than one transcript of interest. The selection is intended as a
+sensible default for search and gene-name lookup, not an authoritative clinical choice,
+and callers should apply their own discretion where it matters.
 
 ---
 
