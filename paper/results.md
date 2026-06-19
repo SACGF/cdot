@@ -16,14 +16,14 @@ data-availability).
 
 ---
 
-## R1: Transcript coverage and ClinVar resolution  *(Figure 1)*
+## R1: Transcript coverage and ClinVar resolution
 
 **[Tier 1]** The unit of coverage is the *transcript-version alignment*: a particular
 transcript version aligned to a particular genome build. The same transcript version is
 counted separately per build, because each alignment is what a resolution against that
 build actually needs. cdot covers {{ coverage.total_count | commas }} such alignments
 across all builds and sources, compared with ~{{ literature.uta_count | commas }} in UTA,
-a {{ coverage.improvement_fold | fmt('.1f') }}× increase (Figure 1). The gain has two
+a {{ coverage.improvement_fold | fmt('.1f') }}× increase. The gain has two
 distinct origins. First, historical depth: UTA does hold several versions per transcript,
 but cdot ingests the complete run of RefSeq and Ensembl releases straight from the FTP
 archives, so it retains many more historical versions. An NM_ version cited in an older
@@ -47,7 +47,7 @@ through cdot alone in R6. cdot resolved
 {{ clinvar.uta_resolution_pct | dp(1) }}% for UTA. On the RefSeq subset the two are at
 parity (~99% each); the entire difference is Ensembl, which UTA cannot resolve at all
 (0% of ENST inputs, as it stores no Ensembl alignments) whereas cdot resolves it
-natively (Figure 1; Supplementary Table S4). The benchmark is reproducible: the ClinVar
+natively (Supplementary Table S4). The benchmark is reproducible: the ClinVar
 build script, random seed, and resolution harness are committed.
 
 **[Tier 2: production validation, not reproducible].** The same gap holds on genuinely
@@ -76,7 +76,7 @@ generates. There is no ground-truth genomic coordinate for the private corpus, s
 metric is resolution rate rather than correctness, and because the classifications are
 patient-derived the corpus cannot be shared (Methods, data availability).
 
-## R2: String cleaning recovers malformed real-world HGVS  *(Figure 2)*
+## R2: String cleaning recovers malformed real-world HGVS
 
 The headline test of cleaning is its effect on a real production query stream; a
 reproducible injection benchmark provides a supporting safety check.
@@ -127,7 +127,7 @@ independent measure of real-world performance and is reported in the supplement 
 purpose here is to demonstrate the no-regression guarantee on which the production result
 depends.
 
-## R3: The ceiling of cleaning, a taxonomy of residual errors  *(Figure 2 / Table S6)*
+## R3: The ceiling of cleaning, a taxonomy of residual errors  *(Table S6)*
 
 **[Tier 2: not reproducible].** The 3.4% of the production corpus (1,118 queries; 860
 unique strings) that still fail to parse after cleaning define the ceiling of what
@@ -181,7 +181,7 @@ multi-release depth gives the fallback more versions to choose from, and it is n
 applied automatically, preserving exact-version semantics by default. Whether a given
 substitution is *coordinate-safe*, and how cdot decides, is the subject of R5.
 
-## R5: Transcript-version stability and safe version fallback  *(Figure S4)*
+## R5: Transcript-version stability and safe version fallback
 
 **[Tier 1]** The version fallback (R4) is only safe if substituting an adjacent version
 does not move the variant: a coding `c.` position must still map to the same genomic
@@ -243,7 +243,7 @@ rather than silently substituted, preserving exact-variant semantics.
 
 **[Tier 1]** To compare transcript backends fairly we held the sequence layer constant
 (every configuration was served by the *same local SeqRepo*), so the only thing that
-varies across rows of Table 2 is the transcript-data layer itself (Figure S1).
+varies across rows of Table 2 is the transcript-data layer itself.
 
 **Table 2. End-to-end HGVS resolution throughput by transcript backend**, sequence layer
 held constant (shared local SeqRepo), identical biocommons/hgvs engine. *(Tier 1.)*
