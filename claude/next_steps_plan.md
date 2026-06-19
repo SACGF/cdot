@@ -12,51 +12,7 @@ CSVs) have been removed; see "Completed" at the bottom for the IDs, so nothing i
 
 ---
 
-## BLOCKING — must exist before submission
-
-### B7. Documentation site (MkDocs + mkdocs-material)
-
-**Why:** The paper needs a citable docs URL. The GitHub wiki is not versioned with code
-and isn't citable. Developers integrating cdot expect discoverable, versioned docs. The
-`docs/` directory already holds the source material (schema, examples, fasta notes,
-version-safety write-up) but there is no `mkdocs.yml` and nothing is published.
-
-**What to do:**
-- Add `mkdocs.yml`; configure the mkdocs-material theme over the existing `docs/`.
-- Host on GitHub Pages (or Read the Docs) at a stable URL, ideally `docs.cdotlib.org` or
-  `cdotlib.readthedocs.io`.
-- Migrate useful wiki content into the structure.
-- Structure:
-  - `index.md` — what cdot is, one-minute install + example
-  - `quickstart.md` — biocommons/hgvs integration, PyHGVS integration, full working code
-  - `data-files.md` — how to get JSON.gz files (GitHub releases, `data_release.py`)
-  - `clean-hgvs.md` — `clean_hgvs()` and `get_best_transcript_version()` with examples
-  - `canonical.md` — gene-symbol HGVS resolution (`resolve_gene_hgvs` / `fix_hgvs`),
-    `get_tx_ac_tags_for_gene` tag ranking, MANE, resolving gene-only HGVS (#36)
-  - `rest-api.md` — cdotlib.org endpoints, `RESTDataProvider`
-  - `data-format.md` — JSON schema, exon 6-tuple, gap encoding (for tool authors)
-  - `data-generation.md` — building your own JSON.gz from RefSeq/Ensembl GTF/GFF3;
-    Snakemake pipeline; source priority; adding a genome build or species (#95)
-
-**Note:** `data-generation.md` matters for users with non-human organisms or custom
-assemblies who need to run the pipeline themselves.
-
----
-
 ## STRENGTHENS THE PAPER — non-blocking but important
-
-### S4. FastaSeqFetcher mismatch detection and documentation (#84, #55)
-
-**Why:** FastaSeqFetcher is the offline sequence path; if it silently returns wrong
-sequences for gap-flagged transcripts it undermines the correctness story.
-
-**What to do:**
-- Use the stored `note` field to detect RefSeq-flagged indel transcripts.
-- Emit a warning (not an error) when `ExonsFromGenomeFastaSeqFetcher` is used for such a
-  transcript.
-- Add a docs page: when to use FastaSeqFetcher, what its limitations are.
-- Investigate `NM_000399.3` discrepancy (#55) — cdot bug or genuine RefSeq/genome
-  divergence?
 
 ### A1. Single ClinVar parse/resolution pass (shared infra for R5b + R6)
 
@@ -126,47 +82,7 @@ we can pick one with a WARNING.
   equivalent, return an ERROR fix and leave the string unchanged (mirrors the `REFUSE`
   default of `on_unsafe_version`). No silent pick.
 - File a GitHub issue; add a `CHANGELOG.md` `[unreleased]` entry referencing it. Lands in
-  `cdot/hgvs/clean.py` / `gene_hgvs.py`. Document under the planned `clean-hgvs.md` (B7).
-
----
-
-## POST-PAPER / FUTURE WORK
-
-### S2 (demoted). BRCA2 gap support verification — no longer a paper claim
-
-**Status change:** The paper deliberately removed the gap-correctness framing (per
-feedback): cdot *stores* per-exon gap data, but applying it is a downstream-library
-concern, not promoted as a cdot result (see `results.md` R7, and the now-removed
-intro/methods notes). So reproducing the Münz 32% is no longer a paper-strengthening
-item — it would re-introduce a claim the paper chose not to make. The correctness-of-gap
-concern that *does* still matter (does `FastaSeqFetcher` return wrong sequence for
-gap-flagged transcripts) is covered by **S4**. Keep this only as optional post-paper
-validation; do not add a benchmark-figure panel for it.
-
-### F3. Automated data-release regeneration (stated as planned in Discussion)
-
-**Why:** `discussion.md` now states that automating regeneration, so each new RefSeq and
-Ensembl release is ingested and published as a data release without manual intervention,
-is a planned improvement. The plan should track what the paper promises.
-
-**What to do:**
-- Wire the Snakemake pipeline + release publishing into a scheduled/CI job that detects a
-  new RefSeq/Ensembl release, regenerates the JSON.gz, and publishes a GitHub data release.
-- Not blocking for submission; it backs a forward-looking sentence, not a result.
-
-### F1. GFF/GTF parser refactor: split by source not format (#101)
-
-The GTFParser/GFF3Parser split follows file format but logic differs by source (RefSeq vs
-Ensembl). This breaks Ensembl GFF3 protein version extraction. A proper fix splits into
-`RefSeqParser` and `EnsemblParser`. High effort; needs CI first. Not needed for the paper.
-
-### F2. CDS phase / ribosomal frameshift support (#76)
-
-Genes with −1 frameshifting (e.g. `NM_015068.3` / PEG10) have incorrect protein
-reconstruction from cdot data. Fix requires GFF3 phase column parsing and either a 7th
-exon tuple element or migration to exon dicts (#78). Biocommons HGVS does not yet consume
-phase, so impact is limited to non-HGVS consumers (pyreference). Worth a mention in the
-paper as a known limitation.
+  `cdot/hgvs/clean.py` / `gene_hgvs.py`. Document under the planned `clean-hgvs.md` docs page (#117).
 
 ---
 
@@ -183,14 +99,10 @@ paper as a known limitation.
 
 | ID | Task | Effort | Blocks submission |
 |----|------|--------|-------------------|
-| B7 | Documentation site (MkDocs) | Medium | Yes — citable URL for paper |
-| S4 | FastaSeqFetcher mismatch detection | Medium | No |
 | A1 | Single ClinVar parse/resolution pass | Medium | No — shared infra for R5b/R6 |
 | R5b | Empirical validation of safe version bumps | Medium | No — but strong reviewer defense |
 | R6 | Categorize the 1.2% genomic-match failures | Low | No — likely raises true accuracy |
 | R7 | Versionless transcript resolution (REFUSE on ambiguity) | Medium | No — client feature + changelog |
 | S2 | BRCA2 gap verification (demoted, post-paper) | Medium | No — dropped from paper framing |
 | F3 | Automated data-release regeneration | Medium | No — backs a Discussion sentence |
-| F1 | Parser refactor | High | No |
-| F2 | CDS phase support | Medium | No |
 
