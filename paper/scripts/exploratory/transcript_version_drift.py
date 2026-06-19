@@ -44,10 +44,13 @@ NOTE: cdot stores the genome *alignment*, not the transcript sequence.  A versio
 bump happens for sequence reasons, but only the part of that change that alters
 the alignment can move a coordinate — which is exactly what this measures.
 
-Standalone — NOT wired into Snakemake or the paper.
+Exploratory precursor to the C2 experiment. The reproducible (Tier-1) write-up
+now lives in paper/scripts/compute_version_stability.py (wired into
+paper/Snakefile, reusing the packaged cdot.hgvs.version_safety helpers). Kept for
+the record; this script itself is standalone and NOT wired into the paper build.
 
 Usage:
-  python analysis/transcript_version_drift.py \
+  python paper/scripts/exploratory/transcript_version_drift.py \
       --json /data/cdot_data/refseq/cdot-0.2.33.refseq.GRCh38.json.gz \
       --build GRCh38 --sample 12000 [--seed 0]
 """

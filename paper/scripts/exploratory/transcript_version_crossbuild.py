@@ -29,10 +29,13 @@ genome_builds dict spanning builds) and measures:
       change), i.e. can REST's all-build view catch what single-build bracketing
       misses?
 
-Standalone — NOT wired into Snakemake, the paper, or the library.
+Exploratory precursor to the C2 experiment. The reproducible (Tier-1) write-up
+now lives in paper/scripts/compute_version_stability.py (wired into
+paper/Snakefile, reusing the packaged cdot.hgvs.version_safety helpers). Kept for
+the record; this script itself is standalone and NOT wired into the paper build.
 
 Usage:
-  python analysis/transcript_version_crossbuild.py \
+  python paper/scripts/exploratory/transcript_version_crossbuild.py \
       --json /data/cdot_data/refseq/cdot-0.2.33.all-builds-refseq-grch37_grch38_t2t-chm13v2.0.json.gz \
       --target GRCh38 --other GRCh37 --sample 12000 [--seed 0]
 """
