@@ -14,6 +14,34 @@ CSVs) have been removed; see "Completed" at the bottom for the IDs, so nothing i
 
 ## STRENGTHENS THE PAPER — non-blocking but important
 
+### R8. Dig into the ClinVar VCF-comparison coordinate differences (new)
+
+**Why:** The VCF-coordinate ClinVar pass (R6, `resolve_clinvar_pass.py` on the VCF-format
+pairs) leaves 1,766 `incorrect` of 4.38M (0.04%); writeup in
+`claude/clinvar_diff_coordinates.md`, residual rows in
+`output/clinvar_pass/vcf_errors.csv`. The categories are mostly artifacts, not cdot
+errors, but the residual has not been fully run to ground:
+
+- **`snv_diff_pos` (406 / 42 transcripts)** clusters by transcript with a constant
+  per-transcript offset (whole-transcript re-placement: paralog / copy-number genes such
+  as GSTT-family NM_000854). Confirm each is a genuine multi-mapping locus (cdot picked a
+  different copy than ClinVar) vs an actual cdot alignment error, e.g. by checking whether
+  the transcript has multiple genomic alignments in the source GFF / cdot data.
+- **`indel_mismatch` (1,116 / 471 transcripts)**: confirm these are left-alignment /
+  repeat-region representation differences, not coordinate errors (re-normalise both sides
+  through a common left-aligner and re-compare).
+- **`babelfish_megaallele` (178)**: a Babelfish insertion left-shuffle artifact; decide
+  whether to special-case (cap shuffle / compare un-shuffled) so they stop counting as
+  incorrect.
+- **Release skew:** rebuild the pairs from a `variant_summary` + ClinVar VCF of the *same*
+  release to remove the wrong-ground-truth rows, then re-derive the residual.
+
+Goal: a defensible "true cdot coordinate-error rate" (genuine disagreements only) for the
+paper, well below the 0.04% raw incorrect rate. Low priority; the headline VCF accuracy
+already stands.
+
+
+
 ### R7. Versionless transcript resolution in `get_best_transcript_version` (new issue)
 
 **Why:** A client / code feature (changelog-worthy), not paper analysis, but motivated by

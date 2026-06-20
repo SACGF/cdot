@@ -43,6 +43,17 @@ parity (~99% each); the entire difference is Ensembl, which UTA cannot resolve a
 natively (Supplementary Table S4). The benchmark is reproducible: the ClinVar
 build script, random seed, and resolution harness are committed.
 
+At full scale, resolving every RefSeq c.HGVS in ClinVar through cdot alone
+({{ clinvar_vcf.n_pairs | commas }} (g.,c.) pairs) reaches
+{{ clinvar_vcf.resolved_pct | dp(1) }}% resolution, and of the variants resolved
+{{ clinvar_vcf.matched_of_resolved_pct | dp(1) }}% reproduce ClinVar's own VCF
+coordinate exactly. We score the projection as a VCF coordinate (CHROM/POS/REF/ALT)
+rather than as a g.HGVS string, so equivalent representations (3'-shift, del/dup
+spellings) and the ClinVar variants written with tandem-repeat or identity notation are
+not miscounted as disagreements. The residual {{ clinvar_vcf.incorrect_pct | dp(2) }}% is
+dominated by paralog and copy-number transcripts that map to more than one genomic locus
+and by indel-representation differences, not by coordinate errors (Supplementary Table S4).
+
 **[Tier 2: production validation, not reproducible].** The same gap holds on genuinely
 historical clinical data, the data that motivated cdot. We resolved the complete set of
 {{ historical.n_lines | commas }} unique HGVS descriptions imported into the Australian
@@ -218,19 +229,37 @@ work even when the requested version was never aligned to the target build. To j
 substituting an available version for a requested one in, say, GRCh38, cdot reads the
 requested version's intrinsic CDS structure from any build that carries it (the structure
 is build-independent, so a GRCh37 or T2T record serves), reads the substitute version's
-structure from GRCh38, and substitutes only when the two match; a match guarantees every
-coding position maps to the same GRCh38 coordinate. Because the comparison is on the
-structure itself rather than on flanking genomic coordinates, it also catches
+structure from GRCh38, and substitutes only when the two match. Because the comparison is
+on the structure itself rather than on flanking genomic coordinates, it also catches
 transient-revert versions (a coordinate that goes A→B→A) that a genomic-bracket check
 between neighbours cannot see.
+
+Identical transcript structure is necessary but not on its own sufficient, so the gate
+adds two refinements. An alignment gap (a transcript-vs-genome indel) present in one
+version and not the other shifts every coding base downstream of it, so the gate also
+requires the two versions' CDS alignment gaps to match. And because the structure is
+build-independent it cannot see the variant's position relative to the UTRs: a 5' or 3'
+UTR variant can move when only the UTR length changes (UTR annotations change between
+versions far more often than the CDS), so for a cited UTR position the matching UTR length
+must be preserved too, while a coding variant on a UTR-only change stays safe. We
+validated the gate empirically against ClinVar: of the
+{{ version_safety_validation.n_safe_substitutions | commas }} version substitutions the
+structure, gap, and UTR checks accept across the full RefSeq corpus, only
+{{ version_safety_validation.n_coordinate_changes }} still move the genomic coordinate,
+both a single transcript that re-aligns the same CDS structure to a different genomic
+locus. The build-independent structure cannot see such a re-placement, so cdot
+additionally compares the two versions' genomic CDS maps when both are loaded, and ships a
+small precomputed blocklist of these re-placements for the case where the requested
+version is absent from the loaded data; with these, no accepted substitution moves a
+coordinate.
 
 cdot ships this as the safety gate behind the version fallback
 (`intrinsic_cds_structure()` and the data-provider method
 `is_version_substitution_safe()`): when the requested version is absent, the substitute
-is applied only if its intrinsic CDS structure matches the requested version's, reported
-as a coordinate-safe `HGVSFix`; a structural mismatch (or a version absent from every
-build, where only a probabilistic genomic-bracket check remains) is refused by default
-rather than silently substituted, preserving exact-variant semantics.
+is applied only if it is coordinate-safe by these tests, reported as a coordinate-safe
+`HGVSFix`; a structural mismatch (or a version absent from every build, where only a
+probabilistic genomic-bracket check remains) is refused by default rather than silently
+substituted, preserving exact-variant semantics.
 
 ## R6: Throughput
 

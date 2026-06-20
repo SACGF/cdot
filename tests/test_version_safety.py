@@ -16,8 +16,11 @@ import pytest
 
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
 from cdot.hgvs.version_safety import (
+    cds_alignment_gaps,
     describe_structure_change,
     intrinsic_cds_structure,
+    utr_lengths,
+    utr_regions_touched,
 )
 
 
@@ -51,6 +54,11 @@ EXONS_LONGER = [[900, 910, 0, 1, 10, None], [2000, 2023, 1, 11, 33, None]]
 # Same CDS length (30) but the exon boundary moved to transcript position 16:
 # segment lengths (15, 15) instead of (10, 20) → structure differs.
 EXONS_RESPLIT = [[100, 115, 0, 1, 15, None], [200, 215, 1, 16, 30, None]]
+# Identical transcript/CDS structure to EXONS (cds_start/cds_end unchanged) but the
+# second coding exon carries a 1-base alignment gap, so its genomic span is one
+# longer and every coding base downstream of the gap shifts. Intrinsic structure
+# compares equal; only the gap signature differs.
+EXONS_GAP = [[100, 110, 0, 1, 10, None], [200, 221, 1, 11, 30, "M5 D1 M15"]]
 
 
 # ---------------------------------------------------------------------------
@@ -96,6 +104,53 @@ def test_intrinsic_structure_none_for_noncoding():
     assert intrinsic_cds_structure(rec) is None
 
 
+def test_cds_alignment_gaps_clean_is_empty():
+    rec = _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})
+    assert cds_alignment_gaps(rec) == ()
+
+
+def test_cds_alignment_gaps_reports_coding_exon_gap():
+    rec = _tx("NM_000059.5", 0, 30, {"GRCh38": EXONS_GAP})
+    # gap on the second coding exon (CDS-segment index 1)
+    assert cds_alignment_gaps(rec) == ((1, "M5 D1 M15"),)
+
+
+def test_intrinsic_structure_blind_to_gap_but_signature_differs():
+    # The whole point: intrinsic structure is identical, the gap signature is not.
+    clean = _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})
+    gapped = _tx("NM_000059.5", 0, 30, {"GRCh38": EXONS_GAP})
+    assert intrinsic_cds_structure(clean) == intrinsic_cds_structure(gapped)
+    assert cds_alignment_gaps(clean) != cds_alignment_gaps(gapped)
+
+
+def test_utr_lengths():
+    # start_codon=5 (5'UTR len 5), stop_codon=25, total cDNA = 30 → 3'UTR len 5.
+    rec = _tx("NM_000059.4", 5, 25, {"GRCh38": EXONS})
+    assert utr_lengths(rec) == (5, 5)
+
+
+def test_utr_lengths_none_for_noncoding():
+    rec = {"id": "NR_1.1", "gene_name": "X",
+           "genome_builds": {"GRCh38": _build(EXONS)}}
+    assert utr_lengths(rec) is None
+
+
+@pytest.mark.parametrize("cited, expected", [
+    ("-49=", {"five_prime"}),
+    ("-49+10A>G", {"five_prime"}),       # 5'UTR intronic
+    ("-3_5del", {"five_prime"}),         # range spanning into the CDS
+    ("*100A>G", {"three_prime"}),
+    ("*5_*10del", {"three_prime"}),
+    ("123A>G", set()),                   # coding
+    ("123+5G>A", set()),                 # CDS intronic (+ offset)
+    ("2604-1G>C", set()),                # CDS intronic (- offset, not 5'UTR)
+    ("123_124insAT", set()),
+    ("", set()),
+])
+def test_utr_regions_touched(cited, expected):
+    assert utr_regions_touched(cited) == expected
+
+
 def test_describe_structure_change_cds_length():
     a = ("+", 30, (10, 20))
     b = ("+", 33, (10, 23))
@@ -119,13 +174,64 @@ def _provider(transcripts, builds=("GRCh37", "GRCh38")):
 
 
 def test_substitution_safe_identical_structure():
+    # Same structure AND same genomic placement → safe.
+    dp = _provider({
+        "NM_000059.3": _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS}),
+        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS}),
+    })
+    safe, reason = dp.is_version_substitution_safe("NM_000059", 3, 4, "GRCh38")
+    assert safe
+    assert "identical CDS structure" in reason
+
+
+def test_substitution_unsafe_genomic_replacement_same_build():
+    # Identical intrinsic CDS structure but the CDS is placed at a different genomic
+    # locus in the same build (mode-2 re-placement, eg NM_018263). Recomputed from the
+    # loaded annotation: both versions are present, so the placement difference is seen
+    # directly and the substitution is refused.
     dp = _provider({
         "NM_000059.3": _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS}),
         "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS_MOVED}),
     })
     safe, reason = dp.is_version_substitution_safe("NM_000059", 3, 4, "GRCh38")
+    assert not safe
+    assert "placement" in reason
+
+
+def test_substitution_unsafe_gap_differs_same_structure():
+    # Identical intrinsic CDS structure, but one version has an alignment gap the
+    # other lacks: the coding coordinate would shift, so it must not be called safe.
+    dp = _provider({
+        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS}),
+        "NM_000059.5": _tx("NM_000059.5", 0, 30, {"GRCh38": EXONS_GAP}),
+    })
+    safe, reason = dp.is_version_substitution_safe("NM_000059", 4, 5, "GRCh38")
+    assert not safe
+    assert "gap" in reason
+
+
+def test_substitution_safe_when_gaps_match():
+    # Both versions carry the same alignment gap → coding coordinates agree → safe.
+    dp = _provider({
+        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS_GAP}),
+        "NM_000059.5": _tx("NM_000059.5", 0, 30, {"GRCh38": EXONS_GAP}),
+    })
+    safe, reason = dp.is_version_substitution_safe("NM_000059", 4, 5, "GRCh38")
     assert safe
     assert "identical CDS structure" in reason
+
+
+def test_blocklist_refuses_known_replacement_even_when_requested_absent(monkeypatch):
+    # The shipped blocklist exists for the case the provider cannot recompute: the
+    # requested version is absent from the loaded data. Here only .4 is present; the
+    # blocklist still refuses substituting it for the absent .2.
+    import cdot.hgvs._version_replacement_blocklist as bl
+    monkeypatch.setattr(bl, "KNOWN_REPLACEMENT_SUBSTITUTIONS",
+                        frozenset({("NM_000059", 2, 4)}))
+    dp = _provider({"NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})})
+    safe, reason = dp.is_version_substitution_safe("NM_000059", 2, 4, "GRCh38")
+    assert not safe
+    assert "blocklist" in reason
 
 
 def test_substitution_unsafe_cds_length_change():

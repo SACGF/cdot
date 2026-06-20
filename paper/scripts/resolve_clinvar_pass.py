@@ -45,20 +45,23 @@ Usage:
 Input file: TSV with two columns  g.HGVS <TAB> c.HGVS  (one variant per line).
 """
 import argparse
+import csv
 import logging
 import re
 import sys
 import time
 from pathlib import Path
 
-import pandas as pd
 import hgvs.parser
 from hgvs.assemblymapper import AssemblyMapper
 
 # Reuse the provider construction, pair loader and classifier from the sibling
 # benchmark script so the two stay in lock-step (same buckets, same provider flags).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from benchmark_resolution import build_provider, load_pairs, classify  # noqa: E402
+from benchmark_resolution import (  # noqa: E402
+    build_provider, classify, classify_vcf,
+    is_vcf_pairs, iter_pairs, iter_vcf_pairs,
+)
 
 from cdot.hgvs.clean import HGVSFixSeverity, VersionStrategy  # noqa: E402
 from cdot.hgvs.gene_hgvs import fix_hgvs  # noqa: E402
@@ -87,49 +90,56 @@ def fix_codes_for(provider, build, c_hgvs, version_fallback):
     return ";".join(f.code.name for f in fixes if f.severity == HGVSFixSeverity.WARNING)
 
 
-def run_pass(am, hp, provider, build, pairs, with_fixes, version_fallback):
-    """Resolve every pair once; return (rows, wall_seconds)."""
-    rows = []
-    t0 = time.perf_counter()
+FIELDNAMES = ["g_hgvs", "c_hgvs", "tx", "version", "bucket", "converted_g", "fix_codes"]
+
+
+def _row(g_hgvs, c_hgvs, bucket, converted, provider, build, with_fixes, version_fallback):
+    tx, version = parse_tx_version(c_hgvs)
+    return {
+        "g_hgvs": g_hgvs,
+        "c_hgvs": c_hgvs,
+        "tx": tx,
+        "version": version if version is not None else "",
+        "bucket": bucket,
+        "converted_g": converted if converted is not None else "",
+        "fix_codes": fix_codes_for(provider, build, c_hgvs, version_fallback) if with_fixes else "",
+    }
+
+
+def gen_rows(am, hp, provider, build, pairs, with_fixes, version_fallback):
+    """Yield one result row per (g.HGVS, c.HGVS) pair (g.HGVS-string scoring)."""
     for g_hgvs, c_hgvs in pairs:
         bucket, converted = classify(am, hp, g_hgvs, c_hgvs)
-        tx, version = parse_tx_version(c_hgvs)
-        rows.append({
-            "g_hgvs": g_hgvs,
-            "c_hgvs": c_hgvs,
-            "tx": tx,
-            "version": version if version is not None else "",
-            "bucket": bucket,
-            "converted_g": converted if converted is not None else "",
-            "fix_codes": fix_codes_for(provider, build, c_hgvs, version_fallback) if with_fixes else "",
-        })
-    return rows, time.perf_counter() - t0
+        yield _row(g_hgvs, c_hgvs, bucket, converted, provider, build, with_fixes, version_fallback)
 
 
-def check_out_format(out_path):
-    """Fail fast (before the slow pass) if a parquet target has no engine installed."""
-    if Path(out_path).suffix == ".parquet":
-        try:
-            import pyarrow  # noqa: F401
-        except ImportError:
-            try:
-                import fastparquet  # noqa: F401
-            except ImportError:
-                sys.exit("--out is .parquet but neither pyarrow nor fastparquet is "
-                         "installed; use a .csv path or `pip install pyarrow`.")
+def gen_rows_vcf(am, hp, bf, provider, build, vcf_pairs, with_fixes, version_fallback):
+    """Yield one result row per VCF pair: scores cdot's c_to_g as a VCF tuple against
+    the ClinVar VCF ground truth (representation-robust; handles repeat/identity HGVS).
+    g_hgvs holds the reference CLNHGVS, converted_g holds cdot's VCF call (chrom-pos-ref-alt)."""
+    for gt, g_hgvs, c_hgvs in vcf_pairs:
+        bucket, converted = classify_vcf(am, hp, bf, gt, c_hgvs)
+        yield _row(g_hgvs, c_hgvs, bucket, converted, provider, build, with_fixes, version_fallback)
 
 
-def write_table(rows, out_path):
-    """Write the per-variant table as CSV or parquet (by extension)."""
-    df = pd.DataFrame(rows, columns=[
-        "g_hgvs", "c_hgvs", "tx", "version", "bucket", "converted_g", "fix_codes"])
+def stream_to_csv(rows, out_path):
+    """Write rows (an iterable of dicts) to CSV one at a time; return (counts, total,
+    wall_seconds). Holds only one row in memory, so a full-ClinVar pass peaks at the
+    provider index, not the whole result set."""
+    from collections import Counter
+    counts = Counter()
+    total = 0
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    if out.suffix == ".parquet":
-        df.to_parquet(out, index=False)
-    else:
-        df.to_csv(out, index=False)
-    return df
+    t0 = time.perf_counter()
+    with open(out, "w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=FIELDNAMES)
+        w.writeheader()
+        for row in rows:
+            w.writerow(row)
+            counts[row["bucket"]] += 1
+            total += 1
+    return counts, total, time.perf_counter() - t0
 
 
 def pct(n, d):
@@ -153,13 +163,15 @@ def main():
                     help="also run fix_hgvs() per variant and record its codes (off by "
                          "default: it doubles the resolution work and fires nothing on "
                          "already-clean ClinVar input)")
-    ap.add_argument("--out", required=True, help="per-variant results table (.csv or .parquet)")
+    ap.add_argument("--out", required=True, help="per-variant results table (.csv; streamed row by row)")
     ap.add_argument("--debug", action="store_true")
     args = ap.parse_args()
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.WARNING)
 
-    check_out_format(args.out)
-    pairs = load_pairs(args.pairs_file)
+    if Path(args.out).suffix == ".parquet":
+        sys.exit("--out streams to CSV; pass a .csv path (the full pass is too large "
+                 "to hold in memory for parquet).")
+    vcf_mode = is_vcf_pairs(args.pairs_file)
 
     t0 = time.perf_counter()
     provider, label = build_provider(args)
@@ -169,14 +181,20 @@ def main():
                         replace_reference=args.replace_reference)
     hp = hgvs.parser.Parser()
 
-    print(f"== ClinVar pass: {label}  |  {len(pairs)} pairs  |  {args.build}  "
+    compare = "VCF coordinate" if vcf_mode else "g.HGVS string"
+    print(f"== ClinVar pass: {label}  |  {args.build}  |  compare={compare}  "
           f"|  with_fixes={args.with_fixes} ==")
-    rows, wall = run_pass(am, hp, provider, args.build, pairs, args.with_fixes,
-                          VersionStrategy.UP_THEN_DOWN)
-    df = write_table(rows, args.out)
+    strategy = VersionStrategy.UP_THEN_DOWN
+    if vcf_mode:
+        from hgvs.extras.babelfish import Babelfish
+        bf = Babelfish(provider, args.build)
+        rows = gen_rows_vcf(am, hp, bf, provider, args.build,
+                            iter_vcf_pairs(args.pairs_file), args.with_fixes, strategy)
+    else:
+        rows = gen_rows(am, hp, provider, args.build,
+                        iter_pairs(args.pairs_file), args.with_fixes, strategy)
+    counts, total, wall = stream_to_csv(rows, args.out)
 
-    counts = df["bucket"].value_counts().to_dict()
-    total = len(df)
     resolved = counts.get("correct", 0) + counts.get("incorrect", 0)
     print(f"  load_time         : {load_time:.2f}s")
     for b in ("correct", "incorrect", "no_data", "error"):

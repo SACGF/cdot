@@ -367,6 +367,23 @@ def _parse_versioned_transcript(hgvs_string: str) -> Optional[tuple[str, int]]:
     return base, int(version)
 
 
+def _cited_position(hgvs_string: str) -> Optional[str]:
+    """Return the text after ``c.``/``n.`` (position plus edit) of a c./n. HGVS, else None.
+
+    Used to make the version-substitution safety check position-aware: a 5'UTR
+    (``c.-N``) or 3'UTR (``c.*N``) cited position needs the matching UTR length
+    preserved, not just the CDS structure (see
+    ``is_version_substitution_safe``).
+    """
+    if ":" not in hgvs_string:
+        return None
+    _prefix, allele = hgvs_string.split(":", 1)
+    for kind in ("c.", "n."):
+        if allele.startswith(kind):
+            return allele[len(kind):]
+    return None
+
+
 def _get_tx_versions(data_provider, versionless: str, genome_build: Optional[str]) -> list[int]:
     """Call ``get_tx_versions``, passing ``genome_build`` only if the provider accepts it.
 
@@ -469,7 +486,8 @@ def resolve_transcript_version(
         # Provider can't assess coordinate-safety — keep the plain substitution fix.
         return resolved, [fix]
 
-    safe, reason = safety(versionless, requested_version, best, genome_build)
+    safe, reason = safety(versionless, requested_version, best, genome_build,
+                          cited_position=_cited_position(hgvs_string))
     moved = (f"Transcript version {versionless}.{requested_version} not found; "
              f"using .{best} instead")
     if safe:

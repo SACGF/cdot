@@ -40,6 +40,38 @@
 
 ### Table S4: ClinVar benchmark details
 
-Breakdown of [N] ClinVar HGVS variants tested: counts by resolution source (RefSeq
-GRCh38, Ensembl GRCh38, GRCh37, unresolved), and failure reason (unknown accession,
-unknown version, parse error).
+Full-scale resolution of every RefSeq c.HGVS in ClinVar through cdot alone (GRCh38, cdot
+0.2.33). Unlike the cdot-vs-UTA comparison in Results R1 (gated to a sample by UTA's
+throughput), every variant is summarised here because only cdot is in the loop. The
+projection is scored as a VCF coordinate (CHROM/POS/REF/ALT) against ClinVar's own VCF,
+not as a g.HGVS string, so equivalent representations and ClinVar's tandem-repeat / identity
+notations are not miscounted.
+
+**Caveat.** ClinVar submissions are dominated by a handful of large (largely US) clinical
+laboratories citing mostly current RefSeq versions, so this is a clean, public,
+reproducible scale check that cdot resolves real variants at scale, not an unbiased sample
+of the transcripts clinical labs use. The unbiased real-world complement is the Shariant
+historical corpus (Results R1, Tier 2). The input is RefSeq-only (ClinVar's Name column is
+RefSeq-centric), so there is no Ensembl row here.
+
+Total pairs: {{ clinvar_vcf.n_pairs | commas }}.
+
+| Outcome | Count | % |
+|---|---|---|
+| Resolved | {{ clinvar_vcf.n_resolved | commas }} | {{ clinvar_vcf.resolved_pct | dp(1) }} |
+| Matched (cdot coordinate = ClinVar VCF) | {{ clinvar_vcf.n_correct | commas }} | {{ clinvar_vcf.matched_pct | dp(2) }} |
+| Coordinate differs | {{ clinvar_vcf.incorrect | commas }} | {{ clinvar_vcf.incorrect_pct | dp(2) }} |
+| Unresolved (no data) | {{ clinvar_vcf.no_data | commas }} | |
+| Unresolved (input not parseable / convertible) | {{ clinvar_vcf.error | commas }} | |
+
+Of the {{ clinvar_vcf.matched_of_resolved_pct | dp(2) }}% match rate among resolved
+variants, the {{ clinvar_vcf_residual.n_incorrect | commas }} coordinate differences are
+overwhelmingly representation or multi-mapping, not cdot errors:
+{{ clinvar_vcf_residual.indel_mismatch | commas }} indel / left-alignment representation
+differences; {{ clinvar_vcf_residual.snv_diff_pos | commas }} SNVs concentrated in just
+{{ clinvar_vcf_residual.snv_diff_pos_transcripts }} transcripts (paralog and copy-number
+genes that map to more than one genomic locus, each with a constant per-transcript offset);
+{{ clinvar_vcf_residual.babelfish_megaallele | commas }} insertions over-shuffled by the
+VCF normaliser; {{ clinvar_vcf_residual.ambiguity_code_allele }} IUPAC ambiguity-code
+alleles (position matches, only the degenerate base differs); and
+{{ clinvar_vcf_residual.identity_or_symbolic }} identity/symbolic alleles.

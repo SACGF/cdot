@@ -115,6 +115,91 @@ def classify(am, hp, g_hgvs, c_hgvs):
     return ("correct" if converted == g_hgvs else "incorrect"), converted
 
 
+# --- VCF-coordinate comparison (preferred over g.HGVS string matching) ----------
+#
+# Comparing the c_to_g result as a VCF tuple (chrom, pos, ref, alt) via biocommons
+# Babelfish is representation-robust (3'-shift, equivalent del/dup spellings collapse
+# to one form) and is defined even for the ClinVar variants whose CLNHGVS uses
+# tandem-repeat ``ref[N]`` or identity ``=`` notation the HGVS parser cannot read -
+# the ground truth there comes from the VCF's own CHROM/POS/REF/ALT columns, never
+# from parsing the HGVS string.
+
+def normalize_vcf(chrom, pos, ref, alt):
+    """Trim a VCF allele to parsimonious form for comparison: (chrom, pos, ref, alt).
+
+    Both Babelfish output and the ClinVar VCF are left-aligned, so trimming the shared
+    prefix/suffix (and advancing pos) is enough to make equivalent calls compare equal.
+    """
+    pos = int(pos)
+    ref = (ref or "").upper()
+    alt = (alt or "").upper()
+    if alt in (".", "", "*") or not ref:  # symbolic / identity: nothing to trim
+        return (str(chrom), pos, ref, alt)
+    while len(ref) > 1 and len(alt) > 1 and ref[-1] == alt[-1]:
+        ref, alt = ref[:-1], alt[:-1]
+    while len(ref) > 1 and len(alt) > 1 and ref[0] == alt[0]:
+        ref, alt, pos = ref[1:], alt[1:], pos + 1
+    return (str(chrom), pos, ref, alt)
+
+
+def classify_vcf(am, hp, bf, gt, c_hgvs):
+    """VCF-coordinate variant of classify(). ``gt`` is the ground-truth (chrom, pos,
+    ref, alt) from the ClinVar VCF; ``bf`` is a biocommons Babelfish for this assembly.
+    Returns (bucket, converted_vcf_str_or_None) with the same buckets as classify()."""
+    try:
+        var_c = hp.parse_hgvs_variant(c_hgvs)
+        var_g = am.c_to_g(var_c) if ":c." in c_hgvs else am.n_to_g(var_c)
+        chrom, pos, ref, alt, _typ = bf.hgvs_to_vcf(var_g)
+        conv = normalize_vcf(chrom, pos, ref, alt)
+    except HGVSDataNotAvailableError:
+        return "no_data", None
+    except HGVSInvalidVariantError:
+        return "error", None
+    except Exception as e:  # noqa: BLE001 - benchmark wants to keep going
+        logging.debug("error on %s: %s", c_hgvs, e)
+        return "error", None
+    conv_str = "-".join(str(x) for x in conv)
+    return ("correct" if conv == normalize_vcf(*gt) else "incorrect"), conv_str
+
+
+def iter_pairs(path):
+    """Stream a legacy 2-column (g.HGVS, c.HGVS) pairs file one record at a time."""
+    with open(path) as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split("\t") if "\t" in line else line.split()
+            if len(parts) >= 2:
+                yield parts[0], parts[1]
+
+
+def iter_vcf_pairs(path):
+    """Stream a VCF-format pairs TSV (header ``chrom pos ref alt g_hgvs c_hgvs``) one
+    record at a time, yielding ((chrom, pos, ref, alt), g_hgvs, c_hgvs). Streaming so a
+    full-ClinVar pass holds only the provider index in RAM, not the whole pair set."""
+    with open(path) as fh:
+        header = fh.readline().rstrip("\n").split("\t")
+        idx = {name: i for i, name in enumerate(header)}
+        for line in fh:
+            f = line.rstrip("\n").split("\t")
+            if len(f) < 6:
+                continue
+            gt = (f[idx["chrom"]], f[idx["pos"]], f[idx["ref"]], f[idx["alt"]])
+            yield gt, f[idx["g_hgvs"]], f[idx["c_hgvs"]]
+
+
+def load_vcf_pairs(path):
+    """Eager list form of :func:`iter_vcf_pairs` (small inputs / tests)."""
+    return list(iter_vcf_pairs(path))
+
+
+def is_vcf_pairs(path):
+    """True if the pairs file is the VCF format (detected by its header)."""
+    with open(path) as fh:
+        return fh.readline().startswith("chrom\t")
+
+
 def run_resolution(am, hp, pairs, show_incorrect=False):
     counts = {"correct": 0, "incorrect": 0, "no_data": 0, "error": 0}
     times = []

@@ -30,14 +30,22 @@ Method note (why this is exact and cheap, mirroring the analysis scripts): cdot
 stores the genome *alignment*, not the sequence.  Each exon is
 ``[alt_start, alt_end, exon_id, cds_start, cds_end, gap]``, a piecewise-linear map
 between 1-based spliced-transcript coordinates (``cds_start``/``cds_end``) and
-genomic coordinates.  ``c.X`` anchors at the start codon, so UTR-only edits are
-automatically "preserving".  The intrinsic structure is derived purely from the
-transcript coordinates, which are identical across builds and unaffected by
-alignment gaps; the genomic map (used only by the fallback) is exact between
-breakpoints because the slope is unit, so two gap-free maps agree on a
-sub-interval iff they agree at its left breakpoint.
+genomic coordinates.  ``c.X`` anchors at the start codon.  The intrinsic structure
+is derived purely from the transcript coordinates, which are identical across
+builds.  Those transcript coordinates are unaffected by alignment gaps, but the
+c.-to-genomic *mapping* is not: a transcript-vs-genome indel (an alignment gap)
+shifts every coding base downstream of it, so two versions with identical
+intrinsic structure can still place a coding base at different genomic
+coordinates.  Identical intrinsic structure is therefore necessary but not
+sufficient; the safety check (:meth:`is_version_substitution_safe`) also requires
+the CDS alignment gaps to match (:func:`cds_alignment_gaps`).  Gaps are
+build-specific, so that gap check is exact when both versions are placed in the
+same build and conservative across builds.  Note the structure validates only
+coding (c.) positions; a UTR/intronic position can still move if the surrounding
+non-coding exon structure changes between versions.
 """
 
+import re
 from typing import Optional
 
 
@@ -67,8 +75,10 @@ def intrinsic_cds_structure(transcript, genome_build: Optional[str] = None):
     even when the requested version is absent from the target build but present in
     another (the whole point of the cross-build result).  Returns ``None`` for
     non-coding transcripts, a missing/zero-length CDS, or a record with no usable
-    build.  Unlike the genomic check, alignment gaps do *not* make this inexact —
-    transcript coordinates are exact regardless of gaps.
+    build.  The transcript coordinates this reads are exact regardless of alignment
+    gaps, but gaps still move the genomic mapping, so an equal structure must be
+    paired with :func:`cds_alignment_gaps` equality before a substitution is called
+    coordinate-safe.
     """
     sc = transcript.get("start_codon")
     ec = transcript.get("stop_codon")
@@ -103,6 +113,115 @@ def intrinsic_cds_structure(transcript, genome_build: Optional[str] = None):
     bounds = seg_starts + [cds_len]
     seg_lengths = tuple(hi - lo for lo, hi in zip(bounds, bounds[1:]))
     return (gb["strand"], cds_len, seg_lengths)
+
+
+def cds_alignment_gaps(transcript, genome_build: Optional[str] = None):
+    """Return a version's CDS alignment-gap signature in a build, or ``None``.
+
+    :func:`intrinsic_cds_structure` compares *transcript* coordinates, which are
+    blind to the transcript-to-genome alignment: two versions with identical CDS
+    structure can still map a coding base to a *different* genomic coordinate when
+    their alignment differs by a gap (a transcript-vs-genome indel shifts every
+    coding base downstream of it by the gap length). So identical intrinsic
+    structure is necessary but not sufficient for coordinate safety; the CDS
+    alignment gaps must match too.
+
+    The signature is a tuple of ``(coding_segment_index, gap_string)`` for every
+    coding exon that carries an alignment gap, in CDS order (an empty tuple when
+    the CDS aligns cleanly). Only exons that overlap the CDS are considered, since
+    a gap entirely in a non-coding exon cannot move a coding coordinate.
+
+    Unlike the intrinsic structure, alignment gaps are build-specific (a version
+    can align cleanly in one build and with a gap in another), so this is read
+    from ``genome_build`` when the record holds it, otherwise from any available
+    build. Two versions both placed in ``genome_build`` are therefore compared
+    exactly; a cross-build comparison (one side read from another build) is best
+    effort and conservative. Returns ``None`` for the same non-coding / missing-CDS
+    / no-build cases as :func:`intrinsic_cds_structure`.
+    """
+    sc = transcript.get("start_codon")
+    ec = transcript.get("stop_codon")
+    if sc is None or ec is None:
+        return None
+    cds_len = ec - sc
+    if cds_len <= 0:
+        return None
+
+    gb = _pick_build(transcript, genome_build)
+    if gb is None:
+        return None
+
+    cds_lo = sc + 1
+    cds_hi = sc + cds_len
+
+    gaps = []
+    seg_idx = 0
+    for exon in gb["exons"]:
+        tx_start, tx_end = exon[3], exon[4]
+        gap = exon[5] if len(exon) > 5 else None
+        if tx_start > cds_hi or tx_end < cds_lo:
+            continue  # non-coding exon: its gap cannot move a coding coordinate
+        if gap:
+            gaps.append((seg_idx, gap))
+        seg_idx += 1
+    return tuple(gaps)
+
+
+def utr_lengths(transcript, genome_build: Optional[str] = None):
+    """Return ``(five_prime_len, three_prime_len)`` in transcript bases, or ``None``.
+
+    The intrinsic CDS structure normalises the UTRs away, so it cannot tell whether
+    a *non-coding* cited position (a 5'UTR ``c.-N`` or a 3'UTR ``c.*N``) still maps
+    to the same genomic coordinate after a substitution. The 5'UTR length is the
+    start-codon offset; the 3'UTR length is the total spliced cDNA length minus the
+    stop-codon offset. Both are transcript coordinates, so (like
+    :func:`intrinsic_cds_structure`) they are build-independent and gap-independent;
+    a build only changes a version's genomic placement, not these lengths.
+
+    Returns ``None`` for non-coding / missing-CDS / no-build records.
+    """
+    sc = transcript.get("start_codon")
+    ec = transcript.get("stop_codon")
+    if sc is None or ec is None:
+        return None
+    gb = _pick_build(transcript, genome_build)
+    if gb is None:
+        return None
+    exons = gb["exons"]
+    if not exons:
+        return None
+    # cds_start/cds_end are cumulative 1-based spliced transcript coordinates, so
+    # the largest cds_end is the total spliced cDNA length.
+    total_cdna = max(exon[4] for exon in exons)
+    return (sc, total_cdna - ec)
+
+
+# A cited c. position is in the 5'UTR when it is negative (leading "-", or a range
+# whose endpoint is negative) and in the 3'UTR when it carries a "*". Coding and
+# CDS-intronic positions touch neither, so the CDS-structure check already covers
+# them. We return the set of UTRs a position/range touches so a range spanning a
+# UTR boundary is handled conservatively.
+_FIVE_PRIME = re.compile(r"(?:^|_)-\d")   # "-49", "-49+10", "-3_5", "10_-2"...
+_THREE_PRIME = re.compile(r"\*")          # any 3'UTR component
+
+
+def utr_regions_touched(cited_position: str) -> set:
+    """Return the UTRs (``{'five_prime', 'three_prime'}``) a cited c. position or
+    range touches; empty for a purely coding/CDS-intronic position.
+
+    ``cited_position`` is the text after ``c.``/``n.`` (the position plus edit, eg
+    ``"-49="``, ``"*100A>G"``, ``"123+5G>A"``). Only the position syntax is
+    inspected; ordinary edits (``>``, ``del``, ``dup``, ``ins``) carry no ``*`` and
+    no leading ``-``.
+    """
+    regions = set()
+    if not cited_position:
+        return regions
+    if _THREE_PRIME.search(cited_position):
+        regions.add("three_prime")
+    if _FIVE_PRIME.search(cited_position):
+        regions.add("five_prime")
+    return regions
 
 
 def describe_structure_change(req_struct, sub_struct) -> str:

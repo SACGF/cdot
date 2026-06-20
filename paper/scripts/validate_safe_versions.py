@@ -44,6 +44,7 @@ from hgvs.assemblymapper import AssemblyMapper
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from benchmark_resolution import build_provider, classify  # noqa: E402
+from cdot.hgvs.gene_hgvs import _cited_position  # noqa: E402
 
 
 def under_version(c_hgvs, tx, w):
@@ -107,8 +108,10 @@ def main():
         if not others:
             continue
         agg["variants_with_alt"] += 1
+        cited_position = _cited_position(row["c_hgvs"])
         for w in others:
-            safe, _reason = provider.is_version_substitution_safe(tx, v, w, args.build)
+            safe, _reason = provider.is_version_substitution_safe(
+                tx, v, w, args.build, cited_position=cited_position)
             if not safe:
                 agg["unsafe_subs"] += 1
                 continue

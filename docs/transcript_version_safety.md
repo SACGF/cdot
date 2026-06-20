@@ -148,6 +148,24 @@ requested version is in no build at all.
   change and is conservatively refused even though a variant in the shared region is fine —
   an acceptable false-negative for a safety gate.
 - Structure is build-portable ~99.5%, not 100%: rare build-specific realignments exist.
+- Identical CDS structure is necessary but not sufficient. An alignment gap (a
+  transcript-vs-genome indel) present in one version and not the other shifts every coding
+  base downstream of it, so the check also requires the two versions' CDS alignment gaps to
+  match (`cds_alignment_gaps`). Gaps are build-specific, so this is exact when both versions
+  are placed in the target build and conservative across builds.
+- The check is position-aware. Coding (`c.`) and CDS-intronic positions are covered by the
+  CDS structure plus alignment gaps. A 5'UTR (`c.-N`) or 3'UTR (`c.*N`) position additionally
+  requires the matching UTR *length* to be unchanged (`utr_lengths`), since UTR annotations
+  change between versions far more often than the CDS. A residual edge case remains: two
+  versions with the same total UTR length but a different UTR exon *split* could still move a
+  UTR-intronic position; covering that needs full non-coding exon structure, not just length.
+- The intrinsic structure is build-independent and so is blind to genomic *placement*: a rare
+  version re-aligns the same CDS structure to a different locus (eg NM_018263, a ~9.75 kb
+  jump). When both versions are loaded this is caught by comparing their genomic CDS maps; for
+  the case where the requested version is absent from all loaded data (nothing to compare) a
+  small precomputed blocklist of known re-placements is shipped
+  (`generate_transcript_data/generate_version_replacement_blocklist.py`). On the 0.2.33 RefSeq
+  GRCh38 release this is 28 substitutions across 10 transcripts.
 
 ## Reproduce
 
