@@ -16,11 +16,22 @@ CSVs) have been removed; see "Completed" at the bottom for the IDs, so nothing i
 
 ### R8. Dig into the ClinVar VCF-comparison coordinate differences (new)
 
+**Status:** largely answered by the UTA isolation (`isolate_uta_vs_cdot.py`, see
+`claude/clinvar_diff_coordinates.md`): of the 1,766 `incorrect`, 1,674 (94.8%) are
+reproduced identically by UTA (not cdot-specific), `snv_diff_pos` is 0% cdot-specific
+(paralog placement in ClinVar), and only 10 differ in a cdot-specific way, all
+seqfetcher N-padding or repeat left-alignment, not exon-mapping errors. Remaining
+optional follow-ups:
+
 **Why:** The VCF-coordinate ClinVar pass (R6, `resolve_clinvar_pass.py` on the VCF-format
 pairs) leaves 1,766 `incorrect` of 4.38M (0.04%); writeup in
 `claude/clinvar_diff_coordinates.md`, residual rows in
 `output/clinvar_pass/vcf_errors.csv`. The categories are mostly artifacts, not cdot
-errors, but the residual has not been fully run to ground:
+errors, but a few threads remain:
+
+- **Re-run the 10 cdot-specific cases with cdot on a transcript SeqRepo** (not the
+  genome `FastaSeqFetcher`) to confirm the N-padding ones resolve, leaving only the
+  repeat left-alignment representation differences.
 
 - **`snv_diff_pos` (406 / 42 transcripts)** clusters by transcript with a constant
   per-transcript offset (whole-transcript re-placement: paralog / copy-number genes such

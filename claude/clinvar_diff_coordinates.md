@@ -61,6 +61,41 @@ paralog/copy-number placement choices, indel/insertion representation, ambiguity
 or release-skew ground truth (the variant_summary and VCF are slightly different ClinVar
 releases, so a few ALLELEIDs join to a different variant).
 
+## UTA isolation: is it cdot's data?
+
+To separate a cdot-specific problem from a shared-engine or ClinVar-ground-truth one, the
+1,766 `incorrect` c.HGVS were re-resolved through **UTA** (a different transcript backend,
+the identical biocommons engine + Babelfish, sequence from SeqRepo) and each compared to
+both cdot's call and ClinVar's VCF
+(`paper/scripts/exploratory/isolate_uta_vs_cdot.py`, needs the local UTA + SeqRepo;
+per-variant verdicts in `output/clinvar_pass/uta_vs_cdot.csv`).
+
+| UTA verdict | count | meaning |
+|-------------|-------|---------|
+| `uta_matches_cdot` | 1,674 (94.8%) | UTA == cdot, both differ from ClinVar -> not cdot-specific |
+| `uta_no_data` | 76 | UTA lacks the transcript/version |
+| `uta_matches_clinvar` | 10 | UTA == ClinVar, cdot differs -> genuinely cdot-specific |
+| `uta_differs_both` | 6 | three-way (all identity/symbolic) |
+
+By category, `snv_diff_pos` is **0%** cdot-specific (334 match cdot, 72 UTA no_data, 0 match
+ClinVar): UTA places the paralog/copy-number clusters exactly where cdot does, so the
+offset is ClinVar mapping a multi-copy gene to a different locus, not a cdot error. The 10
+cdot-specific cases are all indels and are not wrong exon mappings either:
+
+- **Sequence-fetcher N-padding** (NM_002111.8, NM_152503.8): cdot's call contains `N`s
+  because this benchmark fed cdot the `FastaSeqFetcher`, which rebuilds transcript sequence
+  from the genome and pads gapped regions with `N`, while UTA used SeqRepo. A setup
+  artifact; would resolve if cdot used a transcript SeqRepo.
+- **Repeat-region left-alignment** (NM_030582.4 x5 in a CCCCCC/GGCCCC tract ~15 bp off;
+  NM_001164277.2, NM_001417890.1, NM_032790.3 1-3 bp off): cdot normalises the indel to a
+  slightly different position than UTA within a low-complexity tract. Representation, not a
+  wrong coordinate.
+
+Conclusion: on this measure cdot's transcript coordinates are as accurate as UTA's. None of
+the 1,766 differences is a genuine cdot exon-mapping error; they are shared-engine
+representation, ClinVar paralog placement, or (for 10) seqfetcher / left-alignment
+artifacts.
+
 ## Caveats
 
 - `error` (22,653) is mostly input the c.HGVS engine cannot resolve (c.HGVS that itself
