@@ -18,7 +18,7 @@ files (GTF/GFF3) into compact JSON** and ships fast loaders for the HGVS librari
 
 Because it reads the released annotation files directly, cdot covers **1.58 million transcript/genome
 alignments**, including historical transcript versions - vs ~141k in UTA (v.20210129) - which matters
-when resolving legacy HGVS. See [cdot vs UTA](docs/cdot_vs_uta.md) for the trade-offs.
+when resolving legacy HGVS. See [cdot vs UTA](https://github.com/SACGF/cdot/blob/main/docs/cdot_vs_uta.md) for the trade-offs.
 
 Recent changes are in the [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md).
 
@@ -57,14 +57,14 @@ var_c = hp.parse_hgvs_variant('NM_001637.3:c.1582G>A')
 am.c_to_g(var_c)
 ```
 
-[more Biocommons examples](docs/examples_biocommons.md):
+[more Biocommons examples](https://github.com/SACGF/cdot/blob/main/docs/examples_biocommons.md):
 
 > **Tip:** cdot provides many transcripts that aren't in SeqRepo, so the default sequence fetcher will
 > raise `HGVSDataNotAvailableError` for them. You almost always want to supply a
-> [`FastaSeqFetcher`](docs/fasta_seqfetcher.md) (chained after SeqRepo) so every cdot transcript
+> [`FastaSeqFetcher`](https://github.com/SACGF/cdot/blob/main/docs/fasta_seqfetcher.md) (chained after SeqRepo) so every cdot transcript
 > resolves against a local genome FASTA.
 
-For fixing messy HGVS input and fast bulk processing, see [Advanced usage](docs/advanced_usage.md).
+For fixing messy HGVS input and fast bulk processing, see [Advanced usage](https://github.com/SACGF/cdot/blob/main/docs/advanced_usage.md).
 
 [PyHGVS](https://github.com/counsyl/hgvs) example (needs `pip install 'cdot[fasta]'` for pysam):
 
@@ -79,24 +79,24 @@ factory = RESTPyHGVSTranscriptFactory()
 pyhgvs.parse_hgvs_name('NM_001637.3:c.1582G>A', genome, get_transcript=factory.get_transcript_grch37)
 ```
 
-[more PyHGVS examples](docs/examples_pyhgvs.md):
+[more PyHGVS examples](https://github.com/SACGF/cdot/blob/main/docs/examples_pyhgvs.md):
 
 ## Documentation
 
-See [docs/](docs/) for reference and how-to guides:
+See [docs/](https://github.com/SACGF/cdot/tree/main/docs) for reference and how-to guides:
 
-* [JSON data format](docs/json_data_format.md) - every field in a cdot JSON(.gz) file
-* [Coordinates & exon alignments](docs/coordinates_and_exons.md) - how exon coordinates and gap strings work
-* [Advanced usage](docs/advanced_usage.md) - fixing messy HGVS input, and bulk read-ahead retrieval
+* [JSON data format](https://github.com/SACGF/cdot/blob/main/docs/json_data_format.md) - every field in a cdot JSON(.gz) file
+* [Coordinates & exon alignments](https://github.com/SACGF/cdot/blob/main/docs/coordinates_and_exons.md) - how exon coordinates and gap strings work
+* [Advanced usage](https://github.com/SACGF/cdot/blob/main/docs/advanced_usage.md) - fixing messy HGVS input, and bulk read-ahead retrieval
 
-See the [docs index](docs/README.md) for the full list (examples, FastaSeqFetcher, creating data, cdot vs UTA, …).
+See the [docs index](https://github.com/SACGF/cdot/blob/main/docs/README.md) for the full list (examples, FastaSeqFetcher, creating data, cdot vs UTA, …).
 
 ## Q. What's the performance like?
 
 Resolving real ClinVar c.HGVS to genomic coordinates (GRCh38, biocommons HGVS, local sequence fetching):
 
 * UTA public DB: ~1-1.5 seconds / transcript
-* cdot REST service: ~30 HGVS/second sequential, **~500 HGVS/second** with [`prefetch()`](docs/advanced_usage.md) batch cache-warming
+* cdot REST service: ~30 HGVS/second sequential, **~500 HGVS/second** with [`prefetch()`](https://github.com/SACGF/cdot/blob/main/docs/advanced_usage.md) batch cache-warming
 * cdot JSON.gz (local): 500-1k/second
 
 `prefetch()` warms every transcript in one batch round-trip up front, so bulk resolution over the REST
@@ -107,7 +107,7 @@ on 500 variants). Reproduce with `paper/scripts/benchmark_resolution.py`.
 
 [Download from GitHub releases](https://github.com/SACGF/cdot/releases) - RefSeq (37/38) - 72M, Ensembl (37/38) 61M
 
-Details on what the files contain [here](docs/release_files.md)
+Details on what the files contain [here](https://github.com/SACGF/cdot/blob/main/docs/release_files.md)
 
 ## Q. How does this compare to Universal Transcript Archive?
 
@@ -116,11 +116,11 @@ Both projects have similar goals of providing transcripts for loading HGVS, but 
 * UTA aligns sequences, then stores coordinates in an SQL database. 
 * cdot convert existing Ensembl/RefSeq GTFs into JSON
 
-See [cdot vs UTA](docs/cdot_vs_uta.md) for more details
+See [cdot vs UTA](https://github.com/SACGF/cdot/blob/main/docs/cdot_vs_uta.md) for more details
 
 ## Q. How do you store transcripts in JSON?
 
-See the **[JSON data format reference](docs/json_data_format.md)** for a full description of every field, with a machine-readable [JSON Schema](docs/cdot-json-schema.json) alongside it. [Coordinates & exon alignments](docs/coordinates_and_exons.md) explains how exon coordinates and the alignment gap strings work. See also [design notes](docs/design_notes.md) on why the format looks the way it does.
+See the **[JSON data format reference](https://github.com/SACGF/cdot/blob/main/docs/json_data_format.md)** for a full description of every field, with a machine-readable [JSON Schema](https://github.com/SACGF/cdot/blob/main/docs/cdot-json-schema.json) alongside it. [Coordinates & exon alignments](https://github.com/SACGF/cdot/blob/main/docs/coordinates_and_exons.md) explains how exon coordinates and the alignment gap strings work. See also [design notes](https://github.com/SACGF/cdot/blob/main/docs/design_notes.md) on why the format looks the way it does.
 
 You can also read the data with typed Python objects (no extra install required):
 
