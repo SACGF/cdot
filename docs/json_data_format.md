@@ -2,7 +2,7 @@
 
 > Auto-generated from the typed models in [`cdot/models.py`](../cdot/models.py) by `generate_transcript_data/generate_json_docs.py`. Do not edit by hand.
 
-Generated from cdot **0.2.26**. A machine-readable [JSON Schema](cdot-json-schema.json) is generated alongside this file.
+Generated from cdot **0.2.28**. A machine-readable [JSON Schema](cdot-json-schema.json) is generated alongside this file.
 
 See [Coordinates & exon alignments](coordinates_and_exons.md) for a conceptual walk-through of exon coordinates, exon ordering and the alignment gap strings.
 
@@ -62,9 +62,12 @@ A transcript's coordinates on one genome build (e.g. `GRCh38`).
 | `cds_end` | integer or null | no | 0-based genomic CDS end on the contig (coding transcripts only). |
 | `start` | integer or null | no | 0-based genomic start of the transcript on the contig. |
 | `stop` | integer or null | no | 0-based genomic end of the transcript on the contig. |
-| `tag` | string or null | no | Comma-separated tags (e.g. `'MANE_Select,Ensembl_canonical'`); typically Ensembl only. |
+| `tag` | string or null | no | Comma-separated tags (e.g. `'MANE_Select,Ensembl_canonical'`), verbatim from the source GTF/GFF. Spelling differs by consortium: RefSeq uses spaces (`'MANE Select'`, `'RefSeq Select'`) while Ensembl uses underscores (`'MANE_Select'`, `'Ensembl_canonical'`), so a raw-JSON consumer must handle both. To rank/compare tags across sources use `cdot.hgvs.gene_hgvs`, which normalises spelling before comparison. |
 | `note` | string or null | no |  |
 | `other_chroms` | array of string or null | no | Other contigs this transcript also aligns to (e.g. PAR/alt loci). |
+| `source` | string or array of string or null | no | Annotation source (GTF/GFF column 2, e.g. `'BestRefSeq'`); data schema >= 0.2.32. A single string in early 0.2.32 data, a list (e.g. `['BestRefSeq']`) from 0.2.33 on. |
+| `ccds` | string or null | no | CCDS id, when present; data schema >= 0.2.33. |
+| `transcript_support_level` | string or null | no | Ensembl transcript support level (TSL); data schema >= 0.2.33. |
 
 ## Exon
 
@@ -100,7 +103,7 @@ Gene-level metadata (present when the source provided gene info).
 |-------|------|----------|-------------|
 | `gene_symbol` | string or null | no |  |
 | `aliases` | string or null | no |  |
-| `biotype` | array of string or string or null | no |  |
+| `biotype` | string or array of string or null | no |  |
 | `description` | string or null | no |  |
 | `hgnc` | string or null | no |  |
 | `map_location` | string or null | no |  |
@@ -119,3 +122,8 @@ Gene-level metadata (present when the source provided gene info).
 * **Coordinate systems.** Genomic coordinates (`alt_start`/`alt_end`, build `cds_start`/`cds_end`,
   `start`/`stop`) are 0-based. Transcript (cDNA) coordinates inside each exon
   (`cds_start`/`cds_end`) are 1-based.
+* **Tags are verbatim.** The build `tag` field is passed through unchanged from the source
+  GTF/GFF, so MANE/canonical spelling differs by consortium: RefSeq uses spaces (`MANE Select`,
+  `RefSeq Select`) while Ensembl uses underscores (`MANE_Select`, `Ensembl_canonical`). A consumer
+  reading the raw JSON must handle both spellings. To rank or compare tags across sources, use
+  `cdot.hgvs.gene_hgvs`, which normalises spelling (spaces to underscores) before comparison.

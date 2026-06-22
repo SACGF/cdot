@@ -15,6 +15,7 @@ sync with the format automatically. Regenerate with::
     python generate_transcript_data/generate_json_docs.py
 """
 import ast
+import inspect
 import json
 import os
 
@@ -46,6 +47,11 @@ QUIRKS = """\
 * **Coordinate systems.** Genomic coordinates (`alt_start`/`alt_end`, build `cds_start`/`cds_end`,
   `start`/`stop`) are 0-based. Transcript (cDNA) coordinates inside each exon
   (`cds_start`/`cds_end`) are 1-based.
+* **Tags are verbatim.** The build `tag` field is passed through unchanged from the source
+  GTF/GFF, so MANE/canonical spelling differs by consortium: RefSeq uses spaces (`MANE Select`,
+  `RefSeq Select`) while Ensembl uses underscores (`MANE_Select`, `Ensembl_canonical`). A consumer
+  reading the raw JSON must handle both spellings. To rank or compare tags across sources, use
+  `cdot.hgvs.gene_hgvs`, which normalises spelling (spaces to underscores) before comparison.
 """
 MODELS_PY = os.path.join(os.path.dirname(models.__file__), "models.py")
 DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs")
@@ -113,8 +119,9 @@ def first_paragraph(doc):
 
 def clean_doc(doc):
     """Light RST -> Markdown cleanup for class docstrings."""
-    doc = (doc or "").strip().replace("::", ":").replace("``", "`")
-    # collapse the indented example block into an inline code fence
+    # cleandoc strips the leading indentation that continuation lines of a class
+    # docstring carry, so embedded example blocks aren't over-indented in Markdown.
+    doc = inspect.cleandoc(doc or "").replace("::", ":").replace("``", "`")
     return doc
 
 

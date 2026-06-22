@@ -282,7 +282,7 @@
             }
           ],
           "default": null,
-          "description": "Comma-separated tags (e.g. `'MANE_Select,Ensembl_canonical'`); typically Ensembl only."
+          "description": "Comma-separated tags (e.g. `'MANE_Select,Ensembl_canonical'`), verbatim from the source GTF/GFF. Spelling differs by consortium: RefSeq uses spaces (`'MANE Select'`, `'RefSeq Select'`) while Ensembl uses underscores (`'MANE_Select'`, `'Ensembl_canonical'`), so a raw-JSON consumer must handle both. To rank/compare tags across sources use `cdot.hgvs.gene_hgvs`, which normalises spelling before comparison."
         },
         "note": {
           "anyOf": [
@@ -309,6 +309,48 @@
           ],
           "default": null,
           "description": "Other contigs this transcript also aligns to (e.g. PAR/alt loci)."
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Annotation source (GTF/GFF column 2, e.g. `'BestRefSeq'`); data schema >= 0.2.32. A single string in early 0.2.32 data, a list (e.g. `['BestRefSeq']`) from 0.2.33 on."
+        },
+        "ccds": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CCDS id, when present; data schema >= 0.2.33."
+        },
+        "transcript_support_level": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Ensembl transcript support level (TSL); data schema >= 0.2.33."
         }
       },
       "required": [
@@ -319,7 +361,7 @@
     },
     "Exon": {
       "title": "Exon",
-      "description": "A single exon alignment.\n\nSerialised in JSON as a positional array, e.g.::\n\n    [36552548, 36552986, 20, 2001, 2440, \"M196 I1 M61 I1 M181\"]\n\nCoordinates: ``alt_start``/``alt_end`` are 0-based genomic coordinates on the\ncontig; ``cds_start``/``cds_end`` are 1-based transcript (cDNA) coordinates.\n``exon_id`` is the ordinal of the exon in stranded (transcript) order.\n\nThe original positional access (``exon[0]``, tuple unpacking) still works, so\nthis is a drop-in for the plain list it replaces.",
+      "description": "A single exon alignment.\n\n    Serialised in JSON as a positional array, e.g.::\n\n        [36552548, 36552986, 20, 2001, 2440, \"M196 I1 M61 I1 M181\"]\n\n    Coordinates: ``alt_start``/``alt_end`` are 0-based genomic coordinates on the\n    contig; ``cds_start``/``cds_end`` are 1-based transcript (cDNA) coordinates.\n    ``exon_id`` is the ordinal of the exon in stranded (transcript) order.\n\n    The original positional access (``exon[0]``, tuple unpacking) still works, so\n    this is a drop-in for the plain list it replaces.",
       "type": "array",
       "prefixItems": [
         {
@@ -393,13 +435,13 @@
         "biotype": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
               "type": "array",
               "items": {
                 "type": "string"
               }
-            },
-            {
-              "type": "string"
             },
             {
               "type": "null"

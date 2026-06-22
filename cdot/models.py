@@ -106,7 +106,11 @@ class GenomeBuild(_DictAccessStruct, forbid_unknown_fields=False):
     stop: Optional[int] = None
     """0-based genomic end of the transcript on the contig."""
     tag: Optional[str] = None
-    """Comma-separated tags (e.g. ``'MANE_Select,Ensembl_canonical'``); typically Ensembl only."""
+    """Comma-separated tags (e.g. ``'MANE_Select,Ensembl_canonical'``), verbatim from the source
+    GTF/GFF. Spelling differs by consortium: RefSeq uses spaces (``'MANE Select'``, ``'RefSeq Select'``)
+    while Ensembl uses underscores (``'MANE_Select'``, ``'Ensembl_canonical'``), so a raw-JSON consumer
+    must handle both. To rank/compare tags across sources use ``cdot.hgvs.gene_hgvs``, which normalises
+    spelling before comparison."""
     note: Optional[str] = None
     other_chroms: Optional[List[str]] = None
     """Other contigs this transcript also aligns to (e.g. PAR/alt loci)."""
