@@ -164,8 +164,11 @@ requested version is in no build at all.
   jump). When both versions are loaded this is caught by comparing their genomic CDS maps; for
   the case where the requested version is absent from all loaded data (nothing to compare) a
   small precomputed blocklist of known re-placements is shipped
-  (`generate_transcript_data/generate_version_replacement_blocklist.py`). On the 0.2.33 RefSeq
-  GRCh38 release this is 28 substitutions across 10 transcripts.
+  (`generate_transcript_data/generate_version_replacement_blocklist.py`). Re-placement is a
+  genomic property and so build-specific (a pair can re-place in one build but not the other),
+  and the blocklist is keyed without a build and applied in every build, so it is generated as
+  the union of re-placements found across GRCh37 and GRCh38. On the 0.2.33 RefSeq release this
+  is 74 substitutions across 22 transcripts.
 
 ## Reproduce
 

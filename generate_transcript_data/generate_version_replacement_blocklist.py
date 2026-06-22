@@ -11,12 +11,22 @@ version is absent from all loaded data there is nothing to compare - so we ship 
 small precomputed blocklist of these (accession, requested_version, substitute_version)
 re-placements, found here by scanning a full release where every version is present.
 
+Re-placement is a *genomic* property, so it is build-specific: a pair can re-place in
+GRCh37 but not GRCh38 (or the reverse). The blocklist is keyed without a build and
+applied in every build, so it must be the *union* of re-placements found across the
+builds we care about - scanning a single build misses the others' re-placements. We
+scan GRCh37 and GRCh38 (T2T contributes none in practice and clinical use is 37/38),
+so point this at an all-builds release that holds both. Unioning is safe for a safety
+gate: a pair that only re-places in one build is then also refused in the other where
+it is actually fine, an acceptable over-conservative false-negative.
+
 Writes ``cdot/hgvs/_version_replacement_blocklist.py`` (a generated constant module).
 Regenerate after each data release.
 
 Usage:
     python generate_transcript_data/generate_version_replacement_blocklist.py \
-        /path/to/cdot-X.Y.Z.refseq.GRCh38.json.gz [more releases...] --build GRCh38
+        /path/to/cdot-X.Y.Z.all-builds-refseq-....json.gz [more releases...] \
+        --builds GRCh37 GRCh38
 """
 import argparse
 import gzip
@@ -33,10 +43,12 @@ _BASE = re.compile(r"^([A-Za-z]+_?\d+)\.(\d+)$")
 _OUT = Path(__file__).resolve().parents[1] / "cdot" / "hgvs" / "_version_replacement_blocklist.py"
 
 
-def replacements_in_release(path, build):
-    """Yield (accession, requested_version, substitute_version) re-placement triples:
-    pairs with identical intrinsic CDS structure and CDS alignment gaps (so the
-    structural check would call them safe) but a different genomic CDS placement."""
+def replacements_in_release(path, builds):
+    """Yield (accession, requested_version, substitute_version) re-placement triples
+    found in *any* of ``builds``: pairs with identical intrinsic CDS structure and CDS
+    alignment gaps (so the structural check would call them safe) but a different
+    genomic CDS placement. Re-placement is build-specific, so we union over builds; a
+    build absent from this file simply contributes nothing (its genomic map is None)."""
     with gzip.open(path, "rt") as fh:
         txs = json.load(fh)["transcripts"]
     versions = defaultdict(list)
@@ -48,46 +60,49 @@ def replacements_in_release(path, build):
     for base, vs in versions.items():
         if len(vs) < 2:
             continue
-        info = {}
-        for v in vs:
-            rec = txs[f"{base}.{v}"]
-            struct = intrinsic_cds_structure(rec, build)
-            gmap = cds_genomic_map(rec, build)
-            if struct is None or gmap is None:
-                continue
-            info[v] = (struct, cds_alignment_gaps(rec, build),
-                       (gmap["contig"], tuple(gmap["segs"])))
-        for v in info:
-            for w in info:
-                if v == w:
+        for build in builds:
+            info = {}
+            for v in vs:
+                rec = txs[f"{base}.{v}"]
+                struct = intrinsic_cds_structure(rec, build)
+                gmap = cds_genomic_map(rec, build)
+                if struct is None or gmap is None:
                     continue
-                (sv, gv, pv), (sw, gw, pw) = info[v], info[w]
-                # Structurally safe (would pass the check) but placement differs.
-                if sv == sw and gv == gw and pv != pw:
-                    yield (base, v, w)
+                info[v] = (struct, cds_alignment_gaps(rec, build),
+                           (gmap["contig"], tuple(gmap["segs"])))
+            for v in info:
+                for w in info:
+                    if v == w:
+                        continue
+                    (sv, gv, pv), (sw, gw, pw) = info[v], info[w]
+                    # Structurally safe (would pass the check) but placement differs.
+                    if sv == sw and gv == gw and pv != pw:
+                        yield (base, v, w)
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("releases", nargs="+", help="cdot JSON.gz release file(s) to scan")
-    ap.add_argument("--build", default="GRCh38")
+    ap.add_argument("--builds", nargs="+", default=["GRCh37", "GRCh38"],
+                    help="genome builds to scan and union over (default: GRCh37 GRCh38)")
     args = ap.parse_args()
 
     triples = set()
     for path in args.releases:
         n0 = len(triples)
-        for t in replacements_in_release(path, args.build):
+        for t in replacements_in_release(path, args.builds):
             triples.add(t)
         print(f"{path}: +{len(triples) - n0} (total {len(triples)})")
 
     triples = sorted(triples)
     sources = ", ".join(Path(p).name for p in args.releases)
+    builds = ", ".join(args.builds)
     lines = [
         '"""Transcript-version re-placement blocklist (GENERATED - do not edit).',
         "",
         "Regenerate with generate_transcript_data/generate_version_replacement_blocklist.py.",
-        f"Source: {sources} ({args.build}).",
+        f"Source: {sources} (builds: {builds}).",
         "",
         "Each (accession, requested_version, substitute_version) is a substitution whose",
         "intrinsic CDS structure and alignment gaps match (so the structural safety check",
