@@ -1,5 +1,7 @@
 ## [unreleased]
 
+## [0.2.29] - 2026-06-25
+
 ### Added
 
 - #120 - Coordinate-safety check for the opt-in transcript-version fallback: before substituting an adjacent version, cdot tests whether a coding `c.` position still maps to the same genomic coordinate and emits a richer `HGVSFix` (`USED_ADJACENT_VERSION_COORD_SAFE` when verified safe). Adds `is_version_substitution_safe(...)` on the data providers and `intrinsic_cds_structure()`/`cds_alignment_gaps()`/`utr_lengths()` in `cdot.hgvs.version_safety`.
@@ -294,7 +296,8 @@ All other changes in this release were for data (and contained in data_v0.2.26)
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.28...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.29...HEAD
+[0.2.29]: https://github.com/SACGF/cdot/compare/v0.2.28...v0.2.29
 [0.2.28]: https://github.com/SACGF/cdot/compare/v0.2.27...v0.2.28
 [0.2.27]: https://github.com/SACGF/cdot/compare/v0.2.26...v0.2.27
 [0.2.26]: https://github.com/SACGF/cdot/compare/v0.2.21...v0.2.26
