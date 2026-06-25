@@ -67,4 +67,6 @@ Homepage = "https://github.com/SACGF/cdot"
 version = {attr = "cdot.__version__"}
 
 [tool.setuptools.packages.find]
-exclude = ["tests*", "generate_transcript_data*", "scripts*"]
+# Only ship the cdot package. An allowlist avoids accidentally pulling in
+# non-package directories (paper/, docs/, output/, etc) as namespace packages.
+include = ["cdot*"]
