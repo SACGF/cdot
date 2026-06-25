@@ -109,7 +109,9 @@ CLEAN_CASES = [
     # Space after g.
     ("NC_000023.10:g. 31496384G>A",              "NC_000023.10:g.31496384G>A",                 {C.STRIPPED_WHITESPACE}),
     # Double colon
-    ("NM_004245: :c.337G>T",                     "NM_004245:c.337G>T",                         {C.FIXED_DOUBLE_COLON}),
+    ("NM_004245: :c.337G>T",                     "NM_004245:c.337G>T",                         {C.FIXED_MULTIPLE_COLON}),
+    # Run of 3+ colons collapses to one
+    ("NM_004245:::c.337G>T",                      "NM_004245:c.337G>T",                         {C.FIXED_MULTIPLE_COLON}),
     # Space after numbers
     ("NC_000017.10:g.21085664 G>C",              "NC_000017.10:g.21085664G>C",                 {C.STRIPPED_WHITESPACE}),
     # Space after g. (variant 2)
@@ -136,6 +138,28 @@ CLEAN_CASES = [
     ("NC_000007.13:117199563G>T",                "NC_000007.13:g.117199563G>T",                {C.ADDED_MISSING_KIND}),
     # Missing "." after g
     ("NC_000007.13:g117199563G>T",               "NC_000007.13:g.117199563G>T",               set()),
+    # Missing kind on non-coding RNA (NR_/XR_) → "n.", not "c."
+    ("NR_003051.3:601A>G",                        "NR_003051.3:n.601A>G",                       {C.ADDED_MISSING_KIND}),
+    ("XR_001737837.2:601A>G",                     "XR_001737837.2:n.601A>G",                    {C.ADDED_MISSING_KIND}),
+    # Missing kind on predicted mRNA (XM_) and Ensembl (ENST) → "c."
+    ("XM_005260000.3:557T>A",                     "XM_005260000.3:c.557T>A",                    {C.ADDED_MISSING_KIND}),
+    ("ENST00000357654.9:557T>A",                  "ENST00000357654.9:c.557T>A",                 {C.ADDED_MISSING_KIND}),
+    # Missing kind on other genomic prefixes (NG_/NW_/NT_) → "g."
+    ("NG_012337.3:5000A>G",                       "NG_012337.3:g.5000A>G",                      {C.ADDED_MISSING_KIND}),
+    ("NW_009646201.1:100G>T",                     "NW_009646201.1:g.100G>T",                    {C.ADDED_MISSING_KIND}),
+    # Missing kind with a UTR coordinate ("-" 5' UTR, "*" 3' UTR)
+    ("NM_000350.2:-52delC",                       "NM_000350.2:c.-52delC",                      {C.ADDED_MISSING_KIND}),
+    ("NM_000350.2:*52A>G",                        "NM_000350.2:c.*52A>G",                       {C.ADDED_MISSING_KIND}),
+    # Missing leading "N" on transcript/genomic accessions (XM_/XR_ have no N, so
+    # the dropped letter is always N: NM/NC/NR/NG/NT/NW/NS/NZ/NP)
+    ("M_001754.5:c.557T>A",                       "NM_001754.5:c.557T>A",                       {C.ADDED_N_PREFIX}),
+    ("R_003051.3:n.601A>G",                       "NR_003051.3:n.601A>G",                       {C.ADDED_N_PREFIX}),
+    ("G_012337.3:g.5000A>G",                      "NG_012337.3:g.5000A>G",                      {C.ADDED_N_PREFIX}),
+    # Missing underscore on non-NM/NC prefixes (needs 6+ digits to fire)
+    ("NR003051.3:n.601A>G",                       "NR_003051.3:n.601A>G",                       {C.ADDED_TRANSCRIPT_UNDERSCORE}),
+    ("XM005260000.3:c.557T>A",                    "XM_005260000.3:c.557T>A",                    {C.ADDED_TRANSCRIPT_UNDERSCORE}),
+    ("XR001737837.2:n.601A>G",                    "XR_001737837.2:n.601A>G",                    {C.ADDED_TRANSCRIPT_UNDERSCORE}),
+    ("NG012337.3:g.5000A>G",                      "NG_012337.3:g.5000A>G",                      {C.ADDED_TRANSCRIPT_UNDERSCORE}),
     # Missing "." with "-" in position (c- should become c.-)
     ("NM_000350.2(ABCA4):c-52delC",              "NM_000350.2(ABCA4):c.-52delC",              set()),
     # Gene symbol contains "G" which looks like g. — should not be confused
@@ -149,9 +173,11 @@ CLEAN_CASES = [
     # #112 — trailing separator
     ("NM_000059.4:c.316+5G>A;",                  "NM_000059.4:c.316+5G>A",                     {C.STRIPPED_SURROUNDING_PUNCTUATION}),
     # #112 — doubled dot in transcript version
-    ("NM_000059..4:c.316+5G>A",                  "NM_000059.4:c.316+5G>A",                     {C.FIXED_DOUBLE_DOT}),
+    ("NM_000059..4:c.316+5G>A",                  "NM_000059.4:c.316+5G>A",                     {C.FIXED_MULTIPLE_DOT}),
     # #112 — doubled dot after kind
-    ("NM_001754.5(RUNX1):c..1415T>C",            "NM_001754.5(RUNX1):c.1415T>C",              {C.FIXED_DOUBLE_DOT}),
+    ("NM_001754.5(RUNX1):c..1415T>C",            "NM_001754.5(RUNX1):c.1415T>C",              {C.FIXED_MULTIPLE_DOT}),
+    # Run of 3+ dots collapses to one
+    ("NM_001754.5(RUNX1):c....1415T>C",          "NM_001754.5(RUNX1):c.1415T>C",              {C.FIXED_MULTIPLE_DOT}),
     # #112 — misplaced colon in transcript prefix
     ("NM:_000059.4:c.316+5G>A",                  "NM_000059.4:c.316+5G>A",                     {C.FIXED_PREFIX_COLON}),
     # #112 — leading junk before the transcript accession
@@ -175,8 +201,15 @@ CLEAN_CASES = [
     ("NM_000208.4(INSR):c.215_216DEL",           "NM_000208.4(INSR):c.215_216del",            {C.LOWERCASED_MUTATION_TYPE}),
     # #112 — colon used in place of the kind dot ("c:" -> "c.")
     ("NM_000059.4:c:123A>G",                     "NM_000059.4:c.123A>G",                       {C.FIXED_SEPARATOR_TYPO}),
+    # Repeated kind prefix collapses to one ("c.c." and "c.c.c." both -> "c.")
+    ("NM_000059.4:c.c.123A>G",                   "NM_000059.4:c.123A>G",                       {C.FIXED_MULTIPLE_KIND}),
+    ("NM_000059.4:c.c.c.123A>G",                 "NM_000059.4:c.123A>G",                       {C.FIXED_MULTIPLE_KIND}),
     # #112 — parens wrapping the whole accession
     ("(NM_001754.5):c.1415T>C",                  "NM_001754.5:c.1415T>C",                      {C.FIXED_GENE_WRAPPER}),
+    # Kind letter glued to the version reconstructs the same way whether or not a
+    # stray colon sits after it ("2c1188" and "2c:1188" both -> "2:c.1188").
+    ("NM_001017995.2c1188+1773_2733+6592del",    "NM_001017995.2:c.1188+1773_2733+6592del",    {C.RECONSTRUCTED_STRUCTURE}),
+    ("NM_001017995.2c:1188+1773_2733+6592del",   "NM_001017995.2:c.1188+1773_2733+6592del",    {C.RECONSTRUCTED_STRUCTURE}),
     # #112 — genomic accession wedged into the gene-symbol parenthetical slot
     ("NM_000059.4(NC_000013.11):c.68del",        "NM_000059.4:c.68del",                        {C.DROPPED_GENOMIC_REF_IN_PARENS}),
     ("NM_001754.5(NG_042763.1):c.1415T>C",       "NM_001754.5:c.1415T>C",                      {C.DROPPED_GENOMIC_REF_IN_PARENS}),
@@ -284,19 +317,168 @@ def test_structure_reconstruction_not_reported_as_uppercased_bases():
     assert C.UPPERCASED_BASES not in codes(fixes)
 
 
-def test_double_underscore_not_reported_as_added_underscore():
-    # Collapsing a doubled underscore removes one, it does not add a missing
-    # one, so it must be reported as FIXED_DOUBLE_UNDERSCORE, not the
+def test_multiple_underscore_not_reported_as_added_underscore():
+    # Collapsing repeated underscores removes them, it does not add a missing
+    # one, so it must be reported as FIXED_MULTIPLE_UNDERSCORE, not the
     # ADDED_TRANSCRIPT_UNDERSCORE code used when a separator is actually added.
     cleaned, fixes = clean_hgvs("NM__000059.4:c.123del")
     assert cleaned == "NM_000059.4:c.123del"
-    assert C.FIXED_DOUBLE_UNDERSCORE in codes(fixes)
+    assert C.FIXED_MULTIPLE_UNDERSCORE in codes(fixes)
     assert C.ADDED_TRANSCRIPT_UNDERSCORE not in codes(fixes)
+    # A run of 3+ collapses to a single underscore in one pass
+    cleaned, fixes = clean_hgvs("NM___000059.4:c.123del")
+    assert cleaned == "NM_000059.4:c.123del"
+    assert C.FIXED_MULTIPLE_UNDERSCORE in codes(fixes)
+
+
+# ---------------------------------------------------------------------------
+# clean_hgvs — add missing kind, picking the kind from the accession type
+# ---------------------------------------------------------------------------
+
+# (accession_prefix_example, expected_kind_letter)
+ADD_MISSING_KIND_CASES = [
+    # mRNA / Ensembl transcript → c.
+    ("NM_001754.5",     "c"),
+    ("XM_005260000.3",  "c"),
+    ("ENST00000357654.9", "c"),
+    # non-coding RNA → n.
+    ("NR_003051.3",     "n"),
+    ("XR_001737837.2",  "n"),
+    # genomic → g.
+    ("NC_000007.13",    "g"),
+    ("NG_012337.3",     "g"),
+    ("NW_009646201.1",  "g"),
+    ("NT_187633.1",     "g"),
+    ("AC_000156.1",     "g"),
+]
+
+
+@pytest.mark.parametrize("accession,kind", ADD_MISSING_KIND_CASES)
+def test_add_missing_kind_by_reference_type(accession, kind):
+    cleaned, fixes = clean_hgvs(f"{accession}:601A>G", validate=False)
+    assert cleaned == f"{accession}:{kind}.601A>G"
+    fix = next(f for f in fixes if f.code == C.ADDED_MISSING_KIND)
+    assert fix.message == f"Added missing '{kind}.' kind prefix"
+
+
+@pytest.mark.parametrize("accession,kind", ADD_MISSING_KIND_CASES)
+def test_add_missing_kind_with_gene_symbol(accession, kind):
+    # The gene-symbol parenthetical must not stop the kind being inserted.
+    cleaned, _ = clean_hgvs(f"{accession}(GENE):601A>G", validate=False)
+    assert cleaned == f"{accession}(GENE):{kind}.601A>G"
+
+
+@pytest.mark.parametrize("coord", ["-52", "*52", "123"])
+def test_add_missing_kind_utr_and_normal_coords(coord):
+    # The coordinate can start with a digit, "-" (5' UTR) or "*" (3' UTR).
+    cleaned, fixes = clean_hgvs(f"NM_000350.2:{coord}delC", validate=False)
+    assert cleaned == f"NM_000350.2:c.{coord}delC"
+    assert C.ADDED_MISSING_KIND in codes(fixes)
+
+
+def test_add_missing_kind_lowercase_prefix():
+    # Lowercase accession with no kind: kind is added and the prefix uppercased.
+    cleaned, fixes = clean_hgvs("nr_003051.3:601A>G", validate=False)
+    assert cleaned == "NR_003051.3:n.601A>G"
+    assert C.ADDED_MISSING_KIND in codes(fixes)
+
+
+# ---------------------------------------------------------------------------
+# clean_hgvs — restore a dropped leading "N"
+# ---------------------------------------------------------------------------
+
+# (broken, expected) — every N-prefixed RefSeq type with the leading N dropped
+ADD_N_PREFIX_CASES = [
+    ("M_001754.5:c.557T>A",   "NM_001754.5:c.557T>A"),
+    ("R_003051.3:n.601A>G",   "NR_003051.3:n.601A>G"),
+    ("C_000007.13:g.1A>G",    "NC_000007.13:g.1A>G"),
+    ("G_012337.3:g.5000A>G",  "NG_012337.3:g.5000A>G"),
+    ("T_187633.1:g.1A>G",     "NT_187633.1:g.1A>G"),
+    ("W_009646201.1:g.1A>G",  "NW_009646201.1:g.1A>G"),
+    ("P_000050.2:p.Arg1Gly",  "NP_000050.2:p.Arg1Gly"),
+]
+
+
+@pytest.mark.parametrize("broken,expected", ADD_N_PREFIX_CASES)
+def test_add_n_prefix_all_refseq_types(broken, expected):
+    cleaned, fixes = clean_hgvs(broken, validate=False)
+    assert cleaned == expected
+    assert C.ADDED_N_PREFIX in codes(fixes)
+
+
+@pytest.mark.parametrize("not_an_accession", [
+    "X_001234.5:c.1A>G",   # NX_ is not a real prefix
+    "A_001234.5:c.1A>G",   # NA_ is not a real prefix
+    "B_001234.5:c.1A>G",   # NB_ is not a real prefix
+])
+def test_add_n_prefix_skips_unknown_prefixes(not_an_accession):
+    cleaned, _ = clean_hgvs(not_an_accession, validate=False)
+    assert not cleaned.startswith("N")
+
+
+# ---------------------------------------------------------------------------
+# clean_hgvs — add a missing underscore to any RefSeq prefix
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("broken,expected", [
+    ("NM000059.4:c.1A>G",      "NM_000059.4:c.1A>G"),
+    ("NC000007.13:g.1A>G",     "NC_000007.13:g.1A>G"),
+    ("NR003051.3:n.1A>G",      "NR_003051.3:n.1A>G"),
+    ("XM005260000.3:c.1A>G",   "XM_005260000.3:c.1A>G"),
+    ("XR001737837.2:n.1A>G",   "XR_001737837.2:n.1A>G"),
+    ("NG012337.3:g.1A>G",      "NG_012337.3:g.1A>G"),
+    ("NW009646201.1:g.1A>G",   "NW_009646201.1:g.1A>G"),
+])
+def test_add_transcript_underscore_all_refseq_types(broken, expected):
+    cleaned, fixes = clean_hgvs(broken, validate=False)
+    assert cleaned == expected
+    assert C.ADDED_TRANSCRIPT_UNDERSCORE in codes(fixes)
+
+
+# Gene symbols that begin with a RefSeq accession prefix plus a digit. None has
+# 6+ consecutive digits, so neither the underscore nor the reconstruct step may
+# touch them. (NR3C1 is a real, important gene — the regression this guards.)
+GENE_SYMBOL_LOOKALIKES = [
+    "NR3C1:c.1411A>G",
+    "NR1H3:c.100A>G",
+    "NS1:c.100A>G",
+    "ZP3:c.100A>G",
+    "NC2:c.5A>G",
+    "XRCC1:c.100A>G",
+    "NM2:c.5A>G",
+    "AP3B1:c.100A>G",
+]
+
+
+@pytest.mark.parametrize("hgvs_string", GENE_SYMBOL_LOOKALIKES)
+def test_gene_symbol_lookalikes_not_mangled(hgvs_string):
+    cleaned, fixes = clean_hgvs(hgvs_string, validate=False)
+    assert cleaned == hgvs_string, f"Gene symbol mangled: {hgvs_string!r} → {cleaned!r}"
+    assert C.ADDED_TRANSCRIPT_UNDERSCORE not in codes(fixes)
+    assert C.RECONSTRUCTED_STRUCTURE not in codes(fixes)
+
+
+def test_six_digits_required_for_underscore():
+    # 5 digits is not a real accession (a gene-like token) → left alone;
+    # 6 digits is the RefSeq minimum → underscore added.
+    cleaned, _ = clean_hgvs("NR12345:c.1A>G", validate=False)
+    assert cleaned == "NR12345:c.1A>G"
+    cleaned, fixes = clean_hgvs("NR123456:n.1A>G", validate=False)
+    assert cleaned == "NR_123456:n.1A>G"
+    assert C.ADDED_TRANSCRIPT_UNDERSCORE in codes(fixes)
 
 
 # ---------------------------------------------------------------------------
 # clean_hgvs — validation errors
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("leading", ["c", "g", "n", "m", "p", "r", ".", ":"])
+def test_validate_missing_reference_for_all_kind_letters(leading):
+    # A string that starts with a bare kind letter (or ':'/'.') has no reference
+    # sequence and must be flagged, for every kind letter cdot recognises.
+    _cleaned, fixes = clean_hgvs(f"{leading}123A>G")
+    assert C.MISSING_REFERENCE_SEQUENCE in codes(fixes)
 
 def test_validate_ins_integer_length():
     _cleaned, fixes = clean_hgvs("NM_000441.2(SLC26A4):c.1246_2341ins23")
@@ -348,6 +530,14 @@ ALREADY_VALID = [
     # structure reconstruction, not be mistaken for the gene symbol).
     "LRG_199t1(RUNX1):c.1415T>C",
     "LRG_199t2(BRCA2):c.316+5G>A",
+    # Gene symbols that start with a RefSeq accession prefix plus a digit must NOT
+    # be mistaken for an underscore-less accession (NR3 + "C1", NS1, etc.) and
+    # mangled. Real accessions always have an underscore and 6+ digits.
+    "NR3C1:c.1411A>G",
+    "NS1:c.100A>G",
+    "ZP3:c.100A>G",
+    "XRCC1:c.100A>G",
+    "NM_001145661.2(NR3C1):c.1121G>A",
 ]
 
 

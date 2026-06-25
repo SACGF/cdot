@@ -39,13 +39,13 @@ class HGVSFixCode(Enum):
     # String-level fixes (all WARNING)
     STRIPPED_WHITESPACE          = "stripped_whitespace"
     STRIPPED_PROTEIN_SUFFIX      = "stripped_protein_suffix"
-    FIXED_DOUBLE_COLON           = "fixed_double_colon"
-    FIXED_DOUBLE_KIND            = "fixed_double_kind"
+    FIXED_MULTIPLE_COLON         = "fixed_multiple_colon"
+    FIXED_MULTIPLE_KIND          = "fixed_multiple_kind"
     ADDED_N_PREFIX               = "added_n_prefix"
     LOWERCASED_MUTATION_TYPE     = "lowercased_mutation_type"
     STRIPPED_UNBALANCED_BRACKETS = "stripped_unbalanced_brackets"
     STRIPPED_SURROUNDING_PUNCTUATION = "stripped_surrounding_punctuation"
-    FIXED_DOUBLE_DOT             = "fixed_double_dot"
+    FIXED_MULTIPLE_DOT           = "fixed_multiple_dot"
     FIXED_PREFIX_COLON           = "fixed_prefix_colon"
     STRIPPED_LEADING_JUNK        = "stripped_leading_junk"
     FIXED_GENE_WRAPPER           = "fixed_gene_wrapper"
@@ -53,7 +53,7 @@ class HGVSFixCode(Enum):
     DROPPED_DEL_DUP_COUNT        = "dropped_del_dup_count"
     DROPPED_GENOMIC_REF_IN_PARENS = "dropped_genomic_ref_in_parens"
     ADDED_TRANSCRIPT_UNDERSCORE  = "added_transcript_underscore"
-    FIXED_DOUBLE_UNDERSCORE      = "fixed_double_underscore"
+    FIXED_MULTIPLE_UNDERSCORE    = "fixed_multiple_underscore"
     UPPERCASED_BASES             = "uppercased_bases"
     RECONSTRUCTED_STRUCTURE      = "reconstructed_structure"
     ADDED_MISSING_KIND           = "added_missing_kind"
@@ -94,12 +94,12 @@ class HGVSCleanOp(Enum):
     STRIP_LEADING_JUNK       = "strip_leading_junk"
     STRIP_WHITESPACE         = "strip_whitespace"
     STRIP_SURROUNDING_PUNCTUATION = "strip_surrounding_punctuation"
-    FIX_DOUBLE_COLON         = "fix_double_colon"
+    FIX_MULTIPLE_COLON       = "fix_multiple_colon"
     FIX_GENE_WRAPPER         = "fix_gene_wrapper"
-    FIX_DOUBLE_DOT           = "fix_double_dot"
-    FIX_DOUBLE_UNDERSCORE    = "fix_double_underscore"
+    FIX_MULTIPLE_DOT         = "fix_multiple_dot"
+    FIX_MULTIPLE_UNDERSCORE  = "fix_multiple_underscore"
     FIX_PREFIX_COLON         = "fix_prefix_colon"
-    FIX_DOUBLE_KIND          = "fix_double_kind"
+    FIX_MULTIPLE_KIND        = "fix_multiple_kind"
     FIX_SEPARATOR_TYPO       = "fix_separator_typo"
     ADD_N_PREFIX             = "add_n_prefix"
     LOWERCASE_MUTATION_TYPE  = "lowercase_mutation_type"
@@ -187,22 +187,45 @@ def _looks_like_hgvs_prefix(s: str) -> bool:
 
 _P_HGVS_REMOVAL = re.compile(r"^(?P<main>.*?) (p\.|[(]p\.).*$")
 
-_TRANSCRIPT_NO_UNDERSCORE = re.compile(r"^(NM|NC)(\d+)", re.IGNORECASE)
+# Two-letter RefSeq accession prefixes (NM, NR, XM, XR, NC, NG, ...) taken from
+# the type table, used to repair an accession missing its underscore. Requires
+# 6+ digits (every RefSeq accession has at least six) so a real gene symbol that
+# starts with these letters plus a stray digit (eg NR3C1, NS1, ZP3) is never
+# mistaken for an accession and mangled.
+_TWO_LETTER_PREFIXES = sorted({p[:2] for p in _REFSEQ_PREFIX_TYPE})
+_TRANSCRIPT_NO_UNDERSCORE = re.compile(
+    rf"^({'|'.join(_TWO_LETTER_PREFIXES)})(\d{{6,}})", re.IGNORECASE)
+
+# Second letters for which prepending "N" yields a real genomic/transcript prefix
+# (NM, NC, NR, NG, NT, NW, NS, NZ, NP) — used to restore a dropped leading "N".
+_N_PREFIX_SECOND_LETTERS = frozenset(
+    p[1] for p in _REFSEQ_PREFIX_TYPE if p.startswith("N"))
 
 # Lenient pattern — matches HGVS strings whether or not they have a transcript,
 # gene symbol, version, colon, or dot.  Used to reconstruct the canonical form.
 _HGVS_CLEAN_PATTERN = re.compile(
     # transcript_value allows an optional LRG transcript/protein suffix (eg the
     # "t1" in "LRG_199t1") so the suffix isn't mis-parsed as the gene symbol.
-    r"^((?P<transcript_prefix>NR|NM|NC|ENST|LRG|XR)(?P<transcript_value>[0-9_]*(?:[tp][0-9]+)?)"
+    r"^((?P<transcript_prefix>NR|NM|NC|ENST|LRG|XR|XM)(?P<transcript_value>[0-9_]*(?:[tp][0-9]+)?)"
     r"(\.(?P<transcript_version>[0-9]+))?)?"
     r"([(]?(?P<gene_symbol>[^):\.]{2,8})[)]?)?"
-    r":?(?P<letter>c|g|n|p)[.]?(?P<nomen>[^:\.]*)$",
+    # A stray colon between the kind letter and the coordinate (eg "...2c:1188")
+    # is accepted as the kind separator, so the same glued-kind input reconstructs
+    # whether or not that colon is present (it is just misplaced, belonging before
+    # the kind letter rather than after it).
+    r":?(?P<letter>c|g|n|p)[.:]?(?P<nomen>[^:\.]*)$",
     re.IGNORECASE,
 )
 
-_HGVS_TRANSCRIPT_NO_CDOT = re.compile(r"^(NM_|ENST)\d+.*:\d+")
-_HGVS_CONTIG_NO_GDOT      = re.compile(r"^NC_\d+.*:\d+")
+# Missing kind letter after the colon, classified by reference-sequence type so
+# the right kind is inserted: mRNA/Ensembl transcript → "c.", non-coding RNA →
+# "n.", genomic → "g.". The coordinate may start with a digit, "-" (5' UTR) or
+# "*" (3' UTR).
+_COORD_START = r"[\d*\-]"
+_HGVS_MRNA_NO_KIND    = re.compile(rf"^(NM_|XM_|ENST)\d+.*:{_COORD_START}", re.IGNORECASE)
+_HGVS_RNA_NO_KIND     = re.compile(rf"^(NR_|XR_)\d+.*:{_COORD_START}", re.IGNORECASE)
+_HGVS_GENOMIC_NO_KIND = re.compile(
+    rf"^(NC_|NG_|NW_|NT_|AC_|NS_|NZ_)\d+.*:{_COORD_START}", re.IGNORECASE)
 
 _REF_ALT_NUC     = re.compile(r"(?P<ref>[gatc]+)>(?P<alt>[gatc=]+)$", re.IGNORECASE)
 _DEL_INS_DUP_NUC = re.compile(
@@ -384,7 +407,7 @@ def _validate(s: str) -> list[HGVSFix]:
             code=HGVSFixCode.NO_COLON,
             message="No colon ':' found in HGVS string",
         ))
-    for ch in (":", "c", "g", "."):
+    for ch in (":", "c", "g", "n", "m", "p", "r", "."):
         if s.startswith(ch):
             fixes.append(HGVSFix(
                 severity=HGVSFixSeverity.ERROR,
@@ -424,7 +447,7 @@ def _op_strip_whitespace(s: str) -> tuple[str, list[HGVSFix]]:
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.STRIPPED_WHITESPACE,
-            message="Removed whitespace",
+            message="Removed whitespace and non-printable characters",
             original=s, fixed=s2,
         )]
     return s, []
@@ -445,36 +468,38 @@ def _op_strip_surrounding_punctuation(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
-def _op_fix_double_colon(s: str) -> tuple[str, list[HGVSFix]]:
+def _op_fix_multiple_colon(s: str) -> tuple[str, list[HGVSFix]]:
+    # Collapse a run of 2+ colons, e.g. "NM_000059.4::c.123" or ":::" → single colon
     if "::" in s:
-        s2 = s.replace("::", ":")
+        s2 = re.sub(r"::+", ":", s)
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
-            code=HGVSFixCode.FIXED_DOUBLE_COLON,
-            message="Fixed double colon '::'", original=s, fixed=s2,
+            code=HGVSFixCode.FIXED_MULTIPLE_COLON,
+            message="Fixed repeated colon ':'", original=s, fixed=s2,
         )]
     return s, []
 
 
-def _op_fix_double_dot(s: str) -> tuple[str, list[HGVSFix]]:
-    # Collapse doubled dots, e.g. "NM_000059..4" or "c..123" → single dot
+def _op_fix_multiple_dot(s: str) -> tuple[str, list[HGVSFix]]:
+    # Collapse a run of 2+ dots, e.g. "NM_000059..4" or "c...123" → single dot
     if ".." in s:
         s2 = re.sub(r"\.\.+", ".", s)
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
-            code=HGVSFixCode.FIXED_DOUBLE_DOT,
-            message="Fixed doubled dot '..'", original=s, fixed=s2,
+            code=HGVSFixCode.FIXED_MULTIPLE_DOT,
+            message="Fixed repeated dot '.'", original=s, fixed=s2,
         )]
     return s, []
 
 
-def _op_fix_double_underscore(s: str) -> tuple[str, list[HGVSFix]]:
+def _op_fix_multiple_underscore(s: str) -> tuple[str, list[HGVSFix]]:
+    # Collapse a run of 2+ underscores, e.g. "NM__000059" or "NM___000059" → "NM_"
     if "__" in s:
-        s2 = s.replace("__", "_")
+        s2 = re.sub(r"_{2,}", "_", s)
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
-            code=HGVSFixCode.FIXED_DOUBLE_UNDERSCORE,
-            message="Fixed double underscore '__'", original=s, fixed=s2,
+            code=HGVSFixCode.FIXED_MULTIPLE_UNDERSCORE,
+            message="Fixed repeated underscore '_'", original=s, fixed=s2,
         )]
     return s, []
 
@@ -492,17 +517,17 @@ def _op_fix_prefix_colon(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
-def _op_fix_double_kind(s: str) -> tuple[str, list[HGVSFix]]:
-    # Fix double-kind notation (e.g. "c.c." → "c.")
+def _op_fix_multiple_kind(s: str) -> tuple[str, list[HGVSFix]]:
+    # Collapse a repeated kind prefix, e.g. "c.c." or "c.c.c." → "c."
     fixes = []
     for kind in "cgmnpr":
-        pat = f"{kind}.{kind}."
-        if pat in s.lower():
-            s2 = re.sub(re.escape(pat), f"{kind}.", s, flags=re.IGNORECASE)
+        if f"{kind}.{kind}." in s.lower():
+            # (?:c\.){2,} matches a run of 2+ of this kind prefix
+            s2 = re.sub(rf"(?:{kind}\.){{2,}}", f"{kind}.", s, flags=re.IGNORECASE)
             fixes.append(HGVSFix(
                 severity=HGVSFixSeverity.WARNING,
-                code=HGVSFixCode.FIXED_DOUBLE_KIND,
-                message=f"Fixed double kind notation '{pat}'",
+                code=HGVSFixCode.FIXED_MULTIPLE_KIND,
+                message=f"Fixed repeated kind notation '{kind}.'",
                 original=s, fixed=s2,
             ))
             s = s2
@@ -510,8 +535,12 @@ def _op_fix_double_kind(s: str) -> tuple[str, list[HGVSFix]]:
 
 
 def _op_add_n_prefix(s: str) -> tuple[str, list[HGVSFix]]:
-    # Add missing "N" prefix (e.g. "M_001234" → "NM_001234")
-    if s[:2].upper() in ("M_", "C_", "R_"):
+    # Restore a dropped leading "N" on a RefSeq accession, eg "M_001234" →
+    # "NM_001234", "G_012337" → "NG_012337", "R_002196" → "NR_002196". Only fires
+    # when "N" + the first letter is a real genomic/transcript prefix and an
+    # underscore follows, so gene symbols (no "_" in the second position) are
+    # never touched.
+    if len(s) >= 2 and s[1] == "_" and s[0].upper() in _N_PREFIX_SECOND_LETTERS:
         s2 = "N" + s
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
@@ -566,7 +595,9 @@ def _op_strip_unbalanced_brackets(s: str) -> tuple[str, list[HGVSFix]]:
 
 
 def _op_add_transcript_underscore(s: str) -> tuple[str, list[HGVSFix]]:
-    # Add missing underscore to NM/NC prefix (e.g. "NM12345" → "NM_12345")
+    # Add a missing underscore to any RefSeq accession prefix, eg "NM000059" →
+    # "NM_000059", "NR002196" → "NR_002196", "XM005260" → "XM_005260". Requires
+    # 6+ digits so gene symbols (NR3C1, ZP3, ...) are left alone.
     s2 = _TRANSCRIPT_NO_UNDERSCORE.sub(r"\1_\2", s)
     if s2 != s:
         return s2, [HGVSFix(
@@ -582,6 +613,15 @@ def _op_reconstruct_structure(s: str) -> tuple[str, list[HGVSFix]]:
     # Structural reconstruction: uppercase prefix, lowercase kind letter,
     # insert ':' and '.' where missing, place gene symbol correctly
     if m := _HGVS_CLEAN_PATTERN.match(s):
+        # A 2-letter RefSeq prefix (NM, NR, NC, XM, ...) is always followed by an
+        # underscore, and _op_add_transcript_underscore has already inserted any
+        # missing one by now. If the matched "transcript" still has none, this is
+        # really a gene symbol that merely starts with those letters plus a digit
+        # (eg NR3C1, NC2) — do not reconstruct it into "NR3(C1)".
+        prefix = m.group("transcript_prefix")
+        value = m.group("transcript_value") or ""
+        if prefix and len(prefix) == 2 and "_" not in value:
+            return s, []
         reconstructed = _reconstruct(m)
         if reconstructed and reconstructed != s:
             transcript_prefix = m.group("transcript_prefix")
@@ -628,24 +668,24 @@ def _op_uppercase_bases(s: str) -> tuple[str, list[HGVSFix]]:
 
 
 def _op_add_missing_kind(s: str) -> tuple[str, list[HGVSFix]]:
-    # Insert missing "c." or "g." after the colon
-    # e.g. "NM_001754.5:557T>A" → "NM_001754.5:c.557T>A"
-    if _HGVS_TRANSCRIPT_NO_CDOT.match(s):
-        s2 = s.replace(":", ":c.", 1)
-        return s2, [HGVSFix(
-            severity=HGVSFixSeverity.WARNING,
-            code=HGVSFixCode.ADDED_MISSING_KIND,
-            message="Added missing 'c.' kind prefix",
-            original=s, fixed=s2,
-        )]
-    elif _HGVS_CONTIG_NO_GDOT.match(s):
-        s2 = s.replace(":", ":g.", 1)
-        return s2, [HGVSFix(
-            severity=HGVSFixSeverity.WARNING,
-            code=HGVSFixCode.ADDED_MISSING_KIND,
-            message="Added missing 'g.' kind prefix",
-            original=s, fixed=s2,
-        )]
+    # Insert a missing kind letter + dot after the colon, choosing the kind from
+    # the reference-sequence type:
+    #   mRNA / Ensembl transcript (NM_, XM_, ENST) → "c."  eg "NM_001754.5:557T>A"
+    #   non-coding RNA           (NR_, XR_)        → "n."  eg "NR_002196.2:601A>G"
+    #   genomic                  (NC_, NG_, ...)   → "g."  eg "NC_000007.13:1G>T"
+    for pattern, kind in (
+        (_HGVS_MRNA_NO_KIND, "c"),
+        (_HGVS_RNA_NO_KIND, "n"),
+        (_HGVS_GENOMIC_NO_KIND, "g"),
+    ):
+        if pattern.match(s):
+            s2 = s.replace(":", f":{kind}.", 1)
+            return s2, [HGVSFix(
+                severity=HGVSFixSeverity.WARNING,
+                code=HGVSFixCode.ADDED_MISSING_KIND,
+                message=f"Added missing '{kind}.' kind prefix",
+                original=s, fixed=s2,
+            )]
     return s, []
 
 
@@ -693,7 +733,7 @@ def _op_fix_separator_typo(s: str) -> tuple[str, list[HGVSFix]]:
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.FIXED_SEPARATOR_TYPO,
-            message="Fixed comma/period separator typo", original=s, fixed=s2,
+            message="Fixed comma/colon/period separator typo", original=s, fixed=s2,
         )]
     return s, []
 
@@ -739,12 +779,12 @@ _PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
     (HGVSCleanOp.STRIP_LEADING_JUNK,        _op_strip_leading_junk),
     (HGVSCleanOp.STRIP_WHITESPACE,          _op_strip_whitespace),
     (HGVSCleanOp.STRIP_SURROUNDING_PUNCTUATION, _op_strip_surrounding_punctuation),
-    (HGVSCleanOp.FIX_DOUBLE_COLON,          _op_fix_double_colon),
+    (HGVSCleanOp.FIX_MULTIPLE_COLON,        _op_fix_multiple_colon),
     (HGVSCleanOp.FIX_GENE_WRAPPER,          _op_fix_gene_wrapper),
-    (HGVSCleanOp.FIX_DOUBLE_DOT,            _op_fix_double_dot),
-    (HGVSCleanOp.FIX_DOUBLE_UNDERSCORE,     _op_fix_double_underscore),
+    (HGVSCleanOp.FIX_MULTIPLE_DOT,          _op_fix_multiple_dot),
+    (HGVSCleanOp.FIX_MULTIPLE_UNDERSCORE,   _op_fix_multiple_underscore),
     (HGVSCleanOp.FIX_PREFIX_COLON,          _op_fix_prefix_colon),
-    (HGVSCleanOp.FIX_DOUBLE_KIND,           _op_fix_double_kind),
+    (HGVSCleanOp.FIX_MULTIPLE_KIND,         _op_fix_multiple_kind),
     (HGVSCleanOp.FIX_SEPARATOR_TYPO,        _op_fix_separator_typo),
     (HGVSCleanOp.ADD_N_PREFIX,              _op_add_n_prefix),
     (HGVSCleanOp.LOWERCASE_MUTATION_TYPE,   _op_lowercase_mutation_type),
