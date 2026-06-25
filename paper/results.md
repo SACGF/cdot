@@ -35,17 +35,19 @@ shared local SeqRepo so only the transcript data layer differs). A sample is use
 because this comparison is gated by UTA's throughput; the full ClinVar set is resolved
 through cdot alone in R6. cdot resolved
 {{ clinvar.cdot_resolution_pct | dp(1) }}% versus
-{{ clinvar.uta_resolution_pct | dp(1) }}% for UTA. On the RefSeq subset the two are at
-parity (~99% each); the entire difference is Ensembl, which UTA cannot resolve at all
-(0% of ENST inputs, as it stores no Ensembl alignments) whereas cdot resolves it
-natively (Supplementary Table S4). The benchmark is reproducible: the ClinVar
-build script, random seed, and resolution harness are committed.
+{{ clinvar.uta_resolution_pct | dp(1) }}% for UTA. Splitting the sample by transcript
+source locates the gap: on RefSeq the two are close (cdot
+{{ clinvar.cdot_refseq_pct | dp(1) }}%, UTA {{ clinvar.uta_refseq_pct | dp(1) }}%),
+whereas on Ensembl cdot resolves {{ clinvar.cdot_ensembl_pct | dp(1) }}% and UTA
+{{ clinvar.uta_ensembl_pct | dp(1) }}%, because UTA stores no Ensembl alignments
+(Supplementary Table S4). The benchmark is reproducible: the ClinVar build script,
+random seed, and resolution harness are committed.
 
-At full scale, resolving every RefSeq c.HGVS in ClinVar through cdot alone
+At full scale, resolving every RefSeq and Ensembl c.HGVS in ClinVar through cdot alone
 ({{ clinvar_vcf.n_pairs | commas }} (g.,c.) pairs) reaches
 {{ clinvar_vcf.resolved_pct | dp(1) }}% resolution, and of the variants resolved
 {{ clinvar_vcf.matched_of_resolved_pct | dp(1) }}% reproduce ClinVar's own VCF
-coordinate exactly. We score the projection as a VCF coordinate (CHROM/POS/REF/ALT)
+coordinate exactly. The per-source split of this pass is in Supplementary Table S4. We score the projection as a VCF coordinate (CHROM/POS/REF/ALT)
 rather than as a g.HGVS string, so equivalent representations (3'-shift, del/dup
 spellings) and the ClinVar variants written with tandem-repeat or identity notation are
 not miscounted as disagreements. The residual {{ clinvar_vcf.incorrect_pct | dp(2) }}% is

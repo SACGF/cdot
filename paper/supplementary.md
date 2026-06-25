@@ -40,9 +40,9 @@
 
 ### Table S4: ClinVar benchmark details
 
-Full-scale resolution of every RefSeq c.HGVS in ClinVar through cdot alone (GRCh38, cdot
-0.2.33). Unlike the cdot-vs-UTA comparison in Results R1 (gated to a sample by UTA's
-throughput), every variant is summarised here because only cdot is in the loop. The
+Full-scale resolution of every RefSeq and Ensembl c.HGVS in ClinVar through cdot alone
+(GRCh38, cdot 0.2.33). Unlike the cdot-vs-UTA comparison in Results R1 (gated to a sample
+by UTA's throughput), every variant is summarised here because only cdot is in the loop. The
 projection is scored as a VCF coordinate (CHROM/POS/REF/ALT) against ClinVar's own VCF,
 not as a g.HGVS string, so equivalent representations and ClinVar's tandem-repeat / identity
 notations are not miscounted.
@@ -51,8 +51,12 @@ notations are not miscounted.
 laboratories citing mostly current RefSeq versions, so this is a clean, public,
 reproducible scale check that cdot resolves real variants at scale, not an unbiased sample
 of the transcripts clinical labs use. The unbiased real-world complement is the Shariant
-historical corpus (Results R1, Tier 2). The input is RefSeq-only (ClinVar's Name column is
-RefSeq-centric), so there is no Ensembl row here.
+historical corpus (Results R1, Tier 2). The pair builder extracts both RefSeq and Ensembl
+c.HGVS and reports the measured source mix, but ClinVar's `variant_summary` Name column is
+RefSeq-centric, so the Ensembl share at this scale is near zero. ClinVar's comprehensive
+Ensembl HGVS lives in `hgvs4variation.txt.gz`, which this pass does not ingest; the
+Ensembl resolution evidence is therefore the R1 sample (per-source split) and the Shariant
+corpus, not this table.
 
 Total pairs: {{ clinvar_vcf.n_pairs | commas }}.
 

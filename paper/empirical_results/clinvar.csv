@@ -1,2 +1,2 @@
-n_variants,cdot_resolution_pct,uta_resolution_pct
-2818,99.0,70.3
+n_variants,cdot_resolution_pct,uta_resolution_pct,n_refseq,n_ensembl,refseq_pct,ensembl_pct,cdot_refseq_pct,cdot_ensembl_pct,uta_refseq_pct,uta_ensembl_pct
+2818,99.0,70.3,0,0,0.0,0.0,0.0,0.0,0.0,0.0

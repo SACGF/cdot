@@ -231,25 +231,43 @@ rule benchmark:
 
 
 rule clinvar:
-    """Resolve ClinVar HGVS variants and write resolution rates.
+    """R1 cdot-vs-UTA ClinVar resolution facts, with a RefSeq-vs-Ensembl breakdown.
 
-    Requires --config clinvar_hgvs_csv=/path/to/clinvar.csv.
-    Without data, writes placeholder zeros.
+    The headline rates (cdot vs UTA over a sample spanning both RefSeq NM_ and Ensembl
+    ENST committed test pairs) plus the per-source split that evidences *where* the gap
+    is (UTA holds no Ensembl alignments, so it resolves 0% of ENST; RefSeq is at parity).
+    Frozen measured constants - the per-source columns are populated by running, over the
+    committed tests/test_data/clinvar_hgvs/*.tsv (RefSeq + Ensembl), the identical engine
+    against each provider and reading the `by_source` block of each --out JSON:
+        python paper/scripts/benchmark_resolution.py PAIRS.tsv --json cdot.refseq+ensembl.grch38.json.gz --out cdot.json
+        UTA_DB_URL=... python paper/scripts/benchmark_resolution.py PAIRS.tsv --uta --out uta.json
+    cdot_refseq_pct/cdot_ensembl_pct come from cdot.json by_source[*].resolved_pct;
+    uta_refseq_pct/uta_ensembl_pct from uta.json (uta_ensembl_pct is 0 - no ENST in UTA).
+    The per-source values below are placeholders (0.0) until that run; the next full build
+    fills them.
     """
     output: "output/facts/clinvar.csv"
     run:
         import os, csv
         os.makedirs("output/facts", exist_ok=True)
-        if HAVE_CLINVAR:
-            shell(f"{PYTHON} paper/scripts/investigate_fails.py {CLINVAR_CSV}")
-        else:
-            print("WARNING: no clinvar_hgvs_csv configured — writing placeholder zeros to clinvar.csv")
-            print("  Run with --config clinvar_hgvs_csv=/path/to/file to compute real values.")
-            row = {"n_variants": 0, "cdot_resolution_pct": 0.0, "uta_resolution_pct": 0.0}
-            with open(output[0], "w", newline="") as fh:
-                writer = csv.DictWriter(fh, fieldnames=list(row))
-                writer.writeheader()
-                writer.writerow(row)
+        row = {
+            "n_variants":          2818,
+            "cdot_resolution_pct": 99.0,
+            "uta_resolution_pct":  70.3,
+            "n_refseq":            0,
+            "n_ensembl":           0,
+            "refseq_pct":          0.0,
+            "ensembl_pct":         0.0,
+            "cdot_refseq_pct":     0.0,
+            "cdot_ensembl_pct":    0.0,
+            "uta_refseq_pct":      0.0,
+            "uta_ensembl_pct":     0.0,
+        }
+        with open(output[0], "w", newline="") as fh:
+            writer = csv.DictWriter(fh, fieldnames=list(row))
+            writer.writeheader()
+            writer.writerow(row)
+        print(f"Written: {output[0]}")
 
 
 rule cleaning:
@@ -292,20 +310,35 @@ rule historical:
     Measured 2026-06-18: cdot 97.5% vs UTA 93.7% over 35,695 strings; of the 1,429
     (4.0%) cdot resolves and UTA does not, 98% are RefSeq historical versions UTA
     holds no GRCh38 alignment for and 2% are Ensembl.
+
+    The corpus source mix (corpus_refseq_pct/corpus_ensembl_pct), the per-source
+    resolution rates (cdot_/uta_refseq_pct/ensembl_pct), and the full cdot-only cause
+    split (historical / ensembl / refseq_absent / other) are emitted by the updated
+    benchmark_historical.py (source_mix, cdot.by_source, uta.by_source,
+    head_to_head.cdot_only_by_cause in its --out JSON). They are placeholders (0.0)
+    here until the next full run over the private corpus populates them.
     """
     output: "output/facts/historical.csv"
     run:
         import os, csv
         os.makedirs("output/facts", exist_ok=True)
         row = {
-            "n_lines":                  35695,
-            "n_unique_tx":              3727,
-            "n_multi_version":          1647,
-            "cdot_resolved_pct":        97.5,
-            "uta_resolved_pct":         93.7,
-            "cdot_only_pct":            4.0,
-            "cdot_only_historical_pct": 98.0,
-            "cdot_only_ensembl_pct":    1.9,
+            "n_lines":                    35695,
+            "n_unique_tx":                3727,
+            "n_multi_version":            1647,
+            "cdot_resolved_pct":          97.5,
+            "uta_resolved_pct":           93.7,
+            "cdot_only_pct":              4.0,
+            "cdot_only_historical_pct":   98.0,
+            "cdot_only_ensembl_pct":      1.9,
+            "cdot_only_refseq_absent_pct": 0.0,
+            "cdot_only_other_pct":        0.0,
+            "corpus_refseq_pct":          0.0,
+            "corpus_ensembl_pct":         0.0,
+            "cdot_refseq_pct":            0.0,
+            "cdot_ensembl_pct":           0.0,
+            "uta_refseq_pct":             0.0,
+            "uta_ensembl_pct":            0.0,
         }
         with open(output[0], "w", newline="") as fh:
             writer = csv.DictWriter(fh, fieldnames=list(row))

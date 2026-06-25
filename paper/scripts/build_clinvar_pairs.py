@@ -26,6 +26,7 @@ Usage:
     python paper/scripts/build_clinvar_pairs.py variant_summary.txt.gz clinvar.vcf.gz out.tsv [--max N]
 """
 import argparse
+import csv
 import gzip
 import re
 import sys
@@ -33,9 +34,19 @@ import sys
 # 1-based columns in variant_summary.txt.gz
 COL = {"AlleleID": 1, "Name": 3, "Assembly": 17}
 
-_TX = re.compile(r"^((?:NM_|NR_|XM_|XR_)\d+\.\d+)\([^)]*\):([cn]\.[^ ]+)")
+# Accept RefSeq (NM_/NR_/XM_/XR_) and Ensembl (ENST) transcript c./n. HGVS so the pair
+# set, and the per-source breakdown built from it, covers both annotation sources rather
+# than RefSeq only. NOTE: variant_summary's "Name" is RefSeq-preferred, so ENST matches
+# here are usually sparse; ClinVar's full Ensembl HGVS lives in hgvs4variation.txt.gz. The
+# composition counts below report the actual RefSeq-vs-Ensembl mix this file yields.
+_TX = re.compile(r"^((?:NM_|NR_|XM_|XR_|ENST)\d+\.\d+)\([^)]*\):([cn]\.[^ ]+)")
 _ALLELEID = re.compile(r"(?:^|;)ALLELEID=(\d+)")
 _CLNHGVS = re.compile(r"(?:^|;)CLNHGVS=([^;]+)")
+
+
+def source_of(tx):
+    """RefSeq vs Ensembl from the accession prefix."""
+    return "ensembl" if tx.startswith("ENST") else "refseq"
 
 
 def parse_c(name):
@@ -76,6 +87,8 @@ def main():
     ap.add_argument("out")
     ap.add_argument("--assembly", default="GRCh38")
     ap.add_argument("--max", type=int, default=0)
+    ap.add_argument("--out-composition", help="write RefSeq-vs-Ensembl source counts here "
+                    "(the proportion of ClinVar c.HGVS that cite each annotation source)")
     args = ap.parse_args()
 
     print("reading VCF CLNHGVS...", file=sys.stderr)
@@ -85,6 +98,10 @@ def main():
     ci = {k: v - 1 for k, v in COL.items()}
     seen = set()
     kept = scanned = 0
+    # source mix over every parseable c.HGVS name (independent of the VCF join), so it
+    # reflects how ClinVar expresses variants, and of the kept (ground-truthed) pairs.
+    comp_names = {"refseq": 0, "ensembl": 0}
+    comp_kept = {"refseq": 0, "ensembl": 0}
     with gzip.open(args.variant_summary, "rt") as fh, open(args.out, "w") as out:
         fh.readline()
         out.write("chrom\tpos\tref\talt\tg_hgvs\tc_hgvs\n")
@@ -93,17 +110,20 @@ def main():
             f = line.rstrip("\n").split("\t")
             if len(f) <= ci["Assembly"] or f[ci["Assembly"]] != args.assembly:
                 continue
+            c_hgvs = parse_c(f[ci["Name"]])
+            if not c_hgvs:
+                continue
+            src = source_of(c_hgvs.split(":", 1)[0])
+            comp_names[src] += 1
             gt = g_by_allele.get(f[ci["AlleleID"]])
             if not gt:
                 continue
             chrom, pos, ref, alt, g_hgvs = gt
-            c_hgvs = parse_c(f[ci["Name"]])
-            if not c_hgvs:
-                continue
             key = (g_hgvs, c_hgvs)
             if key in seen:
                 continue
             seen.add(key)
+            comp_kept[src] += 1
             out.write(f"{chrom}\t{pos}\t{ref}\t{alt}\t{g_hgvs}\t{c_hgvs}\n")
             kept += 1
             if args.max and kept >= args.max:
@@ -111,6 +131,23 @@ def main():
 
     print(f"scanned {scanned:,} variant_summary rows -> wrote {kept:,} unique "
           f"(g,c) pairs to {args.out}", file=sys.stderr)
+    n_names = comp_names["refseq"] + comp_names["ensembl"]
+    n_kept = comp_kept["refseq"] + comp_kept["ensembl"]
+    ens_names_pct = 100 * comp_names["ensembl"] / n_names if n_names else 0.0
+    ens_kept_pct = 100 * comp_kept["ensembl"] / n_kept if n_kept else 0.0
+    print(f"  source mix (all parseable names): refseq {comp_names['refseq']:,} "
+          f"ensembl {comp_names['ensembl']:,} ({ens_names_pct:.2f}% Ensembl)", file=sys.stderr)
+    print(f"  source mix (kept pairs):          refseq {comp_kept['refseq']:,} "
+          f"ensembl {comp_kept['ensembl']:,} ({ens_kept_pct:.2f}% Ensembl)", file=sys.stderr)
+    if args.out_composition:
+        with open(args.out_composition, "w", newline="") as ch:
+            w = csv.writer(ch)
+            w.writerow(["scope", "refseq", "ensembl", "ensembl_pct"])
+            w.writerow(["names", comp_names["refseq"], comp_names["ensembl"],
+                        round(ens_names_pct, 2)])
+            w.writerow(["kept_pairs", comp_kept["refseq"], comp_kept["ensembl"],
+                        round(ens_kept_pct, 2)])
+        print(f"  Written composition: {args.out_composition}", file=sys.stderr)
 
 
 if __name__ == "__main__":

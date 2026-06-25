@@ -55,6 +55,33 @@ from cdot.hgvs.dataproviders import JSONDataProvider, FastaSeqFetcher
 
 # transcript accession at the start of a string, captured as (base, version)
 _AC_RE = re.compile(r"^([A-Za-z]+_?\d+)\.(\d+)")
+_REFSEQ_PREFIXES = ("NM_", "NR_", "XM_", "XR_")
+
+
+def source_of(s):
+    """RefSeq vs Ensembl vs other, from the leading transcript accession."""
+    m = _AC_RE.match(s)
+    if not m:
+        return "other"
+    base = m.group(1)
+    if base.startswith("ENST"):
+        return "ensembl"
+    if base.startswith(_REFSEQ_PREFIXES):
+        return "refseq"
+    return "other"
+
+
+def per_source_resolution(buckets, strings):
+    """{source: {n, resolved, resolved_pct}} for one provider's per-string buckets."""
+    res = {src: {"n": 0, "resolved": 0} for src in ("refseq", "ensembl", "other")}
+    for s in strings:
+        d = res[source_of(s)]
+        d["n"] += 1
+        if buckets[s] == "resolved":
+            d["resolved"] += 1
+    for d in res.values():
+        d["resolved_pct"] = pct(d["resolved"], d["n"])
+    return res
 
 
 def load_strings(path, sample=None, seed=1):
@@ -152,7 +179,19 @@ def main():
     print(f"== Historical corpus: {len(strings)} lines  |  {args.build}  |  "
           f"pure projection (replace_reference=False) ==")
 
-    results = {"n_lines": len(strings), "build": args.build}
+    # corpus source composition (RefSeq vs Ensembl): the mix of real clinical-lab
+    # traffic, so the per-source resolution rates below can be read in context.
+    comp = {src: 0 for src in ("refseq", "ensembl", "other")}
+    for s in strings:
+        comp[source_of(s)] += 1
+    n = len(strings)
+    print(f"\nCorpus source mix: "
+          f"refseq {comp['refseq']} ({pct(comp['refseq'], n)}%), "
+          f"ensembl {comp['ensembl']} ({pct(comp['ensembl'], n)}%), "
+          f"other {comp['other']} ({pct(comp['other'], n)}%)")
+
+    results = {"n_lines": len(strings), "build": args.build,
+               "source_mix": {src: {"n": c, "pct": pct(c, n)} for src, c in comp.items()}}
     cdot_b = uta_b = None
 
     if args.json:
@@ -163,7 +202,12 @@ def main():
         for k in ("resolved", "no_data", "error", "parsefail"):
             print(f"  {k:<10}: {c[k]:>6}  ({pct(c[k], len(strings))}%)")
         print(f"  throughput: {len(strings)/w:.1f} HGVS/s")
+        cdot_by_source = per_source_resolution(cdot_b, strings)
+        for src in ("refseq", "ensembl"):
+            d = cdot_by_source[src]
+            print(f"  {src:<8} resolved {d['resolved']}/{d['n']} ({d['resolved_pct']}%)")
         results["cdot"] = {"counts": c, "resolved_pct": pct(c["resolved"], len(strings)),
+                           "by_source": cdot_by_source,
                            "throughput_hgvs_per_s": round(len(strings)/w, 1)}
 
     if args.uta_uri:
@@ -174,7 +218,12 @@ def main():
         for k in ("resolved", "no_data", "error", "parsefail"):
             print(f"  {k:<10}: {c[k]:>6}  ({pct(c[k], len(strings))}%)")
         print(f"  throughput: {len(strings)/w:.1f} HGVS/s")
+        uta_by_source = per_source_resolution(uta_b, strings)
+        for src in ("refseq", "ensembl"):
+            d = uta_by_source[src]
+            print(f"  {src:<8} resolved {d['resolved']}/{d['n']} ({d['resolved_pct']}%)")
         results["uta"] = {"counts": c, "resolved_pct": pct(c["resolved"], len(strings)),
+                          "by_source": uta_by_source,
                           "throughput_hgvs_per_s": round(len(strings)/w, 1)}
 
     # ---- head-to-head: strings cdot resolves but UTA does not ----------------

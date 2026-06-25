@@ -84,6 +84,19 @@ def build_provider(args):
     return RESTDataProvider(secure=not args.rest_insecure, seqfetcher=seqfetcher), f"cdot_rest(cdotlib.org)/{seq_label}"
 
 
+_REFSEQ_PREFIXES = ("NM_", "NR_", "XM_", "XR_")
+
+
+def source_of(c_hgvs):
+    """RefSeq vs Ensembl vs other, from the transcript accession in a c./n. HGVS string."""
+    tx = c_hgvs.split(":", 1)[0]
+    if tx.startswith(_REFSEQ_PREFIXES):
+        return "refseq"
+    if tx.startswith("ENST"):
+        return "ensembl"
+    return "other"
+
+
 def load_pairs(path):
     pairs = []
     with open(path) as fh:
@@ -200,8 +213,17 @@ def is_vcf_pairs(path):
         return fh.readline().startswith("chrom\t")
 
 
+def _empty_counts():
+    return {"correct": 0, "incorrect": 0, "no_data": 0, "error": 0}
+
+
 def run_resolution(am, hp, pairs, show_incorrect=False):
-    counts = {"correct": 0, "incorrect": 0, "no_data": 0, "error": 0}
+    counts = _empty_counts()
+    # Per-source (RefSeq vs Ensembl) counts so a single provider run reports how it does
+    # on each annotation source. Run for cdot and for UTA and the two by_source blocks are
+    # the evidence behind "the cdot-vs-UTA gap is Ensembl" (UTA resolves 0% of ENST) and
+    # the RefSeq-parity claim, rather than asserting it.
+    by_source = {"refseq": _empty_counts(), "ensembl": _empty_counts(), "other": _empty_counts()}
     times = []
     t0 = time.perf_counter()
     for g_hgvs, c_hgvs in pairs:
@@ -209,12 +231,30 @@ def run_resolution(am, hp, pairs, show_incorrect=False):
         bucket, converted = classify(am, hp, g_hgvs, c_hgvs)
         times.append(time.perf_counter() - s)
         counts[bucket] += 1
+        by_source[source_of(c_hgvs)][bucket] += 1
         if show_incorrect and bucket == "incorrect":
             print(f"  INCORRECT {c_hgvs}: expected {g_hgvs} got {converted}")
         if bucket == "no_data":
             logging.debug("no_data: %s", c_hgvs)
     wall = time.perf_counter() - t0
-    return counts, times, wall
+    return counts, by_source, times, wall
+
+
+def _source_summary(by_source):
+    """Compact per-source {n, resolved, resolved_pct, matched, matched_pct, no_data} for facts."""
+    out = {}
+    for src, c in by_source.items():
+        n = sum(c.values())
+        if not n:
+            continue
+        resolved = c["correct"] + c["incorrect"]
+        out[src] = {
+            "n": n,
+            "resolved": resolved, "resolved_pct": round(100 * resolved / n, 1),
+            "matched": c["correct"], "matched_pct": round(100 * c["correct"] / n, 1),
+            "no_data": c["no_data"], "error": c["error"],
+        }
+    return out
 
 
 # ---- unified recovery via fix_hgvs ------------------------------------------
@@ -366,7 +406,7 @@ def main():
 
     print(f"== Resolution: {label}  |  {len(pairs)} pairs  |  {args.build}  "
           f"|  replace_reference={args.replace_reference} ==")
-    counts, times, wall = run_resolution(am, hp, pairs, args.show_incorrect)
+    counts, by_source, times, wall = run_resolution(am, hp, pairs, args.show_incorrect)
     resolved = counts["correct"] + counts["incorrect"]
     total = len(pairs)
     print(f"  load_time         : {load_time:.2f}s")
@@ -377,9 +417,17 @@ def main():
     print(f"  resolved (any g.) : {resolved:>5}  ({pct(resolved, total)})")
     print(f"  throughput        : {total / wall:.1f} HGVS/s  (wall {wall:.2f}s)")
 
+    source_summary = _source_summary(by_source)
+    if len(source_summary) > 1:
+        print("  by source (RefSeq vs Ensembl):")
+        for src, d in source_summary.items():
+            print(f"    {src:<8} n={d['n']:<6} resolved={d['resolved_pct']:>5}%  "
+                  f"matched={d['matched_pct']:>5}%  no_data={d['no_data']}")
+
     results = {"provider": label, "build": args.build, "n": total,
                "replace_reference": args.replace_reference,
                "load_time_s": round(load_time, 2), "counts": counts,
+               "by_source": source_summary,
                "prefetch_s": round(prefetch_time, 2) if prefetch_time is not None else None,
                "throughput_hgvs_per_s": round(total / wall, 1), "wall_s": round(wall, 2)}
 
