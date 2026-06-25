@@ -7,12 +7,7 @@ build. We download the complete run of historical releases directly from the Ref
 Ensembl FTP sites rather than only the current annotation, because resolving historical
 HGVS strings depends on it: a clinical report from 2015 may reference an NM_ version that
 was retired in a later RefSeq release but is still cited in patient records and ClinVar
-submissions. The releases are combined in chronological order, with each newer release
-overwriting older entries for the same transcript version. This ordering matters beyond
-simple recency: older files are sometimes less complete than later ones (for example,
-early RefSeq GFF3 releases omitted the transcript/genome alignment-gap CIGAR strings that
-later releases include), so letting newer data win improves the merged result rather than
-merely keeping the latest version.
+submissions. The three sources are:
 
 1. **RefSeq GFF3**: {{ sources.refseq_grch37_releases | int }} GRCh37,
    {{ sources.refseq_grch38_releases | int }} GRCh38, and
@@ -35,13 +30,25 @@ merely keeping the latest version.
    accessions predating the oldest available annotation files and are overridden by
    official annotation where available.
 
+The releases are combined in chronological order, with each newer release overwriting
+older entries for the same transcript version. This ordering matters beyond simple
+recency: older files are sometimes less complete than later ones (for example, early
+RefSeq GFF3 releases omitted the transcript/genome alignment-gap CIGAR strings that later
+releases include), so letting newer data win improves the merged result rather than
+merely keeping the latest version.
+
 A Snakemake pipeline parses each source using `GFF3Parser` or `GTFParser` (HTSeq-based),
-normalises contig names via bioutils, extracts CDS boundaries from start/stop codon
-features, and serialises to gzip-compressed JSON. Gene-level metadata (symbols, HGNC
+normalises contig names via bioutils [@bioutils], extracts coding-sequence (CDS)
+boundaries from start/stop codon features, and serialises to gzip-compressed JSON.
+Gene-level metadata (symbols, HGNC
 IDs, and biotypes) is drawn from the HGNC dataset and NCBI RefSeq gene-info files and
 attached to each transcript.
 
 ## JSON format
+
+JSON was chosen deliberately: every major language parses it at high speed with built-in
+libraries, and it serialises cleanly over HTTP, so the same files drive both the in-memory
+local provider and the REST API without a separate data format.
 
 Each transcript entry stores shared metadata (`gene_name`, `hgnc`, `biotype`, transcript
 accession and version) plus a `genome_builds` dict keyed by assembly name (e.g.
@@ -156,6 +163,11 @@ at cdotlib.org. `RESTDataProvider` fetches transcripts one request per transcrip
 version, suitable for occasional lookups without downloading the full file, and can
 warm its cache with a single batched `prefetch()` request (Results R6).
 
+**Ensembl TARK**: `EnsemblTarkDataProvider` exposes the Ensembl Transcript Archive (TARK)
+REST service through the same biocommons/hgvs interface, so a pipeline can draw transcript
+data directly from Ensembl's own authoritative source when that provenance is required. To
+our knowledge it is the only client that exposes TARK through this interface.
+
 **biocommons/hgvs integration**: cdot implements
 `biocommons.hgvs.dataproviders.interface.Interface`, providing `get_tx_info`,
 `get_tx_exons`, `get_tx_seq`, `get_tx_mapping_options`, and related methods. This is the
@@ -204,3 +216,17 @@ gene is not unambiguous: the clinically preferred transcript can differ from MAN
 and a gene may have more than one transcript of interest. The selection is intended as a
 sensible default for search and gene-name lookup, not an authoritative clinical choice,
 and callers should apply their own discretion where it matters.
+
+## Benchmarking
+
+Resolution accuracy and throughput are measured with scripts committed to the repository
+(`paper/scripts/`). `benchmark_resolution.py` resolves real (g.HGVS, c.HGVS) pairs through
+a pluggable provider (local JSON, REST, or UTA) and reports resolution rate, recovery from
+cleaning and version fallback, and speed; the ClinVar pair set is built by
+`build_clinvar_pairs.py`. Cleaning is evaluated on a production query corpus and, as a
+reproducible control, with `inject_and_clean.py`, which injects each fix category into
+clean ClinVar strings. Version-fallback safety is measured by `compute_version_stability.py`
+on GRCh38, using a seeded {{ version_stability.sample_n | commas }}-accession sample drawn
+from accessions cdot holds at two or more versions (the only accessions where a version
+bump can be assessed). Throughput comparisons hold the sequence layer constant (a shared
+local SeqRepo) so that only the transcript-data layer varies (Results R6).
