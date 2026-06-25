@@ -274,6 +274,26 @@ def test_clean_hgvs_protein_suffix_in_parens():
     assert C.STRIPPED_PROTEIN_SUFFIX in codes(fixes)
 
 
+def test_structure_reconstruction_not_reported_as_uppercased_bases():
+    # Missing colon between an already-uppercase transcript and its c. kind:
+    # the only change is inserting the ':', so the fix must be reported as a
+    # structural reconstruction, NOT as uppercased_bases (no bases changed).
+    cleaned, fixes = clean_hgvs("NM_000059.4c.100+5_200-3del")
+    assert cleaned == "NM_000059.4:c.100+5_200-3del"
+    assert C.RECONSTRUCTED_STRUCTURE in codes(fixes)
+    assert C.UPPERCASED_BASES not in codes(fixes)
+
+
+def test_double_underscore_not_reported_as_added_underscore():
+    # Collapsing a doubled underscore removes one, it does not add a missing
+    # one, so it must be reported as FIXED_DOUBLE_UNDERSCORE, not the
+    # ADDED_TRANSCRIPT_UNDERSCORE code used when a separator is actually added.
+    cleaned, fixes = clean_hgvs("NM__000059.4:c.123del")
+    assert cleaned == "NM_000059.4:c.123del"
+    assert C.FIXED_DOUBLE_UNDERSCORE in codes(fixes)
+    assert C.ADDED_TRANSCRIPT_UNDERSCORE not in codes(fixes)
+
+
 # ---------------------------------------------------------------------------
 # clean_hgvs — validation errors
 # ---------------------------------------------------------------------------

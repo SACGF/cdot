@@ -10,6 +10,10 @@
 
 - #28 - **Behaviour change to the opt-in version fallback:** when a substitution is not structure-verified coordinate-safe (the CDS structure differs, or could not be verified), the default is now to **refuse** it — the string is left unchanged with an ERROR `HGVSFix` (`REFUSED_UNSAFE_VERSION`), rather than silently substituting. Pass `on_unsafe_version=UnsafeVersionPolicy.SUBSTITUTE` to `resolve_transcript_version` / `fix_hgvs` to substitute anyway with a `USED_ADJACENT_VERSION_COORD_UNVERIFIED` WARNING. Providers that cannot assess safety are unaffected (still a plain `USED_ADJACENT_VERSION` WARNING). The fallback remains entirely opt-in (off unless `version_fallback=` is set)
 
+### Fixed
+
+- #119 - HGVS cleaning: two `HGVSFix` codes were mislabelled and now have their own codes - a purely structural reconstruction (eg inserting a missing colon, `NM_000059.4c.123del` → `NM_000059.4:c.123del`) reports `RECONSTRUCTED_STRUCTURE` instead of `UPPERCASED_BASES`, and collapsing a doubled underscore (`NM__000059.4` → `NM_000059.4`) reports `FIXED_DOUBLE_UNDERSCORE` instead of `ADDED_TRANSCRIPT_UNDERSCORE`
+
 ## [0.2.28] - 2026-06-18
 
 ### Added

@@ -53,7 +53,9 @@ class HGVSFixCode(Enum):
     DROPPED_DEL_DUP_COUNT        = "dropped_del_dup_count"
     DROPPED_GENOMIC_REF_IN_PARENS = "dropped_genomic_ref_in_parens"
     ADDED_TRANSCRIPT_UNDERSCORE  = "added_transcript_underscore"
+    FIXED_DOUBLE_UNDERSCORE      = "fixed_double_underscore"
     UPPERCASED_BASES             = "uppercased_bases"
+    RECONSTRUCTED_STRUCTURE      = "reconstructed_structure"
     ADDED_MISSING_KIND           = "added_missing_kind"
     # Gene/transcript fixes (all WARNING)
     SWAPPED_GENE_TRANSCRIPT      = "swapped_gene_transcript"
@@ -471,7 +473,7 @@ def _op_fix_double_underscore(s: str) -> tuple[str, list[HGVSFix]]:
         s2 = s.replace("__", "_")
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
-            code=HGVSFixCode.ADDED_TRANSCRIPT_UNDERSCORE,
+            code=HGVSFixCode.FIXED_DOUBLE_UNDERSCORE,
             message="Fixed double underscore '__'", original=s, fixed=s2,
         )]
     return s, []
@@ -587,7 +589,7 @@ def _op_reconstruct_structure(s: str) -> tuple[str, list[HGVSFix]]:
                 code = HGVSFixCode.UPPERCASED_TRANSCRIPT
                 message = "Uppercased transcript prefix"
             else:
-                code = HGVSFixCode.UPPERCASED_BASES
+                code = HGVSFixCode.RECONSTRUCTED_STRUCTURE
                 message = "Reconstructed HGVS with correct casing and structure"
             return reconstructed, [HGVSFix(
                 severity=HGVSFixSeverity.WARNING,
