@@ -8,7 +8,7 @@ HGVS nomenclature is the international standard for describing sequence variants
 clinical reports, public databases, and the research literature. A routine but
 error-prone task is turning these descriptions back into genomic coordinates, which
 depends on accurate, versioned transcript data. cdot supplies that data. It does not
-resolve HGVS itself; instead it provides the versioned transcript-to-genome alignments
+resolve HGVS itself; it provides the versioned transcript-to-genome alignments
 that the established Python HGVS libraries already use, so existing pipelines gain
 coverage and speed without changing how they work.
 

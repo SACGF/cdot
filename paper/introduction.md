@@ -9,8 +9,8 @@ that transcript is aligned to a particular genome build; the alignment determine
 the transcript's exons fall in genomic coordinates, so conversion is only possible with
 the matching transcript-version alignment for the build in question. The scale is large:
 ClinVar alone provides HGVS descriptions for >{{ literature.clinvar_variants | commas }}
-variants [@Landrum2025]. Getting HGVS descriptions to resolve reliably is a known
-problem, especially for the human-entered strings that reach search boxes and importers:
+variants [@Landrum2025]. Resolving HGVS descriptions reliably is hard,
+especially for the human-entered strings that reach search boxes and importers:
 Mutalyzer, whose users type descriptions into a free-text box, found
 ~{{ literature.hgvs_error_rate_pct | dp(0) }}% error rates in
 submitted HGVS descriptions over five years [@Lefter2021], many attributable to missing

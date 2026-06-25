@@ -7,19 +7,18 @@ a drop-in replacement that needs no database, covers both RefSeq and Ensembl, ad
 T2T-CHM13v2.0, and retains the full release history. The second gap is general to the HGVS
 ecosystem, independent of any one library: the descriptions that clinical and research
 systems actually receive are often malformed or cite a transcript version that has since
-been retired, and most tools simply reject them. cdot's string cleaning and safe version
+been retired, and most tools reject them. cdot's string cleaning and safe version
 fallback recover many of these.
 
-The practical payoff is robustness where it is otherwise hard to achieve. A clinical
-laboratory or research group collecting HGVS from report PDFs, spreadsheets, and free-text
-search boxes can run `clean_hgvs()` as a pre-pass, so that whitespace, casing, and
-copy/paste damage no longer break otherwise-valid descriptions, with every change reported
-for audit rather than applied silently. A variant cited against a transcript version that
+The practical benefit shows up in pipelines that handle messy input. A
+clinical laboratory or research group collecting HGVS from report PDFs, spreadsheets, and
+free-text search boxes can run `clean_hgvs()` as a pre-pass, so that whitespace, casing,
+and copy/paste damage no longer break otherwise-valid descriptions, with every change
+reported for audit rather than applied silently. A variant cited against a transcript version that
 has since been retired can still resolve through the opt-in version fallback, which
 substitutes the nearest available version only when a build-independent check confirms the
-substitution does not move the variant. Together these turn input that would otherwise fail
-into resolved coordinates without asking the user to reformat anything, which is what makes
-cdot worth dropping into a working clinical or research pipeline.
+substitution does not move the variant. These two steps turn input that would otherwise
+fail into resolved coordinates, without asking the user to reformat anything.
 
 cdot also integrates Ensembl TARK, the Ensembl transcript archive: its
 `EnsemblTarkDataProvider` is, to our knowledge, the only client that exposes TARK through
@@ -44,7 +43,7 @@ clients, and for AI agents that call the API directly. Ensembl offers a public R
 for Ensembl transcripts and only at the latest version of each; cdot serves both RefSeq
 and Ensembl and retains historical versions.
 
-By design, cdot separates unambiguous string cleaning, which is safe to apply
+cdot separates unambiguous string cleaning, which is safe to apply
 automatically, from heuristics that can be wrong (choosing an adjacent transcript
 version, or mapping a gene symbol to a canonical transcript), which are opt-in, never
 applied silently, and always reported as an `HGVSFix` the caller can inspect or reject.

@@ -16,12 +16,12 @@ transcript version aligned to a particular genome build. The same transcript ver
 counted separately per build, because each alignment is what a resolution against that
 build actually needs. cdot covers {{ coverage.total_count | commas }} such alignments
 across all builds and sources, compared with ~{{ literature.uta_count | commas }} in UTA,
-a {{ coverage.improvement_fold | fmt('.1f') }}× increase. The gain has two
-distinct origins. First, historical depth: UTA does hold several versions per transcript,
-but cdot ingests the complete run of RefSeq and Ensembl releases straight from the FTP
+a {{ coverage.improvement_fold | fmt('.1f') }}× increase. Two things drive the
+gain. The first is historical depth: UTA does hold several versions per transcript,
+but cdot ingests the complete run of RefSeq and Ensembl releases from the FTP
 archives, so it retains many more historical versions. An NM_ version cited in an older
 clinical report or ClinVar submission still resolves even after NCBI has retired it from
-the current annotation. Second, Ensembl is covered in
+the current annotation. The second is Ensembl, which cdot covers in
 full: {{ coverage.ensembl_unique_count | commas }} Ensembl transcript accessions are
 present in cdot but absent from UTA entirely. T2T-CHM13v2.0 adds a further
 {{ coverage.t2t_unique_count | commas }} alignments.
@@ -54,8 +54,8 @@ not miscounted as disagreements. The residual {{ clinvar_vcf.incorrect_pct | dp(
 dominated by paralog and copy-number transcripts that map to more than one genomic locus
 and by indel-representation differences, not by coordinate errors (Supplementary Table S4).
 
-**[Tier 2: production validation, not reproducible].** The same gap holds on genuinely
-historical clinical data, the data that motivated cdot. We resolved the complete set of
+**[Tier 2: production validation, not reproducible].** The same gap holds on the
+historical clinical data that motivated cdot. We resolved the complete set of
 {{ historical.n_lines | commas }} unique HGVS descriptions imported into the Australian
 Genomics Shariant variant-sharing platform [@Tudini2022]: real classifications submitted
 by clinical genetic-testing laboratories over many years, each written against whichever
@@ -72,29 +72,28 @@ versus {{ historical.uta_resolved_pct | dp(1) }}% for the same locally loaded UT
 which UTA holds no GRCh38 alignment and {{ historical.cdot_only_ensembl_pct | dp(0) }}%
 were Ensembl transcripts (absent from UTA entirely). The ClinVar comparison above shows
 the GTF→JSON→biocommons pipeline works at scale on current transcript versions; this
-corpus shows the historical depth matters in practice, since it is exactly the
+corpus shows the historical depth matters in practice: it is the
 older-version traffic a working clinical lab generates. There is no ground-truth genomic
 coordinate for the private corpus, so the metric is resolution rate rather than
 correctness (Methods, data availability).
 
 ## R2: String cleaning recovers malformed real-world HGVS
 
-The headline test of cleaning is its effect on a real production query stream; a
+The main test of cleaning is its effect on a real production query stream; a
 reproducible injection benchmark provides a supporting safety check.
 
-**[Tier 2: production validation, not reproducible] Headline result.** The corpus is
-**N = 32,752** real queries typed into the HGVS search box of production clinical and
+**[Tier 2: production validation, not reproducible].** The corpus is
+N = 32,752 real queries typed into the HGVS search box of production clinical and
 research variant-curation platforms based on VariantGrid [@VariantGrid]. Users treat that box as a shortcut to jump straight
 to a variant or its classification, so the strings are whatever a clinician or curator
 happened to paste or type, not curated HGVS. They arrive carrying the damage of their
 route to the box: stray whitespace and non-printable characters from copying out of Word
 documents and report PDFs and pasting between systems, lost casing, transposed
 punctuation, and trailing protein annotations. Run over this corpus, `clean_hgvs()` raised
-the fraction parseable by biocommons/hgvs from **91.5%** as-submitted to **96.6%** after
-cleaning: a **+5.1%** absolute gain (≈1,700 additional strings rescued) with **0
-regressions** (no already-valid string was broken). This is the result that matters
-operationally: it measures what cleaning recovers from genuinely messy, human-entered
-input rather than from synthetic errors. The rescues break down by fix type as shown in
+the fraction parseable by biocommons/hgvs from 91.5% as-submitted to 96.6% after
+cleaning: a +5.1% absolute gain (≈1,700 additional strings rescued) with zero
+regressions (no already-valid string was broken). This measures what cleaning recovers
+from messy, human-entered input rather than from synthetic errors. The rescues break down by fix type as shown in
 Table 1; they are dominated by whitespace removal and base re-casing, followed by
 protein-suffix stripping and gene/transcript-wrapper repair.
 
@@ -142,16 +141,16 @@ constants from a deterministic run over the production corpus.)*
 
 | Class | Queries | What it is (*example*) |
 |---|---|---|
-| Truncated | 284 (25.4%) | cut off before a complete variant — `NM_000059.4:c.68_69` (range, no edit) |
-| No reference | 277 (24.8%) | a bare variant body, no transcript/gene/accession — `c.68_69delAG` |
-| Bad accession | 167 (14.9%) | missing prefix, or misplaced/truncated version — `000059.4:c.68del` (`NM_` prefix dropped) |
-| Edit syntax | 113 (10.1%) | malformed or non-standard edit operation — `NM_000059.4:c.68AG>T` (multi-base reference in a substitution) |
-| Trailing / concatenated | 85 (7.6%) | extra characters after a complete variant, or several run together — `NM_000059.4:c.68delAG;c.70A>G` |
-| Grammar gap | 81 (7.2%) | legitimate HGVS the biocommons grammar rejects — `NM_000059.4:c.(67+1_68-1)_(70+1_71-1)del` (uncertain-range deletion) |
-| Insertion (length only) | 30 (2.7%) | an insertion given as a base count, not a sequence — `NM_000059.4:c.68_69ins5` (position and length recoverable; inserted bases not) |
+| Truncated | 284 (25.4%) | cut off before a complete variant: `NM_000059.4:c.68_69` (range, no edit) |
+| No reference | 277 (24.8%) | a bare variant body, no transcript/gene/accession: `c.68_69delAG` |
+| Bad accession | 167 (14.9%) | missing prefix, or misplaced/truncated version: `000059.4:c.68del` (`NM_` prefix dropped) |
+| Edit syntax | 113 (10.1%) | malformed or non-standard edit operation: `NM_000059.4:c.68AG>T` (multi-base reference in a substitution) |
+| Trailing / concatenated | 85 (7.6%) | extra characters after a complete variant, or several run together: `NM_000059.4:c.68delAG;c.70A>G` |
+| Grammar gap | 81 (7.2%) | legitimate HGVS the biocommons grammar rejects: `NM_000059.4:c.(67+1_68-1)_(70+1_71-1)del` (uncertain-range deletion) |
+| Insertion (length only) | 30 (2.7%) | an insertion given as a base count, not a sequence: `NM_000059.4:c.68_69ins5` (position and length recoverable; inserted bases not) |
 
-The residual falls into three regimes. Just over half (~50%: Truncated + No reference) is
-incomplete or reference-less user input — information the user never supplied, which no
+The residual falls into three groups. Just over half (~50%: Truncated + No reference) is
+incomplete or reference-less user input: information the user never supplied, which no
 string-level repair can invent; the integer-length insertions (2.7%) belong with these,
 since the inserted bases were never given (only the position and length are recoverable, so
 the variant is not properly resolvable). About 33% (Bad accession + Edit syntax + Trailing /
@@ -175,7 +174,7 @@ version from each test variant and resolving through the fallback recovered the 
 genomic coordinate with no false rescues (a false rescue being a substitution that
 resolves to a different coordinate). This is a client-layer feature rather than a backend one: biocommons/hgvs
 has no adjacent-version fallback regardless of its data provider, so a UTA-backed pipeline
-gains nothing here even though UTA itself stores several versions per transcript. cdot's
+gains nothing here even though UTA stores several versions per transcript. cdot's
 multi-release depth gives the fallback more versions to choose from, and it is never
 applied automatically, preserving exact-version semantics by default. Whether a given
 substitution is *coordinate-safe*, and how cdot decides, is the subject of R5.
@@ -194,7 +193,7 @@ for Ensembl ({{ version_stability.ensembl_pairs | commas }} pairs)
 {{ version_stability.ensembl_preserving_pct | dp(1) }}%. Weighting by coding base (the
 chance a *random* variant is unaffected), safety is higher still,
 {{ (version_stability.refseq_pervariant_safety * 100) | dp(1) }}% (RefSeq) and
-{{ (version_stability.ensembl_pervariant_safety * 100) | dp(1) }}% (Ensembl); and the genuinely
+{{ (version_stability.ensembl_pervariant_safety * 100) | dp(1) }}% (Ensembl); and the most
 dangerous case, a *partial* bump that mis-places some variants but not others, is rare
 ({{ version_stability.refseq_partial_drift_pct | dp(1) }}% of RefSeq bumps,
 {{ version_stability.ensembl_partial_drift_pct | dp(1) }}% Ensembl); when a coordinate
@@ -202,17 +201,17 @@ does move it is almost always the whole CDS, driven by a re-annotation of the co
 region. Drift is also highly concentrated: only
 {{ version_stability.refseq_accessions_drift_pct | dp(1) }}% of RefSeq accessions ever
 drift, and within that set the moves cluster in a small minority of accessions.
-Concentration like this is actionable: the risky transcripts form a short, identifiable
-list that can be flagged or blocklisted, rather than every version bump being treated as
-unsafe.
+This concentration has a practical consequence: the risky transcripts form a short,
+identifiable list that can be flagged or blocklisted, rather than every version bump being
+treated as unsafe.
 
 Whether a bump is coordinate-safe is predictable from a single version, with no
-flanking pair or genomic context. A transcript version's **intrinsic CDS structure** (its
+flanking pair or genomic context. A transcript version's intrinsic CDS structure (its
 CDS length plus the lengths of its coding-exon segments in transcript coordinates)
-is **build-independent** (identical across GRCh37/GRCh38/T2T for
+is build-independent (identical across GRCh37/GRCh38/T2T for
 {{ version_stability.refseq_struct_portable_pct | dp(1) }}% of RefSeq and
 {{ version_stability.ensembl_struct_portable_pct | dp(1) }}% of Ensembl versions), and a
-change in that structure is almost exactly equivalent to a genomic-coordinate drift:
+change in that structure is almost equivalent to a genomic-coordinate drift:
 every drifting RefSeq bump ({{ version_stability.refseq_drift_struct_flagged_pct | dp(0) }}%)
 and {{ version_stability.ensembl_drift_struct_flagged_pct | dp(1) }}% of drifting Ensembl
 bumps carry an intrinsic-structure change, while conversely
@@ -224,11 +223,11 @@ substituting an available version for a requested one in, say, GRCh38, cdot read
 requested version's intrinsic CDS structure from any build that carries it (the structure
 is build-independent, so a GRCh37 or T2T record serves), reads the substitute version's
 structure from GRCh38, and substitutes only when the two match. Because the comparison is
-on the structure itself rather than on flanking genomic coordinates, it also catches
+on the structure rather than on flanking genomic coordinates, it also catches
 transient-revert versions (a coordinate that goes A→B→A) that a genomic-bracket check
 between neighbours cannot see.
 
-Identical transcript structure is necessary but not on its own sufficient, so the gate
+Identical transcript structure does not on its own guarantee safety, so the gate
 adds two refinements. An alignment gap (a transcript-vs-genome indel) present in one
 version and not the other shifts every coding base downstream of it, so the gate also
 requires the two versions' CDS alignment gaps to match. And because the structure is
@@ -259,7 +258,7 @@ substituted, preserving exact-variant semantics.
 
 **[Tier 1]** To compare transcript backends fairly we held the sequence layer constant
 (every configuration was served by the *same local SeqRepo*), so the only thing that
-varies across rows of Table 2 is the transcript-data layer itself.
+varies across rows of Table 2 is the transcript-data layer.
 
 **Table 2. End-to-end HGVS resolution throughput by transcript backend**, sequence layer
 held constant (shared local SeqRepo), identical biocommons/hgvs engine. *(Tier 1.)*

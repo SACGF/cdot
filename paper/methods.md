@@ -46,7 +46,7 @@ attached to each transcript.
 
 ## JSON format
 
-JSON was chosen deliberately: every major language parses it at high speed with built-in
+We use JSON because every major language parses it at high speed with built-in
 libraries, and it serialises cleanly over HTTP, so the same files drive both the in-memory
 local provider and the REST API without a separate data format.
 
@@ -78,8 +78,8 @@ report PDFs, spreadsheets, literature, and free-text search boxes, and accumulat
 formatting errors along the way: copy/paste whitespace and quotes, lost casing,
 transposed punctuation, a gene symbol and transcript accession swapped, or a trailing
 protein annotation. The intended variant is usually unmistakable to a human reader, but
-such errors are fatal to a strict grammar. The conventional response is to validate the
-string: report it as invalid and stop. cdot instead attempts to repair it.
+a strict grammar rejects the string outright. The conventional response is to validate it,
+report it as invalid, and stop. cdot attempts to repair it instead.
 
 `clean_hgvs()` is a pure string operation. It takes an HGVS string and returns the
 repaired string together with a list of structured `HGVSFix` records describing every
@@ -122,7 +122,7 @@ operations group into:
   and a final step that detects and repairs the common clinical mistake of swapping the
   gene symbol and transcript accession (`BRCA2(NM_000059.4):c.…` →
   `NM_000059.4(BRCA2):c.…`). The standard HGVS gene-in-parentheses form
-  (`NM_000059.4(BRCA2):c.…`) is itself valid and is parsed by biocommons/hgvs unchanged;
+  (`NM_000059.4(BRCA2):c.…`) is valid and is parsed by biocommons/hgvs unchanged;
   these operations target only the non-standard variants of it: accession and gene
   transposed, or the separating colon or dot missing.
 
@@ -165,8 +165,8 @@ warm its cache with a single batched `prefetch()` request (Results R6).
 
 **Ensembl TARK**: `EnsemblTarkDataProvider` exposes the Ensembl Transcript Archive (TARK)
 REST service through the same biocommons/hgvs interface, so a pipeline can draw transcript
-data directly from Ensembl's own authoritative source when that provenance is required. To
-our knowledge it is the only client that exposes TARK through this interface.
+data directly from Ensembl's own authoritative source when that provenance is required. It
+is the only client we know of that exposes TARK through this interface.
 
 **biocommons/hgvs integration**: cdot implements
 `biocommons.hgvs.dataproviders.interface.Interface`, providing `get_tx_info`,
@@ -209,8 +209,8 @@ transcript accession. The candidate transcripts come from the data provider's
 Select, then MANE Plus Clinical, RefSeq Select, Ensembl canonical, then longest). For
 example, a pipeline given `BRCA1:c.68_69del` with no transcript can look up the MANE
 Select accession for BRCA1 (`NM_007294.4`) and resolve `NM_007294.4(BRCA1):c.68_69del`
-against the genome. To our knowledge this is the first
-HGVS data provider to expose programmatic canonical transcript selection aligned to the
+against the genome. We are not aware of another
+HGVS data provider that exposes programmatic canonical transcript selection aligned to the
 MANE standard [@Morales2022; @Wright2023]. Picking a single canonical transcript for a
 gene is not unambiguous: the clinically preferred transcript can differ from MANE Select,
 and a gene may have more than one transcript of interest. The selection is intended as a
