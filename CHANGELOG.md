@@ -1,5 +1,11 @@
 ## [unreleased]
 
+## [0.2.30] - 2026-06-25
+
+### Fixed
+
+- Packaging: the wheel/sdist now ship only the `cdot` package. Previously setuptools namespace-package discovery swept in repo directories (`paper/`, `docs/`, `literature/`, `output/`) as top-level packages, so `pip install cdot` dumped `paper/scripts/*.py` and other non-library files into the environment. The package list is now an explicit `cdot*` allowlist
+
 ## [0.2.29] - 2026-06-25
 
 ### Added
