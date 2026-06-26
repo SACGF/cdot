@@ -17,6 +17,7 @@ CDOT_DATA_VERSION=$(${BASE_DIR}/cdot_json.py --version)
 CDOT_RELEASE_NAME=data_v${CDOT_DATA_VERSION}
 
 files=(
+  "${CDOT_DATA_DIR}/ensembl/cdot-${CDOT_DATA_VERSION}.all-builds-ensembl-grch37_grch38_t2t-chm13v2.0.json.gz"
   "${CDOT_DATA_DIR}/ensembl/cdot-${CDOT_DATA_VERSION}.ensembl.GRCh37.json.gz"
   "${CDOT_DATA_DIR}/ensembl/GRCh37/cdot-${CDOT_DATA_VERSION}.Homo_sapiens_GRCh37_Ensembl_87.gtf.json.gz"
   "${CDOT_DATA_DIR}/ensembl/cdot-${CDOT_DATA_VERSION}.ensembl.GRCh38.json.gz"
@@ -24,6 +25,7 @@ files=(
   "${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.Homo_sapiens_GRCh38_Ensembl_113.gtf.json.gz"
   "${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.Homo_sapiens_GRCh38_Ensembl_114.gtf.json.gz"
   "${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.Homo_sapiens_GRCh38_Ensembl_115.gtf.json.gz"
+  "${CDOT_DATA_DIR}/ensembl/GRCh38/cdot-${CDOT_DATA_VERSION}.Homo_sapiens_GRCh38_Ensembl_116.gtf.json.gz"
   "${CDOT_DATA_DIR}/ensembl/cdot-${CDOT_DATA_VERSION}.ensembl.T2T-CHM13v2.0.json.gz"
   "${CDOT_DATA_DIR}/refseq/cdot-${CDOT_DATA_VERSION}.all-builds-refseq-grch37_grch38_t2t-chm13v2.0.json.gz"
   "${CDOT_DATA_DIR}/refseq/cdot-${CDOT_DATA_VERSION}.refseq.GRCh37.json.gz"

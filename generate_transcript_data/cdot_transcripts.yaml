@@ -86,6 +86,8 @@ config:
         url: "https://ftp.ensembl.org/pub/release-114/gtf/homo_sapiens/Homo_sapiens.GRCh38.114.gtf.gz"
        Homo_sapiens_GRCh38_Ensembl_115.gtf:
         url: "https://ftp.ensembl.org/pub/release-115/gtf/homo_sapiens/Homo_sapiens.GRCh38.115.gtf.gz"
+       Homo_sapiens_GRCh38_Ensembl_116.gtf:
+        url: "https://ftp.ensembl.org/pub/release-116/gtf/homo_sapiens/Homo_sapiens.GRCh38.116.gtf.gz"
 
     T2T-CHM13v2.0:
       Homo_sapiens_T2T-CHM13v2.0_Ensembl_2022_06.gtf:
