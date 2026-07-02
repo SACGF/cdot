@@ -231,37 +231,56 @@ rule benchmark:
 
 
 rule clinvar:
-    """R1 cdot-vs-UTA ClinVar resolution facts, with a RefSeq-vs-Ensembl breakdown.
+    """R2 cdot-vs-UTA ClinVar resolution facts, with a RefSeq-vs-Ensembl breakdown.
 
-    The headline rates (cdot vs UTA over a sample spanning both RefSeq NM_ and Ensembl
-    ENST committed test pairs) plus the per-source split that evidences *where* the gap
-    is (UTA holds no Ensembl alignments, so it resolves 0% of ENST; RefSeq is at parity).
-    Frozen measured constants - the per-source columns are populated by running, over the
-    committed tests/test_data/clinvar_hgvs/*.tsv (RefSeq + Ensembl), the identical engine
-    against each provider and reading the `by_source` block of each --out JSON:
-        python paper/scripts/benchmark_resolution.py PAIRS.tsv --json cdot.refseq+ensembl.grch38.json.gz --out cdot.json
-        UTA_DB_URL=... python paper/scripts/benchmark_resolution.py PAIRS.tsv --uta --out uta.json
-    cdot_refseq_pct/cdot_ensembl_pct come from cdot.json by_source[*].resolved_pct;
-    uta_refseq_pct/uta_ensembl_pct from uta.json (uta_ensembl_pct is 0 - no ENST in UTA).
-    The per-source values below are placeholders (0.0) until that run; the next full build
-    fills them.
+    Two things are recorded here, deliberately from two samples:
+
+    1. Headline rates over the seeded 2,818-variant ClinVar sample (cdot 99.0% vs UTA
+       70.3%). Frozen constants from the original cdot+UTA run; the seeded sample is not
+       committed (built from a ClinVar download), so these stay frozen.
+
+    2. Per-source split, measured on the *committed* tests/test_data/clinvar_hgvs/*.tsv
+       (500 RefSeq NM_ + 818 Ensembl ENST) so a referee can reproduce it. It shows WHERE
+       the gap is: RefSeq is at parity (both hold every cited current version), the whole
+       gap is Ensembl (UTA holds no ENST at all).
+
+    cdot sequences are served by cdot's own FastaSeqFetcher (transcript sequence spliced
+    from a local genome FASTA), so no pair is dropped for a missing sequence: this covers
+    the Ensembl transcripts SeqRepo does not hold, and reproduces Ensembl transcript
+    sequence exactly. The whole committed set is counted (500 RefSeq + 818 Ensembl).
+
+    How the per-source columns were measured (GRCh38, cdot 0.2.33 / UTA uta_20241220):
+        # cdot end-to-end resolution over the committed pairs, --fasta = FastaSeqFetcher:
+        F=GCF_000001405.39_GRCh38.p13_genomic.fna.gz   # NCBI GRCh38, NC_ contig names
+        python paper/scripts/benchmark_resolution.py tests/test_data/clinvar_hgvs/clinvar_hgvs_500.tsv \\
+            --json cdot-0.2.33.refseq_ensembl.GRCh38.json.gz --fasta $F --out cdot_rs.json
+        python paper/scripts/benchmark_resolution.py tests/test_data/clinvar_hgvs/clinvar_hgvs_ensembl.tsv \\
+            --json cdot-0.2.33.refseq_ensembl.GRCh38.json.gz --fasta $F --out cdot_en.json
+        # cdot: RefSeq 500/500 = 100.0%; Ensembl 816/818 = 99.8% (the 2 misses are genuine
+        # missing cdot alignments, not sequence).
+        # UTA coverage: membership of the exact cited accession.version in UTA's GRCh38
+        # alignment set (biocommons has no version fallback, so holding the exact version
+        # is what UTA resolution requires). Against the UTA GRCh38 alignment dump (ac column
+        # of Homo_sapiens_GRCh38_UTA_20241220.csv): RefSeq 500/500 = 100.0%, Ensembl 0 (no
+        # ENST rows in UTA at all) = 0.0%. The live UTA DB gives the same rates; the offline
+        # cdot-JSON conversion of UTA is NOT used because its splign projection under-counts.
     """
     output: "output/facts/clinvar.csv"
     run:
         import os, csv
         os.makedirs("output/facts", exist_ok=True)
         row = {
-            "n_variants":          2818,
-            "cdot_resolution_pct": 99.0,
-            "uta_resolution_pct":  70.3,
-            "n_refseq":            0,
-            "n_ensembl":           0,
-            "refseq_pct":          0.0,
-            "ensembl_pct":         0.0,
-            "cdot_refseq_pct":     0.0,
-            "cdot_ensembl_pct":    0.0,
-            "uta_refseq_pct":      0.0,
-            "uta_ensembl_pct":     0.0,
+            "n_variants":          2818,     # seeded sample (frozen headline)
+            "cdot_resolution_pct": 99.0,     # frozen headline
+            "uta_resolution_pct":  70.3,     # frozen headline
+            "n_refseq":            500,      # committed RefSeq test pairs
+            "n_ensembl":           818,      # committed Ensembl test pairs
+            "refseq_pct":          37.9,     # source mix of the committed per-source sample
+            "ensembl_pct":         62.1,
+            "cdot_refseq_pct":     100.0,    # measured (500/500), FastaSeqFetcher
+            "cdot_ensembl_pct":    99.8,     # measured (816/818; 2 genuine cdot misses)
+            "uta_refseq_pct":      100.0,    # UTA holds every cited version (500/500)
+            "uta_ensembl_pct":     0.0,      # UTA holds no ENST (0/818)
         }
         with open(output[0], "w", newline="") as fh:
             writer = csv.DictWriter(fh, fieldnames=list(row))

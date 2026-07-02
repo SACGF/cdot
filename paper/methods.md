@@ -54,10 +54,10 @@ Each transcript entry stores shared metadata (`gene_name`, `hgnc`, `biotype`, tr
 accession and version) plus a `genome_builds` dict keyed by assembly name (e.g.
 `"GRCh38"`). The build is always a dict key, even in a single-build file, so the format
 is identical whether a file stands in for one GTF/GFF for a single assembly or carries
-several builds at once: the same structure lets a single-build file act as a drop-in
-GTF/GFF replacement and lets the REST API return a transcript's GRCh37, GRCh38, and
-T2T-CHM13v2.0 alignments together in one response, with no reshaping when builds are
-combined. Build-specific fields include `contig`, `strand`, `cds_start`, `cds_end`,
+several builds at once. A single-build file therefore acts as a drop-in GTF/GFF
+replacement, and the REST API can return a transcript's GRCh37, GRCh38, and T2T-CHM13v2.0
+alignments together in one response, with no reshaping when builds are combined.
+Build-specific fields include `contig`, `strand`, `cds_start`, `cds_end`,
 and `exons`, a list of 6-tuples `[alt_start, alt_end, exon_id, cds_start, cds_end,
 gap]`. The `gap` field stores the GFF3 gap string (e.g. `"M196 I1 M61"`) for transcripts
 with indels relative to the genome; the Python client converts this to HGVS CIGAR format
@@ -96,35 +96,18 @@ punctuation is examined, and casing is normalised before the gene/transcript
 relationship is resolved). Callers may restrict cleaning to a subset of operations, such
 as an allowlist for conservative use, but selection only filters the pipeline and does
 not reorder it, so the canonical order is preserved regardless of the subset chosen. The
-operations group into:
-
-- **Stripping**: stray leading characters before the accession (e.g. a `GRCh38.p2` build tag or a
-  stray `#`/`:`), all internal and surrounding whitespace and non-printable characters,
-  wrapping quotes/backticks, trailing separators, and brackets only when unbalanced
-  (balanced parentheses are preserved, since they are valid in uncertain-range and
-  gene-symbol notation).
-- **Structural punctuation**: collapsing a doubled colon, dot, or underscore
-  (`NM_000059..4` → `NM_000059.4`); repairing a misplaced colon in the accession prefix;
-  normalising a gene symbol wedged between extra colons or stray parentheses so that
-  `NM_000059.4:(BRCA2):c.…` and `BRCA1(NM_000059.4)c.…` become the canonical
-  `transcript(GENE):c.…`; collapsing a doubled kind token (`c.c.` → `c.`); and fixing a
-  comma or colon used in place of the kind dot, or a period used in place of a
-  substitution `>`.
-- **Casing and prefixes**: uppercasing nucleotides in substitutions and del/ins/dup
-  edits (`c.123delg` → `c.123delG`), lowercasing an uppercased mutation type while
-  protecting gene symbols that contain those letters (so `NM_000059.4(INSR):c.…` is
-  never corrupted to `insR`), restoring a missing `N` prefix
-  (`M_000059.4` → `NM_000059.4`) or transcript underscore,
-  and adding a missing `c.`/`g.` kind where the accession type makes it unambiguous.
-- **Reconstruction and gene/transcript repair**: a lenient pattern that rebuilds the
-  canonical `transcript(gene):kind.variant` shape from a mangled one (inserting a
-  missing `:` or `.`, uppercasing the accession prefix and lowercasing the kind letter),
-  and a final step that detects and repairs the common clinical mistake of swapping the
-  gene symbol and transcript accession (`BRCA2(NM_000059.4):c.…` →
-  `NM_000059.4(BRCA2):c.…`). The standard HGVS gene-in-parentheses form
-  (`NM_000059.4(BRCA2):c.…`) is valid and is parsed by biocommons/hgvs unchanged;
-  these operations target only the non-standard variants of it: accession and gene
-  transposed, or the separating colon or dot missing.
+operations fall into four groups, applied in order: **stripping** (stray leading
+characters, all whitespace and non-printables, wrapping quotes, and brackets only when
+unbalanced), **structural punctuation** (doubled or misplaced separators, and a gene
+symbol wedged in stray colons or parentheses normalised to the canonical
+`transcript(GENE):c.…` form), **casing and prefixes** (nucleotide and mutation-type
+casing, and restoring a missing accession prefix or kind token), and **reconstruction and
+gene/transcript repair** (rebuilding the canonical shape from a mangled one, and repairing
+a transposed gene symbol and transcript accession). The standard HGVS gene-in-parentheses
+form (`NM_000059.4(BRCA2):c.…`) is itself valid and is parsed by biocommons/hgvs
+unchanged; these operations target only the non-standard variants of it, such as accession
+and gene transposed or a separator missing. The full per-operation catalogue, with
+examples, is in Supplementary Table S7.
 
 Each repair is reported as an `HGVSFix` carrying a severity (`WARNING` for an
 unambiguous correction), a stable machine-readable code, a human-readable message, and
@@ -156,12 +139,12 @@ decides whether it can be used.
 lazily building interval trees for region queries on first use and dictionaries for
 transcript and gene lookup. Transcript retrieval is then O(1), giving throughput of
 {{ benchmark.cdot_local_min_tps | commas }}–{{ benchmark.cdot_local_max_tps | commas }}
-transcripts/second (Results, Table 2).
+transcripts/second (Results, Table 1).
 
 **REST API**: `cdot_rest` (https://github.com/SACGF/cdot_rest) serves the same JSON data
 at cdotlib.org. `RESTDataProvider` fetches transcripts one request per transcript
 version, suitable for occasional lookups without downloading the full file, and can
-warm its cache with a single batched `prefetch()` request (Results R6).
+warm its cache with a single batched `prefetch()` request (Results R3).
 
 **Ensembl TARK**: `EnsemblTarkDataProvider` exposes the Ensembl Transcript Archive (TARK)
 REST service through the same biocommons/hgvs interface, so a pipeline can draw transcript
@@ -229,4 +212,4 @@ clean ClinVar strings. Version-fallback safety is measured by `compute_version_s
 on GRCh38, using a seeded {{ version_stability.sample_n | commas }}-accession sample drawn
 from accessions cdot holds at two or more versions (the only accessions where a version
 bump can be assessed). Throughput comparisons hold the sequence layer constant (a shared
-local SeqRepo) so that only the transcript-data layer varies (Results R6).
+local SeqRepo) so that only the transcript-data layer varies (Results R3).

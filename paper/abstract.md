@@ -1,4 +1,4 @@
-# cdot: resolving as many real-world HGVS strings as possible
+# cdot: fast, versioned RefSeq and Ensembl transcript data for HGVS resolution
 
 # Abstract
 
@@ -21,12 +21,12 @@ required.
 
 cdot also helps with the malformed strings that clinical search boxes and importers
 collect. A parser-independent cleaning step (`clean_hgvs()`) repairs common formatting
-errors before resolution. An opt-in fallback substitutes a retired transcript version for
-the nearest available one, with a build-independent check that the substitution does not
-move the variant. Python integrations are provided for both major HGVS libraries
-(biocommons/hgvs and PyHGVS). cdot stores MANE Select and Ensembl canonical tags for
-gene-symbol HGVS lookup, and is the first transcript data source to bring the
-T2T-CHM13v2.0 assembly to the Python HGVS libraries.
+errors before resolution. When a cited transcript version has been retired, an opt-in
+fallback substitutes the nearest available version, but only when a build-independent
+check confirms the substitution does not move the variant. cdot integrates with both
+major Python HGVS libraries (biocommons/hgvs and PyHGVS), stores MANE Select and Ensembl
+canonical tags for gene-symbol lookup, and is the first transcript data source to bring
+T2T-CHM13v2.0 to these libraries.
 
 **Availability and Implementation:**
 

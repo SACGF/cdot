@@ -12,6 +12,36 @@ CSVs) have been removed; see "Completed" at the bottom for the IDs, so nothing i
 
 ---
 
+## RESOLVED — R2 per-source ClinVar facts (fixed 2026-07-02)
+
+The R2 per-source split used to render all zeros. Fixed by measuring the per-source rates
+on the **committed** test pairs (`tests/test_data/clinvar_hgvs/`) and recording them in
+`paper/empirical_results/clinvar.csv` + the Snakefile `clinvar` rule:
+`cdot_refseq_pct=100.0, uta_refseq_pct=100.0, cdot_ensembl_pct=99.8, uta_ensembl_pct=0.0,
+n_refseq=500, n_ensembl=818`. Method (GRCh38, cdot 0.2.33 / UTA uta_20241220):
+- cdot end-to-end via `benchmark_resolution.py --json cdot-0.2.33.refseq_ensembl.GRCh38.json.gz
+  --fasta GCF_000001405.39_GRCh38.p13_genomic.fna.gz` (NCBI GRCh38, NC_ contig names) over
+  the committed RefSeq (500) and Ensembl (818) tsvs. cdot's `FastaSeqFetcher` splices
+  transcript sequence from the local genome FASTA, so the Ensembl transcripts SeqRepo lacks
+  are served (Ensembl sequence is reproduced exactly). RefSeq 500/500 = 100.0%; Ensembl
+  816/818 = 99.8% (the 2 misses are genuine missing cdot alignments, not sequence). This is
+  the full committed set, no exclusions — it superseded an intermediate SeqRepo-only run
+  that showed a misleading 77% (really SeqRepo's Ensembl sequence coverage, not cdot data).
+- UTA coverage via **membership** of the exact cited accession.version in UTA's GRCh38
+  alignment dump (`/data/cdot/uta/Homo_sapiens_GRCh38_UTA_20241220.csv`, `ac` column):
+  RefSeq 500/500, Ensembl 0 (no ENST rows). NB the offline cdot-JSON conversion of UTA
+  (`cdot-0.2.33_uta.*.json.gz`) under-counts badly (splign-projection artifact, ~4.6%), and
+  the live remote UTA is unreachable here (times out), so membership is the reliable proxy.
+- The 2,818 seeded-sample headline (cdot 99.0 / UTA 70.3) stays a frozen constant: that
+  sample is not committed and needs a live UTA to reproduce. R2 prose attributes the
+  per-source numbers to the committed pairs, not to the 2,818 headline.
+
+**Residual follow-ups (optional, need a live UTA / the seeded sample):**
+- To reproduce the 2,818 headline end-to-end, run on a machine with `uta_20241220` loaded
+  in PostgreSQL and the seeded pair set.
+
+---
+
 ## STRENGTHENS THE PAPER — non-blocking but important
 
 ### R8. Dig into the ClinVar VCF-comparison coordinate differences (new)

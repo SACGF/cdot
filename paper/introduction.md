@@ -17,8 +17,8 @@ submitted HGVS descriptions over five years [@Lefter2021], many attributable to 
 transcript data. Transcript choice also has downstream consequences: only
 {{ literature.lof_agreement_pct | dp(0) }}% of putative loss-of-function variants were
 classified as loss-of-function by both RefSeq and Ensembl annotation sets in ANNOVAR
-[@McCarthy2014], underscoring the
-value of covering both annotation sources.
+[@McCarthy2014], so which annotation source you pick changes the answer and covering both
+matters.
 
 The two dominant Python HGVS libraries are biocommons/hgvs [@Hart2015; @Wang2018] and
 PyHGVS, and they obtain transcript data differently. biocommons/hgvs reads from a
