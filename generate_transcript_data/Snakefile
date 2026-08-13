@@ -64,6 +64,8 @@ gene_info_json_filename = f"Homo_sapiens.gene-info-{cdot_data_version}.{today}.j
 
 all_urls = {}
 name_uta = {}
+multi_urls = {}  # name -> list of URLs, downloaded then concatenated in list order (eg historical #51)
+extra_cdot_args = {}  # name -> extra command line args for cdot_json.py
 
 annotation_consortium_list = []
 genome_builds = set()
@@ -77,11 +79,17 @@ for annotation_consortium, builds in config["config"].items():
                 name_uta[name] = uta
                 if schema := uta.get("schema"):
                     url = f"postgresql://uta.biocommons.org/{schema}"
+            elif urls := data.get("urls"):
+                multi_urls[name] = urls
+                url = urls[-1]  # Recorded as the source URL in the JSON
             else:
                 url = data.get("url")
 
             if url:
                 all_urls[name] = url
+
+            if cdot_args := data.get("cdot_args"):
+                extra_cdot_args[name] = cdot_args
 
 genome_builds = list(sorted(genome_builds))
 merged_genome_build_label = "_".join(genome_builds).lower()
@@ -104,7 +112,7 @@ def get_build_input_files(wildcards):
     prefix = f"{wildcards.annotation_consortium}/{wildcards.genome_build}/cdot-{cdot_data_version}"
     input_files = []
     for name, val in cdot_file_data.items():
-        if 'url' in val:
+        if 'url' in val or 'urls' in val:
             filename = prefix + f".{name}.json.gz"
         elif 'uta' in val:
             filename = prefix + f"_uta.{name}.json.gz"
@@ -112,6 +120,13 @@ def get_build_input_files(wildcards):
             raise ValueError(f"Don't know how to handle {name}: {val}")
         input_files.append(filename)
     return input_files
+
+
+def get_gff_download_path(wildcards):
+    """ Multi-URL sources are concatenated into downloads/combined/ """
+    if wildcards.name in multi_urls:
+        return f"downloads/combined/{wildcards.name}.gz"
+    return f"downloads/{wildcards.name}.gz"
 
 
 rule all:
@@ -167,13 +182,14 @@ rule cdot_gff_json:
     # Individual GFF
     input:
         gene_info_json=gene_info_json_filename,
-        gff_file="downloads/{name}.gz",
+        gff_file=get_gff_download_path,
         gencode_metadata=_gencode_metadata_path  # Optional, only used for Ensembl
     output:
         "{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + ".{name}.json.gz"
     params:
         url=get_url_from_name,
         cdot_command=get_cdot_command,
+        extra_cdot_args=lambda wc: extra_cdot_args.get(wc.name, ""),
         gencode_param=lambda wc: (
             (f'--gencode-hgnc-metadata "{_gencode_metadata_path(wc)}"')
             if (wc.annotation_consortium.lower() == "ensembl" and _gencode_release_from_url(all_urls[wc.name]) is not None)
@@ -195,8 +211,31 @@ rule cdot_gff_json:
                 --output "{output}" \
                 --gene-info-json="{input.gene_info_json}" \
                 {params.gencode_param} \
-                {params.gene_canonical_transcripts_params}
+                {params.gene_canonical_transcripts_params} \
+                {params.extra_cdot_args}
         """
+
+
+rule combine_gff_parts:
+    # Multi-URL sources (eg RefSeq historical annotation + alignments, #51) are
+    # concatenated in YAML list order (concatenated gzip streams are valid gzip)
+    input:
+        lambda wc: [f"downloads/parts/{wc.name}.part{i}.gz" for i in range(len(multi_urls[wc.name]))]
+    output:
+        protected("downloads/combined/{name,[^/]+}.gz")
+    shell:
+        "cat {input} > {output}"
+
+
+rule download_gff_part:
+    resources:
+        connections=1
+    output:
+        protected("downloads/parts/{name,[^/]+}.part{part,\\d+}.gz")
+    params:
+        url=lambda wc: multi_urls[wc.name][int(wc.part)]
+    shell:
+        "curl --fail --show-error -L -o {output} {params.url}"
 
 
 rule download_gff_files:
