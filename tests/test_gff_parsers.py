@@ -20,6 +20,10 @@ class Test(unittest.TestCase):
     # Synthetic - alignment leaves a hole in the transcript coordinates (issue #123)
     REFSEQ_GFF3_FILENAME_COORDINATE_HOLE = os.path.join(test_data_dir,
                                                         "refseq_test.transcript_coordinate_hole.gff")
+    # NCBI historical alignments (issue #51) - annotation + alignments files concatenated (annotation first).
+    # Contains ACADM NM_000016.2/.3, gapped NM_000028.1 and NM_000066.1, partial-start NM_002521.1,
+    # plus an alignment-only NM_001005277.1 (annotation deliberately omitted) to exercise skip_missing_parents
+    REFSEQ_GFF3_FILENAME_HISTORICAL = os.path.join(test_data_dir, "refseq_test.historical_RS_2024_08.gff")
     REFSEQ_GFF3_FILENAME_GRCH37_MT = os.path.join(test_data_dir, "refseq_grch37_mt.gff")
     REFSEQ_GFF3_FILENAME_GRCH38_MT = os.path.join(test_data_dir, "refseq_grch38.p14_mt.gff")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
@@ -79,6 +83,48 @@ class Test(unittest.TestCase):
         transcript = transcripts["NM_015120.4"]
         protein = transcript.get("protein")
         self.assertEqual(protein, "NP_055935.4")
+
+    def test_refseq_gff3_historical(self):
+        """ NCBI historical transcript alignments, issue #51 """
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_HISTORICAL, genome_build, self.FAKE_URL,
+                            skip_missing_parents=True)
+        _, transcripts = parser.get_genes_and_transcripts()
+
+        # The alignment-only transcript is skipped, everything else is kept
+        self.assertEqual(sorted(transcripts),
+                         ["NM_000016.2", "NM_000016.3", "NM_000028.1", "NM_000066.1", "NM_002521.1"])
+        self.assertEqual(parser.skipped_features_no_parents["cDNA_match"], 1)
+
+        # Two historical versions of the same transcript, each with its own alignment
+        # (in 2023 a data-generation bug meant every exon appeared twice - guard against that)
+        self._test_exon_length(transcripts, genome_build, "NM_000016.2", 2192)
+        self._test_exon_length(transcripts, genome_build, "NM_000016.3", 2423)
+        for accession in ["NM_000016.2", "NM_000016.3"]:
+            exons = transcripts[accession]["genome_builds"][genome_build]["exons"]
+            exon_coords = [(e[0], e[1]) for e in exons]
+            self.assertEqual(len(exon_coords), len(set(exon_coords)), f"{accession} has duplicated exons")
+
+        # Alignment gaps come through from the cDNA_match Gap attribute
+        agl = transcripts["NM_000028.1"]["genome_builds"][genome_build]
+        gaps = [e[5] for e in agl["exons"] if e[5]]
+        self.assertEqual(gaps, ["M148 D1 M35 D2 M371 I2 M1135 D1 M794"])
+
+        # CDS from the annotation file combined with alignment coordinates
+        acadm = transcripts["NM_000016.3"]
+        self.assertEqual(acadm["gene_name"], "ACADM")
+        self.assertEqual(acadm["start_codon"], 430)
+        self.assertEqual(acadm["stop_codon"], 1696)
+
+        # Partial alignment: the transcript's first base doesn't align, cDNA coordinates start at 2
+        nppb = transcripts["NM_002521.1"]["genome_builds"][genome_build]
+        last_exon = nppb["exons"][-1]  # - strand, so first transcript exon is last in genomic order
+        self.assertEqual(last_exon[3], 2, "NM_002521.1 alignment starts at base 2 of the transcript")
+
+        # Without skip_missing_parents the alignment-only transcript is an error
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_HISTORICAL, genome_build, self.FAKE_URL)
+        with self.assertRaises(ValueError):
+            parser.get_genes_and_transcripts()
 
     def test_exons_in_genomic_order(self):
         genome_build = "GRCh38"

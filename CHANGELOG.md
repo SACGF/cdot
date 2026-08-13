@@ -1,5 +1,9 @@
 ## [unreleased]
 
+### Added
+
+- #51 - RefSeq GRCh38 data now includes NCBI's historical transcript alignments (`RefSeq_historical_alignments`, RS_2024_08 set): alignments of replaced and suppressed NM_/NR_ versions, many of which never appeared in any annotation release cdot ingests. They are merged at the lowest priority above UTA, so a transcript version from any official annotation release is unchanged. Note some historical alignments are partial: a few transcript bases at the ends (eg an unaligned poly-A tail) or occasionally the first bases do not align to the genome, and the stored exon cDNA coordinates reflect that, so positions in an unaligned region cannot be projected. Data only (no client code change), from the next data release
+
 ### Fixed
 
 - #123 - Data fix: `start_codon`/`stop_codon` are now positions along the whole transcript, so they agree with the exon `cds_start`/`cds_end`. A few RefSeq alignments leave a run of transcript bases unaligned between two exons (58 multi-exon GRCh38 records, eg `NM_033517.1`), and the generator collapsed those out of the codon positions but not out of the exon coordinates, so the CDS was reported short and its last codons were rejected as outside CDS bounds. Data only (no client code change), from the next data release. Also corrects the documented convention: the codon fields are 0-based half-open (the biocommons `cds_start_i`/`cds_end_i` they are passed through as), not 1-based

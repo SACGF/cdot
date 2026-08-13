@@ -125,6 +125,16 @@ config:
         uta:
           schema: "uta_20241220"
           template: "uta_grch38.template"
+      # NCBI historical transcript alignments (#51) - replaced/suppressed RefSeq versions aligned to GRCh38.
+      # Annotation and alignments come as separate files, concatenated (annotation first) before parsing.
+      # Some alignments are partial (transcript ends that don't align to the genome), and a few alignments
+      # reference transcripts absent from the annotation file, hence --skip-missing-parents.
+      # Placed after UTA and before the official releases, so anything from an official annotation wins.
+      Homo_sapiens_GRCh38_RefSeq_historical_RS_2024_08.gff:
+        urls:
+          - "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/historical/GRCh38/GCF_000001405.40-RS_2024_08_historical/GCF_000001405.40-RS_2024_08_genomic.gff.gz"
+          - "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/historical/GRCh38/GCF_000001405.40-RS_2024_08_historical/GCF_000001405.40-RS_2024_08_knownrefseq_alns.gff.gz"
+        cdot_args: "--skip-missing-parents"
       Homo_sapiens_GRCh38_RefSeq_106.gff3:
         url: "https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.106/GFF/ref_GRCh38_top_level.gff3.gz"
       Homo_sapiens_GRCh38_RefSeq_107.gff3:
