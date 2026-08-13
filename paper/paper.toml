@@ -6,6 +6,7 @@ sections    = [
     "methods.md",
     "results.md",
     "discussion.md",
+    "figures.md",
 ]
 supplementary = [
     "supplementary.md",

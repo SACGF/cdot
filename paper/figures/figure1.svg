@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1190 734" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#111827"/>
+    </marker>
+  </defs>
+
+  <!-- ===================== Band A: data generation ===================== -->
+  <rect x="20" y="36" width="1150" height="240" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="40" y="64" font-size="15" font-weight="bold" fill="#111827">A&#8195;Data generation (build time)</text>
+
+  <!-- legend: shape = type, colour = ownership -->
+  <rect x="780" y="48" width="24" height="14" rx="6" fill="#ffffff" stroke="#6b7280"/>
+  <text x="812" y="59" font-size="10.5" fill="#111827">process / code</text>
+  <path d="M780,70 H798 L804,76 V86 H780 Z" fill="#ffffff" stroke="#6b7280"/>
+  <path d="M798,70 V76 H804" fill="none" stroke="#6b7280"/>
+  <text x="812" y="81" font-size="10.5" fill="#111827">file</text>
+  <path d="M905,51 A11,3.5 0 0 0 927,51 L927,59 A11,3.5 0 0 1 905,59 Z" fill="#ffffff" stroke="#6b7280"/>
+  <ellipse cx="916" cy="51" rx="11" ry="3.5" fill="#ffffff" stroke="#6b7280"/>
+  <text x="935" y="59" font-size="10.5" fill="#111827">database</text>
+  <path d="M909,71 H931 L927,85 H905 Z" fill="#ffffff" stroke="#6b7280"/>
+  <text x="935" y="81" font-size="10.5" fill="#111827">input / output</text>
+  <rect x="1075" y="48" width="13" height="13" fill="#dbeafe" stroke="#1d4ed8"/>
+  <text x="1095" y="59" font-size="10.5" fill="#111827">cdot</text>
+  <rect x="1075" y="70" width="13" height="13" fill="#f3f4f6" stroke="#6b7280"/>
+  <text x="1095" y="81" font-size="10.5" fill="#111827">external</text>
+
+  <!-- sources: files (dog-ear) + database (cylinder) -->
+  <path d="M40,84 H238 L250,96 V134 H40 Z" fill="#f3f4f6" stroke="#6b7280"/>
+  <path d="M238,84 V96 H250" fill="none" stroke="#6b7280"/>
+  <text x="145" y="105" font-size="12" font-weight="bold" text-anchor="middle" fill="#111827">RefSeq GFF3</text>
+  <text x="145" y="122" font-size="10.5" text-anchor="middle" fill="#374151">35 historical releases</text>
+
+  <path d="M40,142 H238 L250,154 V192 H40 Z" fill="#f3f4f6" stroke="#6b7280"/>
+  <path d="M238,142 V154 H250" fill="none" stroke="#6b7280"/>
+  <text x="145" y="163" font-size="12" font-weight="bold" text-anchor="middle" fill="#111827">Ensembl GTF</text>
+  <text x="145" y="180" font-size="10.5" text-anchor="middle" fill="#374151">40 releases (81 to 115)</text>
+
+  <path d="M40,206 A105,8 0 0 0 250,206 L250,250 A105,8 0 0 1 40,250 Z" fill="#f3f4f6" stroke="#6b7280"/>
+  <ellipse cx="145" cy="206" rx="105" ry="8" fill="#f3f4f6" stroke="#6b7280"/>
+  <text x="145" y="230" font-size="12" font-weight="bold" text-anchor="middle" fill="#111827">UTA</text>
+  <text x="145" y="246" font-size="10.5" text-anchor="middle" fill="#374151">alignments missing from GFF/GTF</text>
+
+  <line x1="250" y1="109" x2="304" y2="109" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <line x1="250" y1="167" x2="304" y2="167" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <line x1="250" y1="228" x2="304" y2="228" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <!-- pipeline: process -->
+  <rect x="310" y="84" width="250" height="166" rx="10" fill="#dbeafe" stroke="#1d4ed8"/>
+  <text x="435" y="106" font-size="12.5" font-weight="bold" text-anchor="middle" fill="#111827">Snakemake pipeline</text>
+  <text x="435" y="122" font-size="10" text-anchor="middle" fill="#374151">(generate_transcript_data)</text>
+  <text x="325" y="146" font-size="11" fill="#111827">&#8226; parse GTF/GFF3 (HTSeq)</text>
+  <text x="325" y="166" font-size="11" fill="#111827">&#8226; normalise contigs (bioutils)</text>
+  <text x="325" y="186" font-size="11" fill="#111827">&#8226; CDS from start/stop codons</text>
+  <text x="325" y="206" font-size="11" fill="#111827">&#8226; gene info (HGNC, NCBI)</text>
+  <text x="325" y="226" font-size="11" fill="#111827">&#8226; merge releases, newest wins</text>
+
+  <line x1="560" y1="167" x2="594" y2="167" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <!-- JSON.gz: file (dog-ear) -->
+  <path d="M600,105 H778 L790,117 V215 H600 Z" fill="#dbeafe" stroke="#1d4ed8"/>
+  <path d="M778,105 V117 H790" fill="none" stroke="#1d4ed8"/>
+  <text x="695" y="132" font-size="12.5" font-weight="bold" text-anchor="middle" fill="#111827">cdot JSON.gz</text>
+  <text x="695" y="150" font-size="10.5" text-anchor="middle" fill="#374151">1.62 M transcript alignments</text>
+  <text x="695" y="165" font-size="10.5" text-anchor="middle" fill="#374151">GRCh37 &#183; 38 &#183; T2T</text>
+  <text x="695" y="180" font-size="10.5" text-anchor="middle" fill="#374151">hosted on GitHub</text>
+  <text x="695" y="195" font-size="10.5" text-anchor="middle" fill="#374151">+ subsets: source/build/release</text>
+
+  <line x1="790" y1="167" x2="1004" y2="167" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="897" y="159" font-size="10" text-anchor="middle" fill="#4b5563">loaded into Redis</text>
+
+  <!-- cdot_rest: process -->
+  <rect x="1010" y="122" width="150" height="90" rx="10" fill="#dbeafe" stroke="#1d4ed8"/>
+  <text x="1085" y="152" font-size="12.5" font-weight="bold" text-anchor="middle" fill="#111827">cdot_rest</text>
+  <text x="1085" y="170" font-size="10.5" text-anchor="middle" fill="#374151">REST API</text>
+  <text x="1085" y="185" font-size="10.5" text-anchor="middle" fill="#374151">cdotlib.org</text>
+
+  <!-- ===================== Band B: variant resolution ===================== -->
+  <rect x="20" y="306" width="1150" height="404" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="40" y="334" font-size="15" font-weight="bold" fill="#111827">B&#8195;Variant resolution (client)</text>
+
+  <!-- helpers group -->
+  <rect x="40" y="350" width="220" height="185" rx="6" fill="none" stroke="#1d4ed8" stroke-dasharray="5 4"/>
+  <text x="150" y="374" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">opt-in helpers</text>
+  <rect x="55" y="390" width="190" height="55" rx="8" fill="#dbeafe" stroke="#1d4ed8"/>
+  <text x="150" y="412" font-size="11" font-weight="bold" text-anchor="middle" fill="#111827">resolve_gene_hgvs()</text>
+  <text x="150" y="429" font-size="10" text-anchor="middle" fill="#374151">gene symbol &#8594; MANE transcript</text>
+  <rect x="55" y="458" width="190" height="68" rx="8" fill="#dbeafe" stroke="#1d4ed8"/>
+  <text x="150" y="479" font-size="10" font-weight="bold" text-anchor="middle" fill="#111827">get_best_transcript_version()</text>
+  <text x="150" y="495" font-size="10" text-anchor="middle" fill="#374151">version substitution</text>
+  <text x="150" y="510" font-size="10" text-anchor="middle" fill="#374151">(with safety check)</text>
+
+  <!-- sequence layer group -->
+  <rect x="300" y="350" width="280" height="185" rx="6" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="440" y="374" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">sequence layer (ChainedSeqFetcher)</text>
+  <path d="M315,398 A60,8 0 0 0 435,398 L435,467 A60,8 0 0 1 315,467 Z" fill="#f3f4f6" stroke="#6b7280"/>
+  <ellipse cx="375" cy="398" rx="60" ry="8" fill="#f3f4f6" stroke="#6b7280"/>
+  <text x="375" y="431" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">SeqRepo</text>
+  <text x="375" y="449" font-size="10" text-anchor="middle" fill="#374151">curated seqs</text>
+  <rect x="450" y="390" width="120" height="85" rx="8" fill="#dbeafe" stroke="#1d4ed8"/>
+  <text x="510" y="424" font-size="11" font-weight="bold" text-anchor="middle" fill="#111827">FastaSeqFetcher</text>
+  <text x="510" y="442" font-size="10" text-anchor="middle" fill="#374151">splices exons from</text>
+  <text x="510" y="457" font-size="10" text-anchor="middle" fill="#374151">genome FASTA</text>
+
+  <!-- providers group -->
+  <rect x="615" y="350" width="550" height="185" rx="6" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="890" y="374" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">cdot data providers (biocommons/hgvs Interface)</text>
+
+  <rect x="620" y="390" width="150" height="100" rx="8" fill="#dbeafe" stroke="#1d4ed8"/>
+  <text x="695" y="417" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">JSONDataProvider</text>
+  <text x="695" y="436" font-size="10" text-anchor="middle" fill="#374151">in-memory,</text>
+  <text x="695" y="451" font-size="10" text-anchor="middle" fill="#374151">interval trees</text>
+  <text x="695" y="466" font-size="10" text-anchor="middle" fill="#374151">540-665 var/s</text>
+
+  <rect x="815" y="390" width="150" height="100" rx="8" fill="#dbeafe" stroke="#1d4ed8"/>
+  <text x="890" y="417" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">EnsemblTark</text>
+  <text x="890" y="432" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">DataProvider</text>
+  <text x="890" y="451" font-size="10" text-anchor="middle" fill="#374151">Ensembl TARK</text>
+  <text x="890" y="466" font-size="10" text-anchor="middle" fill="#374151">web service</text>
+
+  <rect x="1010" y="390" width="150" height="100" rx="8" fill="#dbeafe" stroke="#1d4ed8"/>
+  <text x="1085" y="417" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">RESTDataProvider</text>
+  <text x="1085" y="436" font-size="10" text-anchor="middle" fill="#374151">per-transcript</text>
+  <text x="1085" y="451" font-size="10" text-anchor="middle" fill="#374151">requests +</text>
+  <text x="1085" y="466" font-size="10" text-anchor="middle" fill="#374151">prefetch()</text>
+
+  <text x="890" y="517" font-size="10" text-anchor="middle" fill="#4b5563">also: JSONPyHGVSTranscriptFactory &#8594; PyHGVS (legacy)</text>
+
+  <!-- arrows from groups into the flow -->
+  <line x1="150" y1="535" x2="135" y2="612" stroke="#111827" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="158" y="576" font-size="10" fill="#4b5563">rewrites input</text>
+
+  <line x1="440" y1="535" x2="535" y2="600" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="310" y="570" font-size="10" fill="#4b5563">transcript sequence</text>
+
+  <line x1="740" y1="535" x2="612" y2="600" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="700" y="562" font-size="10" fill="#4b5563">exons + alignments</text>
+
+  <!-- flow row: strings as input/output parallelograms -->
+  <path d="M52,618 H222 L210,678 H40 Z" fill="#f3f4f6" stroke="#6b7280"/>
+  <text x="131" y="644" font-size="12" font-weight="bold" text-anchor="middle" fill="#111827">HGVS string</text>
+  <text x="131" y="661" font-size="10.5" text-anchor="middle" fill="#374151">possibly malformed</text>
+
+  <line x1="218" y1="648" x2="249" y2="648" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <rect x="255" y="618" width="180" height="64" rx="10" fill="#dbeafe" stroke="#1d4ed8"/>
+  <text x="345" y="644" font-size="12" font-weight="bold" text-anchor="middle" fill="#111827">clean_hgvs()</text>
+  <text x="345" y="662" font-size="10.5" text-anchor="middle" fill="#374151">repair + HGVSFix audit</text>
+
+  <line x1="435" y1="648" x2="464" y2="648" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <rect x="470" y="606" width="210" height="88" rx="10" fill="#f3f4f6" stroke="#6b7280"/>
+  <text x="575" y="636" font-size="12.5" font-weight="bold" text-anchor="middle" fill="#111827">biocommons/hgvs</text>
+  <text x="575" y="656" font-size="10.5" text-anchor="middle" fill="#374151">parse, validate,</text>
+  <text x="575" y="671" font-size="10.5" text-anchor="middle" fill="#374151">map c. &#8596; g.</text>
+
+  <line x1="680" y1="648" x2="720" y2="648" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <path d="M738,618 H908 L896,678 H726 Z" fill="#f3f4f6" stroke="#6b7280"/>
+  <text x="817" y="644" font-size="12" font-weight="bold" text-anchor="middle" fill="#111827">converted HGVS</text>
+  <text x="817" y="661" font-size="10.5" text-anchor="middle" fill="#374151">c. &#8594; g. or g. &#8594; c.</text>
+
+  <!-- vertical lanes from band A (drawn last, on top) -->
+  <line x1="695" y1="217" x2="695" y2="384" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="703" y="330" font-size="10" fill="#4b5563">download,</text>
+  <text x="703" y="345" font-size="10" fill="#4b5563">load ~10 s</text>
+
+  <line x1="1085" y1="212" x2="1085" y2="384" stroke="#111827" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="1093" y="330" font-size="10" fill="#4b5563">HTTPS,</text>
+  <text x="1093" y="345" font-size="10" fill="#4b5563">prefetch()</text>
+</svg>

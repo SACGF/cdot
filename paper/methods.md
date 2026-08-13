@@ -3,7 +3,7 @@
 ## Data sources and generation
 
 cdot draws on three transcript-annotation sources, merged into a single dataset per
-build. We download the complete run of historical releases directly from the RefSeq and
+build (Figure 1A). We download the complete run of historical releases directly from the RefSeq and
 Ensembl FTP sites rather than only the current annotation, because resolving historical
 HGVS strings depends on it: a clinical report from 2015 may reference an NM_ version that
 was retired in a later RefSeq release but is still cited in patient records and ClinVar
@@ -133,6 +133,8 @@ structure (Results R5); the strategy chooses the candidate version, the safety c
 decides whether it can be used.
 
 ## Access and client libraries
+
+cdot's client stack (Figure 1B) offers three data providers behind the same interface.
 
 **Local JSON**: `JSONDataProvider` loads a JSON.gz file into memory on initialisation
 (typically ~{{ benchmark.grch38_load_time_s | dp(0) }} seconds for GRCh38 RefSeq),
