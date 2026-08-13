@@ -1,0 +1,243 @@
+name: data-release
+
+# Builds the full cdot transcript data from cdot_transcripts.yaml and uploads it to a DRAFT
+# GitHub release (data_v<schema version>) for manual validation before publishing.
+# Draft releases are invisible to the public releases API, so cdot.data_release clients
+# cannot see the files until the draft is published.
+#
+# Layout: one matrix job per source file (GFF/GTF parse or UTA fetch+convert), sharing a
+# single gene info file, then a merge job that runs the historical merges and build combines
+# and writes a validation summary (issue #54 warning check, per-source url counts).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-release
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      sources: ${{ steps.gen.outputs.sources }}
+      data_version: ${{ steps.gen.outputs.data_version }}
+      gene_info_target: ${{ steps.gen.outputs.gene_info_target }}
+      date: ${{ steps.gen.outputs.date }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Generate source matrix from cdot_transcripts.yaml
+        id: gen
+        run: |
+          pip install --quiet pyyaml
+          python - << 'EOF'
+          import datetime
+          import json
+          import os
+          import yaml
+
+          ns = {}
+          exec(open("generate_transcript_data/json_schema_version.py").read(), ns)
+          version = ns["JSON_SCHEMA_VERSION"]
+
+          config = yaml.safe_load(open("generate_transcript_data/cdot_transcripts.yaml"))["config"]
+          sources = []
+          for consortium, builds in config.items():
+              for build, cdot_file_data in builds.items():
+                  for name, data in cdot_file_data.items():
+                      uta = "uta" in data
+                      infix = "_uta." if uta else "."
+                      sources.append({
+                          "name": name,
+                          "target": f"{consortium}/{build}/cdot-{version}{infix}{name}.json.gz",
+                      })
+
+          date = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"sources={json.dumps(sources)}\n")
+              f.write(f"data_version={version}\n")
+              f.write(f"gene_info_target=Homo_sapiens.gene-info-{version}.{date}.json.gz\n")
+              f.write(f"date={date}\n")
+          print(f"{len(sources)} sources, data version {version}")
+          EOF
+
+  gene_info:
+    needs: matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      CDOT_GENE_INFO_DATE: ${{ needs.matrix.outputs.date }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r generate_transcript_data/requirements.txt "snakemake>=8,<9"
+      - name: Build gene info
+        run: |
+          mkdir -p data
+          cd data
+          snakemake --snakefile ../generate_transcript_data/Snakefile --cores 2 \
+              "${{ needs.matrix.outputs.gene_info_target }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gene-info
+          path: data/Homo_sapiens.gene-info-*.json.gz
+          retention-days: 7
+
+  parse:
+    needs: [matrix, gene_info]
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      # Limit parallel downloads: NCBI/Ensembl boot clients making too many connections
+      max-parallel: 10
+      matrix:
+        source: ${{ fromJSON(needs.matrix.outputs.sources) }}
+    env:
+      CDOT_GENE_INFO_DATE: ${{ needs.matrix.outputs.date }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r generate_transcript_data/requirements.txt "snakemake>=8,<9"
+      - uses: actions/download-artifact@v4
+        with:
+          name: gene-info
+          path: data
+      - name: Build ${{ matrix.source.name }}
+        run: |
+          cd data
+          snakemake --snakefile ../generate_transcript_data/Snakefile --cores 4 \
+              "${{ matrix.source.target }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-${{ matrix.source.name }}
+          path: data/*/*/cdot-*.json.gz
+          retention-days: 7
+
+  merge:
+    needs: [matrix, parse]
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      CDOT_GENE_INFO_DATE: ${{ needs.matrix.outputs.date }}
+      DATA_VERSION: ${{ needs.matrix.outputs.data_version }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r generate_transcript_data/requirements.txt "snakemake>=8,<9"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: source-*
+          merge-multiple: true
+          path: data
+      - name: Merge historical and combine builds
+        run: |
+          cd data
+          snakemake --snakefile ../generate_transcript_data/Snakefile --cores 4 2>&1 | tee merge_log.txt
+      - name: Check merge log for issue 54 warning
+        run: |
+          {
+            echo "## Validation"
+            if grep -q "different coding coordinates" data/merge_log.txt; then
+              echo "### :warning: issue #54 warning still present"
+              echo '```'
+              grep -A 20 "different coding coordinates" data/merge_log.txt
+              echo '```'
+            else
+              echo ":white_check_mark: No 'different coding coordinates' warning (issue #54)"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Assemble release assets and notes
+        run: |
+          V=${DATA_VERSION}
+          cd data
+          files=(
+            "ensembl/cdot-${V}.all-builds-ensembl-grch37_grch38_t2t-chm13v2.0.json.gz"
+            "ensembl/cdot-${V}.ensembl.GRCh37.json.gz"
+            "ensembl/GRCh37/cdot-${V}.Homo_sapiens_GRCh37_Ensembl_87.gtf.json.gz"
+            "ensembl/cdot-${V}.ensembl.GRCh38.json.gz"
+            "ensembl/GRCh38/cdot-${V}.Homo_sapiens_GRCh38_Ensembl_112.gtf.json.gz"
+            "ensembl/GRCh38/cdot-${V}.Homo_sapiens_GRCh38_Ensembl_113.gtf.json.gz"
+            "ensembl/GRCh38/cdot-${V}.Homo_sapiens_GRCh38_Ensembl_114.gtf.json.gz"
+            "ensembl/GRCh38/cdot-${V}.Homo_sapiens_GRCh38_Ensembl_115.gtf.json.gz"
+            "ensembl/GRCh38/cdot-${V}.Homo_sapiens_GRCh38_Ensembl_116.gtf.json.gz"
+            "ensembl/cdot-${V}.ensembl.T2T-CHM13v2.0.json.gz"
+            "refseq/cdot-${V}.all-builds-refseq-grch37_grch38_t2t-chm13v2.0.json.gz"
+            "refseq/cdot-${V}.refseq.GRCh37.json.gz"
+            "refseq/GRCh37/cdot-${V}.Homo_sapiens_GRCh37_RefSeq_105.20201022.gff.json.gz"
+            "refseq/GRCh37/cdot-${V}.Homo_sapiens_GRCh37_RefSeq_105.20220307.gff.json.gz"
+            "refseq/cdot-${V}.refseq.GRCh38.json.gz"
+            "refseq/GRCh38/cdot-${V}.Homo_sapiens_GRCh38_RefSeq_110.gff.json.gz"
+            "refseq/GRCh38/cdot-${V}.Homo_sapiens_GRCh38_RefSeq_RS_2025_08.gff.json.gz"
+            "refseq/cdot-${V}.refseq.T2T-CHM13v2.0.json.gz"
+          )
+          mkdir -p ../release_assets
+          echo "Data release ${V}, built by the data-release workflow (run ${GITHUB_RUN_ID})." > ../release_assets/notes.md
+          echo >> ../release_assets/notes.md
+          for f in "${files[@]}"; do
+            cp "$f" ../release_assets/
+            {
+              echo "<details><summary>$(basename "$f")</summary>"
+              echo ""
+              PYTHONPATH=.. ../generate_transcript_data/cdot_json.py release_notes "$f" --show-urls
+              echo ""
+              echo "</details>"
+              echo ""
+            } >> ../release_assets/notes.md
+          done
+          cp merge_log.txt ../release_assets/
+          {
+            echo "## Per-source transcript counts (url_counts)"
+            echo ""
+            cat ../release_assets/notes.md
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-files
+          path: release_assets
+          retention-days: 30
+
+  draft_release:
+    needs: [matrix, merge]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DATA_VERSION: ${{ needs.matrix.outputs.data_version }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-files
+          path: release_assets
+      - name: Create draft release
+        run: |
+          TAG="data_v${DATA_VERSION}"
+          # Remove any previous draft for this tag (reruns), published releases are left alone
+          for id in $(gh api "repos/${GITHUB_REPOSITORY}/releases" --paginate \
+                      --jq ".[] | select(.draft and .tag_name == \"${TAG}\") | .id"); do
+            echo "Deleting stale draft release ${id}"
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/${id}"
+          done
+          mv release_assets/notes.md .
+          mv release_assets/merge_log.txt .
+          gh release create "${TAG}" --draft --title "${TAG}" --notes-file notes.md \
+              release_assets/*
+          echo "Draft release ${TAG} created, publish it after validating the files" >> "$GITHUB_STEP_SUMMARY"
