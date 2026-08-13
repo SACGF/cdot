@@ -11,6 +11,14 @@ name: data-release
 
 on:
   workflow_dispatch:
+    inputs:
+      reuse_run_id:
+        description: >-
+          Previous data-release run ID to reuse artifacts from. Sources whose artifact exists
+          in that run are downloaded instead of rebuilt (Snakemake sees the output and no-ops),
+          so only missing/failed sources are actually fetched and parsed.
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -71,8 +79,13 @@ jobs:
     needs: matrix
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    outputs:
+      # Date embedded in the gene info filename. Differs from matrix.outputs.date when a
+      # reused artifact was built on an earlier day, all jobs must agree on it (CDOT_GENE_INFO_DATE)
+      date: ${{ steps.effective.outputs.date }}
     env:
       CDOT_GENE_INFO_DATE: ${{ needs.matrix.outputs.date }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -81,12 +94,29 @@ jobs:
           cache: pip
       - name: Install dependencies
         run: pip install -r generate_transcript_data/requirements.txt "snakemake>=8,<9"
+      - name: Reuse gene info from previous run
+        if: inputs.reuse_run_id != ''
+        run: |
+          mkdir -p data
+          gh run download "${{ inputs.reuse_run_id }}" --repo "${GITHUB_REPOSITORY}" \
+              -n gene-info -D data || echo "No reusable gene-info artifact, will build"
       - name: Build gene info
         run: |
           mkdir -p data
           cd data
-          snakemake --snakefile ../generate_transcript_data/Snakefile --cores 2 \
-              "${{ needs.matrix.outputs.gene_info_target }}"
+          if ls Homo_sapiens.gene-info-*.json.gz 2>/dev/null; then
+            echo "Reusing downloaded gene info"
+          else
+            snakemake --snakefile ../generate_transcript_data/Snakefile --cores 2 \
+                "${{ needs.matrix.outputs.gene_info_target }}"
+          fi
+      - name: Determine effective gene info date
+        id: effective
+        run: |
+          f=$(ls data/Homo_sapiens.gene-info-*.json.gz)
+          date=$(basename "$f" | sed -E 's/.*\.([0-9]{4}-[0-9]{2}-[0-9]{2})\.json\.gz/\1/')
+          echo "date=${date}" >> "$GITHUB_OUTPUT"
+          echo "Gene info file: $f (date ${date})"
       - uses: actions/upload-artifact@v4
         with:
           name: gene-info
@@ -104,7 +134,8 @@ jobs:
       matrix:
         source: ${{ fromJSON(needs.matrix.outputs.sources) }}
     env:
-      CDOT_GENE_INFO_DATE: ${{ needs.matrix.outputs.date }}
+      CDOT_GENE_INFO_DATE: ${{ needs.gene_info.outputs.date }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -117,6 +148,12 @@ jobs:
         with:
           name: gene-info
           path: data
+      - name: Reuse ${{ matrix.source.name }} from previous run
+        if: inputs.reuse_run_id != ''
+        run: |
+          gh run download "${{ inputs.reuse_run_id }}" --repo "${GITHUB_REPOSITORY}" \
+              -n "source-${{ matrix.source.name }}" -D data \
+              || echo "No reusable artifact, will build"
       - name: Build ${{ matrix.source.name }}
         run: |
           cd data
@@ -129,11 +166,11 @@ jobs:
           retention-days: 7
 
   merge:
-    needs: [matrix, parse]
+    needs: [matrix, gene_info, parse]
     runs-on: ubuntu-latest
     timeout-minutes: 300
     env:
-      CDOT_GENE_INFO_DATE: ${{ needs.matrix.outputs.date }}
+      CDOT_GENE_INFO_DATE: ${{ needs.gene_info.outputs.date }}
       DATA_VERSION: ${{ needs.matrix.outputs.data_version }}
     steps:
       - uses: actions/checkout@v5

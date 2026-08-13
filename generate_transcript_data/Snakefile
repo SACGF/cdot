@@ -265,6 +265,7 @@ rule download_gencode_metadata:
 rule fetch_uta_from_db:
     output:
         protected("uta/{name}.csv")
+    retries: 2  # The public UTA server is sometimes flaky
     params:
         schema=lambda wc: name_uta[wc.name]["schema"],
         template=lambda wc: name_uta[wc.name]["template"]
@@ -280,8 +281,13 @@ rule fetch_uta_from_db:
             sql_path = Path(tf.name)
         try:
             # ON_ERROR_STOP makes psql exit nonzero if the \copy fails partway, otherwise a
-            # truncated CSV would pass, and protected() would keep it forever
-            shell(f'PGPASSWORD=anonymous psql -v ON_ERROR_STOP=1 -h uta.biocommons.org -U anonymous -d uta -f "{sql_path}"')
+            # truncated CSV would pass, and protected() would keep it forever.
+            # The export query aggregates for 10+ minutes before any rows stream back, and NAT
+            # (eg on hosted CI runners) drops connections that look idle that long, so send TCP
+            # keepalives to hold the connection open
+            conninfo = ("host=uta.biocommons.org user=anonymous dbname=uta "
+                        "keepalives=1 keepalives_idle=60 keepalives_interval=30 keepalives_count=20")
+            shell(f'PGPASSWORD=anonymous psql -v ON_ERROR_STOP=1 -f "{sql_path}" "{conninfo}"')
         finally:
             sql_path.unlink(missing_ok=True)
 
