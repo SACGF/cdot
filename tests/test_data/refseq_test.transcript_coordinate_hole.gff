@@ -1,0 +1,15 @@
+##gff-version 3
+# Synthetic RefSeq-style GFF3 for issue #123 - a transcript whose alignment leaves a hole in the
+# transcript coordinates. The cDNA_match Target coordinates jump from 200 to 231, so transcript
+# bases 201-230 align nowhere on the genome. Accessions/coordinates are made up.
+NC_000001.11	BestRefSeq	gene	1001	3100	.	+	.	ID=gene-TEST;Dbxref=GeneID:99999;Name=TEST;gbkey=Gene;gene=TEST;gene_biotype=protein_coding
+NC_000001.11	BestRefSeq	mRNA	1001	3100	.	+	.	ID=rna-NM_000123.1;Parent=gene-TEST;Dbxref=GeneID:99999,Genbank:NM_000123.1;Name=NM_000123.1;gbkey=mRNA;gene=TEST;product=test protein;transcript_id=NM_000123.1
+NC_000001.11	BestRefSeq	exon	1001	1100	.	+	.	ID=exon-NM_000123.1-1;Parent=rna-NM_000123.1;Dbxref=GeneID:99999,Genbank:NM_000123.1;gbkey=mRNA;gene=TEST;transcript_id=NM_000123.1
+NC_000001.11	BestRefSeq	exon	2001	2100	.	+	.	ID=exon-NM_000123.1-2;Parent=rna-NM_000123.1;Dbxref=GeneID:99999,Genbank:NM_000123.1;gbkey=mRNA;gene=TEST;transcript_id=NM_000123.1
+NC_000001.11	BestRefSeq	exon	3001	3100	.	+	.	ID=exon-NM_000123.1-3;Parent=rna-NM_000123.1;Dbxref=GeneID:99999,Genbank:NM_000123.1;gbkey=mRNA;gene=TEST;transcript_id=NM_000123.1
+NC_000001.11	BestRefSeq	CDS	1011	1100	.	+	0	ID=cds-NP_000123.1;Parent=rna-NM_000123.1;Dbxref=GeneID:99999,Genbank:NP_000123.1;Name=NP_000123.1;gbkey=CDS;gene=TEST;protein_id=NP_000123.1
+NC_000001.11	BestRefSeq	CDS	2001	2100	.	+	0	ID=cds-NP_000123.1;Parent=rna-NM_000123.1;Dbxref=GeneID:99999,Genbank:NP_000123.1;Name=NP_000123.1;gbkey=CDS;gene=TEST;protein_id=NP_000123.1
+NC_000001.11	BestRefSeq	CDS	3001	3050	.	+	0	ID=cds-NP_000123.1;Parent=rna-NM_000123.1;Dbxref=GeneID:99999,Genbank:NP_000123.1;Name=NP_000123.1;gbkey=CDS;gene=TEST;protein_id=NP_000123.1
+NC_000001.11	RefSeq	cDNA_match	1001	1100	100	+	.	ID=aln-NM_000123.1;Target=NM_000123.1 1 100 +;for_remapping=2;gap_count=0;pct_coverage=90.9;pct_identity_gap=100;rank=1
+NC_000001.11	RefSeq	cDNA_match	2001	2100	100	+	.	ID=aln-NM_000123.1;Target=NM_000123.1 101 200 +;for_remapping=2;gap_count=0;pct_coverage=90.9;pct_identity_gap=100;rank=1
+NC_000001.11	RefSeq	cDNA_match	3001	3100	100	+	.	ID=aln-NM_000123.1;Target=NM_000123.1 231 330 +;for_remapping=2;gap_count=0;pct_coverage=90.9;pct_identity_gap=100;rank=1

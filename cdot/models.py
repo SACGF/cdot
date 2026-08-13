@@ -135,9 +135,12 @@ class Transcript(_DictAccessStruct, forbid_unknown_fields=False):
     protein: Optional[str] = None
     """Protein accession (coding transcripts only)."""
     start_codon: Optional[int] = None
-    """1-based transcript (cDNA) coordinate of the CDS start (coding only)."""
+    """0-based transcript (cDNA) coordinate of the CDS start (coding only). Together with
+    ``stop_codon`` this is a half-open interval, so ``seq[start_codon:stop_codon]`` is the CDS.
+    Passed through unchanged as biocommons ``cds_start_i``."""
     stop_codon: Optional[int] = None
-    """1-based transcript (cDNA) coordinate of the CDS end (coding only)."""
+    """0-based transcript (cDNA) coordinate of the CDS end, exclusive (coding only).
+    Passed through unchanged as biocommons ``cds_end_i``."""
     hgnc: Optional[str] = None
     cdot: Optional[str] = None
     """cdot version that generated/last touched this transcript record."""

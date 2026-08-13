@@ -2,7 +2,7 @@
 
 > Auto-generated from the typed models in [`cdot/models.py`](../cdot/models.py) by `generate_transcript_data/generate_json_docs.py`. Do not edit by hand.
 
-Generated from cdot **0.2.28**. A machine-readable [JSON Schema](cdot-json-schema.json) is generated alongside this file.
+Generated from cdot **0.2.30**. A machine-readable [JSON Schema](cdot-json-schema.json) is generated alongside this file.
 
 See [Coordinates & exon alignments](coordinates_and_exons.md) for a conceptual walk-through of exon coordinates, exon ordering and the alignment gap strings.
 
@@ -41,8 +41,8 @@ A single transcript and its per-build coordinates.
 | `gene_version` | string or null | no |  |
 | `biotype` | array of string or null | no |  |
 | `protein` | string or null | no | Protein accession (coding transcripts only). |
-| `start_codon` | integer or null | no | 1-based transcript (cDNA) coordinate of the CDS start (coding only). |
-| `stop_codon` | integer or null | no | 1-based transcript (cDNA) coordinate of the CDS end (coding only). |
+| `start_codon` | integer or null | no | 0-based transcript (cDNA) coordinate of the CDS start (coding only). Together with `stop_codon` this is a half-open interval, so `seq[start_codon:stop_codon]` is the CDS. Passed through unchanged as biocommons `cds_start_i`. |
+| `stop_codon` | integer or null | no | 0-based transcript (cDNA) coordinate of the CDS end, exclusive (coding only). Passed through unchanged as biocommons `cds_end_i`. |
 | `hgnc` | string or null | no |  |
 | `cdot` | string or null | no | cdot version that generated/last touched this transcript record. |
 | `source` | array of string or null | no | Annotation source(s) this transcript came from (e.g. `['NCBI']`). |
@@ -121,7 +121,14 @@ Gene-level metadata (present when the source provided gene info).
   In that case a placeholder symbol is used as the `genes` map key.
 * **Coordinate systems.** Genomic coordinates (`alt_start`/`alt_end`, build `cds_start`/`cds_end`,
   `start`/`stop`) are 0-based. Transcript (cDNA) coordinates inside each exon
-  (`cds_start`/`cds_end`) are 1-based.
+  (`cds_start`/`cds_end`) are 1-based inclusive. The transcript-level `start_codon`/`stop_codon`
+  are 0-based half-open (the UTA/biocommons `cds_start_i`/`cds_end_i` convention), so
+  `seq[start_codon:stop_codon]` is the CDS.
+* **Transcript coordinates can have holes.** A few RefSeq alignments leave a run of transcript
+  bases unaligned, so the next exon's `cds_start` is not `cds_end + 1` of the previous exon. All
+  transcript coordinates, exon and codon alike, are positions along the whole transcript, so they
+  stay comparable across such a hole. See
+  [Coordinates & exon alignments](coordinates_and_exons.md#holes-in-the-transcript-coordinates).
 * **Tags are verbatim.** The build `tag` field is passed through unchanged from the source
   GTF/GFF, so MANE/canonical spelling differs by consortium: RefSeq uses spaces (`MANE Select`,
   `RefSeq Select`) while Ensembl uses underscores (`MANE_Select`, `Ensembl_canonical`). A consumer

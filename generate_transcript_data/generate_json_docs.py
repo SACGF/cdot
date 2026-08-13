@@ -46,7 +46,14 @@ QUIRKS = """\
   In that case a placeholder symbol is used as the `genes` map key.
 * **Coordinate systems.** Genomic coordinates (`alt_start`/`alt_end`, build `cds_start`/`cds_end`,
   `start`/`stop`) are 0-based. Transcript (cDNA) coordinates inside each exon
-  (`cds_start`/`cds_end`) are 1-based.
+  (`cds_start`/`cds_end`) are 1-based inclusive. The transcript-level `start_codon`/`stop_codon`
+  are 0-based half-open (the UTA/biocommons `cds_start_i`/`cds_end_i` convention), so
+  `seq[start_codon:stop_codon]` is the CDS.
+* **Transcript coordinates can have holes.** A few RefSeq alignments leave a run of transcript
+  bases unaligned, so the next exon's `cds_start` is not `cds_end + 1` of the previous exon. All
+  transcript coordinates, exon and codon alike, are positions along the whole transcript, so they
+  stay comparable across such a hole. See
+  [Coordinates & exon alignments](coordinates_and_exons.md#holes-in-the-transcript-coordinates).
 * **Tags are verbatim.** The build `tag` field is passed through unchanged from the source
   GTF/GFF, so MANE/canonical spelling differs by consortium: RefSeq uses spaces (`MANE Select`,
   `RefSeq Select`) while Ensembl uses underscores (`MANE_Select`, `Ensembl_canonical`). A consumer

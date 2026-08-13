@@ -8,4 +8,6 @@
 # 0.2.31 - Add 'metadata' - method/urls
 # 0.2.32 - Add 'source' (GTF column #2) to build data
 # 0.2.33 - Store "ccds", "transcript_support_level"
-JSON_SCHEMA_VERSION = "0.2.33"
+# 0.2.34 - start_codon/stop_codon are whole-transcript positions, so they agree with the exon
+#          cds_start/cds_end where an alignment leaves a hole in the transcript coordinates (#123)
+JSON_SCHEMA_VERSION = "0.2.34"

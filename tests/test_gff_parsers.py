@@ -17,6 +17,9 @@ class Test(unittest.TestCase):
     REFSEQ_GFF3_FILENAME_2021 = os.path.join(test_data_dir, "refseq_test.GRCh38.p13_genomic.109.20210514.gff")
     # Newer RefSeq, before Genbank => GenBank changed
     REFSEQ_GFF3_FILENAME_2023 = os.path.join(test_data_dir, "refseq_test.GRCh38.p14_genomic.RS_2023_03.gff")
+    # Synthetic - alignment leaves a hole in the transcript coordinates (issue #123)
+    REFSEQ_GFF3_FILENAME_COORDINATE_HOLE = os.path.join(test_data_dir,
+                                                        "refseq_test.transcript_coordinate_hole.gff")
     REFSEQ_GFF3_FILENAME_GRCH37_MT = os.path.join(test_data_dir, "refseq_grch37_mt.gff")
     REFSEQ_GFF3_FILENAME_GRCH38_MT = os.path.join(test_data_dir, "refseq_grch38.p14_mt.gff")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
@@ -150,6 +153,48 @@ class Test(unittest.TestCase):
     def test_mito_no_mrna(self):
         """ Need to make fake MT transcripts for RefSeq @see https://github.com/SACGF/cdot/issues/72 """
         self._test_mito(self.REFSEQ_GFF3_FILENAME_GRCH37_MT, "GRCh37")
+
+    def test_transcript_position_across_coordinate_hole(self):
+        """ A few RefSeq alignments leave a run of transcript bases unaligned between two exons, so
+            the exon transcript coordinates have a hole in them. Codon positions must stay in whole
+            transcript coordinates rather than collapsing the hole out.
+            @see https://github.com/SACGF/cdot/issues/123 """
+        # (alt_start, alt_end, exon_id, cds_start, cds_end, gap) - stranded order.
+        # Exon 1 ends at transcript 200, exon 2 picks up at 231, so 30 bases align nowhere.
+        exons = [
+            (1_000, 1_100, 0, 1, 100, None),
+            (2_000, 2_100, 1, 101, 200, None),
+            (3_000, 3_100, 2, 231, 330, None),
+        ]
+        # 50 bases into the exon that follows the hole
+        self.assertEqual(GFF3Parser._get_transcript_position(True, exons, 3_050), 280)
+        # Exons before the hole are unaffected
+        self.assertEqual(GFF3Parser._get_transcript_position(True, exons, 2_050), 150)
+
+        # Same again on the minus strand (exons in stranded order, so genomic order is reversed)
+        rev_exons = [
+            (3_000, 3_100, 0, 1, 100, None),
+            (2_000, 2_100, 1, 101, 200, None),
+            (1_000, 1_100, 2, 231, 330, None),
+        ]
+        self.assertEqual(GFF3Parser._get_transcript_position(False, rev_exons, 1_050), 280)
+        self.assertEqual(GFF3Parser._get_transcript_position(False, rev_exons, 2_050), 150)
+
+    def test_codon_positions_across_coordinate_hole(self):
+        """ End to end version of the above: the codon positions the parser writes out must be in
+            the same coordinate system as the exon cds_start/cds_end.
+            @see https://github.com/SACGF/cdot/issues/123 """
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_COORDINATE_HOLE, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        transcript = transcripts["NM_000123.1"]
+
+        exons = transcript["genome_builds"][genome_build]["exons"]
+        self.assertEqual([tuple(e[3:5]) for e in exons], [(1, 100), (101, 200), (231, 330)])
+
+        # CDS runs from genomic 1010 (10 bases into exon 1) to 3050 (50 bases into exon 3)
+        self.assertEqual(transcript["start_codon"], 10)
+        self.assertEqual(transcript["stop_codon"], 280)
 
     def test_ensembl_hgnc_injection(self):
         """ Test that GENCODE HGNC metadata is properly injected into Ensembl GTF transcripts and genes.

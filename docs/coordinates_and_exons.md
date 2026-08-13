@@ -91,6 +91,46 @@ transcript (cDNA, 1-based)   genome (contig, 0-based)
 A `D<n>` op would be the mirror image: the genomic cursor advances by `n` while the transcript cursor
 stays put.
 
+## Holes in the transcript coordinates
+
+An `I` op covers transcript bases that are absent from the genome *within* an exon. Separately, a
+small number of RefSeq alignments leave a run of transcript bases unaligned *between* two exons:
+the alignment simply stops and picks up again further along the transcript. For those records
+`cds_start` of exon N+1 is **not** `cds_end + 1` of exon N, and no `gap` string accounts for the
+difference, because the missing bases align nowhere on the genome at all.
+
+```
+[50694774, 50695046,  9, 1031, 1302, null]
+[50697556, 50697715, 10, 1342, 1498, "M5 D2 M152"]
+                                ^^^^ 39 transcript bases (1303-1341) align nowhere
+```
+
+Both exons still satisfy the identities above individually. The rule to rely on is that every
+transcript coordinate in the file, the exon `cds_start`/`cds_end` and the transcript-level
+`start_codon`/`stop_codon`, is a position along the **whole transcript**, so they remain comparable
+across a hole. Do not derive a transcript position by summing exon lengths.
+
+58 of the multi-exon GRCh38 RefSeq alignments have such a hole (issue
+[#123](https://github.com/SACGF/cdot/issues/123)).
+
+biocommons HGVS cannot project variants through one of these transcripts, from cdot or from UTA.
+It detects the discontinuity and raises `HGVSDataNotAvailableError: ... Exons N and N+1 are not
+adjacent` rather than return a silently wrong answer. See
+[biocommons/hgvs#385](https://github.com/biocommons/hgvs/issues/385) and
+[#386](https://github.com/biocommons/hgvs/issues/386).
+
+## The `start_codon` / `stop_codon` fields
+
+These sit on the transcript, not the build, since they are transcript coordinates. Unlike the exon
+`cds_start`/`cds_end` they are **0-based half-open**, matching UTA and biocommons
+`cds_start_i`/`cds_end_i` (cdot passes them straight through as those). So:
+
+```python
+cds = transcript_seq[tx["start_codon"]:tx["stop_codon"]]   # starts ATG, ends with the stop codon
+```
+
+A `start_codon` of `0` means the record has no 5'UTR, which is common in partial transcripts.
+
 ## How cdot uses the gap
 
 When serving the biocommons HGVS interface, cdot converts each gap string into a biocommons CIGAR in

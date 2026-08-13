@@ -307,18 +307,23 @@ class GFFParser(abc.ABC):
 
     @staticmethod
     def _get_transcript_position(transcript_strand, ordered_cdna_matches, genomic_coordinate, label=None):
-        cdna_offset = 0
-        for (exon_start, exon_end, _exon_id, cdna_start, cdna_end, cdna_match_gap) in ordered_cdna_matches:
+        """ Returns a 0-based position along the whole transcript (issue #123)
+
+            The exon's own cdna_start is used as the offset, rather than the running sum of the
+            preceding exon lengths. These are the same thing for the vast majority of transcripts,
+            but a handful of RefSeq alignments leave a hole in the transcript coordinates - a run
+            of transcript bases that aligns nowhere on the genome, so exon N+1 starts later than
+            exon N ended. Summing exon lengths silently collapses those holes out, putting the
+            codon positions in a different coordinate system to the exon cds_start/cds_end. """
+        for (exon_start, exon_end, _exon_id, cdna_start, _cdna_end, cdna_match_gap) in ordered_cdna_matches:
             if exon_start <= genomic_coordinate <= exon_end:
                 # We're inside this match
                 if transcript_strand:
                     position = genomic_coordinate - exon_start
                 else:
                     position = exon_end - genomic_coordinate
-                return cdna_offset + position + GFFParser.get_cdna_match_offset(cdna_match_gap, position)
-            else:
-                length = cdna_end - cdna_start + 1
-                cdna_offset += length
+                # cdna_start is 1-based, so cdna_start - 1 is the exon's 0-based transcript start
+                return (cdna_start - 1) + position + GFFParser.get_cdna_match_offset(cdna_match_gap, position)
         if label is None:
             label = "Genomic coordinate: %d" % genomic_coordinate
         raise ValueError('%s is not in any of the exons' % label)

@@ -1,5 +1,9 @@
 ## [unreleased]
 
+### Fixed
+
+- #123 - Data fix: `start_codon`/`stop_codon` are now positions along the whole transcript, so they agree with the exon `cds_start`/`cds_end`. A few RefSeq alignments leave a run of transcript bases unaligned between two exons (58 multi-exon GRCh38 records, eg `NM_033517.1`), and the generator collapsed those out of the codon positions but not out of the exon coordinates, so the CDS was reported short and its last codons were rejected as outside CDS bounds. Data only (no client code change), from the next data release. Also corrects the documented convention: the codon fields are 0-based half-open (the biocommons `cds_start_i`/`cds_end_i` they are passed through as), not 1-based
+
 ## [0.2.30] - 2026-06-25
 
 ### Fixed
