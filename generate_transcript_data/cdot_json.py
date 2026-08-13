@@ -10,9 +10,6 @@ import sys
 from argparse import ArgumentParser
 from collections import defaultdict, Counter
 from csv import DictReader
-from pyhgvs import CDNACoord
-
-from cdot.pyhgvs.pyhgvs_transcript import PyHGVSTranscriptFactory
 from generate_transcript_data.gff_parser import GTFParser, GFF3Parser
 from generate_transcript_data.json_encoders import SortedSetEncoder
 from generate_transcript_data.json_schema_version import JSON_SCHEMA_VERSION
@@ -216,24 +213,63 @@ def gff3_to_json(args):
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 
 
+def _cdna_offset_to_genomic_offset(gap, cdna_offset):
+    """ Convert an offset within an exon from cDNA to genomic, both 0-based in transcript
+        direction. gap is a GFF3-style gap string (eg 'M185 I3 M250'): M consumes both,
+        I cDNA only, D genomic only """
+    if not gap:
+        return cdna_offset
+    cdna_consumed = 0
+    genomic_consumed = 0
+    for op_str in gap.split():
+        code = op_str[0]
+        length = int(op_str[1:])
+        if code == "M":
+            if cdna_offset < cdna_consumed + length:
+                return genomic_consumed + (cdna_offset - cdna_consumed)
+            cdna_consumed += length
+            genomic_consumed += length
+        elif code == "I":
+            if cdna_offset < cdna_consumed + length:
+                raise ValueError(f"cDNA offset {cdna_offset} is in gap '{op_str}' (unaligned transcript bases)")
+            cdna_consumed += length
+        elif code == "D":
+            genomic_consumed += length
+        else:
+            raise ValueError(f"Unknown gap operation '{op_str}'")
+    return genomic_consumed + (cdna_offset - cdna_consumed)
+
+
+def _transcript_position_to_genomic(strand, exons, transcript_position):
+    """ transcript_position is 0-based along the whole transcript,
+        returns the 0-based genomic coordinate of that base """
+    cdna_position = transcript_position + 1  # exon cdna_start/cdna_end are 1-based inclusive
+    for (alt_start, alt_end, _exon_id, cdna_start, cdna_end, gap) in exons:
+        if cdna_start <= cdna_position <= cdna_end:
+            genomic_offset = _cdna_offset_to_genomic_offset(gap, cdna_position - cdna_start)
+            if strand == '+':
+                return alt_start + genomic_offset
+            else:
+                return alt_end - 1 - genomic_offset
+    raise ValueError(f"Transcript position {transcript_position} is not in any of the exons")
+
+
 def _add_cds_start_end(genome_build, transcript_data):
     """ Replace cds_start/cds_end with values generated from start/stop codons
-        as some data sources (eg UTA) do not provide cds_start/cds_end """
+        as some data sources (eg UTA) do not provide cds_start/cds_end.
+        Values are 0-based half-open in genomic order, matching the GFF parser """
 
-    transcript_id = transcript_data["id"]
-    tf = PyHGVSTranscriptFactory(transcripts={transcript_id: transcript_data})
-    transcript = tf.get_transcript(transcript_id, genome_build, sacgf_pyhgvs_fork=True)
+    build_coordinates = transcript_data["genome_builds"][genome_build]
+    strand = build_coordinates["strand"]
+    exons = build_coordinates["exons"]
+    # First and last CDS bases (0-based transcript positions)
+    first_cds_base = _transcript_position_to_genomic(strand, exons, transcript_data["start_codon"])
+    last_cds_base = _transcript_position_to_genomic(strand, exons, transcript_data["stop_codon"] - 1)
+    if strand == '-':
+        (first_cds_base, last_cds_base) = (last_cds_base, first_cds_base)
 
-    start_codon = CDNACoord(coord=transcript._start_codon_transcript_pos)
-    stop_codon = CDNACoord(coord=transcript._stop_codon_transcript_pos)
-    cds_start = transcript.cdna_to_genomic_coord(start_codon)
-    cds_end = transcript.cdna_to_genomic_coord(stop_codon)
-    # In pyhgvs they are always in genomic order
-    if transcript.strand == '-':
-        (cds_start, cds_end) = (cds_end, cds_start)
-
-    transcript_data["genome_builds"][genome_build]["cds_start"] = cds_start
-    transcript_data["genome_builds"][genome_build]["cds_end"] = cds_end
+    build_coordinates["cds_start"] = first_cds_base
+    build_coordinates["cds_end"] = last_cds_base + 1
 
 
 def uta_to_json(args):

@@ -57,8 +57,9 @@ def _gencode_metadata_url(wc):
     return f"https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_{grel}/gencode.v{grel}.metadata.HGNC.gz"
 
 
-# Name it based on date as it may vary
-today = datetime.now().date().isoformat()
+# Name it based on date as it may vary. CI sets CDOT_GENE_INFO_DATE so that parallel jobs
+# (possibly straddling midnight) agree on the filename and reuse one shared gene info file
+today = os.environ.get("CDOT_GENE_INFO_DATE") or datetime.now().date().isoformat()
 gene_info_download_filename = os.path.join("downloads/gene_info", f"Homo_sapiens.gene_info.{today}.gz")
 gene_info_json_filename = f"Homo_sapiens.gene-info-{cdot_data_version}.{today}.json.gz"
 
@@ -278,7 +279,9 @@ rule fetch_uta_from_db:
             tf.flush()
             sql_path = Path(tf.name)
         try:
-            shell(f'PGPASSWORD=anonymous psql -h uta.biocommons.org -U anonymous -d uta -f "{sql_path}"')
+            # ON_ERROR_STOP makes psql exit nonzero if the \copy fails partway, otherwise a
+            # truncated CSV would pass, and protected() would keep it forever
+            shell(f'PGPASSWORD=anonymous psql -v ON_ERROR_STOP=1 -h uta.biocommons.org -U anonymous -d uta -f "{sql_path}"')
         finally:
             sql_path.unlink(missing_ok=True)
 
