@@ -17,10 +17,10 @@
 | Genome build | Ensembl release | Transcript count |
 |-------------|-----------------|-----------------|
 | GRCh37 | 75–81 | ... |
-| GRCh38 | 76–115 | ... |
+| GRCh38 | 76–116 | ... |
 | T2T-CHM13v2.0 | ... | ... |
 
-### Table S3: JSON schema fields (v0.2.33)
+### Table S3: JSON schema fields (v0.2.34)
 
 | Field | Level | Description |
 |-------|-------|-------------|

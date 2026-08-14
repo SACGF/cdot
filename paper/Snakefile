@@ -251,15 +251,16 @@ rule clinvar:
     the Ensembl transcripts SeqRepo does not hold, and reproduces Ensembl transcript
     sequence exactly. The whole committed set is counted (500 RefSeq + 818 Ensembl).
 
-    How the per-source columns were measured (GRCh38, cdot 0.2.33 / UTA uta_20241220):
+    How the per-source columns were measured (GRCh38, cdot 0.2.34 / UTA uta_20241220):
         # cdot end-to-end resolution over the committed pairs, --fasta = FastaSeqFetcher:
         F=GCF_000001405.39_GRCh38.p13_genomic.fna.gz   # NCBI GRCh38, NC_ contig names
         python paper/scripts/benchmark_resolution.py tests/test_data/clinvar_hgvs/clinvar_hgvs_500.tsv \\
-            --json cdot-0.2.33.refseq_ensembl.GRCh38.json.gz --fasta $F --out cdot_rs.json
+            --json cdot-0.2.34.refseq.GRCh38.json.gz --fasta $F --out cdot_rs.json
         python paper/scripts/benchmark_resolution.py tests/test_data/clinvar_hgvs/clinvar_hgvs_ensembl.tsv \\
-            --json cdot-0.2.33.refseq_ensembl.GRCh38.json.gz --fasta $F --out cdot_en.json
-        # cdot: RefSeq 500/500 = 100.0%; Ensembl 816/818 = 99.8% (the 2 misses are genuine
-        # missing cdot alignments, not sequence).
+            --json cdot-0.2.34.ensembl.GRCh38.json.gz --fasta $F --out cdot_en.json
+        # cdot: RefSeq 500/500 = 100.0%; Ensembl 816/818 = 99.8% (the 2 misses are Ensembl
+        # patch-scaffold-only transcripts absent from the data, issue #113 - not sequence).
+        # Rates identical on 0.2.33 and 0.2.34.
         # UTA coverage: membership of the exact cited accession.version in UTA's GRCh38
         # alignment set (biocommons has no version fallback, so holding the exact version
         # is what UTA resolution requires). Against the UTA GRCh38 alignment dump (ac column
@@ -328,37 +329,37 @@ rule historical:
             shariant_imported_alleles_uniq.txt \\
             --json cdot.refseq.grch38.json.gz cdot.ensembl.grch38.json.gz \\
             --uta-uri postgresql://uta:uta@localhost:5432/uta/uta_20241220
-    Measured 2026-06-18: cdot 97.5% vs UTA 93.7% over 35,695 strings; of the 1,429
-    (4.0%) cdot resolves and UTA does not, 98% are RefSeq historical versions UTA
-    holds no GRCh38 alignment for and 2% are Ensembl.
-
-    The corpus source mix (corpus_refseq_pct/corpus_ensembl_pct), the per-source
-    resolution rates (cdot_/uta_refseq_pct/ensembl_pct), and the full cdot-only cause
-    split (historical / ensembl / refseq_absent / other) are emitted by the updated
-    benchmark_historical.py (source_mix, cdot.by_source, uta.by_source,
-    head_to_head.cdot_only_by_cause in its --out JSON). They are placeholders (0.0)
-    here until the next full run over the private corpus populates them.
+    Measured 2026-08-14 (cdot data 0.2.34, refseq+ensembl GRCh38 JSON): cdot 99.6%
+    vs UTA 93.7% over 36,010 strings; of the 2,141 (5.9%) cdot resolves and UTA
+    does not, 98.6% are RefSeq historical versions UTA holds no GRCh38 alignment
+    for, 1.3% Ensembl, 0.1% other. The jump from the previous measurement (97.5%
+    on 0.2.33-era data, 2026-06-18) is the #51 historical GRCh38 RefSeq
+    alignments plus the #95 UTA-source restore; the corpus itself also grew
+    slightly (35,695 -> 36,010 lines). The corpus source mix, per-source rates
+    and the cdot-only cause split come from benchmark_historical.py's --out JSON
+    (source_mix, cdot.by_source, uta.by_source, head_to_head.cdot_only_by_cause);
+    n_unique_tx / n_multi_version are counted from the corpus accessions.
     """
     output: "output/facts/historical.csv"
     run:
         import os, csv
         os.makedirs("output/facts", exist_ok=True)
         row = {
-            "n_lines":                    35695,
-            "n_unique_tx":                3727,
-            "n_multi_version":            1647,
-            "cdot_resolved_pct":          97.5,
+            "n_lines":                    36010,
+            "n_unique_tx":                3731,
+            "n_multi_version":            1654,
+            "cdot_resolved_pct":          99.6,
             "uta_resolved_pct":           93.7,
-            "cdot_only_pct":              4.0,
-            "cdot_only_historical_pct":   98.0,
-            "cdot_only_ensembl_pct":      1.9,
-            "cdot_only_refseq_absent_pct": 0.0,
+            "cdot_only_pct":              5.9,
+            "cdot_only_historical_pct":   98.6,
+            "cdot_only_ensembl_pct":      1.3,
+            "cdot_only_refseq_absent_pct": 0.1,
             "cdot_only_other_pct":        0.0,
-            "corpus_refseq_pct":          0.0,
-            "corpus_ensembl_pct":         0.0,
-            "cdot_refseq_pct":            0.0,
-            "cdot_ensembl_pct":           0.0,
-            "uta_refseq_pct":             0.0,
+            "corpus_refseq_pct":          99.8,
+            "corpus_ensembl_pct":         0.2,
+            "cdot_refseq_pct":            99.7,
+            "cdot_ensembl_pct":           47.4,
+            "uta_refseq_pct":             93.8,
             "uta_ensembl_pct":            0.0,
         }
         with open(output[0], "w", newline="") as fh:
@@ -381,7 +382,12 @@ rule version_stability:
     With single-build GRCh38 data present it recomputes; the all-builds files
     (needed for the cross-build numbers) are taken from --config
     refseq_allbuilds=... ensembl_allbuilds=.... Without data it writes the frozen
-    measured constants below (GRCh38, --sample 12000 --seed 1, cdot 0.2.33).
+    measured constants below (GRCh38, --sample 12000 --seed 1, cdot 0.2.34).
+    Relative to the pre-0.2.33 snapshot: the RefSeq drift increase comes from the
+    #51 historical alignments (old versions drift more), the large Ensembl
+    stability improvement from Ensembl 116 entering the data (verified by
+    re-running on the 0.2.33 files: RefSeq matched the old snapshot exactly,
+    Ensembl already matched the new numbers).
     """
     output: "output/facts/version_stability.csv"
     run:
@@ -403,26 +409,26 @@ rule version_stability:
             row = {
                 "sample_n":                              12000,
                 "build":                                 "GRCh38",
-                "refseq_pairs":                          17162,
-                "refseq_preserving_pct":                 97.8,
-                "refseq_full_drift_pct":                 2.1,
-                "refseq_partial_drift_pct":              0.1,
-                "refseq_pervariant_safety":              0.981,
-                "refseq_accessions_drift_pct":           2.9,
-                "refseq_top5_drift_share_pct":           100.0,
-                "ensembl_pairs":                         12812,
-                "ensembl_preserving_pct":                85.0,
-                "ensembl_full_drift_pct":                12.1,
-                "ensembl_partial_drift_pct":             2.9,
-                "ensembl_pervariant_safety":             0.907,
-                "ensembl_accessions_drift_pct":          15.5,
-                "ensembl_top5_drift_share_pct":          34.7,
-                "refseq_struct_portable_pct":            99.5,
-                "refseq_drift_struct_flagged_pct":       100.0,
+                "refseq_pairs":                          19393,
+                "refseq_preserving_pct":                 96.0,
+                "refseq_full_drift_pct":                 3.2,
+                "refseq_partial_drift_pct":              0.7,
+                "refseq_pervariant_safety":              0.968,
+                "refseq_accessions_drift_pct":           5.5,
+                "refseq_top5_drift_share_pct":           92.7,
+                "ensembl_pairs":                         12377,
+                "ensembl_preserving_pct":                98.0,
+                "ensembl_full_drift_pct":                1.6,
+                "ensembl_partial_drift_pct":             0.4,
+                "ensembl_pervariant_safety":             0.987,
+                "ensembl_accessions_drift_pct":          2.0,
+                "ensembl_top5_drift_share_pct":          100.0,
+                "refseq_struct_portable_pct":            99.3,
+                "refseq_drift_struct_flagged_pct":       99.9,
                 "refseq_struct_unchanged_preserved_pct": 100.0,
-                "ensembl_struct_portable_pct":           99.8,
-                "ensembl_drift_struct_flagged_pct":      99.3,
-                "ensembl_struct_unchanged_preserved_pct": 99.9,
+                "ensembl_struct_portable_pct":           100.0,
+                "ensembl_drift_struct_flagged_pct":      100.0,
+                "ensembl_struct_unchanged_preserved_pct": 100.0,
             }
             with open(output[0], "w", newline="") as fh:
                 writer = csv.DictWriter(fh, fieldnames=list(row))

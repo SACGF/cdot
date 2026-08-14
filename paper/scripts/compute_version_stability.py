@@ -22,10 +22,10 @@ deterministic (--seed).
 
 Usage:
     python paper/scripts/compute_version_stability.py \
-        --refseq-grch38   cdot-0.2.33.refseq.GRCh38.json.gz \
-        --ensembl-grch38  cdot-0.2.33.ensembl.GRCh38.json.gz \
-        --refseq-allbuilds  cdot-0.2.33.all-builds-refseq-...json.gz \
-        --ensembl-allbuilds cdot-0.2.33.all-builds-ensembl-...json.gz \
+        --refseq-grch38   cdot-0.2.34.refseq.GRCh38.json.gz \
+        --ensembl-grch38  cdot-0.2.34.ensembl.GRCh38.json.gz \
+        --refseq-allbuilds  cdot-0.2.34.all-builds-refseq-...json.gz \
+        --ensembl-allbuilds cdot-0.2.34.all-builds-ensembl-...json.gz \
         --build GRCh38 --other GRCh37 --sample 12000 --seed 1
 """
 

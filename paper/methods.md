@@ -18,7 +18,7 @@ submissions. The three sources are:
 2. **Ensembl GTF**: {{ sources.ensembl_grch37_releases | int }} GRCh37,
    {{ sources.ensembl_grch38_releases | int }} GRCh38, and
    {{ sources.ensembl_t2t_releases | int }} T2T-CHM13v2.0 releases, spanning Ensembl
-   releases 81 to 115 (Supplementary Table S2). We use Ensembl GTF rather than GFF3
+   releases 81 to 116 (Supplementary Table S2). We use Ensembl GTF rather than GFF3
    because the GFF3 files omit transcript
    protein versions. Ensembl coverage adds
    {{ coverage.ensembl_unique_count | commas }} transcript accessions absent from
@@ -162,7 +162,7 @@ pipeline:
 
 ```python
 from cdot.hgvs.dataproviders import JSONDataProvider
-hdp = JSONDataProvider(["cdot.0.2.33.refseq.grch38.json.gz"])
+hdp = JSONDataProvider(["cdot.0.2.34.refseq.grch38.json.gz"])
 ```
 
 Sequence data is supplied by SeqRepo [@Hart2020] or cdot's `FastaSeqFetcher` (local genome FASTA),

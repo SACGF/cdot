@@ -267,11 +267,11 @@ is build-independent, identical across GRCh37/GRCh38/T2T for
 {{ version_stability.refseq_struct_portable_pct | dp(1) }}% of RefSeq and
 {{ version_stability.ensembl_struct_portable_pct | dp(1) }}% of Ensembl versions. A
 change in that structure is almost equivalent to a genomic-coordinate drift:
-every drifting RefSeq bump ({{ version_stability.refseq_drift_struct_flagged_pct | dp(0) }}%)
-and {{ version_stability.ensembl_drift_struct_flagged_pct | dp(1) }}% of drifting Ensembl
-bumps carry an intrinsic-structure change, while conversely
+{{ version_stability.refseq_drift_struct_flagged_pct | dp(1) }}% of drifting RefSeq
+bumps and {{ version_stability.ensembl_drift_struct_flagged_pct | dp(1) }}% of drifting
+Ensembl bumps carry an intrinsic-structure change, while conversely
 {{ version_stability.refseq_struct_unchanged_preserved_pct | dp(0) }}% (RefSeq) /
-{{ version_stability.ensembl_struct_unchanged_preserved_pct | dp(1) }}% (Ensembl) of
+{{ version_stability.ensembl_struct_unchanged_preserved_pct | dp(0) }}% (Ensembl) of
 structure-unchanged bumps are genomically preserved. This makes the safety decision
 work even when the requested version was never aligned to the target build. To judge
 substituting an available version for a requested one in, say, GRCh38, cdot reads the

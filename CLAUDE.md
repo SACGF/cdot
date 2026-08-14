@@ -79,7 +79,7 @@ Schema versioning (`cdot/__init__.py`) uses major.minor; clients validate compat
 
 ### Data Sources
 
-`generate_transcript_data/cdot_transcripts.yaml` defines all transcript sources: Ensembl GTF (releases 81–115, GRCh37/GRCh38), RefSeq GFF3, UTA, and T2T-CHM13v2.0. When sources are merged, newer entries override older ones.
+`generate_transcript_data/cdot_transcripts.yaml` defines all transcript sources: Ensembl GTF (releases 81–116, GRCh37/GRCh38), RefSeq GFF3, UTA, and T2T-CHM13v2.0. When sources are merged, newer entries override older ones.
 
 ### Release Management
 

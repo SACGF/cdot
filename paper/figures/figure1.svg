@@ -61,7 +61,7 @@
   <path d="M600,105 H778 L790,117 V215 H600 Z" fill="#dbeafe" stroke="#1d4ed8"/>
   <path d="M778,105 V117 H790" fill="none" stroke="#1d4ed8"/>
   <text x="695" y="132" font-size="12.5" font-weight="bold" text-anchor="middle" fill="#111827">cdot JSON.gz</text>
-  <text x="695" y="150" font-size="10.5" text-anchor="middle" fill="#374151">1.62 M transcript alignments</text>
+  <text x="695" y="150" font-size="10.5" text-anchor="middle" fill="#374151">1.95 M transcript alignments</text>
   <text x="695" y="165" font-size="10.5" text-anchor="middle" fill="#374151">GRCh37 &#183; 38 &#183; T2T</text>
   <text x="695" y="180" font-size="10.5" text-anchor="middle" fill="#374151">hosted on GitHub</text>
   <text x="695" y="195" font-size="10.5" text-anchor="middle" fill="#374151">+ subsets: source/build/release</text>
