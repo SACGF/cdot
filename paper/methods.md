@@ -13,7 +13,10 @@ submissions. The three sources are:
    {{ sources.refseq_grch38_releases | int }} GRCh38, and
    {{ sources.refseq_t2t_releases | int }} T2T-CHM13v2.0 historical NCBI annotation
    releases (Supplementary Table S1), running from the earliest archived annotation
-   releases through to the dated RS_2025_08 release (August 2025).
+   releases through to the dated RS_2025_08 release (August 2025). The GRCh38 set
+   also includes NCBI's historical transcript-alignment file (RS_2024_08), which
+   aligns transcript versions replaced or suppressed before any archived annotation
+   release.
 
 2. **Ensembl GTF**: {{ sources.ensembl_grch37_releases | int }} GRCh37,
    {{ sources.ensembl_grch38_releases | int }} GRCh38, and

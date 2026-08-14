@@ -16,7 +16,7 @@
 
 | Genome build | Ensembl release | Transcript count |
 |-------------|-----------------|-----------------|
-| GRCh37 | 75–81 | ... |
+| GRCh37 | 82–87 | ... |
 | GRCh38 | 76–116 | ... |
 | T2T-CHM13v2.0 | ... | ... |
 

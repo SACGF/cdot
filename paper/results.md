@@ -14,7 +14,7 @@ transcript version aligned to a particular genome build. The same transcript ver
 counted separately per build, because each alignment is what a resolution against that
 build actually needs. cdot covers {{ coverage.total_count | commas }} such alignments
 across all builds and sources, compared with ~{{ literature.uta_count | commas }} in UTA,
-an {{ coverage.improvement_fold | fmt('.1f') }}× increase. Two things drive the
+an increase of {{ coverage.improvement_fold | fmt('.1f') }}×. Two things drive the
 gain. The first is historical depth: UTA does hold several versions per transcript,
 but cdot ingests the complete run of RefSeq and Ensembl releases from the FTP
 archives, so it retains many more historical versions. An NM_ version cited in an older
