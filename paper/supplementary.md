@@ -91,6 +91,89 @@ track them with a mild mid-CDS excess and a depleted 3'-most decile
 their representation and multi-mapping origins rather than positional alignment drift
 (`bin_residual_positions.py`).
 
+### Table S5: Injection cleaning benchmark, per category
+
+Reproducible injection benchmark (`paper/scripts/inject_and_clean.py`): each
+`clean_hgvs()` fix category is injected into a seeded sample of {{ cleaning.inject_sample_size | commas }}
+clean, parseable public ClinVar c.HGVS strings (committed to the repository, seed 112,
+at most 200 cases per category), and recovery is an exact string match to the known
+canonical target. The LOVD columns come from `paper/scripts/lovd_head_to_head.py`, which
+runs the same cases through the LOVD HGVS syntax checker (v1.2.2, local PHP CLI) under
+the same scoring rule (Methods); "top-1" scores the checker's highest-confidence
+suggested correction. Production ops with no string-level injector (structure
+reconstruction, empty-version dropping, provider-verified accession-prefix restoration)
+are absent by design. Examples are synthesised from public `NM_000059.4` (BRCA2).
+Regenerate with the commands in each script's docstring; totals also appear in
+`paper/empirical_results/cleaning.csv` and `lovd_comparison.csv`.
+
+| Injected error (example → target) | n | `clean_hgvs()` | LOVD top-1 |
+|---|---|---|---|
+| Whitespace (` NM_000059.4: c.68del`) | 200 | 100% | 100% |
+| Lowercased bases (`c.316g>a`) | 200 | 100% | 100% |
+| Trailing protein suffix (`c.68del p.Arg100Ter`) | 200 | 100% | 91.5% |
+| Gene wrapper with colon (`NM_000059.4:(BRCA2):c.68del`) | 200 | 100% | 0% |
+| Gene/transcript swapped (`BRCA2(NM_000059.4):c.68del`) | 200 | 100% | 49.5% |
+| Surrounding quotes (`"NM_000059.4:c.68del"`) | 200 | 100% | 0% |
+| Doubled colon (`NM_000059.4::c.68del`) | 200 | 100% | 0% |
+| Unbalanced bracket (`(NM_000059.4:c.68del`) | 200 | 100% | 0% |
+| Separator typo (`NM_000059.4:c,68del`) | 200 | 100% | 100% |
+| Doubled version dot (`NM_000059..4:c.68del`) | 200 | 100% | 0% |
+| Leading junk (`GRCh38.p2 NM_000059.4:c.68del`) | 200 | 100% | 0% |
+| Doubled kind (`NM_000059.4:c.c.68del`) | 200 | 100% | 0% |
+| Lowercased accession (`nm_000059.4:c.68del`) | 200 | 100% | 52.0% |
+| Redundant del/dup count (`c.68_69del23`) | 77 | 100% | 0% |
+| Missing accession underscore (`NM000059.4:c.68del`) | 200 | 100% | 0% |
+| Colon in accession prefix (`NM:_000059.4:c.68del`) | 200 | 100% | 0% |
+| Uppercased mutation type (`c.68DEL`) | 142 | 100% | 100% |
+| Dropped accession letter (`M_000059.4:c.68del`) | 200 | 100% | 0% |
+| **Total** | **{{ lovd_comparison.n_cases | commas }}** | **{{ lovd_comparison.cdot_pct | dp(1) }}%** | **{{ lovd_comparison.lovd_top1_pct | dp(1) }}%** |
+
+Weighted by the production rescue-op distribution (Results Table 2) the totals are
+{{ lovd_comparison.cdot_weighted_pct | dp(1) }}% for `clean_hgvs()` and
+{{ lovd_comparison.lovd_top1_weighted_pct | dp(1) }}% for LOVD top-1; accepting the
+target anywhere in LOVD's ranked correction list changes no case. On the
+{{ lovd_comparison.originals_n | commas }} uncorrupted originals neither tool falsely
+corrects any input ({{ lovd_comparison.cdot_false_corrections | int }} for `clean_hgvs()`,
+{{ lovd_comparison.lovd_false_corrections | int }} for LOVD); LOVD flags
+{{ lovd_comparison.lovd_flagged_invalid_pct | dp(1) }}% of them (intronic positions on
+a transcript reference) as requiring a genomic reference while leaving the string
+unchanged. The LOVD partial rates are one-sided accession-family support: the
+gene/transcript swap is repaired for RefSeq but not Ensembl accessions, accession
+re-casing for Ensembl but not RefSeq, and the two rates track the corpus's roughly
+even RefSeq/Ensembl split. The protein-suffix misses absorb the stray `p` into the
+edit (`c.68del p.` becomes `c.68delP`).
+
+### Table S6: Residual error classes after cleaning
+
+**[Tier 2].** Single-label classification of the 1,075 production queries (826 unique
+strings) that still fail to parse after cleaning (Results, "Residual errors"), under a
+fixed decision-tree taxonomy. Of the eight classes, the seven repair-relevant ones are
+shown; the eighth was non-HGVS input (81 queries, 7.5%: pasted URLs, report templates,
+or prose), excluded here as there is nothing in it for cleaning to repair. Counts and %
+are of the 1,075 residual queries; examples are synthesised from public BRCA2
+`NM_000059.4`. *(Tier 2; frozen constants from a deterministic run over the production
+corpus.)*
+
+| Class | Queries | What it is (*example*) |
+|---|---|---|
+| Truncated | 284 (26.4%) | cut off before a complete variant: `NM_000059.4:c.68_69` (range, no edit) |
+| No reference | 277 (25.8%) | a bare variant body, no transcript/gene/accession: `c.68_69delAG` |
+| Bad accession | 124 (11.5%) | misplaced or truncated version, or a missing prefix with no unique data match: `NM_000059/4:c.68del` (slash in place of the version dot) |
+| Edit syntax | 113 (10.5%) | malformed or non-standard edit operation: `NM_000059.4:c.68AG>T` (multi-base reference in a substitution) |
+| Trailing / concatenated | 85 (7.9%) | extra characters after a complete variant, or several run together: `NM_000059.4:c.68delAG;c.70A>G` |
+| Grammar gap | 81 (7.5%) | legitimate HGVS the biocommons grammar rejects: `NM_000059.4:c.(67+1_68-1)_(70+1_71-1)del` (uncertain-range deletion) |
+| Insertion (length only) | 30 (2.8%) | an insertion given as a base count, not a sequence: `NM_000059.4:c.68_69ins5` (position and length recoverable; inserted bases not) |
+
+*Method and limitation:* classification was performed by a large language model (Claude
+Opus 4, Anthropic; 2026-06-17) applying the shared decision tree to each unique string,
+single-label and single-rater; no second-rater adjudication was done, so no inter-rater
+agreement (κ) is reported. The taxonomy is version `v1`. Counts were refreshed on
+2026-08-17 after the accession-repair cleaning rules landed: the 43 residual queries the
+new rules rescue all sat in the Bad accession class (delta re-rated by Claude Fable 5,
+Anthropic), which drops from 167 (14.9% of the previous 1,118-query residual) to 124;
+the other classes are unchanged. Synthesised examples (from public `NM_000059.4` /
+`NM_001754.5`) illustrate each class; no corpus string is reproduced.
+
 ### Figure S1: Positional drift along the CDS across version bumps
 
 ![](paper/figures/figure_s1_positional_drift.svg)

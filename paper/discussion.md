@@ -52,7 +52,8 @@ description that already parsed.
 The LOVD checker is the closest comparator, being the one tool in this group that runs
 offline without a reference sequence, so we ran it head-to-head with `clean_hgvs()` on
 the reproducible injection corpus ({{ lovd_comparison.n_cases | commas }} corrupted
-strings, checker {{ lovd_comparison.lovd_version }}; scoring in Methods). The corpus
+strings, checker {{ lovd_comparison.lovd_version }}; scoring in Methods, per-category
+breakdown in Supplementary Table S5). The corpus
 injects the error classes `clean_hgvs()` targets, so `clean_hgvs()` recovers every case
 by construction and the comparison measures how much of that territory a general syntax
 checker also covers, not the overall quality of either tool. Weighted by the production
