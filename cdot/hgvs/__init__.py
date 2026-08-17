@@ -22,6 +22,7 @@ from cdot.hgvs.gene_hgvs import (
     fix_hgvs,
     rank_transcripts_for_gene,
     resolve_gene_hgvs,
+    resolve_missing_accession_prefix,
     resolve_transcript_version,
     UnsafeVersionPolicy,
 )
