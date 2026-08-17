@@ -80,6 +80,46 @@ VCF normaliser; {{ clinvar_vcf_residual.ambiguity_code_allele }} IUPAC ambiguity
 alleles (position matches, only the degenerate base differs); and
 {{ clinvar_vcf_residual.identity_or_symbolic }} identity/symbolic alleles.
 
+Binning these coordinate differences by relative CDS position (the decile scheme of
+Figure S1, cited position over CDS length; a re-run of the pass, which reproduced the
+committed totals within six variants) shows no 3'-end concentration: correct projections
+are nearly uniform across deciles
+({{ clinvar_residual_positions.correct_decile10_pct | dp(1) }}% in the 3'-most decile)
+and the {{ clinvar_residual_positions.incorrect_binned | commas }} binned differences
+track them with a mild mid-CDS excess and a depleted 3'-most decile
+({{ clinvar_residual_positions.incorrect_decile10_pct | dp(1) }}%), consistent with
+their representation and multi-mapping origins rather than positional alignment drift
+(`bin_residual_positions.py`).
+
+### Figure S1: Positional drift along the CDS across version bumps
+
+![](paper/figures/figure_s1_positional_drift.svg)
+
+**Figure S1. Coordinate preservation by relative CDS position across consecutive
+transcript version bumps** (GRCh38, seeded
+{{ version_stability.sample_n | commas }}-accession sample per consortium; deciles of the
+shared CDS, 1 = 5'-most tenth). **(A)** Conditioned on the partial-drift bumps
+({{ positional_drift.refseq_partial_pairs }} RefSeq and
+{{ positional_drift.ensembl_partial_pairs }} Ensembl pairs, the
+{{ version_stability.refseq_partial_drift_pct | dp(1) }}% and
+{{ version_stability.ensembl_partial_drift_pct | dp(1) }}% of bumps where some coding
+bases move and others do not): preservation declines monotonically toward the 3' end,
+from {{ positional_drift.refseq_partial_decile1_pct | dp(1) }}% to
+{{ positional_drift.refseq_partial_decile10_pct | dp(1) }}% of coding bases for RefSeq
+and {{ positional_drift.ensembl_partial_decile1_pct | dp(1) }}% to
+{{ positional_drift.ensembl_partial_decile10_pct | dp(1) }}% for Ensembl, because a
+partial drift keeps a 5' prefix intact up to its first alignment change and shifts the
+bases downstream of it. **(B)** Unconditioned over every compared bump the curve is
+essentially flat (RefSeq {{ positional_drift.refseq_all_decile1_pct | dp(1) }}% to
+{{ positional_drift.refseq_all_decile10_pct | dp(1) }}%; Ensembl
+{{ positional_drift.ensembl_all_decile1_pct | dp(1) }}% to
+{{ positional_drift.ensembl_all_decile10_pct | dp(1) }}%): most drift is a whole-CDS
+relocation, position independent and reliably flagged by the intrinsic-structure check
+(Results R5). The positional effect is confined to the rare partial-drift tail, which is
+what makes a 5' coding variant safer to substitute than a 3' one when a version must be
+swapped. Produced by `compute_version_stability.py` (facts) and
+`make_positional_figure.py` (rendering).
+
 ### Table S7: `clean_hgvs()` operation catalogue
 
 The cleaning pipeline (Methods) applies these operation groups in a fixed canonical order.
@@ -95,9 +135,12 @@ Each operation inspects the string, makes at most one class of change, and recor
   (`NM_000059..4` → `NM_000059.4`); repairing a misplaced colon in the accession prefix;
   normalising a gene symbol wedged between extra colons or stray parentheses so that
   `NM_000059.4:(BRCA2):c.…` and `BRCA1(NM_000059.4)c.…` become the canonical
-  `transcript(GENE):c.…`; collapsing a doubled kind token (`c.c.` → `c.`); and fixing a
-  comma or colon used in place of the kind dot, or a period used in place of a
-  substitution `>`.
+  `transcript(GENE):c.…`; collapsing a doubled kind token (`c.c.` → `c.`); fixing a
+  comma or colon used in place of the kind dot, a period used in place of a
+  substitution `>`, a semicolon, underscore, or space used in place of the
+  reference:allele colon (`NM_000059.4;c.68del` and `BRCA2 c.68del` →
+  `NM_000059.4:c.68del` / `BRCA2:c.68del`); and dropping the dangling dot of an
+  empty transcript version (`NM_000059.:c.68del` → `NM_000059:c.68del`).
 - **Casing and prefixes**: uppercasing nucleotides in substitutions and del/ins/dup
   edits (`c.123delg` → `c.123delG`), lowercasing an uppercased mutation type while
   protecting gene symbols that contain those letters (so `NM_000059.4(INSR):c.…` is
@@ -110,3 +153,10 @@ Each operation inspects the string, makes at most one class of change, and recor
   and a final step that detects and repairs the common clinical mistake of swapping the
   gene symbol and transcript accession (`BRCA2(NM_000059.4):c.…` →
   `NM_000059.4(BRCA2):c.…`).
+
+One further repair sits outside `clean_hgvs()` because it needs transcript data:
+`resolve_missing_accession_prefix()` (applied by `fix_hgvs()` when a data provider is
+supplied) restores a fully dropped RefSeq prefix (`000059.4:c.68del` →
+`NM_000059.4:c.68del`) by generating the candidates the kind letter allows (`c.` →
+`NM_`/`XM_`, `n.` → `NR_`/`XR_`) and applying the fix only when exactly one candidate
+accession exists in the loaded data (Methods).

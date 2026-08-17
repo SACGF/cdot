@@ -72,32 +72,37 @@ GENE_POOL = ["BRCA2", "RUNX1", "BRCA1", "TP53", "MSH2"]
 
 # ---------------------------------------------------------------------------
 # Injection weights — FROZEN CONSTANTS (Tier 2, cited not shipped)
-# Source: cdot_private/output/cleaning_analysis_20260617.txt
-#   "Which clean ops do the rescuing?" (rescued rows, ops counted; N=32,752).
-# Used only to weight the reproducible per-class recovery into a single
-# headline number that reflects the real-world mix of errors. No corpus string
-# is read or copied.
+# Source: deterministic run of clean_hgvs() plus the provider-aware
+#   accession-prefix restoration over the production corpus, 2026-08-17
+#   ("Which clean ops do the rescuing?"; rescued rows, WARNING ops counted;
+#   N=32,752). Used only to weight the reproducible per-class recovery into a
+#   single headline number that reflects the real-world mix of errors. No
+#   corpus string is read or copied.
+# Ops with no string-level injector are excluded: RECONSTRUCTED_STRUCTURE (248
+#   rescued rows; its perturbations are covered by the kind/colon injectors),
+#   DROPPED_EMPTY_VERSION (8; dropping the version is not round-trippable) and
+#   ADDED_ACCESSION_PREFIX (1; needs a data provider).
 # ---------------------------------------------------------------------------
 
 REAL_RESCUE_OP_COUNTS = {
-    "STRIPPED_WHITESPACE": 940,
-    "UPPERCASED_BASES": 553,
+    "STRIPPED_WHITESPACE": 664,
+    "FIXED_SEPARATOR_TYPO": 349,
+    "SWAPPED_GENE_TRANSCRIPT": 156,
     "STRIPPED_PROTEIN_SUFFIX": 130,
     "FIXED_GENE_WRAPPER": 100,
-    "SWAPPED_GENE_TRANSCRIPT": 99,
     "STRIPPED_SURROUNDING_PUNCTUATION": 84,
-    "FIXED_MULTIPLE_COLON": 60,
+    "FIXED_MULTIPLE_COLON": 63,
     "STRIPPED_UNBALANCED_BRACKETS": 58,
-    "FIXED_SEPARATOR_TYPO": 37,
-    "FIXED_MULTIPLE_DOT": 35,
-    "STRIPPED_LEADING_JUNK": 23,
+    "UPPERCASED_BASES": 42,
+    "FIXED_MULTIPLE_DOT": 37,
+    "STRIPPED_LEADING_JUNK": 32,
     "FIXED_MULTIPLE_KIND": 13,
     "UPPERCASED_TRANSCRIPT": 10,
     "DROPPED_DEL_DUP_COUNT": 8,
-    "ADDED_TRANSCRIPT_UNDERSCORE": 6,
     "FIXED_PREFIX_COLON": 3,
     "LOWERCASED_MUTATION_TYPE": 3,
     "ADDED_N_PREFIX": 2,
+    "ADDED_TRANSCRIPT_UNDERSCORE": 2,
 }
 
 # ---------------------------------------------------------------------------

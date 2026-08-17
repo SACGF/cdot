@@ -11,10 +11,12 @@ the matching transcript-version alignment for the build in question. The scale i
 ClinVar alone provides HGVS descriptions for >{{ literature.clinvar_variants | commas }}
 variants [@Landrum2025]. Resolving HGVS descriptions reliably is hard,
 especially for the human-entered strings that reach search boxes and importers:
-Mutalyzer, whose users type descriptions into a free-text box, found
-~{{ literature.hgvs_error_rate_pct | dp(0) }}% error rates in
-submitted HGVS descriptions over five years [@Lefter2021], many attributable to missing
-transcript data. Transcript choice also has downstream consequences: only
+of the ~26 million unique descriptions submitted to Mutalyzer over five years of
+production logs, only ~{{ literature.mutalyzer_correct_pct | dp(0) }}% were correct as
+written, ~{{ literature.mutalyzer_error_pct | dp(0) }}% contained a syntactic or
+semantic error, and Mutalyzer could automatically correct only
+~{{ literature.mutalyzer_autocorrect_pct | dp(0) }}% (all rates per unique
+description, not per submission) [@Lefter2021]. Transcript choice also has downstream consequences: only
 {{ literature.lof_agreement_pct | dp(0) }}% of putative loss-of-function variants were
 classified as loss-of-function by both RefSeq and Ensembl annotation sets in ANNOVAR
 [@McCarthy2014], so which annotation source you pick changes the answer and covering both

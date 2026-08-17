@@ -18,12 +18,16 @@ This script does exactly one resolution pass and emits a per-variant table with:
     converted_g   cdot's c_to_g output, or empty if it could not convert
     fix_codes     ';'-joined HGVSFix codes fix_hgvs() would apply (empty on clean
                   input); only populated with --with-fixes (off by default)
+    fixed_bucket  bucket of the fix_hgvs()-repaired string, scored the same way
+                  (equals bucket when fix_hgvs changes nothing); only populated
+                  with --with-fixes
 
 bucket is the BASELINE resolution of the c.HGVS exactly as given (no cleaning, no
 version bump), scored against g_hgvs. That is what R5b (does a safe version bump
 preserve converted_g?) and R6 (re-normalise the incorrect bucket) both build on.
-fix_codes is recorded alongside so a recovery analysis can attribute rescues
-without a second pass.
+fix_codes and fixed_bucket are recorded alongside so a recovery analysis can
+attribute rescues (bucket != correct, fixed_bucket == correct) without a second
+pass.
 
 Provider is pluggable (shared with benchmark_resolution.py): defaults to cdot REST
 so it runs with no local data; pass --json a cdot release for the offline run.
@@ -79,21 +83,22 @@ def parse_tx_version(c_hgvs):
     return m.group(1), (int(m.group(2)) if m.group(2) else None)
 
 
-def fix_codes_for(provider, build, c_hgvs, version_fallback):
-    """Return the ';'-joined WARNING-level HGVSFix codes fix_hgvs() applies to
-    c_hgvs (empty string when nothing fires, e.g. already-clean input)."""
+def run_fix(provider, build, c_hgvs, version_fallback):
+    """Return (fixed_string, ';'-joined WARNING-level HGVSFix codes) from
+    fix_hgvs() (codes empty when nothing fires, e.g. already-clean input)."""
     try:
-        _fixed, fixes = fix_hgvs(c_hgvs, provider, build, version_fallback=version_fallback)
+        fixed, fixes = fix_hgvs(c_hgvs, provider, build, version_fallback=version_fallback)
     except Exception as e:  # noqa: BLE001 - keep the pass going
         logging.debug("fix_hgvs error on %s: %s", c_hgvs, e)
-        return ""
-    return ";".join(f.code.name for f in fixes if f.severity == HGVSFixSeverity.WARNING)
+        return c_hgvs, ""
+    return fixed, ";".join(f.code.name for f in fixes if f.severity == HGVSFixSeverity.WARNING)
 
 
-FIELDNAMES = ["g_hgvs", "c_hgvs", "tx", "version", "bucket", "converted_g", "fix_codes"]
+FIELDNAMES = ["g_hgvs", "c_hgvs", "tx", "version", "bucket", "converted_g",
+              "fix_codes", "fixed_bucket"]
 
 
-def _row(g_hgvs, c_hgvs, bucket, converted, provider, build, with_fixes, version_fallback):
+def _row(g_hgvs, c_hgvs, bucket, converted, fix_codes, fixed_bucket):
     tx, version = parse_tx_version(c_hgvs)
     return {
         "g_hgvs": g_hgvs,
@@ -102,7 +107,8 @@ def _row(g_hgvs, c_hgvs, bucket, converted, provider, build, with_fixes, version
         "version": version if version is not None else "",
         "bucket": bucket,
         "converted_g": converted if converted is not None else "",
-        "fix_codes": fix_codes_for(provider, build, c_hgvs, version_fallback) if with_fixes else "",
+        "fix_codes": fix_codes,
+        "fixed_bucket": fixed_bucket,
     }
 
 
@@ -110,7 +116,11 @@ def gen_rows(am, hp, provider, build, pairs, with_fixes, version_fallback):
     """Yield one result row per (g.HGVS, c.HGVS) pair (g.HGVS-string scoring)."""
     for g_hgvs, c_hgvs in pairs:
         bucket, converted = classify(am, hp, g_hgvs, c_hgvs)
-        yield _row(g_hgvs, c_hgvs, bucket, converted, provider, build, with_fixes, version_fallback)
+        fix_codes = fixed_bucket = ""
+        if with_fixes:
+            fixed, fix_codes = run_fix(provider, build, c_hgvs, version_fallback)
+            fixed_bucket = bucket if fixed == c_hgvs else classify(am, hp, g_hgvs, fixed)[0]
+        yield _row(g_hgvs, c_hgvs, bucket, converted, fix_codes, fixed_bucket)
 
 
 def gen_rows_vcf(am, hp, bf, provider, build, vcf_pairs, with_fixes, version_fallback):
@@ -119,7 +129,11 @@ def gen_rows_vcf(am, hp, bf, provider, build, vcf_pairs, with_fixes, version_fal
     g_hgvs holds the reference CLNHGVS, converted_g holds cdot's VCF call (chrom-pos-ref-alt)."""
     for gt, g_hgvs, c_hgvs in vcf_pairs:
         bucket, converted = classify_vcf(am, hp, bf, gt, c_hgvs)
-        yield _row(g_hgvs, c_hgvs, bucket, converted, provider, build, with_fixes, version_fallback)
+        fix_codes = fixed_bucket = ""
+        if with_fixes:
+            fixed, fix_codes = run_fix(provider, build, c_hgvs, version_fallback)
+            fixed_bucket = bucket if fixed == c_hgvs else classify_vcf(am, hp, bf, gt, fixed)[0]
+        yield _row(g_hgvs, c_hgvs, bucket, converted, fix_codes, fixed_bucket)
 
 
 def stream_to_csv(rows, out_path):

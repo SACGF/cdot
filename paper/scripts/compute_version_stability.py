@@ -16,6 +16,12 @@ all-builds files (each version record spans GRCh37/GRCh38/T2T). All measurement
 reuses the packaged cdot.hgvs.version_safety helpers, so the facts and the shipped
 safety check are computed by the same code.
 
+A second facts file, ``output/facts/positional_drift.csv``, bins preserved and
+total coding bases by relative CDS position (deciles, 5'→3') across the same
+version-bump pairs. Because drift is overwhelmingly whole-CDS (a relocation,
+position independent), the positional curve is emitted both conditioned on the
+partial-drift pairs (where any positional effect must live) and unconditioned.
+
 Per CLAUDE.md, run this only against production release files on a dedicated run,
 never the GTF/GFF generation pipeline. Sampling (--sample) keeps it cheap and
 deterministic (--seed).
@@ -34,6 +40,7 @@ import gzip
 import json
 import random
 import re
+from bisect import bisect_right
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -103,6 +110,41 @@ def _preserved_fraction(a, b):
     return same / total if total else None
 
 
+N_BINS = 10
+
+
+def _preserved_by_decile(a, b, n_bins=N_BINS):
+    """Per-decile (preserved, total) coding-base counts over the shared CDS.
+
+    Same breakpoint walk as :func:`_preserved_fraction`, with the decile edges
+    added as extra breakpoints so no segment spans a bin. Bin 0 is the 5'-most
+    tenth of the shared CDS, bin ``n_bins - 1`` the 3'-most. Returns ``None`` in
+    exactly the cases _preserved_fraction returns ``None``; a contig/strand
+    relocation (whole-CDS drift) yields zero preserved bases in every bin.
+    """
+    if a is None or b is None or a["has_gap"] or b["has_gap"]:
+        return None
+    L = min(a["cds_len"], b["cds_len"])
+    if L <= 0:
+        return None
+    relocated = a["contig"] != b["contig"] or a["strand"] != b["strand"]
+    edges = [i * L // n_bins for i in range(1, n_bins)]
+    bps = sorted({0, L} | set(edges)
+                 | {o for o, _g in a["segs"] if 0 < o < L}
+                 | {o for o, _g in b["segs"] if 0 < o < L})
+    pres = [0] * n_bins
+    tot = [0] * n_bins
+    for x0, x1 in zip(bps, bps[1:]):
+        length = x1 - x0
+        if length <= 0:
+            continue
+        bin_ = bisect_right(edges, x0)
+        tot[bin_] += length
+        if not relocated and _genomic_at(a, x0) == _genomic_at(b, x0):
+            pres[bin_] += length
+    return pres, tot
+
+
 def drift_stats(transcripts, build, sample, seed):
     """Single-build drift, per-variant safety and concentration for one consortium."""
     by_acc = _by_acc(transcripts)
@@ -112,6 +154,10 @@ def drift_stats(transcripts, build, sample, seed):
     pairs = 0
     preserving = full_drift = partial_drift = 0
     bases_pres = bases_total = 0
+    deciles = {
+        "all_pres": [0] * N_BINS, "all_tot": [0] * N_BINS,
+        "partial_pres": [0] * N_BINS, "partial_tot": [0] * N_BINS,
+    }
     acc_drifts = Counter()
     acc_seen = set()
     for acc in accs:
@@ -131,6 +177,16 @@ def drift_stats(transcripts, build, sample, seed):
             overlap = min(a["cds_len"], b["cds_len"])
             bases_total += overlap
             bases_pres += round(frac * overlap)
+            dec = _preserved_by_decile(a, b)
+            if dec is not None:
+                dec_pres, dec_tot = dec
+                for i in range(N_BINS):
+                    deciles["all_pres"][i] += dec_pres[i]
+                    deciles["all_tot"][i] += dec_tot[i]
+                if 0.0 < frac < 1.0:
+                    for i in range(N_BINS):
+                        deciles["partial_pres"][i] += dec_pres[i]
+                        deciles["partial_tot"][i] += dec_tot[i]
             if frac == 1.0:
                 preserving += 1
             elif frac == 0.0:
@@ -150,7 +206,7 @@ def drift_stats(transcripts, build, sample, seed):
     def pct(x):
         return round(100 * x / pairs, 1) if pairs else 0.0
 
-    return {
+    stats = {
         "pairs": pairs,
         "preserving_pct": pct(preserving),
         "full_drift_pct": pct(full_drift),
@@ -159,6 +215,36 @@ def drift_stats(transcripts, build, sample, seed):
         "accessions_drift_pct": round(100 * n_drift_acc / n_acc, 1) if n_acc else 0.0,
         "top5_drift_share_pct": round(top5_share, 1),
     }
+    deciles["partial_pairs"] = partial_drift
+    return stats, deciles
+
+
+def positional_facts(label, deciles):
+    """Flatten one consortium's decile accumulators into positional-drift facts.
+
+    ``{label}_partial_decile{i}_pct`` is the preserved fraction of coding bases in
+    decile i (1 = 5'-most tenth of the shared CDS, 10 = 3'-most) across the
+    partial-drift pairs only; ``{label}_all_decile{i}_pct`` is the unconditioned
+    curve over every compared pair. Halves summarise monotonicity.
+    """
+    def curve(pres, tot, prefix):
+        out = {}
+        for i in range(N_BINS):
+            out[f"{prefix}_decile{i + 1}_pct"] = (
+                round(100 * pres[i] / tot[i], 1) if tot[i] else 0.0)
+        h = N_BINS // 2
+        p5, t5 = sum(pres[:h]), sum(tot[:h])
+        p3, t3 = sum(pres[h:]), sum(tot[h:])
+        out[f"{prefix}_5p_half_pct"] = round(100 * p5 / t5, 1) if t5 else 0.0
+        out[f"{prefix}_3p_half_pct"] = round(100 * p3 / t3, 1) if t3 else 0.0
+        return out
+
+    facts = {f"{label}_partial_pairs": deciles["partial_pairs"],
+             f"{label}_partial_bases": sum(deciles["partial_tot"])}
+    facts.update(curve(deciles["partial_pres"], deciles["partial_tot"],
+                       f"{label}_partial"))
+    facts.update(curve(deciles["all_pres"], deciles["all_tot"], f"{label}_all"))
+    return facts
 
 
 def crossbuild_stats(transcripts, build, other, sample, seed):
@@ -220,13 +306,15 @@ def main():
     args = ap.parse_args()
 
     facts = {"sample_n": args.sample, "build": args.build}
+    pos_facts = {"sample_n": args.sample, "build": args.build}
 
     for label, path in (("refseq", args.refseq_grch38), ("ensembl", args.ensembl_grch38)):
         if path and Path(path).exists():
             print(f"drift: loading {path} ...", flush=True)
-            d = drift_stats(_load(path), args.build, args.sample, args.seed)
+            d, deciles = drift_stats(_load(path), args.build, args.sample, args.seed)
             for k, v in d.items():
                 facts[f"{label}_{k}"] = v
+            pos_facts.update(positional_facts(label, deciles))
 
     for label, path in (("refseq", args.refseq_allbuilds), ("ensembl", args.ensembl_allbuilds)):
         if path and Path(path).exists():
@@ -241,6 +329,13 @@ def main():
     print(f"Written: {out}")
     for k, v in facts.items():
         print(f"  {k}: {v}")
+
+    if len(pos_facts) > 2:  # got at least one single-build file
+        pos_out = Path("output/facts/positional_drift.csv")
+        pd.DataFrame([pos_facts]).to_csv(pos_out, index=False)
+        print(f"Written: {pos_out}")
+        for k, v in pos_facts.items():
+            print(f"  {k}: {v}")
 
 
 if __name__ == "__main__":

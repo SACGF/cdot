@@ -122,6 +122,17 @@ integer length instead of the inserted sequence); these mark incomplete input ra
 than formatting noise. By default cleaning never raises and always returns its best
 attempt, though callers may opt into raising on the first error.
 
+One repair goes beyond string manipulation. A bare-number accession, where the user
+dropped the RefSeq prefix entirely (`000059.4:c.68del`), cannot be repaired from the
+string alone: the kind letter narrows the possibilities (`c.` implies `NM_` or `XM_`,
+`n.` implies `NR_` or `XR_`, with 7-8 digit fields zero-padded to the 9-digit form) but
+cannot fully disambiguate them. `resolve_missing_accession_prefix()`, applied by
+`fix_hgvs()` whenever a data provider is supplied, generates the candidate accessions
+and checks each against the loaded transcript data, restoring the prefix only when
+exactly one candidate exists there; with zero or several matches the string is left
+unchanged. Like every other repair it is reported as an `HGVSFix`, never applied
+silently.
+
 A separate, opt-in helper, `get_best_transcript_version()`, addresses
 transcript-version drift. Unlike the cleaning operations above, which are unambiguous
 formatting corrections, substituting a different transcript version is a heuristic that
@@ -142,9 +153,9 @@ cdot's client stack (Figure 1B) offers three data providers behind the same inte
 **Local JSON**: `JSONDataProvider` loads a JSON.gz file into memory on initialisation
 (typically ~{{ benchmark.grch38_load_time_s | dp(0) }} seconds for GRCh38 RefSeq),
 lazily building interval trees for region queries on first use and dictionaries for
-transcript and gene lookup. Transcript retrieval is then O(1), giving throughput of
-{{ benchmark.cdot_local_min_tps | commas }}–{{ benchmark.cdot_local_max_tps | commas }}
-transcripts/second (Results, Table 1).
+transcript and gene lookup. Transcript retrieval is then O(1), giving end-to-end
+resolution throughput of ~{{ benchmark.cdot_local_tps | commas }} HGVS/second
+(Results, Table 1).
 
 **REST API**: `cdot_rest` (https://github.com/SACGF/cdot_rest) serves the same JSON data
 at cdotlib.org. `RESTDataProvider` fetches transcripts one request per transcript
@@ -216,5 +227,45 @@ reproducible control, with `inject_and_clean.py`, which injects each fix categor
 clean ClinVar strings. Version-fallback safety is measured by `compute_version_stability.py`
 on GRCh38, using a seeded {{ version_stability.sample_n | commas }}-accession sample drawn
 from accessions cdot holds at two or more versions (the only accessions where a version
-bump can be assessed). Throughput comparisons hold the sequence layer constant (a shared
-local SeqRepo) so that only the transcript-data layer varies (Results R3).
+bump can be assessed). The same run bins preserved coding bases by relative CDS position
+(deciles, 5' to 3') to test whether drift within a version bump is positional
+(Supplementary Figure S1).
+
+The submitted-string ClinVar corpus (Results R2) is built by
+`build_clinvar_submitted_pairs.py` from the per-submission HGVS attributes of a ClinVar
+VCV XML release (ClinVarVCVRelease_2026-06): for each ClinicalAssertion (SCV), the
+first RefSeq/Ensembl transcript c./n. expression among its `Attribute[@Type="HGVS"]`
+values is kept verbatim and joined to the variant's VCF coordinate through the record's
+AlleleID, the same ground-truth join as `build_clinvar_pairs.py`. Submitted HGVS is not
+deduplicated across SCVs in ClinVar, so the builder collapses SCV rows to unique
+(AlleleID, submitted string) pairs, retaining the collapsed submission count; distinct
+strings for the same variant (for example, two laboratories citing different transcript
+versions) are all kept. Benchmark samples are drawn uniformly at random with a fixed
+seed (42): 3,000 pairs for the cdot-versus-UTA comparison (sized to match the seeded
+current-version sample), and a 500-pair sample committed to
+`tests/test_data/clinvar_hgvs/`. Scoring uses the VCF coordinate rather than the
+g.HGVS string, since a submitted string may legitimately spell an indel differently
+from ClinVar's normalised form. Two practical caveats: the full VCV XML is tens of
+gigabytes uncompressed, so the builder streams it (and also accepts a pre-extracted
+per-SCV table); and the first-attribute selection is what defines "the" submitted
+string when an SCV carries several HGVS expressions. Transcript version age is
+computed by `compute_submitted_version_age.py` against the released cdot RefSeq JSON,
+whose per-transcript source URL identifies whether an entry comes from the current
+annotation release (RS_2025_08) or survives only through cdot's historical releases.
+
+Throughput (Table 1) is measured by `compute_benchmark.py`. Every configuration resolves
+the identical committed set of {{ benchmark.n_pairs | commas }} ClinVar (g.HGVS, c.HGVS)
+pairs through the same biocommons/hgvs engine, with the sequence layer held constant:
+a single shared local SeqRepo instance, with its file-descriptor cache enabled, serves
+every configuration, so the only thing that varies between rows is the transcript-data
+layer. (This matters in practice: without file-descriptor caching, SeqRepo re-opens a
+compressed FASTA file on every fetch and the sequence layer, not the transcript layer,
+bounds every backend.) Each configuration is timed over {{ benchmark.n_repeats | int }} passes
+of the set and reported as median (IQR). The timed portion is steady-state resolution
+throughput (HGVS parse plus coordinate projection per string); provider setup (JSON load,
+database connection), the REST cache-warming `prefetch()`, and one untimed warm-up pass
+per configuration are excluded. The REST rows run against the production server at
+cdotlib.org over the public internet, so they include real network conditions. The public
+remote UTA row is measured on the first {{ benchmark.uta_remote_n | int }} pairs of the same
+set, because at ~{{ benchmark.uta_remote_tps | dp(1) }} HGVS/s a full-size pass is
+impractical (Results R3).

@@ -1,2 +1,2 @@
-cdot_local_min_tps,cdot_local_max_tps,cdot_rest_tps,cdot_rest_prefetch_tps,uta_local_tps,uta_remote_tps,grch38_load_time_s
-540,665,39,731,24,0.1,10.6
+n_pairs,n_repeats,cdot_local_tps,cdot_local_tps_q1,cdot_local_tps_q3,grch38_load_time_s,cdot_rest_tps,cdot_rest_tps_q1,cdot_rest_tps_q3,cdot_rest_prefetch_tps,cdot_rest_prefetch_tps_q1,cdot_rest_prefetch_tps_q3,uta_local_tps,uta_local_tps_q1,uta_local_tps_q3,uta_remote_tps,uta_remote_tps_q1,uta_remote_tps_q3,uta_remote_n
+500,5,748,743,752,4.8,16,15,16,753,752,753,187,187,188,0.12,0.12,0.12,25
