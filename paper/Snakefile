@@ -66,7 +66,7 @@ EMPIRICAL  = "paper/empirical_results"
 GEN_FACTS  = "output/facts"
 FACT_FILES = ["literature.csv", "coverage.csv", "benchmark.csv",
               "clinvar.csv", "clinvar_submitted.csv", "clinvar_submitted_residual.csv",
-              "cleaning.csv", "sources.csv", "historical.csv",
+              "cleaning.csv", "lovd_comparison.csv", "sources.csv", "historical.csv",
               "version_stability.csv", "positional_drift.csv"]
 
 PAPER_SOURCES = [
@@ -427,6 +427,30 @@ rule cleaning:
     output: "output/facts/cleaning.csv"
     shell:
         "{PYTHON} paper/scripts/inject_and_clean.py"
+
+
+rule lovd_comparison:
+    """Tier-1 head-to-head: clean_hgvs() vs the LOVD HGVS syntax checker (issue #112).
+
+    Runs the exact injection corpus of the `cleaning` rule through the LOVD
+    checker (github.com/LOVDnl/HGVS-syntax-checker, pinned v1.2.2, local PHP
+    CLI) and through clean_hgvs(), scored identically; see
+    paper/scripts/lovd_head_to_head.py for the scoring rules. Needs a local
+    clone of the checker: pass --config lovd_checker=/path/to/HGVS.php (PHP
+    >= 7.4 CLI required). Without it, the frozen measured constants from
+    paper/empirical_results/ are copied (measured 2026-08-17, checker v1.2.2,
+    commit 4cd074ba9cbd, PHP 8.5).
+    """
+    output: "output/facts/lovd_comparison.csv"
+    run:
+        import os, shutil
+        os.makedirs("output/facts", exist_ok=True)
+        checker = config.get("lovd_checker", "")
+        if checker and Path(checker).exists():
+            shell(f"{PYTHON} paper/scripts/lovd_head_to_head.py --checker {checker}")
+        else:
+            print("No lovd_checker - copying the frozen measured LOVD comparison facts")
+            shutil.copy(f"{EMPIRICAL}/lovd_comparison.csv", output[0])
 
 
 rule sources:

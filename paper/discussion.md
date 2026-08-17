@@ -49,6 +49,27 @@ anything that consumes the string downstream benefits; every change is returned 
 `HGVSFix` the caller can audit; and it guarantees no regressions, never breaking a
 description that already parsed.
 
+The LOVD checker is the closest comparator, being the one tool in this group that runs
+offline without a reference sequence, so we ran it head-to-head with `clean_hgvs()` on
+the reproducible injection corpus ({{ lovd_comparison.n_cases | commas }} corrupted
+strings, checker {{ lovd_comparison.lovd_version }}; scoring in Methods). The corpus
+injects the error classes `clean_hgvs()` targets, so `clean_hgvs()` recovers every case
+by construction and the comparison measures how much of that territory a general syntax
+checker also covers, not the overall quality of either tool. Weighted by the production
+error mix, LOVD's top-ranked correction restored
+{{ lovd_comparison.lovd_top1_weighted_pct | dp(0) }}% of cases
+({{ lovd_comparison.lovd_top1_pct | dp(0) }}% unweighted across categories), matching
+`clean_hgvs()` on the common single-token errors: whitespace, letter case, separator
+typos and trailing protein annotations. The rest splits into inputs that must be treated
+as free text rather than a malformed variant description (surrounding quotes, unbalanced
+brackets, leading assembly text), which sit outside the checker's intended input, and
+repairs applied to only one accession family (it restores a swapped gene and transcript
+for RefSeq but not Ensembl accessions, and re-cases a lowercase Ensembl accession but
+not a RefSeq one). Neither tool altered any valid input, though LOVD flags intronic
+descriptions on a transcript reference
+({{ lovd_comparison.lovd_flagged_invalid_pct | dp(0) }}% of the valid originals) as
+requiring a genomic reference, a deliberate design position rather than a defect.
+
 Beyond HGVS resolution, the JSON representation is useful in its own right. It parses far
 faster than the GTF/GFF files it is built from and loads trivially over HTTP, so cdot
 doubles as a lightweight, queryable gene/transcript reference. We publish the per-release

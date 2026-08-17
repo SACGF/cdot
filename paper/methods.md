@@ -224,7 +224,19 @@ a pluggable provider (local JSON, REST, or UTA) and reports resolution rate, rec
 cleaning and version fallback, and speed; the ClinVar pair set is built by
 `build_clinvar_pairs.py`. Cleaning is evaluated on a production query corpus and, as a
 reproducible control, with `inject_and_clean.py`, which injects each fix category into
-clean ClinVar strings. Version-fallback safety is measured by `compute_version_stability.py`
+clean ClinVar strings. `lovd_head_to_head.py` runs the same injected cases (same seed and
+per-category caps) through both `clean_hgvs()` and the LOVD HGVS syntax checker
+[@LovdHgvsChecker] ({{ lovd_comparison.lovd_version }}, run locally as a PHP CLI), scored
+with one rule: a case is recovered when the tool's output (for LOVD, its top-ranked
+suggested correction) exactly matches the known canonical target. The two ecosystems
+canonicalise a parenthesised gene symbol in opposite directions (biocommons keeps
+`NM_x.y(GENE):c.`, LOVD removes the symbol), so the comparison ignores that annotation on
+both sides. A secondary metric accepting the target anywhere in LOVD's ranked correction
+list gave identical results, so top-1 ranking cost LOVD nothing. Every injected category
+is string-repairable by construction (`inject_and_clean.py` does not inject errors whose
+repair needs transcript data, such as a missing accession prefix), so both tools are
+eligible on every case; the same false-correction check (does the tool alter a valid
+input) is applied to both over the uncorrupted originals. Version-fallback safety is measured by `compute_version_stability.py`
 on GRCh38, using a seeded {{ version_stability.sample_n | commas }}-accession sample drawn
 from accessions cdot holds at two or more versions (the only accessions where a version
 bump can be assessed). The same run bins preserved coding bases by relative CDS position
