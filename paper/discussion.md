@@ -41,7 +41,12 @@ JSON quickly and in batches, downstream software can query transcript coordinate
 demand instead of bundling large annotation downloads, which is convenient for thin
 clients, and for AI agents that call the API directly. Ensembl offers a public REST service, but only
 for Ensembl transcripts and only at the latest version of each; cdot serves both RefSeq
-and Ensembl and retains historical versions.
+and Ensembl and retains historical versions. cdot's JSON is also read outside Python:
+ferro-hgvs [@FerroHgvs], an independent HGVS parser and normaliser written in Rust, loads
+cdot JSON directly as its transcript-to-genome alignment source, and uses it to provide
+Ensembl support. Because the format is plain JSON with a documented schema, a consumer in
+another language needs only a JSON parser, not an HGVS library or the Python data-provider
+interface.
 
 cdot separates unambiguous string cleaning, which is safe to apply
 automatically, from heuristics that can be wrong (choosing an adjacent transcript
