@@ -21,6 +21,7 @@ from cdot.hgvs.gene_hgvs import (
     fix_hgvs,
     rank_transcripts_for_gene,
     resolve_gene_hgvs,
+    resolve_missing_accession_prefix,
     resolve_transcript_version,
     UnsafeVersionPolicy,
 )
@@ -436,7 +437,8 @@ def test_parse_versioned_transcript_no_colon():
 
 
 # ---------------------------------------------------------------------------
-# resolve_transcript_version — adjacent-version fallback
+# resolve_missing_accession_prefix (#112): restore a dropped RefSeq prefix,
+# verified against the data provider (fires only on a unique match)
 # ---------------------------------------------------------------------------
 
 class _VersionStubProvider:
@@ -446,6 +448,116 @@ class _VersionStubProvider:
 
     def get_tx_versions(self, accession):
         return self._version_map.get(accession, [])
+
+
+def test_missing_prefix_unambiguous_nm(version_provider):
+    # "c." implies NM_/XM_; only NM_000059 exists, so the fix applies.
+    resolved, fixes = resolve_missing_accession_prefix(
+        "000059.4:c.36del", version_provider)
+    assert resolved == "NM_000059.4:c.36del"
+    assert len(fixes) == 1
+    assert fixes[0].severity == W
+    assert fixes[0].code == C.ADDED_ACCESSION_PREFIX
+    assert fixes[0].original == "000059.4"
+    assert fixes[0].fixed == "NM_000059.4"
+
+
+def test_missing_prefix_kept_underscore(version_provider):
+    # The user dropped the letters but kept the underscore.
+    resolved, fixes = resolve_missing_accession_prefix(
+        "_000059.4:c.36del", version_provider)
+    assert resolved == "NM_000059.4:c.36del"
+    assert fixes[0].code == C.ADDED_ACCESSION_PREFIX
+
+
+def test_missing_prefix_ambiguous_candidates_no_fix():
+    # Both NM_ and XM_ exist for these digits: never guess.
+    provider = _VersionStubProvider({"NM_001754": [5], "XM_001754": [1]})
+    resolved, fixes = resolve_missing_accession_prefix(
+        "001754.5:c.749G>A", provider)
+    assert resolved == "001754.5:c.749G>A"
+    assert fixes == []
+
+
+def test_missing_prefix_unknown_accession_no_fix(version_provider):
+    # No candidate exists in the provider: leave the string unchanged.
+    resolved, fixes = resolve_missing_accession_prefix(
+        "001754.5:c.749G>A", version_provider)
+    assert resolved == "001754.5:c.749G>A"
+    assert fixes == []
+
+
+def test_missing_prefix_kind_letter_routes_to_rna_prefixes():
+    # "n." implies NR_/XR_, so an NM_-only provider must not match ...
+    provider = _VersionStubProvider({"NM_001754": [5]})
+    resolved, fixes = resolve_missing_accession_prefix(
+        "001754.5:n.100A>G", provider)
+    assert resolved == "001754.5:n.100A>G"
+    assert fixes == []
+    # ... and an NR_ match resolves the "n." form only.
+    provider = _VersionStubProvider({"NR_038196": [1]})
+    resolved, fixes = resolve_missing_accession_prefix(
+        "038196.1:n.100A>G", provider)
+    assert resolved == "NR_038196.1:n.100A>G"
+    assert fixes[0].code == C.ADDED_ACCESSION_PREFIX
+    resolved, fixes = resolve_missing_accession_prefix(
+        "038196.1:c.100A>G", provider)
+    assert resolved == "038196.1:c.100A>G"
+    assert fixes == []
+
+
+def test_missing_prefix_zero_pads_seven_digit_field():
+    # RefSeq digit fields are 6 or 9 digits; a 7-digit input is a 9-digit
+    # accession that also lost its leading zeros.
+    provider = _VersionStubProvider({"NM_001128425": [1]})
+    resolved, fixes = resolve_missing_accession_prefix(
+        "1128425.1:c.667A>G", provider)
+    assert resolved == "NM_001128425.1:c.667A>G"
+    assert fixes[0].code == C.ADDED_ACCESSION_PREFIX
+
+
+def test_missing_prefix_unversioned_accession(version_provider):
+    resolved, fixes = resolve_missing_accession_prefix(
+        "000059:c.36del", version_provider)
+    assert resolved == "NM_000059:c.36del"
+    assert fixes[0].code == C.ADDED_ACCESSION_PREFIX
+
+
+def test_missing_prefix_provider_cannot_enumerate_no_fix():
+    class _NoVersions:
+        def get_tx_versions(self, accession):
+            raise NotImplementedError("nope")
+
+    resolved, fixes = resolve_missing_accession_prefix(
+        "000059.4:c.36del", _NoVersions())
+    assert resolved == "000059.4:c.36del"
+    assert fixes == []
+
+
+def test_missing_prefix_noop_without_bare_number(version_provider):
+    # Complete references and gene symbols are untouched.
+    for s in ("NM_000059.4:c.36del", "BRCA2:c.36del", "12345.1:c.36del"):
+        assert resolve_missing_accession_prefix(s, version_provider) == (s, [])
+
+
+def test_fix_hgvs_restores_missing_prefix(version_provider):
+    # fix_hgvs applies the provider-aware prefix restoration (no genome_build
+    # needed) after string cleaning.
+    result, fixes = fix_hgvs(" 000059.4:c.36DEL", data_provider=version_provider)
+    assert result == "NM_000059.4:c.36del"
+    fix_codes = {f.code for f in fixes}
+    assert C.ADDED_ACCESSION_PREFIX in fix_codes
+    assert C.STRIPPED_WHITESPACE in fix_codes
+
+
+def test_fix_hgvs_no_provider_leaves_bare_number_unchanged():
+    result, _fixes = fix_hgvs("000059.4:c.36del")
+    assert result == "000059.4:c.36del"
+
+
+# ---------------------------------------------------------------------------
+# resolve_transcript_version — adjacent-version fallback
+# ---------------------------------------------------------------------------
 
 
 @pytest.fixture

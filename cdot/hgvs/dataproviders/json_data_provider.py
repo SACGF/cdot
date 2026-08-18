@@ -2,7 +2,7 @@ import abc
 import gzip
 import requests
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from lazy import lazy
 from hgvs.dataproviders.interface import Interface
 from hgvs.dataproviders.seqfetcher import SeqFetcher
@@ -31,6 +31,12 @@ class AbstractJSONDataProvider(Interface):
     # All cdot data is 'splign', it's the method used in NCBI/Ensembl GTFs, and we also only pull out 'splign' from UTA
     NCBI_ALN_METHOD = "splign"
     required_version = "1.1"
+    # get_tx_exons() converts cdot's stored exon arrays into the list of per-exon dicts
+    # (with CIGARs) that biocommons hgvs expects. That conversion is the per-variant hot
+    # path, and its input is immutable once loaded/fetched, so each provider instance
+    # keeps a small LRU of built results (see get_tx_exons). Size is a per-instance
+    # bound on distinct (tx_ac, alt_ac) entries; each entry is just the exon dict list.
+    TX_EXONS_CACHE_SIZE = 10_000
 
     def __init__(self, assemblies: List[str] = None, mode=None, cache=None, seqfetcher=None):
         """ assemblies: defaults to ["GRCh37", "GRCh38"]
@@ -54,6 +60,10 @@ class AbstractJSONDataProvider(Interface):
         self.assembly_by_contig = {}
         for assembly_name, contig_map in self.assembly_maps.items():
             self.assembly_by_contig.update({contig: assembly_name for contig in contig_map.keys()})
+        # Per-instance LRU for get_tx_exons results, keyed (tx_ac, alt_ac). Instance-level
+        # (not functools.lru_cache on the method) so the cache dies with the instance and
+        # is never shared across providers holding different data.
+        self._tx_exons_cache = OrderedDict()
 
 
     @abc.abstractmethod
@@ -283,7 +293,17 @@ class AbstractJSONDataProvider(Interface):
         return "".join(cigar_ops)
 
     def get_tx_exons(self, tx_ac, alt_ac, alt_aln_method):
-        self._check_alt_aln_method(alt_aln_method)
+        self._check_alt_aln_method(alt_aln_method)  # raises unless alt_aln_method == splign
+        # alt_aln_method is validated above (always splign) so it is not part of the key.
+        # Only successful builds are cached: a None result can become available later on
+        # providers that fetch lazily (eg RESTDataProvider after prefetch()).
+        # Callers get the cached list itself and must not mutate it (biocommons hgvs
+        # only reads it; sorted() takes a copy).
+        cache_key = (tx_ac, alt_ac)
+        if (cached := self._tx_exons_cache.get(cache_key)) is not None:
+            self._tx_exons_cache.move_to_end(cache_key)
+            return cached
+
         transcript = self._get_transcript(tx_ac)
         if not transcript:
             return None
@@ -320,6 +340,9 @@ class AbstractJSONDataProvider(Interface):
             }
             tx_exons.append(exon_data)
 
+        self._tx_exons_cache[cache_key] = tx_exons
+        if len(self._tx_exons_cache) > self.TX_EXONS_CACHE_SIZE:
+            self._tx_exons_cache.popitem(last=False)
         return tx_exons
 
     def get_tx_identity_info(self, tx_ac):

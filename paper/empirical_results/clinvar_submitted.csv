@@ -1,0 +1,2 @@
+n_scv_tx_strings,n_unique_pairs,ensembl_pct,version_not_current_pct,scv_weighted_not_current_pct,base_retired_pct,not_current_in_cdot_pct,absent_cdot_pct,n_sample,sample_seed,cdot_resolved_pct,cdot_matched_pct,cdot_no_data,cdot_incorrect,cdot_error,uta_resolved_pct,uta_no_data_pct,cdot_only,cdot_only_pct,uta_only,rescued_by_fix,regressions,after_fix_matched_pct,residual_n,residual_pct
+3495275,2933667,0.0,81.8,80.3,0.7,99.3,0.6,3000,42,98.9,98.7,27,4,7,80.1,19.7,563,18.8,1,1,0,98.8,37,1.2

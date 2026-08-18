@@ -11,6 +11,7 @@ resolve_gene_hgvs() in one call — the recommended function for most callers.
 """
 
 import inspect
+import re
 from enum import Enum
 from typing import Optional
 
@@ -344,6 +345,105 @@ def resolve_gene_hgvs(
 
 
 # ---------------------------------------------------------------------------
+# Public: resolve_missing_accession_prefix — restore a dropped RefSeq prefix
+# ---------------------------------------------------------------------------
+
+# A bare-number accession: the user dropped the RefSeq prefix entirely (or left
+# only its underscore), e.g. "000059.4:c.68del" / "_001128425.1:c.667A>G".
+# RefSeq digit fields are 6 or 9 digits, but 7-8 are accepted as a 9-digit
+# accession missing its leading zeros (see _digit_field_candidates).
+_BARE_NUMBER_ACCESSION = re.compile(r"^_?(\d{6,9})((?:\.\d+)?):([cn])\.", re.IGNORECASE)
+
+# The kind letter constrains which RefSeq prefixes could have been dropped:
+# a coding "c." implies an mRNA accession, a non-coding "n." an RNA accession.
+_PREFIXES_FOR_KIND = {
+    "c": ("NM_", "XM_"),
+    "n": ("NR_", "XR_"),
+}
+
+
+def _digit_field_candidates(digits: str) -> list[str]:
+    """Candidate digit fields for a bare-number accession.
+
+    RefSeq accessions have 6 or 9 digits after the prefix. A 6 or 9 digit
+    input is taken as written; a 7-8 digit input can only be a 9-digit
+    accession whose leading zeros were also dropped, so it is zero-padded.
+    """
+    if len(digits) in (6, 9):
+        return [digits]
+    return [digits.zfill(9)]
+
+
+def resolve_missing_accession_prefix(
+    hgvs_string: str,
+    data_provider,
+    genome_build: Optional[str] = None,
+) -> tuple[str, list[HGVSFix]]:
+    """
+    Restore a RefSeq prefix that was dropped from the transcript accession,
+    e.g. "000059.4:c.68del" → "NM_000059.4:c.68del".
+
+    The kind letter narrows the possibilities ("c." implies NM_/XM_, "n."
+    implies NR_/XR_) but cannot fully disambiguate, so the candidates are
+    checked against the data provider (via ``get_tx_versions``) and the fix is
+    applied only when exactly one candidate accession exists there. With zero
+    or several matches the string is returned unchanged - this function never
+    guesses.
+
+    Returns:
+        (resolved_string, fixes)
+        fixes contains a WARNING ADDED_ACCESSION_PREFIX HGVSFix when the prefix
+        was restored, and is empty otherwise (no bare-number accession, no
+        provider match, ambiguous match, or a provider that cannot enumerate
+        versions).
+
+    ``genome_build`` is optional and only used to restrict the existence check
+    to accessions placeable in that build (for providers whose
+    ``get_tx_versions`` accepts it).
+
+    Example::
+
+        resolved, fixes = resolve_missing_accession_prefix(
+            "000059.4:c.68del", data_provider)
+        # resolved = "NM_000059.4:c.68del"   (if only NM_000059 exists)
+        # fixes[0].code = HGVSFixCode.ADDED_ACCESSION_PREFIX
+    """
+    m = _BARE_NUMBER_ACCESSION.match(hgvs_string)
+    if m is None:
+        return hgvs_string, []
+
+    digits, version, kind = m.group(1), m.group(2), m.group(3).lower()
+    candidates = []
+    for prefix in _PREFIXES_FOR_KIND[kind]:
+        for digit_field in _digit_field_candidates(digits):
+            accession = f"{prefix}{digit_field}"
+            try:
+                versions = _get_tx_versions(data_provider, accession, genome_build)
+            except NotImplementedError:
+                return hgvs_string, []  # provider can't enumerate, don't guess
+            if versions:
+                candidates.append(accession)
+
+    if len(candidates) != 1:
+        return hgvs_string, []  # unknown or ambiguous, never guess
+
+    accession = candidates[0]
+    original_head = hgvs_string[:m.end(2)]
+    fixed_head = f"{accession}{version}"
+    resolved = fixed_head + hgvs_string[m.end(2):]
+    return resolved, [HGVSFix(
+        severity=HGVSFixSeverity.WARNING,
+        code=HGVSFixCode.ADDED_ACCESSION_PREFIX,
+        message=(
+            f"Restored missing accession prefix: '{original_head}' → "
+            f"'{fixed_head}' (unique match in data provider)"
+        ),
+        original=original_head,
+        fixed=fixed_head,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # Public: resolve_transcript_version — adjacent-version fallback
 # ---------------------------------------------------------------------------
 
@@ -540,9 +640,10 @@ def fix_hgvs(
     """
     Clean and resolve an HGVS string in one call.
 
-    Runs clean_hgvs() first (always), then resolve_gene_hgvs() if a
-    data_provider and genome_build are supplied.  All fixes from both steps
-    are returned in a single list.
+    Runs clean_hgvs() first (always), then resolve_missing_accession_prefix()
+    if a data_provider is supplied, then resolve_gene_hgvs() if a data_provider
+    and genome_build are supplied.  All fixes from every step are returned in a
+    single list.
 
     If data_provider/genome_build are omitted, only string cleaning is performed.
     This is useful when the caller knows the input already contains a transcript.
@@ -585,6 +686,14 @@ def fix_hgvs(
         # result = "NM_000059.4:c.36del"  (if .2 absent but .4 present)
     """
     result, fixes = clean_hgvs(hgvs_string, ops=ops)
+
+    if data_provider is not None:
+        # Restore a dropped RefSeq prefix (eg "000059.4:c.68del") before gene
+        # resolution, so the bare number is not mistaken for a gene symbol.
+        result, prefix_fixes = resolve_missing_accession_prefix(
+            result, data_provider, genome_build=genome_build,
+        )
+        fixes.extend(prefix_fixes)
 
     if data_provider is not None and genome_build is not None:
         result, resolution_fixes = resolve_gene_hgvs(

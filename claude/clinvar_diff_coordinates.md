@@ -105,8 +105,24 @@ artifacts.
   `clinvar_latest.vcf.gz` 2026-03-21 by ALLELEID; the slight release skew contributes a
   few wrong-ground-truth rows in `incorrect`.
 
+## Positional distribution (2026-08-17 re-run)
+
+The original per-variant table was deleted, so the pass was re-run for the R5
+positional-drift analysis (same code/settings, cdot 0.2.33 RefSeq + genome FASTA) on the
+Jun 26 rebuild of the pairs file (4,423,358 pairs, slightly newer ClinVar): 4,395,535
+correct / 1,772 incorrect / 3,228 no_data / 22,823 error, i.e. the committed totals
+within six variants. `paper/scripts/bin_residual_positions.py` bins each correct and
+incorrect row's cited c. position by relative CDS position (deciles). Result: correct
+projections are nearly uniform (9.6-10.4% per decile); the 1,718 binned incorrect rows
+show no 3' concentration, only a mild mid-CDS excess (14.3% in decile 6) and a depleted
+3'-most decile (5.5% vs 9.6% baseline), consistent with the representation/multi-mapping
+composition above. Facts committed to
+`paper/empirical_results/clinvar_residual_positions.csv`.
+
 ## Files
 
 - Full per-variant table (not in source control): `output/clinvar_pass/refseq_full_vcf.csv`
+  (2026-08-17 re-run: `/data/clinvar/clinvar_pass_rerun/refseq_full_vcf.csv`)
 - Residual / errors (not in source control): `output/clinvar_pass/vcf_errors.csv`
 - Headline facts (committed): `paper/empirical_results/clinvar_vcf.csv`
+- Positional binning (committed): `paper/empirical_results/clinvar_residual_positions.csv`

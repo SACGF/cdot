@@ -68,6 +68,59 @@ dominated by paralog and copy-number transcripts that map to more than one genom
 and by indel-representation differences, not by coordinate errors; the per-source split
 and the residual breakdown are in Supplementary Table S4.
 
+Both corpora above take their c.HGVS from the `Name` column of ClinVar's
+variant_summary, ClinVar's own recomputed preferred-transcript name, which is always at
+the current transcript version. They therefore measure a current-version ceiling and
+cannot exercise historical transcript depth. To measure what laboratories actually
+write, we built a second public corpus from the per-submission (SCV) HGVS attributes of
+the ClinVar VCV XML: each submitted string kept verbatim and joined to the variant's VCF
+coordinate as ground truth via its AlleleID
+({{ clinvar_submitted.n_unique_pairs | commas }} unique submitted-string/variant pairs
+from {{ clinvar_submitted.n_scv_tx_strings | commas }} SCV transcript expressions;
+construction, dedup and sampling rules in Methods). The corpus is entirely RefSeq (not
+one submitted string cites an Ensembl transcript), and its version profile confirms that
+submitted traffic is historical:
+{{ clinvar_submitted.version_not_current_pct | dp(1) }}% of submitted strings cite a
+transcript version that is no longer the version in the current RefSeq annotation
+release ({{ clinvar_submitted.scv_weighted_not_current_pct | dp(1) }}% weighted by
+submission count), and {{ clinvar_submitted.base_retired_pct | dp(1) }}% cite a
+transcript no longer annotated at any version. cdot's merged release history holds
+{{ clinvar_submitted.not_current_in_cdot_pct | dp(1) }}% of those superseded versions;
+only {{ clinvar_submitted.absent_cdot_pct | dp(1) }}% of cited versions are absent from
+its GRCh38 data.
+
+On a fixed-seed sample of {{ clinvar_submitted.n_sample | commas }} submitted pairs (the
+comparison is again gated by UTA throughput), cdot resolved
+{{ clinvar_submitted.cdot_resolved_pct | dp(1) }}% and reproduced ClinVar's VCF
+coordinate for {{ clinvar_submitted.cdot_matched_pct | dp(1) }}%, versus
+{{ clinvar_submitted.uta_resolved_pct | dp(1) }}% for the same locally loaded UTA. On
+submitted rather than recomputed strings, the RefSeq gap that is invisible at the
+current-version ceiling (both backends {{ clinvar.cdot_refseq_pct | dp(1) }}% above)
+opens to {{ clinvar_submitted.cdot_only_pct | dp(1) }} points: UTA holds no GRCh38
+alignment for {{ clinvar_submitted.uta_no_data_pct | dp(1) }}% of the cited versions,
+and {{ clinvar_submitted.cdot_only | commas }} of the
+{{ clinvar_submitted.n_sample | commas }} pairs resolve through cdot alone (one through
+UTA alone). The submitted strings are largely well-formed, so string cleaning has little
+to rescue here (`fix_hgvs()` repaired {{ clinvar_submitted.rescued_by_fix | int }}
+string, a dup carrying a length suffix, with
+{{ clinvar_submitted.regressions | int }} regressions); the residual
+{{ clinvar_submitted.residual_pct | dp(1) }}% after cleaning and version fallback
+({{ clinvar_submitted.residual_n | int }} of {{ clinvar_submitted.n_sample | commas }})
+is dominated by version effects, not formatting:
+{{ clinvar_submitted_residual.version_refused | int }} cite a version absent from the
+data where the fallback declines to substitute because coordinate safety cannot be
+verified (no false rescues, by design),
+{{ clinvar_submitted_residual.coordinate_drift | int }} resolve through the cited
+historical version to a coordinate that differs from ClinVar's current interpretation,
+{{ clinvar_submitted_residual.position_out_of_bounds | int }} +
+{{ clinvar_submitted_residual.reference_mismatch | int }} cite a position or base that
+does not exist on the cited version,
+{{ clinvar_submitted_residual.grammar_unsupported | int }} use repeat or allele notation
+the biocommons grammar rejects, and
+{{ clinvar_submitted_residual.unknown_accession | int }} cites an accession absent
+entirely. The corpus builder, version-age script, resolution harness and a committed
+500-pair sample make this benchmark reproducible end to end.
+
 **[Tier 2].** The same gap holds on the
 historical clinical data that motivated cdot. We resolved the complete set of
 {{ historical.n_lines | commas }} unique HGVS descriptions imported into the Australian
@@ -84,60 +137,78 @@ versus {{ historical.uta_resolved_pct | dp(1) }}% for the same locally loaded UT
 ({{ historical.cdot_only_pct | dp(1) }}% of the corpus),
 {{ historical.cdot_only_historical_pct | dp(0) }}% were RefSeq transcript versions for
 which UTA holds no GRCh38 alignment and {{ historical.cdot_only_ensembl_pct | dp(0) }}%
-were Ensembl transcripts (absent from UTA entirely). The ClinVar comparison above shows
-the GTF→JSON→biocommons pipeline works at scale on current transcript versions; this
-corpus shows the historical depth matters in practice: it is the
-older-version traffic a working clinical lab generates. There is no ground-truth genomic
+were Ensembl transcripts (absent from UTA entirely). The public submitted-string corpus
+above establishes the version-age effect reproducibly; this private corpus confirms it
+on the traffic a working clinical lab generates, where the same historical-version gap
+appears at comparable size. There is no ground-truth genomic
 coordinate for the private corpus, so the metric is resolution rate rather than
 correctness (Methods, data availability).
 
 ## R3: Throughput
 
-Backends were compared with the sequence layer held constant, so the only thing that
-varies across rows of Table 1 is the transcript-data layer.
+Backends were compared over the identical committed {{ benchmark.n_pairs | commas }}-pair
+ClinVar set with the engine and sequence layer held constant (Methods), so the only thing
+that varies across rows of Table 1 is the transcript-data layer. Each configuration was
+timed over {{ benchmark.n_repeats | int }} passes of the set.
 
-**Table 1. End-to-end HGVS resolution throughput by transcript backend**, sequence layer
-held constant (shared local SeqRepo), identical biocommons/hgvs engine.
+**Table 1. End-to-end HGVS resolution throughput by transcript backend**: median (IQR)
+HGVS/s over {{ benchmark.n_repeats | int }} timed passes of the identical
+{{ benchmark.n_pairs | commas }}-pair ClinVar set, sequence layer held constant (one
+shared local SeqRepo instance), identical biocommons/hgvs engine. Timing covers
+steady-state resolution only (provider load, REST `prefetch()` and one warm-up pass per
+configuration are untimed). The public remote UTA row uses the first
+{{ benchmark.uta_remote_n | int }} pairs of the same set (a full-size pass is impractical at
+this throughput).
 
-| Configuration | Throughput (HGVS/s) |
+| Configuration | Throughput (HGVS/s), median (IQR) |
 |---|---|
-| UTA: public remote database | ~{{ benchmark.uta_remote_tps | dp(1) }} |
-| UTA: local PostgreSQL | ~{{ benchmark.uta_local_tps | int }} |
-| cdot REST (one request per transcript) | ~{{ benchmark.cdot_rest_tps | int }} |
-| cdot REST (after one batch `prefetch()`) | ~{{ benchmark.cdot_rest_prefetch_tps | int }} |
-| cdot local JSON | {{ benchmark.cdot_local_min_tps | int }}–{{ benchmark.cdot_local_max_tps | int }} |
+| UTA: public remote database | {{ benchmark.uta_remote_tps | dp(2) }} ({{ benchmark.uta_remote_tps_q1 | dp(2) }}–{{ benchmark.uta_remote_tps_q3 | dp(2) }}) |
+| UTA: local PostgreSQL | {{ benchmark.uta_local_tps | int }} ({{ benchmark.uta_local_tps_q1 | int }}–{{ benchmark.uta_local_tps_q3 | int }}) |
+| cdot REST (one request per transcript) | {{ benchmark.cdot_rest_tps | int }} ({{ benchmark.cdot_rest_tps_q1 | int }}–{{ benchmark.cdot_rest_tps_q3 | int }}) |
+| cdot REST (after one batch `prefetch()`) | {{ benchmark.cdot_rest_prefetch_tps | int }} ({{ benchmark.cdot_rest_prefetch_tps_q1 | int }}–{{ benchmark.cdot_rest_prefetch_tps_q3 | int }}) |
+| cdot local JSON | {{ benchmark.cdot_local_tps | int }} ({{ benchmark.cdot_local_tps_q1 | int }}–{{ benchmark.cdot_local_tps_q3 | int }}) |
 
 A GRCh38 RefSeq JSON file loads in ~{{ benchmark.grch38_load_time_s | dp(0) }} s and then
-resolves at {{ benchmark.cdot_local_min_tps | int }}–{{ benchmark.cdot_local_max_tps |
-int }} HGVS/s through the biocommons engine. The REST provider serves
-~{{ benchmark.cdot_rest_tps | int }} HGVS/s when each transcript version is fetched in its
-own request; batching those lookups into one `prefetch()` request amortises the
-per-request network and processing overhead across the whole set and warms the transcript
-cache. Later lookups are then in-memory hits, so REST throughput rises to match local. A
-locally loaded UTA reached only ~{{ benchmark.uta_local_tps | int }} HGVS/s, and the
-public remote UTA database only ~{{ benchmark.uta_remote_tps | dp(1) }} HGVS/s. cdot's
-local data layer is thus roughly 30× faster than a local UTA on the identical engine.
-Once the data layer is local, the remaining bottleneck is sequence fetching rather than
-transcript lookup.
+resolves at {{ benchmark.cdot_local_tps | int }} HGVS/s (median) through the biocommons
+engine. The REST provider serves {{ benchmark.cdot_rest_tps | int }} HGVS/s when each
+transcript version is fetched in its own request; batching those lookups into one
+`prefetch()` request (all transcripts for the set, under a second, untimed) warms the
+transcript cache, after which lookups are in-memory hits and REST throughput
+({{ benchmark.cdot_rest_prefetch_tps | int }} HGVS/s) is equivalent to local JSON, the
+two differing by under 1% across repeats: with the transcript data in process memory,
+both configurations are bounded by the shared engine and sequence layer, not by the
+transcript backend. A locally loaded UTA on the
+identical engine reached {{ benchmark.uta_local_tps | int }} HGVS/s, about a quarter of
+local-JSON throughput, because each transcript lookup is a set of SQL queries rather
+than a dict hit. The public remote UTA database, at
+{{ benchmark.uta_remote_tps | dp(2) }} HGVS/s, is nearly four orders of magnitude slower
+than any local configuration: every lookup pays wide-area round trips to a shared
+server. Note that the absolute numbers are sensitive to the shared sequence layer: with
+SeqRepo's file-descriptor cache disabled (its default), every configuration is bounded
+by sequence fetching at well under 200 HGVS/s and the differences between transcript
+backends are masked (Methods).
 
 At scale, a single local-JSON process resolved the entire set of 3,660,452
 unique ClinVar (g.HGVS, c.HGVS) pairs in ~92 minutes (665 HGVS/s; 99.3% produced a
-genomic coordinate, 98.8% matched the ClinVar genomic HGVS exactly). The REST provider
-matched this over the network: after one batch cache-warming pass (21,277 distinct
-transcripts warmed in ~6 s) it resolved the same set in ~83 minutes (731 HGVS/s),
-effectively matching local JSON: once the cache is warm both providers resolve from an
-in-memory dict with no further network I/O, so throughput is bounded by the shared
-sequence layer. The marginal difference is within run-to-run variance, plausibly because
-the warmed REST cache holds only the few thousand transcripts the set actually touches
-whereas local JSON holds the entire dataset in memory. The same exhaustive pass is
-impractical against the public remote UTA database (extrapolated at hundreds of days from
-its ~0.1 HGVS/s). (`paper/scripts/build_clinvar_pairs.py` builds the pair set by joining
-ClinVar's variant_summary with the ClinVar VCF.)
+genomic coordinate, 98.8% matched the ClinVar genomic HGVS exactly), and the REST
+provider, after one batch cache-warming pass (21,277 distinct transcripts warmed in
+~6 s), resolved the same set in ~83 minutes (731 HGVS/s). Those two at-scale figures
+come from separate one-off runs whose sequence-layer cache conditions differed, so
+their small difference is not evidence of REST outrunning local JSON; the controlled
+same-set comparison in Table 1, which holds those conditions fixed, shows the two
+configurations are equivalent once the REST cache is warm. The same exhaustive pass is
+impractical against the public remote UTA database (extrapolated at close to a year
+from its ~{{ benchmark.uta_remote_tps | dp(2) }} HGVS/s). (`paper/scripts/build_clinvar_pairs.py`
+builds the pair set by joining ClinVar's variant_summary with the ClinVar VCF.)
 
 ## R4: String cleaning recovers malformed real-world HGVS
 
-The main test of cleaning is its effect on a real production query stream; a
-reproducible injection benchmark provides a supporting safety check.
+An independent large-scale production stream shows how common broken input is:
+roughly 4 in 10 of the unique HGVS descriptions submitted to Mutalyzer carried a
+syntactic or semantic error, and its checker automatically repaired only
+~{{ literature.mutalyzer_autocorrect_pct | dp(0) }}% of unique descriptions overall
+[@Lefter2021]. The main test of cleaning is its effect on a real production query
+stream; a reproducible injection benchmark provides a supporting safety check.
 
 **[Tier 2].** The corpus is
 N = 32,752 real queries typed into the HGVS search box of production clinical and
@@ -146,31 +217,50 @@ to a variant or its classification, so the strings are whatever a clinician or c
 happened to paste or type, not curated HGVS. They arrive carrying the damage of their
 route to the box: stray whitespace and non-printable characters from copying out of Word
 documents and report PDFs and pasting between systems, lost casing, transposed
-punctuation, and trailing protein annotations. Run over this corpus, `clean_hgvs()` raised
-the fraction parseable by biocommons/hgvs from 91.5% as-submitted to 96.6% after
-cleaning: a +5.1% absolute gain (1,678 additional strings rescued) with zero
-regressions (no already-valid string was broken). This measures what cleaning recovers
-from messy, human-entered input rather than from synthetic errors. The rescues break down by fix type as shown in
-Table 2; they are dominated by whitespace removal and base re-casing, followed by
-protein-suffix stripping and gene/transcript-wrapper repair.
+punctuation, and trailing protein annotations. Run over this corpus, the cleaning
+pipeline (`clean_hgvs()` plus the data-provider-verified accession-prefix restoration
+below) raised the fraction parseable by biocommons/hgvs from 91.5% as-submitted to
+96.7% after cleaning: a +5.3% absolute gain (1,721 additional strings rescued) with zero
+regressions (no already-valid string was broken). That gain is 5.3 of the 8.5
+percentage points that failed as-submitted, about 62% of the failures. This measures
+what cleaning recovers from messy, human-entered input rather than from synthetic
+errors. The rescues break down by fix type as shown in
+Table 2; they are dominated by whitespace removal and structural-punctuation repair,
+followed by gene/transcript-wrapper repair and structure reconstruction. One category is
+not a pure string operation: a bare-number accession whose RefSeq prefix was dropped
+entirely (`000059.4:c.68del`) is repaired by generating the candidate accessions the
+kind letter allows (`c.` implies `NM_`/`XM_`, `n.` implies `NR_`/`XR_`), checking each
+against the loaded transcript data, and restoring the prefix only when exactly one
+candidate exists there. This repair is impossible for a purely string-level checker:
+having the transcript data locally is what makes it safe.
+
+The public submitted-string ClinVar corpus (R2) provides the reproducible complement to
+this Tier 2 result, and locates the two failure axes: formal database submissions are
+largely well-formed, so cleaning fires rarely there (one rescue in the 3,000-pair
+sample) and failures are dominated by transcript-version age, whereas interactive
+human-typed input carries the formatting damage that cleaning repairs. cdot addresses
+the first with historical transcript depth and the second with `clean_hgvs()`.
 
 **Table 2. Fixes applied across the production corpus (N = 32,752).** Each row is a
-`clean_hgvs()` fix category, with the number of rescued queries in which it fired and that
-number as a share of the 1,678 rescued queries. Categories overlap (a single query may
+cleaning fix category, with the number of rescued queries in which it fired and that
+number as a share of the 1,721 rescued queries. Categories overlap (a single query may
 need several fixes), so the counts sum to more than the total. *(Tier 2; counts are
-frozen constants from a deterministic run of `clean_hgvs()` over the production corpus.)*
+frozen constants from a deterministic run of the cleaning pipeline, `clean_hgvs()` plus
+the provider-verified accession-prefix restoration, over the production corpus.)*
 
 | Fix category | Example (→ repaired) | Rescued queries | % of rescued |
 |---|---|---|---|
-| Whitespace / non-printable removal | `NM_000059.4: c.1A>G` → `NM_000059.4:c.1A>G` | 940 | 56.0% |
-| Base re-casing | `NM_000059.4:c.1delg` → `…delG` | 553 | 33.0% |
-| Structural-punctuation repair | `NM_000059..4:c.1A>G` → `NM_000059.4:c.1A>G` | 310 | 18.5% |
-| Gene/transcript-wrapper repair | `BRCA2(NM_000059.4):c.1A>G` → `NM_000059.4(BRCA2):c.1A>G` | 209 | 12.5% |
-| Protein-suffix stripping | `NM_000059.4:c.1A>G p.(Met1?)` → `NM_000059.4:c.1A>G` | 130 | 7.7% |
-| Genomic-ref-in-parens removal | `NM_000059.4(NC_000013.11):c.68del` → `NM_000059.4:c.68del` | 57 | 3.4% |
-| Other (del/dup count, mutation-type case, …) | `NM_000059.4:c.1_2del2` → `…del` | 21 | 1.3% |
-| Prefix / kind restoration | `NM_000059.4:1A>G` → `NM_000059.4:c.1A>G` | 11 | 0.7% |
-| **Total unique queries rescued** | | **1,678** | **100%** |
+| Whitespace / non-printable removal | `NM_000059.4: c.1A>G` → `NM_000059.4:c.1A>G` | 664 | 38.6% |
+| Structural-punctuation repair | `NM_000059.4;c.1A>G` → `NM_000059.4:c.1A>G` | 640 | 37.2% |
+| Gene/transcript-wrapper repair | `BRCA2(NM_000059.4):c.1A>G` → `NM_000059.4(BRCA2):c.1A>G` | 260 | 15.1% |
+| Structure reconstruction | `NM_000059.4c.1A>G` → `NM_000059.4:c.1A>G` | 248 | 14.4% |
+| Protein-suffix stripping | `NM_000059.4:c.1A>G p.(Met1?)` → `NM_000059.4:c.1A>G` | 130 | 7.6% |
+| Genomic-ref-in-parens removal | `NM_000059.4(NC_000013.11):c.68del` → `NM_000059.4:c.68del` | 57 | 3.3% |
+| Base re-casing | `NM_000059.4:c.1delg` → `…delG` | 42 | 2.4% |
+| Other (del/dup count, mutation-type case, …) | `NM_000059.4:c.1_2del2` → `…del` | 11 | 0.6% |
+| Prefix / kind restoration | `NM_000059.4:1A>G` → `NM_000059.4:c.1A>G` | 4 | 0.2% |
+| Accession prefix restoration (provider-verified) | `000059.4:c.68del` → `NM_000059.4:c.68del` | 1 | 0.1% |
+| **Total unique queries rescued** | | **1,721** | **100%** |
 
 As a reproducible control,
 `paper/scripts/inject_and_clean.py` injects each `clean_hgvs()` fix category into a seeded
@@ -184,35 +274,35 @@ depends.
 
 ### Residual errors: the ceiling of cleaning *(Table S6)*
 
-**[Tier 2].** The 3.4% of the production corpus (1,118 queries; 860
+**[Tier 2].** The 3.3% of the production corpus (1,075 queries; 826
 unique strings) that still fail to parse after cleaning define the ceiling of what
 pure string repair can achieve. Each residual string was assigned to one single-label
 error class under a fixed decision-tree taxonomy. Of the eight classes, the seven
 repair-relevant ones are shown below with synthesised examples; the eighth was non-HGVS
-input (81 queries, 7.2%: pasted URLs, report templates, or prose) and is excluded from
+input (81 queries, 7.5%: pasted URLs, report templates, or prose) and is excluded from
 the table, as there is nothing in it for cleaning to repair.
 
-**Residual error classes after cleaning** (counts and % of the 1,118 residual
+**Residual error classes after cleaning** (counts and % of the 1,075 residual
 queries; examples synthesised from public BRCA2 `NM_000059.4`). *(Tier 2; frozen
 constants from a deterministic run over the production corpus.)*
 
 | Class | Queries | What it is (*example*) |
 |---|---|---|
-| Truncated | 284 (25.4%) | cut off before a complete variant: `NM_000059.4:c.68_69` (range, no edit) |
-| No reference | 277 (24.8%) | a bare variant body, no transcript/gene/accession: `c.68_69delAG` |
-| Bad accession | 167 (14.9%) | missing prefix, or misplaced/truncated version: `000059.4:c.68del` (`NM_` prefix dropped) |
-| Edit syntax | 113 (10.1%) | malformed or non-standard edit operation: `NM_000059.4:c.68AG>T` (multi-base reference in a substitution) |
-| Trailing / concatenated | 85 (7.6%) | extra characters after a complete variant, or several run together: `NM_000059.4:c.68delAG;c.70A>G` |
-| Grammar gap | 81 (7.2%) | legitimate HGVS the biocommons grammar rejects: `NM_000059.4:c.(67+1_68-1)_(70+1_71-1)del` (uncertain-range deletion) |
-| Insertion (length only) | 30 (2.7%) | an insertion given as a base count, not a sequence: `NM_000059.4:c.68_69ins5` (position and length recoverable; inserted bases not) |
+| Truncated | 284 (26.4%) | cut off before a complete variant: `NM_000059.4:c.68_69` (range, no edit) |
+| No reference | 277 (25.8%) | a bare variant body, no transcript/gene/accession: `c.68_69delAG` |
+| Bad accession | 124 (11.5%) | misplaced or truncated version, or a missing prefix with no unique data match: `NM_000059/4:c.68del` (slash in place of the version dot) |
+| Edit syntax | 113 (10.5%) | malformed or non-standard edit operation: `NM_000059.4:c.68AG>T` (multi-base reference in a substitution) |
+| Trailing / concatenated | 85 (7.9%) | extra characters after a complete variant, or several run together: `NM_000059.4:c.68delAG;c.70A>G` |
+| Grammar gap | 81 (7.5%) | legitimate HGVS the biocommons grammar rejects: `NM_000059.4:c.(67+1_68-1)_(70+1_71-1)del` (uncertain-range deletion) |
+| Insertion (length only) | 30 (2.8%) | an insertion given as a base count, not a sequence: `NM_000059.4:c.68_69ins5` (position and length recoverable; inserted bases not) |
 
-The residual falls into three groups. Just over half (~50%: Truncated + No reference) is
+The residual falls into three groups. Just over half (~52%: Truncated + No reference) is
 incomplete or reference-less user input: information the user never supplied, which no
-string-level repair can invent; the integer-length insertions (2.7%) belong with these,
+string-level repair can invent; the integer-length insertions (2.8%) belong with these,
 since the inserted bases were never given (only the position and length are recoverable, so
-the variant is not properly resolvable). About 33% (Bad accession + Edit syntax + Trailing /
+the variant is not properly resolvable). About 30% (Bad accession + Edit syntax + Trailing /
 concatenated) is in principle fixable and marks the frontier for future cleaning rules.
-The remaining ~14% splits into two equal classes of 81 queries (7.2%) each: a grammar gap
+The remaining ~15% splits into two equal classes of 81 queries (7.5%) each: a grammar gap
 (valid HGVS the biocommons grammar rejects rather than the input) and the non-HGVS input
 excluded above (strings that should not be parsed at all). Most of what remains is
 therefore either out of scope for any repair or a downstream grammar limitation.
@@ -220,8 +310,12 @@ therefore either out of scope for any repair or a downstream grammar limitation.
 *Method and limitation:* classification was performed by a large language model (Claude
 Opus 4, Anthropic; 2026-06-17) applying the shared decision tree to each unique string,
 single-label and single-rater; no second-rater adjudication was done, so no inter-rater
-agreement (κ) is reported. The taxonomy is version `v1`. Synthesised examples (from public
-NM_000059.4 / NM_001754.5) illustrate each class; no corpus string is reproduced.
+agreement (κ) is reported. The taxonomy is version `v1`. Counts were refreshed on
+2026-08-17 after the accession-repair cleaning rules landed: the 43 residual queries the
+new rules rescue all sat in the Bad accession class (delta re-rated by Claude Fable 5,
+Anthropic), which drops from 167 (14.9% of the previous 1,118-query residual) to 124;
+the other classes are unchanged. Synthesised examples (from public NM_000059.4 /
+NM_001754.5) illustrate each class; no corpus string is reproduced.
 
 ## R5: Transcript version fallback and safe substitution
 
@@ -253,7 +347,16 @@ dangerous case, a *partial* bump that mis-places some variants but not others, i
 ({{ version_stability.refseq_partial_drift_pct | dp(1) }}% of RefSeq bumps,
 {{ version_stability.ensembl_partial_drift_pct | dp(1) }}% Ensembl); when a coordinate
 does move it is almost always the whole CDS, driven by a re-annotation of the coding
-region. Drift is also highly concentrated: only
+region. Within that small partial-drift tail the risk is strongly positional: a partial
+drift keeps a 5' prefix intact up to its first alignment change and moves what lies
+downstream, so preservation falls monotonically along the CDS, from
+{{ positional_drift.refseq_partial_decile1_pct | dp(0) }}% of coding bases in the 5'-most
+decile to {{ positional_drift.refseq_partial_decile10_pct | dp(0) }}% in the 3'-most for
+RefSeq ({{ positional_drift.ensembl_partial_decile1_pct | dp(0) }}% to
+{{ positional_drift.ensembl_partial_decile10_pct | dp(0) }}% for Ensembl), while the
+whole-CDS relocations that dominate drift are position independent (Supplementary Figure
+S1). As a rule of thumb, when the safety of a substitution cannot be checked, a 5' coding
+variant is a safer bet than a 3' one. Drift is also highly concentrated: only
 {{ version_stability.refseq_accessions_drift_pct | dp(1) }}% of RefSeq accessions ever
 drift, and within that set the moves cluster in a small minority of accessions.
 This concentration has a practical consequence: the risky transcripts form a short,

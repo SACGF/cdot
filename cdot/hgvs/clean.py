@@ -54,6 +54,7 @@ class HGVSFixCode(Enum):
     DROPPED_GENOMIC_REF_IN_PARENS = "dropped_genomic_ref_in_parens"
     ADDED_TRANSCRIPT_UNDERSCORE  = "added_transcript_underscore"
     FIXED_MULTIPLE_UNDERSCORE    = "fixed_multiple_underscore"
+    DROPPED_EMPTY_VERSION        = "dropped_empty_version"
     UPPERCASED_BASES             = "uppercased_bases"
     RECONSTRUCTED_STRUCTURE      = "reconstructed_structure"
     ADDED_MISSING_KIND           = "added_missing_kind"
@@ -74,6 +75,9 @@ class HGVSFixCode(Enum):
     # Gene → transcript resolution (WARNING on success, ERROR on failure)
     RESOLVED_GENE_TO_TRANSCRIPT  = "resolved_gene_to_transcript"
     NO_TRANSCRIPT_FOR_GENE       = "no_transcript_for_gene"
+    # Accession prefix restoration for a bare-number accession, verified against
+    # a data provider (see gene_hgvs.resolve_missing_accession_prefix; WARNING)
+    ADDED_ACCESSION_PREFIX       = "added_accession_prefix"
     # Validation errors (ERROR)
     NO_COLON                     = "no_colon"
     MISSING_REFERENCE_SEQUENCE   = "missing_reference_sequence"
@@ -92,6 +96,7 @@ class HGVSCleanOp(Enum):
     """
     STRIP_PROTEIN_SUFFIX     = "strip_protein_suffix"
     STRIP_LEADING_JUNK       = "strip_leading_junk"
+    FIX_SPACE_BEFORE_KIND    = "fix_space_before_kind"
     STRIP_WHITESPACE         = "strip_whitespace"
     STRIP_SURROUNDING_PUNCTUATION = "strip_surrounding_punctuation"
     FIX_MULTIPLE_COLON       = "fix_multiple_colon"
@@ -101,6 +106,7 @@ class HGVSCleanOp(Enum):
     FIX_PREFIX_COLON         = "fix_prefix_colon"
     FIX_MULTIPLE_KIND        = "fix_multiple_kind"
     FIX_SEPARATOR_TYPO       = "fix_separator_typo"
+    DROP_EMPTY_VERSION       = "drop_empty_version"
     ADD_N_PREFIX             = "add_n_prefix"
     LOWERCASE_MUTATION_TYPE  = "lowercase_mutation_type"
     DROP_DEL_DUP_COUNT       = "drop_del_dup_count"
@@ -244,9 +250,10 @@ _PREFIX_COLON_UNDERSCORE = re.compile(r"^(N[MR]|X[MR]):_", re.IGNORECASE)
 # Transcript accession prefixes (used to locate the HGVS core within a string)
 _TX_PREFIX = r"(?:NM_|NR_|XM_|XR_|NC_|NG_|ENST|LRG_)"
 
-# Leading junk before a transcript accession, e.g. "#", ":", a literal "\t",
-# or a genome-build prefix like "GRCh38.p2 " / "GRCh37.p12#"
-_LEADING_JUNK = re.compile(r"^(?:GRCh\d+(?:\.p\d+)?[#\s]*|\\t|[#:])+", re.IGNORECASE)
+# Leading junk before a transcript accession, e.g. "#", ":", "-", a literal
+# "\t", whitespace (": NM_..."), or a genome-build prefix like "GRCh38.p2 " /
+# "GRCh37.p12#". Only stripped when a transcript accession actually follows.
+_LEADING_JUNK = re.compile(r"^(?:GRCh\d+(?:\.p\d+)?[#\s]*|\\t|[#:\-\s])+", re.IGNORECASE)
 
 # Gene symbol wedged between extra colons, e.g. "tx:(GENE):c." / "tx:(GENE)c." /
 # "tx:GENE:c." — should be "tx(GENE):c."
@@ -269,6 +276,26 @@ _KIND_COMMA = re.compile(r":([cgnmp]),", re.IGNORECASE)
 _KIND_COLON = re.compile(r":([cgnmp]):(?=[\d*?(\-])", re.IGNORECASE)
 # Period used in place of the substitution '>', e.g. "1030C.T" -> "1030C>T"
 _SUB_PERIOD = re.compile(r"([ACGT])\.([ACGT])$", re.IGNORECASE)
+
+# Semicolon or underscore used in place of the accession:allele colon, e.g.
+# "NM_000059.4;c.68del" or "NM_000059.4_c.68del". Anchored to the start so a
+# ';' inside a multi-variant allele is never touched. LRG is excluded (its
+# accessions legitimately contain underscores).
+_ACCESSION_KIND_SEPARATOR = re.compile(
+    r"^((?:NM_|NR_|XM_|XR_|NC_|NG_|ENST)\d+(?:\.\d+)?)[;_](?=[cgnmp]\.)", re.IGNORECASE)
+
+# Whitespace used in place of the reference:kind colon after a bare gene symbol,
+# e.g. "BRCA2 c.68del" -> "BRCA2:c.68del". Restricted to a plain symbol (no
+# '_'/'.'/':') so accessions are left to the whitespace/reconstruction steps,
+# and runs before whitespace stripping (which would otherwise glue the symbol to
+# the kind letter, mangling symbols that resemble an accession, eg NR2E3).
+_SPACE_BEFORE_KIND = re.compile(r"^([A-Za-z][A-Za-z0-9]{1,9})\s+(?=[cgnmp]\.)", re.IGNORECASE)
+
+# An empty version field: accession, a dot, then no digits before the colon,
+# e.g. "NM_001754.:c.749G>A". The version digits were dropped, so drop the dot
+# and leave a valid unversioned accession.
+_EMPTY_VERSION = re.compile(
+    r"^((?:NM_|NR_|XM_|XR_|NC_|NG_|ENST)\d+)\.(?=:)", re.IGNORECASE)
 
 # del/dup with an explicit range followed by a redundant base count, e.g.
 # "c.1315_1337dup23" -> "c.1315_1337dup" (the range already gives the length;
@@ -723,12 +750,45 @@ def _op_fix_gene_wrapper(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
+def _op_fix_space_before_kind(s: str) -> tuple[str, list[HGVSFix]]:
+    # Whitespace in place of the reference:kind colon after a bare gene symbol,
+    # e.g. "BRCA2 c.68del" -> "BRCA2:c.68del". Must run before whitespace
+    # stripping, which would glue the symbol to the kind letter and leave
+    # accession-lookalike symbols (eg NR2E3) unrepairable.
+    s2 = _SPACE_BEFORE_KIND.sub(r"\1:", s)
+    if s2 != s:
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.FIXED_SEPARATOR_TYPO,
+            message="Replaced space between reference and kind with ':'",
+            original=s, fixed=s2,
+        )]
+    return s, []
+
+
+def _op_drop_empty_version(s: str) -> tuple[str, list[HGVSFix]]:
+    # An accession with a dot but no version digits, e.g. "NM_001754.:c.749G>A"
+    # -> "NM_001754:c.749G>A". The version was dropped; an unversioned accession
+    # is valid HGVS, so drop the dangling dot rather than invent a version.
+    s2 = _EMPTY_VERSION.sub(r"\1", s)
+    if s2 != s:
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.DROPPED_EMPTY_VERSION,
+            message="Dropped dangling dot of an empty transcript version",
+            original=s, fixed=s2,
+        )]
+    return s, []
+
+
 def _op_fix_separator_typo(s: str) -> tuple[str, list[HGVSFix]]:
-    # Comma ("c,1811") or colon ("c:1811") in place of the kind dot, and period
-    # in place of the substitution '>' ("1030C.T" -> "1030C>T").
+    # Comma ("c,1811") or colon ("c:1811") in place of the kind dot, period
+    # in place of the substitution '>' ("1030C.T" -> "1030C>T"), and semicolon
+    # or underscore in place of the accession:allele colon ("NM_000059.4;c.68del").
     s2 = _KIND_COMMA.sub(r":\1.", s)
     s2 = _KIND_COLON.sub(r":\1.", s2)
     s2 = _SUB_PERIOD.sub(r"\1>\2", s2)
+    s2 = _ACCESSION_KIND_SEPARATOR.sub(r"\1:", s2)
     if s2 != s:
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
@@ -777,6 +837,7 @@ def _op_drop_genomic_ref_in_parens(s: str) -> tuple[str, list[HGVSFix]]:
 _PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
     (HGVSCleanOp.STRIP_PROTEIN_SUFFIX,      _op_strip_protein_suffix),
     (HGVSCleanOp.STRIP_LEADING_JUNK,        _op_strip_leading_junk),
+    (HGVSCleanOp.FIX_SPACE_BEFORE_KIND,     _op_fix_space_before_kind),
     (HGVSCleanOp.STRIP_WHITESPACE,          _op_strip_whitespace),
     (HGVSCleanOp.STRIP_SURROUNDING_PUNCTUATION, _op_strip_surrounding_punctuation),
     (HGVSCleanOp.FIX_MULTIPLE_COLON,        _op_fix_multiple_colon),
@@ -786,6 +847,7 @@ _PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
     (HGVSCleanOp.FIX_PREFIX_COLON,          _op_fix_prefix_colon),
     (HGVSCleanOp.FIX_MULTIPLE_KIND,         _op_fix_multiple_kind),
     (HGVSCleanOp.FIX_SEPARATOR_TYPO,        _op_fix_separator_typo),
+    (HGVSCleanOp.DROP_EMPTY_VERSION,        _op_drop_empty_version),
     (HGVSCleanOp.ADD_N_PREFIX,              _op_add_n_prefix),
     (HGVSCleanOp.LOWERCASE_MUTATION_TYPE,   _op_lowercase_mutation_type),
     (HGVSCleanOp.DROP_DEL_DUP_COUNT,        _op_drop_del_dup_count),

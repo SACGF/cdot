@@ -11,7 +11,10 @@ JSON, hosted on GitHub and also loaded into the cdot_rest REST API
 possibly malformed, is repaired by `clean_hgvs()`, then parsed and mapped
 between c. and g. coordinates by biocommons/hgvs, which draws exons and
 alignments from one of cdot's data providers (in-memory `JSONDataProvider`,
-`RESTDataProvider`, or `EnsemblTarkDataProvider`) and transcript sequence from
+`RESTDataProvider`, or `EnsemblTarkDataProvider`); the PostgreSQL-backed
+`UTADataProvider` built into biocommons/hgvs plugs into the same interface and
+is the alternative backend cdot is compared against in Results. Transcript
+sequence comes from
 the sequence layer (SeqRepo and/or `FastaSeqFetcher`, tried in order via
 `ChainedSeqFetcher`). Opt-in helpers rewrite the input string:
 `resolve_gene_hgvs()` maps a gene symbol to its MANE transcript, and

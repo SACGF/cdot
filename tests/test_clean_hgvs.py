@@ -213,6 +213,21 @@ CLEAN_CASES = [
     # #112 — genomic accession wedged into the gene-symbol parenthetical slot
     ("NM_000059.4(NC_000013.11):c.68del",        "NM_000059.4:c.68del",                        {C.DROPPED_GENOMIC_REF_IN_PARENS}),
     ("NM_001754.5(NG_042763.1):c.1415T>C",       "NM_001754.5:c.1415T>C",                      {C.DROPPED_GENOMIC_REF_IN_PARENS}),
+    # #112: semicolon/underscore in place of the accession:allele colon
+    ("NM_000059.4;c.68del",                      "NM_000059.4:c.68del",                        {C.FIXED_SEPARATOR_TYPO}),
+    ("NM_001754.5_c.749G>A",                     "NM_001754.5:c.749G>A",                       {C.FIXED_SEPARATOR_TYPO}),
+    ("NM_000059.4; c.68del",                     "NM_000059.4:c.68del",                        {C.FIXED_SEPARATOR_TYPO}),
+    # #112: dangling dot of an empty (dropped) transcript version
+    ("NM_001754.:c.749G>A",                      "NM_001754:c.749G>A",                         {C.DROPPED_EMPTY_VERSION}),
+    ("NM_001754.::c..749G>A",                    "NM_001754:c.749G>A",                         {C.DROPPED_EMPTY_VERSION}),
+    # #112: leading colon/dash junk separated from the accession by whitespace
+    (": NM_000059.4(BRCA2):c.68del",             "NM_000059.4(BRCA2):c.68del",                 {C.STRIPPED_LEADING_JUNK}),
+    ("- NM_001754.5:c.749G>A",                   "NM_001754.5:c.749G>A",                       {C.STRIPPED_LEADING_JUNK}),
+    # #112: space in place of the reference:kind colon after a gene symbol.
+    # Must also work for symbols that resemble an accession (2-letter RefSeq
+    # prefix + digit, eg NR2E3), which reconstruction deliberately refuses.
+    ("BRCA2 c.68del",                            "BRCA2:c.68del",                              {C.FIXED_SEPARATOR_TYPO}),
+    ("NR2E3 c.349G>A",                           "NR2E3:c.349G>A",                             {C.FIXED_SEPARATOR_TYPO}),
 ]
 
 
@@ -293,6 +308,34 @@ def test_drop_genomic_ref_in_parens_collapses_genomic_selector_form():
     cleaned, fixes = clean_hgvs("NC_000013.11(NM_000059.4):c.68del", validate=False)
     assert cleaned == "NM_000059.4:c.68del"
     assert C.DROPPED_GENOMIC_REF_IN_PARENS in codes(fixes)
+
+
+def test_accession_separator_semicolon_inside_allele_untouched():
+    # A ';' inside a (balanced-bracket) multi-variant allele is real HGVS
+    # punctuation, not a separator typo, so the anchored rule must not fire.
+    s = "NM_000059.4:c.[68del;70A>G]"
+    cleaned, fixes = clean_hgvs(s, validate=False)
+    assert cleaned == s
+    assert not fixes
+
+
+def test_empty_version_requires_colon_after_dot():
+    # A real version must never be dropped; the rule only fires on a dangling
+    # dot immediately before the colon.
+    s = "NM_001754.5:c.749G>A"
+    cleaned, fixes = clean_hgvs(s, validate=False)
+    assert cleaned == s
+    assert not fixes
+
+
+def test_space_before_kind_leaves_accessions_to_whitespace_strip():
+    # An accession head (contains '_'/'.') is glued by the whitespace strip and
+    # then repaired by reconstruction. The space-separator rule must not fire,
+    # so the reported fixes stay the same as before the rule existed.
+    cleaned, fixes = clean_hgvs("nm_000059.4 c.316+5G>A")
+    assert cleaned == "NM_000059.4:c.316+5G>A"
+    assert C.STRIPPED_WHITESPACE in codes(fixes)
+    assert C.FIXED_SEPARATOR_TYPO not in codes(fixes)
 
 
 def test_clean_hgvs_protein_suffix():
