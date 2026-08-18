@@ -100,41 +100,50 @@ at most 200 cases per category), and recovery is an exact string match to the kn
 canonical target. The LOVD columns come from `paper/scripts/lovd_head_to_head.py`, which
 runs the same cases through the LOVD HGVS syntax checker (v1.2.2, local PHP CLI) under
 the same scoring rule (Methods); "top-1" scores the checker's highest-confidence
-suggested correction. Production ops with no string-level injector (structure
-reconstruction, empty-version dropping, provider-verified accession-prefix restoration)
-are absent by design. Examples are synthesised from public `NM_000059.4` (BRCA2).
-Regenerate with the commands in each script's docstring; totals also appear in
-`paper/empirical_results/cleaning.csv` and `lovd_comparison.csv`.
+suggested correction. The VariantValidator (VV) and Mutalyzer columns come from
+`paper/scripts/vv_mutalyzer_head_to_head.py`, which runs the same cases through the two
+services' public REST APIs ({{ vv_mutalyzer_comparison.service_date }}; Methods) under
+the same rule, scoring the validated (VV) or corrected/normalized (Mutalyzer)
+description. Production ops with no string-level injector (structure reconstruction,
+empty-version dropping, provider-verified accession-prefix restoration) are absent by
+design. Examples are synthesised from public `NM_000059.4` (BRCA2). Regenerate with the
+commands in each script's docstring; totals also appear in
+`paper/empirical_results/cleaning.csv`, `lovd_comparison.csv` and
+`vv_mutalyzer_comparison.csv`.
 
-| Injected error (example → target) | n | `clean_hgvs()` | LOVD top-1 |
-|---|---|---|---|
-| Whitespace (` NM_000059.4: c.68del`) | 200 | 100% | 100% |
-| Lowercased bases (`c.316g>a`) | 200 | 100% | 100% |
-| Trailing protein suffix (`c.68del p.Arg100Ter`) | 200 | 100% | 91.5% |
-| Gene wrapper with colon (`NM_000059.4:(BRCA2):c.68del`) | 200 | 100% | 0% |
-| Gene/transcript swapped (`BRCA2(NM_000059.4):c.68del`) | 200 | 100% | 49.5% |
-| Surrounding quotes (`"NM_000059.4:c.68del"`) | 200 | 100% | 0% |
-| Doubled colon (`NM_000059.4::c.68del`) | 200 | 100% | 0% |
-| Unbalanced bracket (`(NM_000059.4:c.68del`) | 200 | 100% | 0% |
-| Separator typo (`NM_000059.4:c,68del`) | 200 | 100% | 100% |
-| Doubled version dot (`NM_000059..4:c.68del`) | 200 | 100% | 0% |
-| Leading junk (`GRCh38.p2 NM_000059.4:c.68del`) | 200 | 100% | 0% |
-| Doubled kind (`NM_000059.4:c.c.68del`) | 200 | 100% | 0% |
-| Lowercased accession (`nm_000059.4:c.68del`) | 200 | 100% | 52.0% |
-| Redundant del/dup count (`c.68_69del23`) | 77 | 100% | 0% |
-| Missing accession underscore (`NM000059.4:c.68del`) | 200 | 100% | 0% |
-| Colon in accession prefix (`NM:_000059.4:c.68del`) | 200 | 100% | 0% |
-| Uppercased mutation type (`c.68DEL`) | 142 | 100% | 100% |
-| Dropped accession letter (`M_000059.4:c.68del`) | 200 | 100% | 0% |
-| **Total** | **{{ lovd_comparison.n_cases | commas }}** | **{{ lovd_comparison.cdot_pct | dp(1) }}%** | **{{ lovd_comparison.lovd_top1_pct | dp(1) }}%** |
+| Injected error (example → target) | n | `clean_hgvs()` | LOVD top-1 | VV | Mutalyzer |
+|---|---|---|---|---|---|
+| Whitespace (` NM_000059.4: c.68del`) | 200 | 100% | 100% | 96.5% | 89.5% |
+| Lowercased bases (`c.316g>a`) | 200 | 100% | 100% | 96.0% | 89.5% |
+| Trailing protein suffix (`c.68del p.Arg100Ter`) | 200 | 100% | 91.5% | 0% | 0% |
+| Gene wrapper with colon (`NM_000059.4:(BRCA2):c.68del`) | 200 | 100% | 0% | 0% | 0% |
+| Gene/transcript swapped (`BRCA2(NM_000059.4):c.68del`) | 200 | 100% | 49.5% | 94.5% | 0% |
+| Surrounding quotes (`"NM_000059.4:c.68del"`) | 200 | 100% | 0% | 97.5% | 0% |
+| Doubled colon (`NM_000059.4::c.68del`) | 200 | 100% | 0% | 99.0% | 0% |
+| Unbalanced bracket (`(NM_000059.4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
+| Separator typo (`NM_000059.4:c,68del`) | 200 | 100% | 100% | 0% | 0% |
+| Doubled version dot (`NM_000059..4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
+| Leading junk (`GRCh38.p2 NM_000059.4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
+| Doubled kind (`NM_000059.4:c.c.68del`) | 200 | 100% | 0% | 0% | 0% |
+| Lowercased accession (`nm_000059.4:c.68del`) | 200 | 100% | 52.0% | 94.0% | 35.5% |
+| Redundant del/dup count (`c.68_69del23`) | 77 | 100% | 0% | 0% | 0% |
+| Missing accession underscore (`NM000059.4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
+| Colon in accession prefix (`NM:_000059.4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
+| Uppercased mutation type (`c.68DEL`) | 142 | 100% | 100% | 94.4% | 0% |
+| Dropped accession letter (`M_000059.4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
+| **Total** | **{{ lovd_comparison.n_cases | commas }}** | **{{ lovd_comparison.cdot_pct | dp(1) }}%** | **{{ lovd_comparison.lovd_top1_pct | dp(1) }}%** | **{{ vv_mutalyzer_comparison.vv_pct | dp(1) }}%** | **{{ vv_mutalyzer_comparison.mut_pct | dp(1) }}%** |
 
 Weighted by the production rescue-op distribution (Results Table 2) the totals are
-{{ lovd_comparison.cdot_weighted_pct | dp(1) }}% for `clean_hgvs()` and
-{{ lovd_comparison.lovd_top1_weighted_pct | dp(1) }}% for LOVD top-1; accepting the
+{{ lovd_comparison.cdot_weighted_pct | dp(1) }}% for `clean_hgvs()`,
+{{ lovd_comparison.lovd_top1_weighted_pct | dp(1) }}% for LOVD top-1,
+{{ vv_mutalyzer_comparison.vv_weighted_pct | dp(1) }}% for VariantValidator and
+{{ vv_mutalyzer_comparison.mut_weighted_pct | dp(1) }}% for Mutalyzer; accepting the
 target anywhere in LOVD's ranked correction list changes no case. On the
-{{ lovd_comparison.originals_n | commas }} uncorrupted originals neither tool falsely
+{{ lovd_comparison.originals_n | commas }} uncorrupted originals no tool falsely
 corrects any input ({{ lovd_comparison.cdot_false_corrections | int }} for `clean_hgvs()`,
-{{ lovd_comparison.lovd_false_corrections | int }} for LOVD); LOVD flags
+{{ lovd_comparison.lovd_false_corrections | int }} for LOVD,
+{{ vv_mutalyzer_comparison.vv_false_corrections | int }} for VariantValidator,
+{{ vv_mutalyzer_comparison.mut_false_corrections | int }} for Mutalyzer); LOVD flags
 {{ lovd_comparison.lovd_flagged_invalid_pct | dp(1) }}% of them (intronic positions on
 a transcript reference) as requiring a genomic reference while leaving the string
 unchanged. The LOVD partial rates are one-sided accession-family support: the
@@ -142,6 +151,20 @@ gene/transcript swap is repaired for RefSeq but not Ensembl accessions, accessio
 re-casing for Ensembl but not RefSeq, and the two rates track the corpus's roughly
 even RefSeq/Ensembl split. The protein-suffix misses absorb the stray `p` into the
 edit (`c.68del p.` becomes `c.68delP`).
+
+The services' sub-100% ceilings in the categories they otherwise repair are
+service-level rejections independent of the injected error, measured on the same
+uncorrupted originals: VariantValidator rejects
+{{ vv_mutalyzer_comparison.vv_rejected_valid | int }} of the
+{{ vv_mutalyzer_comparison.originals_n | commas }} valid originals (all recent Ensembl
+transcripts absent from its vvta_2025_02 database), and Mutalyzer rejects
+{{ vv_mutalyzer_comparison.mut_rejected_valid | int }} (`EINTRONIC`: intronic positions
+on a RefSeq transcript reference; it resolves intronic Ensembl descriptions).
+Mutalyzer's lowercased-accession rate is one-sided in the opposite direction to LOVD's
+(it re-cases `enst...` but not `nm_...`). VariantValidator's responses for input it
+could not parse embedded the LOVD syntax checker's ranked suggestions in
+{{ vv_mutalyzer_comparison.vv_lovd_suggestion_cases | commas }} of the
+{{ vv_mutalyzer_comparison.n_cases | commas }} cases without applying them (Discussion).
 
 ### Table S6: Residual error classes after cleaning
 

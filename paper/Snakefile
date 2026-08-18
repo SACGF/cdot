@@ -75,7 +75,8 @@ GEN_FACTS  = "output/facts"
 # inputs it needs are absent the rule copies the committed EMPIRICAL file instead, so
 # a build always renders; `full` writes these back to EMPIRICAL after a good render.
 COMPUTED_FACTS = ["coverage.csv", "benchmark.csv", "cleaning.csv",
-                  "lovd_comparison.csv", "sources.csv",
+                  "lovd_comparison.csv", "vv_mutalyzer_comparison.csv",
+                  "sources.csv",
                   "version_stability.csv", "positional_drift.csv"]
 
 # FROZEN - measured once (or transcribed from published papers) and committed under
@@ -274,6 +275,31 @@ rule lovd_comparison:
         else:
             print("No lovd_checker - copying the frozen measured LOVD comparison facts")
             shutil.copy(f"{EMPIRICAL}/lovd_comparison.csv", output[0])
+
+
+rule vv_mutalyzer_comparison:
+    """Head-to-head: clean_hgvs() vs the VariantValidator and Mutalyzer public
+    REST services on the injection corpus (issue #112).
+
+    Same cases and scoring as the lovd_comparison rule, driven by
+    paper/scripts/vv_mutalyzer_head_to_head.py over the public APIs
+    (rest.variantvalidator.org, mutalyzer.nl). Remote services cannot be
+    version-pinned, so the facts record the service date and the version
+    metadata the APIs report (measured 2026-08-18, VariantValidator 4.0.1).
+    The live run needs network access and about an hour (requests are cached
+    and resumable in output/rest_cache/); opt in with --config
+    vv_mutalyzer=true. Otherwise the frozen measured constants from
+    paper/empirical_results/ are copied.
+    """
+    output: "output/facts/vv_mutalyzer_comparison.csv"
+    run:
+        import os, shutil
+        os.makedirs("output/facts", exist_ok=True)
+        if config.get("vv_mutalyzer", False):
+            shell(f"{PYTHON} paper/scripts/vv_mutalyzer_head_to_head.py")
+        else:
+            print("No vv_mutalyzer=true - copying the frozen measured service comparison facts")
+            shutil.copy(f"{EMPIRICAL}/vv_mutalyzer_comparison.csv", output[0])
 
 
 rule sources:

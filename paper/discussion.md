@@ -71,6 +71,24 @@ descriptions on a transcript reference
 ({{ lovd_comparison.lovd_flagged_invalid_pct | dp(0) }}% of the valid originals) as
 requiring a genomic reference, a deliberate design position rather than a defect.
 
+The same corpus puts the sequence-aware services in context. Run over their public REST
+APIs ({{ vv_mutalyzer_comparison.service_date }}; Methods), VariantValidator's validated
+description recovered {{ vv_mutalyzer_comparison.vv_weighted_pct | dp(0) }}% of cases
+weighted by the production error mix, and Mutalyzer
+{{ vv_mutalyzer_comparison.mut_weighted_pct | dp(0) }}% (Supplementary Table S5). Each
+repairs the damage it can interpret and rejects the rest as invalid: whitespace and
+letter case for both, with VariantValidator also handling quotes, doubled colons,
+accession re-casing and swapped gene and transcript forms at 94 to 99% per category,
+capped by transcripts absent from its database rather than by the injected error.
+Neither falsely corrected a valid input. These services answer a different question from
+`clean_hgvs()`: they validate a description against the reference sequence, so a string
+that cannot be parsed is an error to report, not text to repair. The roles are
+converging, though. Since release 4.0.0 (June 2026) VariantValidator embeds the LOVD
+syntax checker [@VariantValidator400], and its API responses for input it cannot parse
+carry the checker's ranked suggestions alongside the validation error, although the
+service does not apply them. The LOVD measurement above therefore also characterises
+the syntax-repair layer surfaced by a current VariantValidator pipeline.
+
 Beyond HGVS resolution, the JSON representation is useful in its own right. It parses far
 faster than the GTF/GFF files it is built from and loads trivially over HTTP, so cdot
 doubles as a lightweight, queryable gene/transcript reference. We publish the per-release

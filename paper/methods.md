@@ -236,7 +236,23 @@ list gave identical results, so top-1 ranking cost LOVD nothing. Every injected 
 is string-repairable by construction (`inject_and_clean.py` does not inject errors whose
 repair needs transcript data, such as a missing accession prefix), so both tools are
 eligible on every case; the same false-correction check (does the tool alter a valid
-input) is applied to both over the uncorrupted originals. Version-fallback safety is measured by `compute_version_stability.py`
+input) is applied to both over the uncorrupted originals.
+
+`vv_mutalyzer_head_to_head.py` extends the same cases and scoring rule to the two
+sequence-aware validation services, VariantValidator [@Freeman2018] and Mutalyzer
+[@Lefter2021], over their public REST APIs
+({{ vv_mutalyzer_comparison.service_date }}; remote services cannot be version-pinned,
+so the facts record the service date and the version metadata each API reports).
+VariantValidator requests are routed by accession family (its Ensembl transcripts live
+on a separate endpoint) and a case counts as recovered when the validated transcript
+description matches the target; for Mutalyzer a match by either its
+`corrected_description` or its `normalized_description` counts, since the normalizer
+may legitimately re-shift a representation. On the uncorrupted originals, a valid input
+the service *alters* is a false correction, while one it *rejects* (for example
+Mutalyzer's `EINTRONIC` for intronic positions on a transcript reference, or a
+transcript absent from VariantValidator's database) is counted separately as a
+validity or coverage position, matching how LOVD's flagged-invalid originals are
+reported. Version-fallback safety is measured by `compute_version_stability.py`
 on GRCh38, using a seeded {{ version_stability.sample_n | commas }}-accession sample drawn
 from accessions cdot holds at two or more versions (the only accessions where a version
 bump can be assessed). The same run bins preserved coding bases by relative CDS position
