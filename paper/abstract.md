@@ -2,31 +2,30 @@
 
 # Abstract
 
-**Summary:**
+**Motivation:**
 
-HGVS nomenclature is the international standard for describing sequence variants in
-clinical reports, public databases, and the research literature. A routine but
-error-prone task is turning these descriptions back into genomic coordinates, which
-depends on accurate, versioned transcript data. cdot supplies that data. It does not
-resolve HGVS itself; it provides the versioned transcript-to-genome alignments
-that the established Python HGVS libraries already use, so existing pipelines gain
-coverage and speed without changing how they work.
+Resolving a transcript-level HGVS variant description to genomic coordinates requires
+accurate, versioned transcript-to-genome alignments. The standard source for this,
+UTA, requires a PostgreSQL database, covers only
+~{{ literature.uta_count | commas }} alignments, retains limited transcript history,
+and omits Ensembl, while the descriptions real pipelines receive are often malformed or
+cite retired transcript versions.
 
-The standard resource for this, UTA, requires a PostgreSQL database, has no Ensembl
-support, and covers only ~{{ literature.uta_count | commas }} transcript alignments. cdot
-provides {{ coverage.total_count | commas }} versioned transcript/genome alignments from
-RefSeq and Ensembl across GRCh37, GRCh38, and T2T-CHM13v2.0, as a single gzipped JSON
-file or served on demand over HTTP via a REST API (cdotlib.org), with no database
-required.
+**Results:**
 
-cdot also helps with the malformed strings that clinical search boxes and importers
-collect. A parser-independent cleaning step (`clean_hgvs()`) repairs common formatting
-errors before resolution. When a cited transcript version has been retired, an opt-in
-fallback substitutes the nearest available version, but only when a build-independent
-check confirms the substitution does not move the variant. cdot integrates with both
-major Python HGVS libraries (biocommons/hgvs and PyHGVS), stores MANE Select and Ensembl
-canonical tags for gene-symbol lookup, and is the first transcript data source to bring
-T2T-CHM13v2.0 to these libraries.
+cdot provides {{ coverage.total_count | commas }} versioned transcript/genome
+alignments from RefSeq and Ensembl across GRCh37, GRCh38, and, for the first time for
+the Python HGVS libraries, T2T-CHM13v2.0, as a single gzipped JSON file or a REST API
+(cdotlib.org), with no database required. On ClinVar's submitted variant descriptions,
+{{ clinvar_submitted.version_not_current_pct | dp(1) }}% of which cite a transcript
+version that is no longer current, cdot resolved
+{{ clinvar_submitted.cdot_resolved_pct | dp(1) }}% versus
+{{ clinvar_submitted.uta_resolved_pct | dp(1) }}% for UTA. Loaded in memory, cdot
+resolves ~{{ benchmark.cdot_local_tps | commas }} HGVS/second, nearly four orders of
+magnitude above the public UTA server. A parser-independent cleaning step
+(`clean_hgvs()`) repairs common formatting errors before resolution, and an opt-in
+fallback substitutes a retired transcript version only when a coordinate-safety check
+confirms the substitution does not move the variant.
 
 **Availability and Implementation:**
 

@@ -1,5 +1,90 @@
 # Supplementary Material
 
+## Supplementary Methods
+
+### Submitted-string corpus construction
+
+`build_clinvar_submitted_pairs.py` streams the ClinVar VCV XML (tens of gigabytes
+uncompressed; a pre-extracted per-SCV table is also accepted). For each
+ClinicalAssertion (SCV), the first RefSeq/Ensembl transcript c./n. expression among its
+`Attribute[@Type="HGVS"]` values is kept verbatim; this first-attribute selection is
+what defines "the" submitted string when an SCV carries several HGVS expressions.
+Submitted HGVS is not deduplicated across SCVs in ClinVar, so the builder collapses SCV
+rows to unique (AlleleID, submitted string) pairs, retaining the collapsed submission
+count; distinct strings for the same variant (for example, two laboratories citing
+different transcript versions) are all kept. The 3,000-pair benchmark sample is sized
+to match the seeded current-version sample used for the cdot-versus-UTA comparison.
+
+### LOVD head-to-head scoring detail
+
+The two ecosystems canonicalise a parenthesised gene symbol in opposite directions
+(biocommons keeps `NM_x.y(GENE):c.`, LOVD removes the symbol), so the comparison
+ignores that annotation on both sides. A secondary metric accepting the target anywhere
+in LOVD's ranked correction list gave identical results, so top-1 ranking cost LOVD
+nothing. Every injected category is string-repairable by construction
+(`inject_and_clean.py` does not inject errors whose repair needs transcript data, such
+as a missing accession prefix), so both tools are eligible on every case.
+
+### Shariant corpus resolution protocol
+
+The Shariant corpus (Results R2, Tier 2) is resolved as pure coordinate projection with
+`replace_reference=False`, so the sequence layer never differs between the two
+backends.
+
+### RefSeq transcript sequence and `FastaSeqFetcher`
+
+`FastaSeqFetcher` reconstructs transcript sequence from the genome, which is not
+guaranteed to match a curated RefSeq transcript at every position. In practice variants
+are usually called against a genome-mapped read alignment, so any such discrepancy lies
+in the reference the variant was already described against. Where an exact RefSeq
+transcript sequence is needed, SeqRepo supplies it when it holds the accession (it does
+not hold every version cdot covers), and `ChainedSeqFetcher` can prefer SeqRepo with a
+FASTA fallback to maximise the fraction of transcripts served.
+
+### Throughput measurement detail
+
+The timed portion is steady-state resolution throughput (HGVS parse plus coordinate
+projection per string); provider setup (JSON load, database connection), the REST
+cache-warming `prefetch()`, and one untimed warm-up pass per configuration are
+excluded. The absolute numbers are sensitive to the shared sequence layer: with
+SeqRepo's file-descriptor cache disabled (its default), SeqRepo re-opens a compressed
+FASTA file on every fetch, every configuration is bounded by sequence fetching at well
+under 200 HGVS/s, and the differences between transcript backends are masked. All
+configurations therefore run with the cache enabled.
+
+### Version-substitution safety gate detail
+
+To judge substituting an available version for a requested one in, say, GRCh38, cdot
+reads the requested version's intrinsic CDS structure from any build that carries it
+(the structure is build-independent, so a GRCh37 or T2T record serves), reads the
+substitute version's structure from GRCh38, and substitutes only when the two match.
+Because the comparison is on the structure rather than on flanking genomic coordinates,
+it also catches transient-revert versions (a coordinate that goes A→B→A) that a
+genomic-bracket check between neighbours cannot see.
+
+Identical transcript structure does not on its own guarantee safety, so the gate adds
+two refinements. An alignment gap (a transcript-vs-genome indel) present in one version
+and not the other shifts every coding base downstream of it, so the gate also requires
+the two versions' CDS alignment gaps to match. And because the structure is
+build-independent it cannot see the variant's position relative to the UTRs: a 5' or 3'
+UTR variant can move when only the UTR length changes (UTR annotations change between
+versions far more often than the CDS), so for a cited UTR position the matching UTR
+length must be preserved too, while a coding variant on a UTR-only change stays safe.
+
+As a predictor of genomic drift, an intrinsic-structure change flags
+{{ version_stability.refseq_drift_struct_flagged_pct | dp(1) }}% of drifting RefSeq
+bumps and {{ version_stability.ensembl_drift_struct_flagged_pct | dp(1) }}% of drifting
+Ensembl bumps, while conversely
+{{ version_stability.refseq_struct_unchanged_preserved_pct | dp(0) }}% (RefSeq) /
+{{ version_stability.ensembl_struct_unchanged_preserved_pct | dp(0) }}% (Ensembl) of
+structure-unchanged bumps are genomically preserved. The build-independent structure
+cannot see a re-alignment of the same CDS structure to a different genomic locus, so
+cdot additionally compares the two versions' genomic CDS maps when both are loaded, and
+ships a small precomputed blocklist of these re-placements for the case where the
+requested version is absent from the loaded data. A structural mismatch, or a version
+absent from every build (where only a probabilistic genomic-bracket check remains), is
+refused by default.
+
 ## Supplementary Tables
 
 ### Table S1: RefSeq GFF3 annotation releases
@@ -241,5 +326,21 @@ One further repair sits outside `clean_hgvs()` because it needs transcript data:
 `resolve_missing_accession_prefix()` (applied by `fix_hgvs()` when a data provider is
 supplied) restores a fully dropped RefSeq prefix (`000059.4:c.68del` →
 `NM_000059.4:c.68del`) by generating the candidates the kind letter allows (`c.` →
-`NM_`/`XM_`, `n.` → `NR_`/`XR_`) and applying the fix only when exactly one candidate
-accession exists in the loaded data (Methods).
+`NM_`/`XM_`, `n.` → `NR_`/`XR_`; 7-8 digit fields zero-padded to the 9-digit form) and
+applying the fix only when exactly one candidate accession exists in the loaded data
+(Methods).
+
+### Table S8: Residual outcomes on the submitted-string sample
+
+The {{ clinvar_submitted.residual_n | int }} of
+{{ clinvar_submitted.n_sample | commas }} sampled submitted-string pairs (Results R2)
+that remain unresolved after cleaning and version fallback, by cause.
+
+| Cause | n |
+|---|---|
+| Cited version absent from the data; the fallback declines to substitute because coordinate safety cannot be verified (no false rescues, by design) | {{ clinvar_submitted_residual.version_refused | int }} |
+| Resolves through the cited historical version to a coordinate that differs from ClinVar's current interpretation | {{ clinvar_submitted_residual.coordinate_drift | int }} |
+| Cited position does not exist on the cited version | {{ clinvar_submitted_residual.position_out_of_bounds | int }} |
+| Cited reference base does not exist on the cited version | {{ clinvar_submitted_residual.reference_mismatch | int }} |
+| Repeat or allele notation the biocommons grammar rejects | {{ clinvar_submitted_residual.grammar_unsupported | int }} |
+| Accession absent entirely | {{ clinvar_submitted_residual.unknown_accession | int }} |
