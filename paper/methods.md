@@ -152,7 +152,23 @@ clean ClinVar strings. `lovd_head_to_head.py` runs the same injected cases throu
 ({{ lovd_comparison.lovd_version }}, run locally as a PHP CLI), scoring a case as
 recovered when the tool's output (for LOVD, its top-ranked correction) exactly matches
 the canonical target; the same false-correction check runs over the uncorrupted
-originals. Version-fallback safety is measured by `compute_version_stability.py` on
+originals.
+
+`vv_mutalyzer_head_to_head.py` extends the same cases and scoring rule to the two
+sequence-aware validation services, VariantValidator [@Freeman2018] and Mutalyzer
+[@Lefter2021], over their public REST APIs
+({{ vv_mutalyzer_comparison.service_date }}; remote services cannot be version-pinned,
+so the facts record the service date and the version metadata each API reports).
+VariantValidator requests are routed by accession family (its Ensembl transcripts live
+on a separate endpoint) and a case counts as recovered when the validated transcript
+description matches the target; for Mutalyzer a match by either its
+`corrected_description` or its `normalized_description` counts, since the normalizer
+may legitimately re-shift a representation. On the uncorrupted originals, a valid input
+the service *alters* is a false correction, while one it *rejects* (for example
+Mutalyzer's `EINTRONIC` for intronic positions on a transcript reference, or a
+transcript absent from VariantValidator's database) is counted separately as a
+validity or coverage position, matching how LOVD's flagged-invalid originals are
+reported. Version-fallback safety is measured by `compute_version_stability.py` on
 GRCh38, over a seeded {{ version_stability.sample_n | commas }}-accession sample of
 accessions cdot holds at two or more versions; the same run bins preserved coding bases
 by relative CDS position (Supplementary Figure S1).
