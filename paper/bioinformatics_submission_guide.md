@@ -2,22 +2,22 @@
 
 ---
 
-## Application Note (our target article type)
+## Original Paper (our target article type)
+
+- **Page limit**: 7 pages (~5,000 words)
+- Manuscripts **>20% over the limit are returned without review**
+- **Abstract structure**: Motivation / Results / Availability / Contact / Supplementary
+  Information
+
+## Application Note (not our target, for reference)
 
 - **Page limit**: 4 pages (~2,600 words, or ~2,000 words + 1 figure)
-- Manuscripts **>20% over the limit are returned without review**
 - **Abstract structure**:
   - **Summary** — one paragraph, no sub-headings
   - **Availability and Implementation** — URL, language, licence
   - **Contact** — corresponding author email
   - **Supplementary Information** — if applicable (reference in abstract)
 - Body structure is flexible; typical: Introduction → Implementation → Discussion
-
-## Original Paper (not our target, for reference)
-
-- **Page limit**: 7 pages (~5,000 words)
-- **Abstract**: Motivation / Results / Availability / Contact / Supplementary
-  Information
 
 ---
 
