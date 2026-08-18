@@ -35,8 +35,9 @@ differ only in **how that dir gets populated**:
 - **quick** copies the committed *stored results* from `paper/empirical_results/` into it.
 
 `paper/empirical_results/` is the checked-in snapshot of measured results (it is *not*
-the facts dir — "facts" are the generated values). The full build refreshes it after a
-successful run.
+the facts dir — "facts" are the generated values). A full build refreshes the ones it
+recomputed; the rest are only ever edited by hand, with their provenance recorded in
+`paper/empirical_results/PROVENANCE.md`.
 
 ### Quick build (default) — seconds, no data needed
 
@@ -91,16 +92,30 @@ snakemake -s paper/Snakefile full --cores 1 \
              uta_uri=postgresql://uta:uta@localhost:5432/uta/uta_20241220
 ```
 
-What each fact comes from (see the rules in `paper/Snakefile`):
+Every fact lives as a one-row CSV in `paper/empirical_results/`. They split two ways:
+
+**Computed** — a rule in `paper/Snakefile` regenerates them. When the inputs that rule
+needs are absent, it copies the committed CSV instead, so a build always renders; a
+`full` build writes only these back to `paper/empirical_results/`.
 
 | Fact CSV | Source | Needs |
 |---|---|---|
 | `coverage.csv` | `paper/scripts/compute_coverage.py` over the release JSON.gz files | `data_dir` |
-| `sources.csv` | `paper/scripts/compute_sources.py` over `cdot_transcripts.yaml` | committed (none) |
+| `benchmark.csv` | `paper/scripts/compute_benchmark.py` (Table 1 throughput) | `data_dir`, `uta_uri`, SeqRepo |
+| `version_stability.csv`, `positional_drift.csv` | `paper/scripts/compute_version_stability.py` | `data_dir` |
 | `cleaning.csv` | `paper/scripts/inject_and_clean.py` (Tier-1 injection benchmark) | committed test data (none) |
-| `benchmark.csv` | measured throughput (`paper/scripts/benchmark_resolution.py`, `paper/scripts/compare_providers.py`) | recorded as frozen measurements in the rule |
-| `clinvar.csv` | `paper/scripts/benchmark_resolution.py` (cdot vs UTA resolution) | `data_dir`, `uta_uri`, SeqRepo |
-| `literature.csv` | static constants from published papers | none |
+| `lovd_comparison.csv` | `paper/scripts/lovd_head_to_head.py` | `lovd_checker` (local PHP CLI) |
+| `sources.csv` | `paper/scripts/compute_sources.py` over `cdot_transcripts.yaml` | committed (none) |
+
+**Frozen** — measured once against data that is not committed here (the full-ClinVar
+pass, the Shariant historical corpus, the submitted-SCV corpus) or transcribed from
+published papers. Nothing recomputes them; the Snakefile's `frozen_fact` rule just
+copies them into the facts dir. To change one, edit the CSV and update its entry in
+`paper/empirical_results/PROVENANCE.md`, which records what produced each number:
+`literature.csv`, `clinvar.csv`, `clinvar_source_breakdown.csv`,
+`clinvar_submitted.csv`, `clinvar_submitted_residual.csv`, `clinvar_vcf.csv`,
+`clinvar_vcf_residual.csv`, `clinvar_residual_positions.csv`, `genomic_mismatch.csv`,
+`historical.csv`, `version_safety_validation.csv`.
 
 The full-scale ClinVar throughput runs take ~1.5 h each — see `claude/benchmark_plan.md`.
 
@@ -118,7 +133,9 @@ The full-scale ClinVar throughput runs take ~1.5 h each — see `claude/benchmar
 
 To refresh the committed snapshot without a full data run (e.g. after editing one
 analysis script), regenerate that one CSV into `output/facts/` and copy it into
-`paper/empirical_results/`.
+`paper/empirical_results/`. For a frozen fact there is nothing to regenerate: edit the
+CSV in `paper/empirical_results/` directly, and record the new measurement in
+`paper/empirical_results/PROVENANCE.md`.
 
 ## Key resources
 

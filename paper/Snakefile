@@ -12,6 +12,11 @@ Build the quick paper AND a PDF (needs the weasyprint toolchain):
 Recompute one facts file:
     snakemake -s paper/Snakefile --cores 1 output/facts/coverage.csv
 
+Every fact is a one-row CSV committed under paper/empirical_results/. Some have a
+rule here that recomputes them (see COMPUTED_FACTS); the rest are measured once and
+only copied in (FROZEN_FACTS), with their provenance in
+paper/empirical_results/PROVENANCE.md. To change a frozen number, edit the CSV there.
+
 Config keys (via --config or a config.yaml):
     data_dir         Directory with production JSON.gz files.
     clinvar_hgvs_csv Path to ClinVar HGVS benchmark CSV.
@@ -61,13 +66,30 @@ PDF_FLAG = "--pdf" if config.get("pdf", False) else ""
 #   FULL  - regenerate the facts there from production data / benchmark runs.
 #   QUICK - copy the committed stored results from EMPIRICAL into there.
 # EMPIRICAL is the checked-in snapshot of measured results (NOT "facts" - those are
-# the generated templating values); `full` refreshes it after a successful run.
+# the generated templating values); `full` refreshes the computed ones after a
+# successful run.
 EMPIRICAL  = "paper/empirical_results"
 GEN_FACTS  = "output/facts"
-FACT_FILES = ["literature.csv", "coverage.csv", "benchmark.csv",
-              "clinvar.csv", "clinvar_submitted.csv", "clinvar_submitted_residual.csv",
-              "cleaning.csv", "lovd_comparison.csv", "sources.csv", "historical.csv",
-              "version_stability.csv", "positional_drift.csv"]
+
+# COMPUTED - a rule below regenerates these from data or a benchmark run. When the
+# inputs it needs are absent the rule copies the committed EMPIRICAL file instead, so
+# a build always renders; `full` writes these back to EMPIRICAL after a good render.
+COMPUTED_FACTS = ["coverage.csv", "benchmark.csv", "cleaning.csv",
+                  "lovd_comparison.csv", "sources.csv",
+                  "version_stability.csv", "positional_drift.csv"]
+
+# FROZEN - measured once (or transcribed from published papers) and committed under
+# EMPIRICAL; nothing recomputes them, so the `frozen_fact` rule just copies them in.
+# Their provenance (what was run, when, against what data) is in
+# EMPIRICAL/PROVENANCE.md, which is where you edit when a number is re-measured.
+FROZEN_FACTS = ["literature.csv",
+                "clinvar.csv", "clinvar_source_breakdown.csv",
+                "clinvar_submitted.csv", "clinvar_submitted_residual.csv",
+                "clinvar_vcf.csv", "clinvar_vcf_residual.csv",
+                "clinvar_residual_positions.csv", "genomic_mismatch.csv",
+                "historical.csv", "version_safety_validation.csv"]
+
+FACT_FILES = COMPUTED_FACTS + FROZEN_FACTS
 
 PAPER_SOURCES = [
     "paper/abstract.md",
@@ -137,64 +159,51 @@ rule full:
         facts   = [f"{GEN_FACTS}/{f}" for f in FACT_FILES],
     output:
         touch("output/.paper_built_full"),
+    params:
+        # only the computed facts are written back; the frozen ones came FROM
+        # EMPIRICAL, so copying them back would be a no-op that churns mtimes
+        writeback = " ".join(f"{GEN_FACTS}/{f}" for f in COMPUTED_FACTS),
     shell:
         # render from the freshly regenerated facts; only refresh the committed
         # snapshot once the render succeeds, so a botched run can't corrupt it
-        "{VIBE} {PDF_FLAG} && cp {GEN_FACTS}/*.csv {EMPIRICAL}/"
+        "{VIBE} {PDF_FLAG} && cp {params.writeback} {EMPIRICAL}/"
 
 
-rule literature:
-    """Write static literature facts (values from published papers)."""
-    output: "output/facts/literature.csv"
+rule frozen_fact:
+    """Copy a committed stored result from paper/empirical_results/ into the facts dir.
+
+    These are the facts nothing recomputes: measured once against data that is not
+    committed here (the full-ClinVar pass, the Shariant historical corpus, the
+    submitted-SCV corpus) or transcribed from published papers. They live as CSVs
+    under EMPIRICAL and the values are edited there, not here; what produced each
+    one is recorded in paper/empirical_results/PROVENANCE.md.
+    """
+    input:  f"{EMPIRICAL}/{{name}}.csv"
+    output: f"{GEN_FACTS}/{{name}}.csv"
+    wildcard_constraints:
+        name = "|".join(f[:-len(".csv")] for f in FROZEN_FACTS),
     run:
-        import csv, os
-        os.makedirs("output/facts", exist_ok=True)
-        rows = [{
-            "clinvar_variants":     3000000,
-            # Lefter 2021 (Mutalyzer): breakdown of the ~26 million unique
-            # descriptions from five years of production logs (per unique
-            # description, not per submission). Error = 15.8% syntactic +
-            # 25.4% semantic failures of the Name Checker.
-            "mutalyzer_correct_pct":     50.4,
-            "mutalyzer_error_pct":       41.2,
-            "mutalyzer_autocorrect_pct": 7.1,
-            "lof_agreement_pct":    44,
-            "brca2_accuracy_pct":   32,
-            "uta_count":            141000,
-            "uta_remote_tps":       1,
-            "mane_coverage_pct":    97,
-            "seqrepo_speedup_fold": 1300,
-        }]
-        with open(output[0], "w", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=list(rows[0]))
-            writer.writeheader()
-            writer.writerows(rows)
-        print(f"Written: {output[0]}")
+        import os, shutil
+        os.makedirs(GEN_FACTS, exist_ok=True)
+        shutil.copy(input[0], output[0])
+        print(f"Written: {output[0]} (frozen, copied from {input[0]})")
 
 
 rule coverage:
     """Compute transcript coverage from production JSON.gz files.
 
     Requires --config data_dir=/path/to/data (or individual file paths).
-    Without data, writes placeholder zeros so the paper build still runs.
+    Without data, the committed measurement in paper/empirical_results/ is copied
+    so the paper build still runs.
     """
     output: "output/facts/coverage.csv"
     run:
-        import os
+        import os, shutil
         os.makedirs("output/facts", exist_ok=True)
         if not HAVE_DATA:
-            print("WARNING: no data_dir set — writing placeholder zeros to coverage.csv")
-            print("  Run with --config data_dir=/path/to/data to compute real values.")
-            import csv
-            row = {k: 0 for k in [
-                "total_count", "refseq_grch37_count", "refseq_grch38_count",
-                "t2t_count", "ensembl_grch37_count", "ensembl_grch38_count",
-                "ensembl_unique_count", "t2t_unique_count", "improvement_fold",
-            ]}
-            with open(output[0], "w", newline="") as fh:
-                writer = csv.DictWriter(fh, fieldnames=list(row))
-                writer.writeheader()
-                writer.writerow(row)
+            print("No data_dir - copying the committed measured coverage facts")
+            print("  Run with --config data_dir=/path/to/data to recompute them.")
+            shutil.copy(f"{EMPIRICAL}/coverage.csv", output[0])
         else:
             flags = " ".join(
                 f"--{name.replace('_', '-')} {path}"
@@ -213,206 +222,20 @@ rule benchmark:
     ClinVar set through every backend, 5 timed passes each, one shared fd-cached
     SeqRepo sequence layer, reporting median and IQR. The public remote UTA rows take
     ~20 min (~0.1 HGVS/s); skip them during development with an edited invocation.
-    Without data, writes the frozen measured facts below (not placeholders).
+    Without data, the committed measurement in paper/empirical_results/ is copied
+    (a real measurement, not a placeholder; conditions in PROVENANCE.md).
     """
     output: "output/facts/benchmark.csv"
     run:
-        import os, csv
+        import os, shutil
         os.makedirs("output/facts", exist_ok=True)
         grch38 = FILES.get("refseq_grch38", "")
         if grch38 and Path(grch38).exists():
             uta_flag = f"--uta-uri {config['uta_uri']}" if "uta_uri" in config else ""
             shell(f"{PYTHON} paper/scripts/compute_benchmark.py --refseq-grch38 {grch38} {uta_flag}")
         else:
-            print("No data_dir — writing the frozen measured benchmark facts to benchmark.csv")
-            # Measured 2026-08-17 (cdot 0.2.34 GRCh38 RefSeq, uta_20241220 local, public
-            # uta.biocommons.org remote, cdotlib.org REST, biocommons engine, one shared
-            # local SeqRepo with fd caching): median (q1, q3) HGVS/s over 5 passes of the
-            # committed 500-pair set (remote UTA: first 25 pairs). See R3 / Table 1.
-            row = {
-                "n_pairs":                    500,
-                "n_repeats":                  5,
-                "cdot_local_tps":             748,
-                "cdot_local_tps_q1":          743,
-                "cdot_local_tps_q3":          752,
-                "grch38_load_time_s":         4.8,
-                "cdot_rest_tps":              16,
-                "cdot_rest_tps_q1":           15,
-                "cdot_rest_tps_q3":           16,
-                "cdot_rest_prefetch_tps":     753,
-                "cdot_rest_prefetch_tps_q1":  752,
-                "cdot_rest_prefetch_tps_q3":  753,
-                "uta_local_tps":              187,
-                "uta_local_tps_q1":           187,
-                "uta_local_tps_q3":           188,
-                "uta_remote_tps":             0.12,
-                "uta_remote_tps_q1":          0.12,
-                "uta_remote_tps_q3":          0.12,
-                "uta_remote_n":               25,
-            }
-            with open(output[0], "w", newline="") as fh:
-                writer = csv.DictWriter(fh, fieldnames=list(row))
-                writer.writeheader()
-                writer.writerow(row)
-
-
-rule clinvar:
-    """R2 cdot-vs-UTA ClinVar resolution facts, with a RefSeq-vs-Ensembl breakdown.
-
-    Two things are recorded here, deliberately from two samples:
-
-    1. Headline rates over the seeded 2,818-variant ClinVar sample (cdot 99.0% vs UTA
-       70.3%). Frozen constants from the original cdot+UTA run; the seeded sample is not
-       committed (built from a ClinVar download), so these stay frozen.
-
-    2. Per-source split, measured on the *committed* tests/test_data/clinvar_hgvs/*.tsv
-       (500 RefSeq NM_ + 818 Ensembl ENST) so a referee can reproduce it. It shows WHERE
-       the gap is: RefSeq is at parity (both hold every cited current version), the whole
-       gap is Ensembl (UTA holds no ENST at all).
-
-    cdot sequences are served by cdot's own FastaSeqFetcher (transcript sequence spliced
-    from a local genome FASTA), so no pair is dropped for a missing sequence: this covers
-    the Ensembl transcripts SeqRepo does not hold, and reproduces Ensembl transcript
-    sequence exactly. The whole committed set is counted (500 RefSeq + 818 Ensembl).
-
-    How the per-source columns were measured (GRCh38, cdot 0.2.34 / UTA uta_20241220):
-        # cdot end-to-end resolution over the committed pairs, --fasta = FastaSeqFetcher:
-        F=GCF_000001405.39_GRCh38.p13_genomic.fna.gz   # NCBI GRCh38, NC_ contig names
-        python paper/scripts/benchmark_resolution.py tests/test_data/clinvar_hgvs/clinvar_hgvs_500.tsv \\
-            --json cdot-0.2.34.refseq.GRCh38.json.gz --fasta $F --out cdot_rs.json
-        python paper/scripts/benchmark_resolution.py tests/test_data/clinvar_hgvs/clinvar_hgvs_ensembl.tsv \\
-            --json cdot-0.2.34.ensembl.GRCh38.json.gz --fasta $F --out cdot_en.json
-        # cdot: RefSeq 500/500 = 100.0%; Ensembl 816/818 = 99.8% (the 2 misses are Ensembl
-        # patch-scaffold-only transcripts absent from the data, issue #113 - not sequence).
-        # Rates identical on 0.2.33 and 0.2.34.
-        # UTA coverage: membership of the exact cited accession.version in UTA's GRCh38
-        # alignment set (biocommons has no version fallback, so holding the exact version
-        # is what UTA resolution requires). Against the UTA GRCh38 alignment dump (ac column
-        # of Homo_sapiens_GRCh38_UTA_20241220.csv): RefSeq 500/500 = 100.0%, Ensembl 0 (no
-        # ENST rows in UTA at all) = 0.0%. The live UTA DB gives the same rates; the offline
-        # cdot-JSON conversion of UTA is NOT used because its splign projection under-counts.
-    """
-    output: "output/facts/clinvar.csv"
-    run:
-        import os, csv
-        os.makedirs("output/facts", exist_ok=True)
-        row = {
-            "n_variants":          2818,     # seeded sample (frozen headline)
-            "cdot_resolution_pct": 99.0,     # frozen headline
-            "uta_resolution_pct":  70.3,     # frozen headline
-            "n_refseq":            500,      # committed RefSeq test pairs
-            "n_ensembl":           818,      # committed Ensembl test pairs
-            "refseq_pct":          37.9,     # source mix of the committed per-source sample
-            "ensembl_pct":         62.1,
-            "cdot_refseq_pct":     100.0,    # measured (500/500), FastaSeqFetcher
-            "cdot_ensembl_pct":    99.8,     # measured (816/818; 2 genuine cdot misses)
-            "uta_refseq_pct":      100.0,    # UTA holds every cited version (500/500)
-            "uta_ensembl_pct":     0.0,      # UTA holds no ENST (0/818)
-        }
-        with open(output[0], "w", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=list(row))
-            writer.writeheader()
-            writer.writerow(row)
-        print(f"Written: {output[0]}")
-
-
-rule clinvar_submitted:
-    """R2 submitted-HGVS ClinVar corpus facts: version-age distribution plus the
-    cdot-vs-UTA comparison on strings as the submitting labs wrote them.
-
-    The variant_summary-based corpora take c.HGVS from ClinVar's recomputed Name
-    column, always at the current transcript version, so they are a current-version
-    ceiling. This corpus instead uses the per-SCV HGVS attributes of the VCV XML
-    (submitted strings verbatim), joined to the ClinVar VCF coordinate via AlleleID.
-    Frozen measured constants; the corpus (built from a ClinVar XML download) is not
-    committed, but a 500-pair seed-42 sample is
-    (tests/test_data/clinvar_hgvs/clinvar_submitted_500.tsv). Provenance
-    (measured 2026-08-17, ClinVarVCVRelease_2026-06, cdot 0.2.34 refseq GRCh38,
-    local uta_20241220):
-        # corpus: 5,652,560 SCV HGVS values -> 3,495,275 transcript c./n. strings
-        # -> 2,933,667 unique (AlleleID, string) pairs; 100.00% RefSeq, 0 ENST
-        python paper/scripts/build_clinvar_submitted_pairs.py \\
-            --xml ClinVarVCVRelease_2026-06.xml.gz clinvar.GRCh38.vcf.gz \\
-            clinvar_submitted_pairs.GRCh38.tsv     # (or --scv-csv-dir extraction)
-        # version age vs the current annotation release (RS_2025_08, auto-detected
-        # from per-transcript source URLs in the cdot JSON):
-        python paper/scripts/compute_submitted_version_age.py \\
-            clinvar_submitted_pairs.GRCh38.tsv \\
-            --refseq-grch38 cdot-0.2.34.refseq.GRCh38.json.gz \\
-            --refseq-allbuilds cdot-0.2.34.all-builds-refseq-....json.gz
-        # resolution on the seed-42 3,000-pair sample (VCF-coordinate scoring):
-        F=GCF_000001405.39_GRCh38.p13_genomic.fna.gz
-        python paper/scripts/resolve_clinvar_pass.py clinvar_submitted_sample3000.tsv \\
-            --json cdot-0.2.34.refseq.GRCh38.json.gz --fasta $F --with-fixes \\
-            --out submitted_pass_cdot_3000.csv
-        UTA_DB_URL=... HGVS_SEQREPO_DIR=... python paper/scripts/resolve_clinvar_pass.py \\
-            clinvar_submitted_sample3000.tsv --uta --out submitted_pass_uta_3000.csv
-    Residual taxonomy (clinvar_submitted_residual.csv), derived from the cdot pass
-    rows with fixed_bucket != correct (37 of 3,000):
-      * version_refused (26): cited version absent from the data; the adjacent-version
-        fallback declined to substitute because coordinate-safety could not be
-        verified (REFUSED_UNSAFE_VERSION; no false rescues by design). Split from
-        no_data via summarize_clinvar_pass.py --split-no-data (26 unknown-version).
-      * unknown_accession (1): no version of the accession in the data.
-      * coordinate_drift (4): resolves through the cited historical version to a
-        coordinate that differs from ClinVar's current interpretation.
-      * position_out_of_bounds (3) / reference_mismatch (1): the cited position or
-        base does not exist on the cited version (raises HGVSInvalidIntervalError /
-        HGVSInvalidVariantError).
-      * grammar_unsupported (2): repeat ref[N] and allele [..] notation the
-        biocommons grammar rejects.
-    """
-    output:
-        facts    = "output/facts/clinvar_submitted.csv",
-        residual = "output/facts/clinvar_submitted_residual.csv",
-    run:
-        import os, csv
-        os.makedirs("output/facts", exist_ok=True)
-        row = {
-            "n_scv_tx_strings":             3495275,  # transcript c./n. strings across SCVs
-            "n_unique_pairs":               2933667,  # unique (AlleleID, submitted string)
-            "ensembl_pct":                  0.0,      # not one submitted ENST string
-            "version_not_current_pct":      81.8,     # cited version != current (RS_2025_08)
-            "scv_weighted_not_current_pct": 80.3,     # same, weighted by scv_count
-            "base_retired_pct":             0.7,      # accession absent from current release
-            "not_current_in_cdot_pct":      99.3,     # cdot GRCh38 holds the superseded version
-            "absent_cdot_pct":              0.6,      # cited version absent from cdot GRCh38
-            "n_sample":                     3000,     # seed-42 uniform sample
-            "sample_seed":                  42,
-            "cdot_resolved_pct":            98.9,     # 2966/3000
-            "cdot_matched_pct":             98.7,     # 2962/3000 reproduce the VCF coordinate
-            "cdot_no_data":                 27,       # 26 unknown-version + 1 unknown-accession
-            "cdot_incorrect":               4,
-            "cdot_error":                   7,
-            "uta_resolved_pct":             80.1,     # 2404/3000 (all matched)
-            "uta_no_data_pct":              19.7,     # 592/3000: no alignment for the version
-            "cdot_only":                    563,      # resolved by cdot, not UTA
-            "cdot_only_pct":                18.8,
-            "uta_only":                     1,
-            "rescued_by_fix":               1,        # dup with length suffix (DROPPED_DEL_DUP_COUNT)
-            "regressions":                  0,
-            "after_fix_matched_pct":        98.8,     # 2963/3000
-            "residual_n":                   37,
-            "residual_pct":                 1.2,
-        }
-        with open(output.facts, "w", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=list(row))
-            writer.writeheader()
-            writer.writerow(row)
-        resid = {
-            "n_residual":            37,
-            "version_refused":       26,
-            "unknown_accession":     1,
-            "coordinate_drift":      4,
-            "position_out_of_bounds": 3,
-            "reference_mismatch":    1,
-            "grammar_unsupported":   2,
-        }
-        with open(output.residual, "w", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=list(resid))
-            writer.writeheader()
-            writer.writerow(resid)
-        print(f"Written: {output.facts}, {output.residual}")
+            print("No data_dir - copying the committed measured benchmark facts")
+            shutil.copy(f"{EMPIRICAL}/benchmark.csv", output[0])
 
 
 rule cleaning:
@@ -462,60 +285,6 @@ rule sources:
         "{PYTHON} paper/scripts/compute_sources.py"
 
 
-rule historical:
-    """Tier-2 historical clinical-lab resolution benchmark (cdot vs UTA).
-
-    Frozen measured constants. The source corpus is the set of HGVS descriptions
-    imported into the Shariant platform - real, patient-derived clinical-lab
-    classifications that are NOT shareable, so a referee cannot regenerate these
-    numbers (hence Tier 2). They were produced by resolving the full corpus through
-    paper/scripts/benchmark_historical.py against a local cdot RefSeq+Ensembl JSON
-    and a locally loaded UTA (uta_20241220), identical biocommons engine, pure
-    coordinate projection. Reproduction (on a machine with the private corpus):
-        UTA_DB_URL=... HGVS_SEQREPO_DIR=... python paper/scripts/benchmark_historical.py \\
-            shariant_imported_alleles_uniq.txt \\
-            --json cdot.refseq.grch38.json.gz cdot.ensembl.grch38.json.gz \\
-            --uta-uri postgresql://uta:uta@localhost:5432/uta/uta_20241220
-    Measured 2026-08-14 (cdot data 0.2.34, refseq+ensembl GRCh38 JSON): cdot 99.6%
-    vs UTA 93.7% over 36,010 strings; of the 2,141 (5.9%) cdot resolves and UTA
-    does not, 98.6% are RefSeq historical versions UTA holds no GRCh38 alignment
-    for, 1.3% Ensembl, 0.1% other. The jump from the previous measurement (97.5%
-    on 0.2.33-era data, 2026-06-18) is the #51 historical GRCh38 RefSeq
-    alignments plus the #95 UTA-source restore; the corpus itself also grew
-    slightly (35,695 -> 36,010 lines). The corpus source mix, per-source rates
-    and the cdot-only cause split come from benchmark_historical.py's --out JSON
-    (source_mix, cdot.by_source, uta.by_source, head_to_head.cdot_only_by_cause);
-    n_unique_tx / n_multi_version are counted from the corpus accessions.
-    """
-    output: "output/facts/historical.csv"
-    run:
-        import os, csv
-        os.makedirs("output/facts", exist_ok=True)
-        row = {
-            "n_lines":                    36010,
-            "n_unique_tx":                3731,
-            "n_multi_version":            1654,
-            "cdot_resolved_pct":          99.6,
-            "uta_resolved_pct":           93.7,
-            "cdot_only_pct":              5.9,
-            "cdot_only_historical_pct":   98.6,
-            "cdot_only_ensembl_pct":      1.3,
-            "cdot_only_refseq_absent_pct": 0.1,
-            "cdot_only_other_pct":        0.0,
-            "corpus_refseq_pct":          99.8,
-            "corpus_ensembl_pct":         0.2,
-            "cdot_refseq_pct":            99.7,
-            "cdot_ensembl_pct":           47.4,
-            "uta_refseq_pct":             93.8,
-            "uta_ensembl_pct":            0.0,
-        }
-        with open(output[0], "w", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=list(row))
-            writer.writeheader()
-            writer.writerow(row)
-        print(f"Written: {output[0]}")
-
-
 rule version_stability:
     """Tier-1 reproducible transcript-version stability facts (R5; C2 experiment).
 
@@ -528,25 +297,20 @@ rule version_stability:
 
     With single-build GRCh38 data present it recomputes; the all-builds files
     (needed for the cross-build numbers) are taken from --config
-    refseq_allbuilds=... ensembl_allbuilds=.... Without data it writes the frozen
-    measured constants below (GRCh38, --sample 12000 --seed 1, cdot 0.2.34).
-    Relative to the pre-0.2.33 snapshot: the RefSeq drift increase comes from the
-    #51 historical alignments (old versions drift more), the large Ensembl
-    stability improvement from Ensembl 116 entering the data (verified by
-    re-running on the 0.2.33 files: RefSeq matched the old snapshot exactly,
-    Ensembl already matched the new numbers).
+    refseq_allbuilds=... ensembl_allbuilds=.... Without data the committed
+    measurement in paper/empirical_results/ is copied (GRCh38, --sample 12000
+    --seed 1, cdot 0.2.34; see PROVENANCE.md).
 
     The same script run also bins preserved coding bases by relative CDS position
     (deciles, 5'->3') into positional_drift.csv, conditioned on the partial-drift
-    pairs and unconditioned (see the R5 positional-drift figure); its frozen
-    constants live in paper/empirical_results/positional_drift.csv and are copied
-    here when no data is present.
+    pairs and unconditioned (see the R5 positional-drift figure); it is copied from
+    paper/empirical_results/ alongside version_stability.csv when no data is present.
     """
     output:
         "output/facts/version_stability.csv",
         "output/facts/positional_drift.csv",
     run:
-        import os, csv, shutil
+        import os, shutil
         os.makedirs("output/facts", exist_ok=True)
         rs38 = FILES.get("refseq_grch38", "")
         en38 = FILES.get("ensembl_grch38", "")
@@ -560,35 +324,6 @@ rule version_stability:
                     flags.append(f"--{key.replace('_', '-')} {p}")
             shell(f"{PYTHON} paper/scripts/compute_version_stability.py {' '.join(flags)}")
         else:
-            print("No data_dir — writing the frozen measured version-stability facts")
-            shutil.copy(f"{EMPIRICAL}/positional_drift.csv",
-                        "output/facts/positional_drift.csv")
-            row = {
-                "sample_n":                              12000,
-                "build":                                 "GRCh38",
-                "refseq_pairs":                          19393,
-                "refseq_preserving_pct":                 96.0,
-                "refseq_full_drift_pct":                 3.2,
-                "refseq_partial_drift_pct":              0.7,
-                "refseq_pervariant_safety":              0.968,
-                "refseq_accessions_drift_pct":           5.5,
-                "refseq_top5_drift_share_pct":           92.7,
-                "ensembl_pairs":                         12377,
-                "ensembl_preserving_pct":                98.0,
-                "ensembl_full_drift_pct":                1.6,
-                "ensembl_partial_drift_pct":             0.4,
-                "ensembl_pervariant_safety":             0.987,
-                "ensembl_accessions_drift_pct":          2.0,
-                "ensembl_top5_drift_share_pct":          100.0,
-                "refseq_struct_portable_pct":            99.3,
-                "refseq_drift_struct_flagged_pct":       99.9,
-                "refseq_struct_unchanged_preserved_pct": 100.0,
-                "ensembl_struct_portable_pct":           100.0,
-                "ensembl_drift_struct_flagged_pct":      100.0,
-                "ensembl_struct_unchanged_preserved_pct": 100.0,
-            }
-            with open(output[0], "w", newline="") as fh:
-                writer = csv.DictWriter(fh, fieldnames=list(row))
-                writer.writeheader()
-                writer.writerow(row)
-            print(f"Written: {output[0]}")
+            print("No data_dir - copying the committed measured version-stability facts")
+            for name, dest in zip(("version_stability.csv", "positional_drift.csv"), output):
+                shutil.copy(f"{EMPIRICAL}/{name}", dest)
