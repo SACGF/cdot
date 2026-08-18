@@ -277,24 +277,11 @@ depends.
 **[Tier 2].** The 3.3% of the production corpus (1,075 queries; 826
 unique strings) that still fail to parse after cleaning define the ceiling of what
 pure string repair can achieve. Each residual string was assigned to one single-label
-error class under a fixed decision-tree taxonomy. Of the eight classes, the seven
-repair-relevant ones are shown below with synthesised examples; the eighth was non-HGVS
-input (81 queries, 7.5%: pasted URLs, report templates, or prose) and is excluded from
-the table, as there is nothing in it for cleaning to repair.
-
-**Residual error classes after cleaning** (counts and % of the 1,075 residual
-queries; examples synthesised from public BRCA2 `NM_000059.4`). *(Tier 2; frozen
-constants from a deterministic run over the production corpus.)*
-
-| Class | Queries | What it is (*example*) |
-|---|---|---|
-| Truncated | 284 (26.4%) | cut off before a complete variant: `NM_000059.4:c.68_69` (range, no edit) |
-| No reference | 277 (25.8%) | a bare variant body, no transcript/gene/accession: `c.68_69delAG` |
-| Bad accession | 124 (11.5%) | misplaced or truncated version, or a missing prefix with no unique data match: `NM_000059/4:c.68del` (slash in place of the version dot) |
-| Edit syntax | 113 (10.5%) | malformed or non-standard edit operation: `NM_000059.4:c.68AG>T` (multi-base reference in a substitution) |
-| Trailing / concatenated | 85 (7.9%) | extra characters after a complete variant, or several run together: `NM_000059.4:c.68delAG;c.70A>G` |
-| Grammar gap | 81 (7.5%) | legitimate HGVS the biocommons grammar rejects: `NM_000059.4:c.(67+1_68-1)_(70+1_71-1)del` (uncertain-range deletion) |
-| Insertion (length only) | 30 (2.8%) | an insertion given as a base count, not a sequence: `NM_000059.4:c.68_69ins5` (position and length recoverable; inserted bases not) |
+error class under a fixed decision-tree taxonomy (Supplementary Table S6, with
+synthesised examples and the classification method). Of the eight classes, the seven
+repair-relevant ones appear in the table; the eighth was non-HGVS input (81 queries,
+7.5%: pasted URLs, report templates, or prose) and is excluded, as there is nothing in
+it for cleaning to repair.
 
 The residual falls into three groups. Just over half (~52%: Truncated + No reference) is
 incomplete or reference-less user input: information the user never supplied, which no
@@ -306,16 +293,8 @@ The remaining ~15% splits into two equal classes of 81 queries (7.5%) each: a gr
 (valid HGVS the biocommons grammar rejects rather than the input) and the non-HGVS input
 excluded above (strings that should not be parsed at all). Most of what remains is
 therefore either out of scope for any repair or a downstream grammar limitation.
-
-*Method and limitation:* classification was performed by a large language model (Claude
-Opus 4, Anthropic; 2026-06-17) applying the shared decision tree to each unique string,
-single-label and single-rater; no second-rater adjudication was done, so no inter-rater
-agreement (κ) is reported. The taxonomy is version `v1`. Counts were refreshed on
-2026-08-17 after the accession-repair cleaning rules landed: the 43 residual queries the
-new rules rescue all sat in the Bad accession class (delta re-rated by Claude Fable 5,
-Anthropic), which drops from 167 (14.9% of the previous 1,118-query residual) to 124;
-the other classes are unchanged. Synthesised examples (from public NM_000059.4 /
-NM_001754.5) illustrate each class; no corpus string is reproduced.
+The classification method and its limitations (single-rater LLM labelling under a fixed
+decision tree) are described with Supplementary Table S6.
 
 ## R5: Transcript version fallback and safe substitution
 
