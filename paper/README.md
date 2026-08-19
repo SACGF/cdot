@@ -82,7 +82,7 @@ snakemake -s paper/Snakefile full --config pdf=true --cores 1 \
 
 ### Full build — regenerates every fact, then renders
 
-Recomputes the reproducible (Tier-1) facts from scratch, refreshes the
+Recomputes the reproducible (public-data) facts from scratch, refreshes the
 `paper/empirical_results/` snapshot, then renders. Slow, and needs the inputs each fact requires.
 
 ```bash
@@ -103,7 +103,7 @@ needs are absent, it copies the committed CSV instead, so a build always renders
 | `coverage.csv` | `paper/scripts/compute_coverage.py` over the release JSON.gz files | `data_dir` |
 | `benchmark.csv` | `paper/scripts/compute_benchmark.py` (Table 1 throughput) | `data_dir`, `uta_uri`, SeqRepo |
 | `version_stability.csv`, `positional_drift.csv` | `paper/scripts/compute_version_stability.py` | `data_dir` |
-| `cleaning.csv` | `paper/scripts/inject_and_clean.py` (Tier-1 injection benchmark) | committed test data (none) |
+| `cleaning.csv` | `paper/scripts/inject_and_clean.py` (public-data injection benchmark) | committed test data (none) |
 | `lovd_comparison.csv` | `paper/scripts/lovd_head_to_head.py` | `lovd_checker` (local PHP CLI) |
 | `sources.csv` | `paper/scripts/compute_sources.py` over `cdot_transcripts.yaml` | committed (none) |
 
@@ -119,17 +119,17 @@ copies them into the facts dir. To change one, edit the CSV and update its entry
 
 The full-scale ClinVar throughput runs take ~1.5 h each — see `claude/benchmark_plan.md`.
 
-### Two-tier facts and the private corpus
+### Public and private facts
 
-- **Tier 1 (reproducible)** lives in the fact CSVs above and regenerates from public
-  data committed here.
-- **Tier 2 (production validation, not reproducible)** — the cleaning rescue rate
+- **Public data (reproducible)** lives in the fact CSVs above and regenerates from
+  public data committed here.
+- **Private data (production validation, not reproducible):** the cleaning rescue rate
   (91.7% → 97.0%), the per-fix rescue distribution (Results Table 2), and the residual
-  error taxonomy — comes from the private `cdot_private` corpus and is written into
+  error taxonomy come from the private `cdot_private` corpus and are written into
   `results.md` as **literal frozen constants**, not regenerable facts. No corpus string
   ever enters this repo. When the corpus is re-analysed (`cdot_private/analyze_cleaning.py`),
   transcribe the new aggregate numbers into `results.md` by hand. These are flagged
-  `[Tier 2]` in the text.
+  `[private data]` in the text.
 
 To refresh the committed snapshot without a full data run (e.g. after editing one
 analysis script), regenerate that one CSV into `output/facts/` and copy it into

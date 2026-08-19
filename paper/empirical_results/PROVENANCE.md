@@ -142,6 +142,22 @@ re-resolving the residual strings and catching the exception class:
   (`HGVSInvalidIntervalError`).
 * `unknown_accession` (0): no version of the accession in the data.
 
+## injection_benchmark.csv, residual_taxonomy.csv (table CSVs, not facts)
+
+Multi-row table CSVs rendered inline by the `<!-- include-csv: ... -->` directive in
+`supplementary.md` (Tables S5 and S6), so the numbers live in a CSV rather than hardcoded
+in the markdown. `vibepaper`'s fact loader skips multi-row CSVs, so these are not `{{ }}`
+facts; edit the CSV to change the table.
+
+* `injection_benchmark.csv` (Table S5): per-category recovery of `clean_hgvs()` vs LOVD /
+  VariantValidator / Mutalyzer on the injection benchmark. Body rows from
+  `inject_and_clean.py` + the LOVD / VV / Mutalyzer head-to-heads; the **Total** row is
+  the frozen aggregate (matches `lovd_comparison.csv` / `vv_mutalyzer_comparison.csv`).
+  Refresh by re-running those scripts and re-transcribing.
+* `residual_taxonomy.csv` (Table S6): the seven repair-relevant residual classes of the
+  private cleaning corpus (frozen LLM classification; see `cleaning_corpus.csv`). Percentages
+  are of the 994 genuine-HGVS residual queries.
+
 ## cleaning_corpus.csv (frozen, Tier 2)
 
 R4 production cleaning-corpus headline numbers, transcribed from a deterministic run of
