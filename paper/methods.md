@@ -4,8 +4,7 @@
 
 cdot merges three transcript-annotation sources into a single dataset per build
 (Figure 1A), downloading the complete run of historical releases from the RefSeq and
-Ensembl FTP sites because an NM_ version retired years ago is still cited in patient
-records and ClinVar submissions:
+Ensembl FTP sites:
 
 1. **RefSeq GFF3**: {{ sources.refseq_grch37_releases | int }} GRCh37,
    {{ sources.refseq_grch38_releases | int }} GRCh38, and
@@ -35,19 +34,14 @@ gzip-compressed JSON.
 ## JSON format
 
 JSON parses quickly in every major language and serialises cleanly over HTTP, so the
-same files drive both the in-memory provider and the REST API. Each transcript entry stores shared metadata (`gene_name`, `hgnc`, `biotype`,
-accession and version) plus a `genome_builds` dict keyed by assembly name. The build is
-always a dict key, so a single-build file is a drop-in GTF/GFF replacement and the REST
-API can return a transcript's GRCh37, GRCh38, and T2T-CHM13v2.0 alignments in one
-response. Build-specific fields (`contig`, `strand`, CDS bounds, exons; Supplementary
-Table S3) include a per-exon `gap` string (e.g. `"M196 I1 M61"`) recording
-transcript-vs-genome indels, converted to HGVS CIGAR format at query time. A root-level
-`schema_version` lets clients reject incompatible files on load.
-
-Canonical transcript tags (`mane_select`, `mane_plus_clinical`, `refseq_select`, and
-`ensembl_canonical`) are stored per build where present. MANE Select covers
->{{ literature.mane_coverage_pct | dp(0) }}% of protein-coding genes [@Morales2022]
-and is available for GRCh38; Ensembl canonical tags cover GRCh37 and GRCh38.
+same files drive both the in-memory provider and the REST API. Each transcript entry
+stores shared metadata plus a `genome_builds` dict keyed by assembly name, so one entry
+carries a transcript's GRCh37, GRCh38, and T2T-CHM13v2.0 alignments and a single-build
+file is a drop-in GTF/GFF replacement. Per-build fields include a per-exon `gap` string
+recording transcript-vs-genome indels, converted to HGVS CIGAR format at query time, and
+canonical tags (MANE Select and Plus Clinical, RefSeq Select, Ensembl canonical) where
+present; a root-level `schema_version` lets clients reject incompatible files on load.
+The full schema is Supplementary Table S3.
 
 ## String cleaning (`clean_hgvs()`)
 
@@ -76,7 +70,7 @@ dropped entirely (`000059.4:c.68del`). `resolve_missing_accession_prefix()`, app
 kind letter allows and restores the prefix only when exactly one exists in the loaded
 data, reported as an `HGVSFix` like every other repair.
 
-## Version fallback
+## Version substitution
 
 A separate, opt-in helper, `get_best_transcript_version()`, addresses transcript-version
 drift. Substituting a different version is a heuristic that can be wrong, so it is
@@ -144,7 +138,7 @@ Resolution accuracy and throughput are measured with scripts committed to the
 repository (`paper/scripts/`); protocol detail beyond what follows is in Supplementary
 Methods. `benchmark_resolution.py` resolves real (g.HGVS, c.HGVS) pairs through a
 pluggable provider (local JSON, REST, or UTA) and reports resolution rate, recovery
-from cleaning and version fallback, and speed; the ClinVar pair set is built by
+from cleaning and version substitution, and speed; the ClinVar pair set is built by
 `build_clinvar_pairs.py`. Cleaning is evaluated on a production query corpus and, as a
 reproducible control, with `inject_and_clean.py`, which injects each fix category into
 clean ClinVar strings. `lovd_head_to_head.py` runs the same injected cases through both
@@ -158,17 +152,13 @@ originals.
 sequence-aware validation services, VariantValidator [@Freeman2018] and Mutalyzer
 [@Lefter2021], over their public REST APIs
 ({{ vv_mutalyzer_comparison.service_date }}; remote services cannot be version-pinned,
-so the facts record the service date and the version metadata each API reports).
-VariantValidator requests are routed by accession family (its Ensembl transcripts live
-on a separate endpoint) and a case counts as recovered when the validated transcript
-description matches the target; for Mutalyzer a match by either its
-`corrected_description` or its `normalized_description` counts, since the normalizer
-may legitimately re-shift a representation. On the uncorrupted originals, a valid input
-the service *alters* is a false correction, while one it *rejects* (for example
-Mutalyzer's `EINTRONIC` for intronic positions on a transcript reference, or a
-transcript absent from VariantValidator's database) is counted separately as a
-validity or coverage position, matching how LOVD's flagged-invalid originals are
-reported. Version-fallback safety is measured by `compute_version_stability.py` on
+so the facts record the service date and each API's reported version). A case counts as
+recovered when the service's validated description matches the target; on the
+uncorrupted originals, a valid input the service *alters* is a false correction while one
+it *rejects* is counted separately as a validity or coverage position, matching how
+LOVD's flagged-invalid originals are reported. The per-service request routing and
+matching rules are in Supplementary Methods. Version-substitution safety is measured by
+`compute_version_stability.py` on
 GRCh38, over a seeded {{ version_stability.sample_n | commas }}-accession sample of
 accessions cdot holds at two or more versions; the same run bins preserved coding bases
 by relative CDS position (Supplementary Figure S1).
