@@ -20,7 +20,7 @@ Because it reads the released annotation files directly, cdot covers **1.58 mill
 alignments**, including historical transcript versions - vs ~141k in UTA (v.20210129) - which matters
 when resolving legacy HGVS. See [cdot vs UTA](https://github.com/SACGF/cdot/blob/main/docs/cdot_vs_uta.md) for the trade-offs.
 
-Recent changes are in the [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md).
+Recent changes are in the [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md), and changes to the published transcript data in the [data changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG-data.md).
 
 ## Install
 

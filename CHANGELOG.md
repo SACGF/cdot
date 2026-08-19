@@ -1,19 +1,16 @@
 ## [unreleased]
 
+## [0.2.31] - 2026-08-19
+
 ### Added
 
 - #112 - HGVS cleaning: `resolve_missing_accession_prefix(hgvs_string, data_provider, genome_build=None)` restores a RefSeq prefix the user dropped entirely, eg `000059.4:c.68del` → `NM_000059.4:c.68del`. The kind letter picks the candidate prefixes (`c.` → `NM_`/`XM_`, `n.` → `NR_`/`XR_`; a 7-8 digit field is zero-padded to the 9-digit form) and each candidate is checked against the data provider (via `get_tx_versions`), so the fix is applied only when exactly one candidate accession exists there - with zero or several matches the string is unchanged. Reported as a WARNING `HGVSFix` with the new code `ADDED_ACCESSION_PREFIX`, never silent. `fix_hgvs` runs it automatically whenever a `data_provider` is supplied (before gene resolution); without a provider the string is left alone
 - #112 - HGVS cleaning: new string-level ops driven by the search-log corpus - a semicolon or underscore in place of the accession:allele colon (`NM_000059.4;c.68del` / `NM_001754.5_c.749G>A` → `…:c.…`, reported under `FIXED_SEPARATOR_TYPO`); a space in place of the reference:kind colon after a bare gene symbol (`BRCA2 c.68del` → `BRCA2:c.68del`, new op `HGVSCleanOp.FIX_SPACE_BEFORE_KIND`, which also repairs symbols that resemble an accession, eg `NR2E3 c.349G>A`); a dangling dot left by a dropped transcript version (`NM_001754.:c.749G>A` → `NM_001754:c.749G>A`, new op `HGVSCleanOp.DROP_EMPTY_VERSION` / fix code `DROPPED_EMPTY_VERSION`); and leading-junk stripping now also covers junk separated from the accession by whitespace or a stray dash (`": NM_000059.4(BRCA2):c.68del"`)
-- #51 - RefSeq GRCh38 data now includes NCBI's historical transcript alignments (`RefSeq_historical_alignments`, RS_2024_08 set): alignments of replaced and suppressed NM_/NR_ versions, many of which never appeared in any annotation release cdot ingests. They are merged at the lowest priority above UTA, so a transcript version from any official annotation release is unchanged. Note some historical alignments are partial: a few transcript bases at the ends (eg an unaligned poly-A tail) or occasionally the first bases do not align to the genome, and the stored exon cDNA coordinates reflect that, so positions in an unaligned region cannot be projected. Data only (no client code change), from the next data release
+- #129 - Batch transcript-retrieval hook on the biocommons HGVS data providers: `_get_transcripts(tx_acs)` returns `{tx_ac: transcript_data}` and is now the single point every method that walks a list of transcripts goes through (`get_tx_for_gene`, `get_tx_ac_tags_for_gene`, `get_tx_for_region`, `_get_tags_by_tx_ac`). A provider backed by a database or a bulk REST call can override just this one method (one query instead of N) and speed all of them up. The default implementation loops `_get_transcript` per accession, which is what an in-memory provider such as `JSONDataProvider` already wants, so existing subclasses are unaffected; duplicate accessions collapse and the result follows the order of `tx_acs`. The batch tag hook `_get_tags_by_tx_ac` added in 0.2.28 keeps its signature and now retrieves through `_get_transcripts` too, so overriding `_get_transcripts` alone is enough to remove the N+1 from every one of these methods
 
 ### Changed
 
 - #5 - Performance: the biocommons HGVS data providers now keep a small per-instance LRU cache (10,000 entries) of `get_tx_exons()` results, so repeated lookups of the same transcript/contig no longer rebuild the per-exon dict list (the per-variant hot path when resolving a stream of variants). Applies to `JSONDataProvider` and `RESTDataProvider`; results are cached only after a successful build, so lazily fetched providers still pick up transcripts that appear later (eg after a REST `prefetch()`)
-
-### Fixed
-
-- #95 - Data fix: the genomic `cds_start`/`cds_end` of UTA-sourced minus-strand transcripts were both 1 too high (a 0-based/1-based conversion error in the UTA import; plus-strand transcripts were unaffected). These fields are only used by the PyHGVS integration, so biocommons HGVS resolution was never affected. The UTA import also no longer requires the SACGF PyHGVS fork: when the pipeline ran with standard pyhgvs installed instead, every coding UTA transcript failed conversion and was silently skipped, which is why release 0.2.33 has only 3,954 UTA-sourced GRCh37 records (all non-coding) against 46,659 in 0.2.28. Coding UTA transcripts are restored from the next data release, and the pipeline's UTA fetch now fails loudly instead of keeping a truncated download. Data only (no client code change)
-- #123 - Data fix: `start_codon`/`stop_codon` are now positions along the whole transcript, so they agree with the exon `cds_start`/`cds_end`. A few RefSeq alignments leave a run of transcript bases unaligned between two exons (58 multi-exon GRCh38 records, eg `NM_033517.1`), and the generator collapsed those out of the codon positions but not out of the exon coordinates, so the CDS was reported short and its last codons were rejected as outside CDS bounds. Data only (no client code change), from the next data release. Also corrects the documented convention: the codon fields are 0-based half-open (the biocommons `cds_start_i`/`cds_end_i` they are passed through as), not 1-based
 
 ## [0.2.30] - 2026-06-25
 
@@ -317,8 +314,9 @@ All other changes in this release were for data (and contained in data_v0.2.26)
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.29...HEAD
-[0.2.29]: https://github.com/SACGF/cdot/compare/v0.2.28...v0.2.29
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.31...HEAD
+[0.2.31]: https://github.com/SACGF/cdot/compare/v0.2.30...v0.2.31
+[0.2.30]: https://github.com/SACGF/cdot/compare/v0.2.28...v0.2.30
 [0.2.28]: https://github.com/SACGF/cdot/compare/v0.2.27...v0.2.28
 [0.2.27]: https://github.com/SACGF/cdot/compare/v0.2.26...v0.2.27
 [0.2.26]: https://github.com/SACGF/cdot/compare/v0.2.21...v0.2.26
@@ -333,8 +331,7 @@ All other changes in this release were for data (and contained in data_v0.2.26)
 [0.2.13]: https://github.com/SACGF/cdot/compare/v0.2.12...v0.2.13
 [0.2.12]: https://github.com/SACGF/cdot/compare/v0.2.11...v0.2.12
 [0.2.11]: https://github.com/SACGF/cdot/compare/v0.2.10...v0.2.11
-[0.2.10]: https://github.com/SACGF/cdot/compare/v0.2.9...v0.2.10
-[0.2.9]: https://github.com/SACGF/cdot/compare/v0.2.8...v0.2.9
+[0.2.10]: https://github.com/SACGF/cdot/compare/v0.2.8...v0.2.10
 [0.2.8]: https://github.com/SACGF/cdot/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/SACGF/cdot/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/SACGF/cdot/compare/v0.2.5...v0.2.6

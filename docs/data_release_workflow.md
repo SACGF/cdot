@@ -19,8 +19,9 @@ cannot see the files until you press Publish.
    matters (see the comments in the file).
 2. Bump `JSON_SCHEMA_VERSION` in
    [`generate_transcript_data/json_schema_version.py`](../generate_transcript_data/json_schema_version.py)
-   and add a line to the data changelog comment above it. The version is embedded in every output
-   filename and becomes the release tag (`data_v<version>`).
+   and move the `[unreleased]` entries in [`CHANGELOG-data.md`](../CHANGELOG-data.md) under a heading
+   for the new version. The version is embedded in every output filename and becomes the release tag
+   (`data_v<version>`).
 3. Push to main, then start the workflow: GitHub → Actions → "data-release" → "Run workflow"
    (or `gh workflow run data-release`). A full build parses every source and takes a few hours;
    the matrix runs one job per source file.

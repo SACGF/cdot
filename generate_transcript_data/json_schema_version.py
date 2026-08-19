@@ -1,16 +1,6 @@
 # After 0.2.22 we split version into separate code (pip) and data schema versions
 # The cdot client will use its own major/minor to determine whether it can read these data files
 
-# DATA changelog (TODO: Move this to changelog)
+# Changes to the data are recorded in CHANGELOG-data.md (in the repo root)
 
-# 0.2.29 - Ensembl now has HGNC added from outside GTFs
-# 0.2.30 - Ensembl GRCh37 has canonical transcripts added from outside GTFs
-# 0.2.31 - Add 'metadata' - method/urls
-# 0.2.32 - Add 'source' (GTF column #2) to build data
-# 0.2.33 - Store "ccds", "transcript_support_level"
-# 0.2.34 - start_codon/stop_codon are whole-transcript positions, so they agree with the exon
-#          cds_start/cds_end where an alignment leaves a hole in the transcript coordinates (#123)
-#          Historical GRCh38 RefSeq alignments of replaced/suppressed versions (#51)
-#          UTA build cds_start/cds_end no longer 1 too high on minus strand, and coding UTA
-#          transcripts restored (were silently skipped when built without the pyhgvs fork) (#95)
 JSON_SCHEMA_VERSION = "0.2.34"

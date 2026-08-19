@@ -14,7 +14,12 @@ Performance comparison: UTA public DB ~1s/transcript vs cdot JSON.gz ~500-1000 t
 
 **PyHGVS is abandoned — prefer biocommons HGVS.** The `cdot/pyhgvs/` integration exists for legacy compatibility but PyHGVS is no longer maintained. Do not write new features that require significant PyHGVS-specific work. Focus new development on the biocommons HGVS path (`cdot/hgvs/dataproviders/`). If a feature is straightforward to support in both libraries, fine; if it requires real effort for PyHGVS, skip it and biocommons-only is acceptable.
 
-**Keep the changelog up to date.** `CHANGELOG.md` is for **users of the client code** — only add entries for changes such a user would care about: client API/behaviour changes, dependency/compatibility changes (eg dropping a Python version), and changes to the **data content** they consume (note when a change only affects data and not client code). Add the entry to the `[unreleased]` section under `### Added`, `### Changed`, or `### Fixed`, and reference the GitHub issue it is done against (eg `#27`).
+**Keep the changelogs up to date.** There are two, because code and data are released separately, on independent version numbers:
+
+- `CHANGELOG.md` is for users of the client code (`pip install cdot`), versioned by `cdot.__version__` and released to PyPI. Client API/behaviour changes, dependency/compatibility changes (eg dropping a Python version).
+- `CHANGELOG-data.md` is for users of the published transcript data, versioned by `generate_transcript_data/json_schema_version.py` and released as a `data_v<version>` GitHub release. Changes to the data content they consume.
+
+Put the entry in whichever one the change actually ships in; a change affecting both gets an entry in each. Add it to that file's `[unreleased]` section under `### Added`, `### Changed`, or `### Fixed`, and reference the GitHub issue it is done against (eg `#27`).
 
 Do **NOT** add changelog entries for things a client-code user never sees: documentation, the paper (`paper/`), benchmark/analysis tooling (`analysis/`, `tests/benchmark_*.py`), CI/dev infrastructure, or the data-generation/build pipeline (`generate_transcript_data/`, Snakemake) when it doesn't change the released data. When in doubt, ask "would someone who only does `pip install cdot` and calls the library (or downloads a data release) notice this?" — if no, leave it out.
 
