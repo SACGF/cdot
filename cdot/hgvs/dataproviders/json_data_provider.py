@@ -70,6 +70,22 @@ class AbstractJSONDataProvider(Interface):
     def _get_transcript(self, tx_ac):
         pass
 
+    def _get_transcripts(self, tx_acs) -> dict:
+        """
+        Return ``{tx_ac: transcript_data}`` for the given accessions.
+
+        This is the retrieve-many hook: every method that walks a list of transcripts
+        (:meth:`get_tx_for_gene`, :meth:`get_tx_ac_tags_for_gene`,
+        :meth:`get_tx_for_region`, :meth:`_get_tags_by_tx_ac`) goes through here, so a
+        provider that can answer for many accessions at once - a single database query,
+        a bulk REST call - only has to override this one method to speed all of them up.
+
+        The default fetches one at a time via :meth:`_get_transcript`, which is what a
+        provider holding its transcripts in memory already wants. Duplicate accessions
+        collapse (it is keyed by accession) and insertion order follows ``tx_acs``.
+        """
+        return {tx_ac: self._get_transcript(tx_ac) for tx_ac in tx_acs}
+
     @abc.abstractmethod
     def _get_gene(self, gene):
         pass
@@ -480,8 +496,7 @@ class LocalDataProvider(AbstractJSONDataProvider):
         """ return transcript info records for supplied gene, in order of decreasing length """
 
         tx_list = []  # Store in tuples with length, so we can sort before returning
-        for transcript_id in self._get_transcript_ids_for_gene(gene):
-            transcript_data = self._get_transcript(transcript_id)
+        for transcript_id, transcript_data in self._get_transcripts(self._get_transcript_ids_for_gene(gene)).items():
             cds_start_i = transcript_data.get("start_codon")
             cds_end_i = transcript_data.get("stop_codon")
             # Return the canonical versioned accession from the record (matching
@@ -518,7 +533,8 @@ class LocalDataProvider(AbstractJSONDataProvider):
         override receives the accession, the full transcript dict, and the build
         name, so it can fall back to the cdot data when the external source has no
         entry. (To answer for many accessions in one query, override
-        :meth:`_get_tags_by_tx_ac` instead.)
+        :meth:`_get_tags_by_tx_ac` instead; to batch the transcript retrieval that
+        feeds it, override :meth:`_get_transcripts`.)
 
         Example override (Django)::
 
@@ -533,20 +549,20 @@ class LocalDataProvider(AbstractJSONDataProvider):
         tag_str = build_data.get("tag", "")
         return [t.strip() for t in tag_str.split(",") if t.strip()] if tag_str else []
 
-    def _get_tags_by_tx_ac(self, tx_acs: list[str], genome_build: str) -> dict[str, list[str]]:
+    def _get_tags_by_tx_ac(self, transcripts: dict, genome_build: str) -> dict[str, list[str]]:
         """
-        Return {tx_ac: tags} for the given accessions in the given genome build.
+        Return {tx_ac: tags} for the given {tx_ac: transcript_data} in the given
+        genome build.
 
-        The default loops :meth:`_get_transcript` + :meth:`_get_transcript_tags`
-        per accession. Override in a subclass that can answer for all accessions
-        in a single query (e.g. a Django provider with a MANE table) to avoid the
-        N+1 query pattern on the gene-symbol resolution path.
+        The caller has already retrieved the transcripts (via :meth:`_get_transcripts`),
+        so the default just reads each one's tags with :meth:`_get_transcript_tags`.
+        Override this when the tags live somewhere other than the transcript JSON and
+        can be answered for all accessions in one go (e.g. a Django provider with a
+        MANE table); override :meth:`_get_transcripts` when it's the transcript
+        retrieval itself you want to batch.
         """
-        result = {}
-        for tx_ac in tx_acs:
-            transcript_data = self._get_transcript(tx_ac)
-            result[tx_ac] = self._get_transcript_tags(tx_ac, transcript_data, genome_build)
-        return result
+        return {tx_ac: self._get_transcript_tags(tx_ac, transcript_data, genome_build)
+                for tx_ac, transcript_data in transcripts.items()}
 
     def get_tx_ac_tags_for_gene(self, gene: str, genome_build: str) -> list[tuple[str, list[str]]]:
         """
@@ -569,8 +585,8 @@ class LocalDataProvider(AbstractJSONDataProvider):
         are unaffected, as ``transcript_data["id"]`` equals that id.
         """
         lengths = []
-        for transcript_id in self._get_transcript_ids_for_gene(gene):
-            transcript_data = self._get_transcript(transcript_id)
+        transcripts_by_ac = {}
+        for transcript_id, transcript_data in self._get_transcripts(self._get_transcript_ids_for_gene(gene)).items():
             build_data = transcript_data["genome_builds"].get(genome_build)
             if build_data is None:
                 continue
@@ -582,8 +598,9 @@ class LocalDataProvider(AbstractJSONDataProvider):
             # [alt_start, alt_end, ...] so each exon's length is alt_end - alt_start.
             length = sum(exon[1] - exon[0] for exon in build_data["exons"])
             lengths.append((length, accession))
+            transcripts_by_ac[accession] = transcript_data
 
-        tags_by_ac = self._get_tags_by_tx_ac([tx_ac for _, tx_ac in lengths], genome_build)
+        tags_by_ac = self._get_tags_by_tx_ac(transcripts_by_ac, genome_build)
         lengths.sort(key=lambda x: x[0], reverse=True)
         return [(tx_ac, tags_by_ac.get(tx_ac, [])) for _, tx_ac in lengths]
 
@@ -594,9 +611,8 @@ class LocalDataProvider(AbstractJSONDataProvider):
 
         tx_list = []
         contig_iv_tree = self._get_contig_interval_tree(alt_ac)
-        for interval in contig_iv_tree[start_i:end_i+1]:
-            transcript_id = interval.data
-            transcript_data = self._get_transcript(transcript_id)
+        transcript_ids = [interval.data for interval in contig_iv_tree[start_i:end_i+1]]
+        for transcript_id, transcript_data in self._get_transcripts(transcript_ids).items():
             build_data = self._get_transcript_coordinates_for_contig(transcript_data, alt_ac)
             contig, tx_start, tx_end, strand = self._get_contig_start_end_strand(build_data)
             if contig == alt_ac:

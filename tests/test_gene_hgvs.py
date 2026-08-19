@@ -1017,10 +1017,10 @@ def test_get_tx_ac_tags_for_gene_uses_batch_hook(ensembl_provider, monkeypatch):
     # batch hook _get_tags_by_tx_ac, so a subclass can answer in one query.
     calls = {}
 
-    def fake_batch(tx_acs, genome_build):
-        calls["tx_acs"] = list(tx_acs)
+    def fake_batch(transcripts, genome_build):
+        calls["tx_acs"] = list(transcripts)
         calls["genome_build"] = genome_build
-        return {tx_ac: ["MANE_Select"] for tx_ac in tx_acs}
+        return {tx_ac: ["MANE_Select"] for tx_ac in transcripts}
 
     monkeypatch.setattr(ensembl_provider, "_get_tags_by_tx_ac", fake_batch)
     result = ensembl_provider.get_tx_ac_tags_for_gene("AOAH", "GRCh38")
@@ -1030,8 +1030,10 @@ def test_get_tx_ac_tags_for_gene_uses_batch_hook(ensembl_provider, monkeypatch):
     assert all(tags == ["MANE_Select"] for _tx_ac, tags in result)
 
 
-def test_get_tags_by_tx_ac_default_loops_per_transcript_hook(ensembl_provider):
-    # Default batch implementation defers to the per-transcript hook.
+def test_get_tags_by_tx_ac_default_reads_per_transcript_hook(ensembl_provider):
+    # Default implementation reads tags off the transcripts it was handed, via the
+    # per-transcript hook.
     tx_acs = ensembl_provider._get_transcript_ids_for_gene("AOAH")
-    by_ac = ensembl_provider._get_tags_by_tx_ac(list(tx_acs), "GRCh38")
+    transcripts = ensembl_provider._get_transcripts(tx_acs)
+    by_ac = ensembl_provider._get_tags_by_tx_ac(transcripts, "GRCh38")
     assert "MANE_Select" in by_ac["ENST00000617537.5"]
