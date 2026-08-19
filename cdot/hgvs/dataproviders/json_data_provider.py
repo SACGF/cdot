@@ -532,9 +532,9 @@ class LocalDataProvider(AbstractJSONDataProvider):
         stores MANE/canonical status separately from the transcript JSON).  The
         override receives the accession, the full transcript dict, and the build
         name, so it can fall back to the cdot data when the external source has no
-        entry. (To answer for many accessions in one query, override
-        :meth:`_get_tags_by_tx_ac` instead; to batch the transcript retrieval that
-        feeds it, override :meth:`_get_transcripts`.)
+        entry. (To batch the transcript retrieval that feeds this, override
+        :meth:`_get_transcripts`; to answer the tags themselves for many accessions
+        in one query, override :meth:`_get_tags_by_tx_ac`.)
 
         Example override (Django)::
 
@@ -549,20 +549,21 @@ class LocalDataProvider(AbstractJSONDataProvider):
         tag_str = build_data.get("tag", "")
         return [t.strip() for t in tag_str.split(",") if t.strip()] if tag_str else []
 
-    def _get_tags_by_tx_ac(self, transcripts: dict, genome_build: str) -> dict[str, list[str]]:
+    def _get_tags_by_tx_ac(self, tx_acs: list[str], genome_build: str) -> dict[str, list[str]]:
         """
-        Return {tx_ac: tags} for the given {tx_ac: transcript_data} in the given
-        genome build.
+        Return {tx_ac: tags} for the given accessions in the given genome build.
 
-        The caller has already retrieved the transcripts (via :meth:`_get_transcripts`),
-        so the default just reads each one's tags with :meth:`_get_transcript_tags`.
-        Override this when the tags live somewhere other than the transcript JSON and
-        can be answered for all accessions in one go (e.g. a Django provider with a
-        MANE table); override :meth:`_get_transcripts` when it's the transcript
-        retrieval itself you want to batch.
+        The default retrieves the transcripts in one go with :meth:`_get_transcripts`
+        and reads each one's tags with :meth:`_get_transcript_tags`, so a provider
+        that overrides :meth:`_get_transcripts` already answers this in a single
+        query - there is no need to override this method just to avoid the N+1.
+
+        Override this one when the tags live somewhere other than the transcript
+        JSON and can be answered for all accessions at once (e.g. a Django provider
+        with a MANE table), which saves retrieving the transcripts at all.
         """
         return {tx_ac: self._get_transcript_tags(tx_ac, transcript_data, genome_build)
-                for tx_ac, transcript_data in transcripts.items()}
+                for tx_ac, transcript_data in self._get_transcripts(tx_acs).items()}
 
     def get_tx_ac_tags_for_gene(self, gene: str, genome_build: str) -> list[tuple[str, list[str]]]:
         """
@@ -585,7 +586,6 @@ class LocalDataProvider(AbstractJSONDataProvider):
         are unaffected, as ``transcript_data["id"]`` equals that id.
         """
         lengths = []
-        transcripts_by_ac = {}
         for transcript_id, transcript_data in self._get_transcripts(self._get_transcript_ids_for_gene(gene)).items():
             build_data = transcript_data["genome_builds"].get(genome_build)
             if build_data is None:
@@ -598,9 +598,8 @@ class LocalDataProvider(AbstractJSONDataProvider):
             # [alt_start, alt_end, ...] so each exon's length is alt_end - alt_start.
             length = sum(exon[1] - exon[0] for exon in build_data["exons"])
             lengths.append((length, accession))
-            transcripts_by_ac[accession] = transcript_data
 
-        tags_by_ac = self._get_tags_by_tx_ac(transcripts_by_ac, genome_build)
+        tags_by_ac = self._get_tags_by_tx_ac([tx_ac for _, tx_ac in lengths], genome_build)
         lengths.sort(key=lambda x: x[0], reverse=True)
         return [(tx_ac, tags_by_ac.get(tx_ac, [])) for _, tx_ac in lengths]
 

@@ -37,21 +37,26 @@ class TestRetrieveMany(unittest.TestCase):
         test_json_file = os.path.join(this_file_dir, "test_data/cdot.refseq.grch37.json")
         self.data_provider = BatchRecordingJSONDataProvider([test_json_file])
 
-    def _assert_retrieved_in_one_batch(self):
-        self.assertEqual(1, len(self.data_provider.batches))
-        self.assertTrue(self.data_provider.batches[0], "batch was not empty")
+    def _assert_retrieved_in_batches(self, expected_batches=1):
+        """ The point is that the number of retrievals is constant, not per-transcript """
+        batches = self.data_provider.batches
+        self.assertEqual(expected_batches, len(batches))
+        for batch in batches:
+            self.assertTrue(batch, "batch was not empty")
 
     def test_get_tx_for_gene_retrieves_in_one_batch(self):
         self.data_provider.get_tx_for_gene(self.GENE)
-        self._assert_retrieved_in_one_batch()
+        self._assert_retrieved_in_batches()
 
-    def test_get_tx_ac_tags_for_gene_retrieves_in_one_batch(self):
+    def test_get_tx_ac_tags_for_gene_retrieves_in_batches(self):
+        # Two batches (rank by length, then tags), not one query per transcript - which
+        # is the whole point: a few hundred transcripts cost 2 retrievals, not 400.
         self.data_provider.get_tx_ac_tags_for_gene(self.GENE, "GRCh37")
-        self._assert_retrieved_in_one_batch()
+        self._assert_retrieved_in_batches(2)
 
     def test_get_tx_for_region_retrieves_in_one_batch(self):
         self.data_provider.get_tx_for_region(self.CONTIG, "splign", 36570024, 36570025)
-        self._assert_retrieved_in_one_batch()
+        self._assert_retrieved_in_batches()
 
     def test_default_retrieves_one_at_a_time(self):
         """ Providers holding transcripts in memory keep working without an override """
