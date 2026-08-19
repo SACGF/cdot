@@ -1,0 +1,8 @@
+Class,Queries,What it is (*example*)
+Truncated,284 (28.6%),"cut off before a complete variant: `NM_000059.4:c.68_69` (range, no edit)"
+No reference,277 (27.9%),"a bare variant body, no transcript/gene/accession: `c.68_69delAG`"
+Bad accession,124 (12.5%),"misplaced or truncated version, or a missing prefix with no unique data match: `NM_000059/4:c.68del` (slash in place of the version dot)"
+Edit syntax,113 (11.4%),malformed or non-standard edit operation: `NM_000059.4:c.68AG>T` (multi-base reference in a substitution)
+Trailing / concatenated,85 (8.6%),"extra characters after a complete variant, or several run together: `NM_000059.4:c.68delAG;c.70A>G`"
+Grammar gap,81 (8.1%),legitimate HGVS the biocommons grammar rejects: `NM_000059.4:c.(67+1_68-1)_(70+1_71-1)del` (uncertain-range deletion)
+Insertion (length only),30 (3.0%),"an insertion given as a base count, not a sequence: `NM_000059.4:c.68_69ins5` (position and length recoverable; inserted bases not)"

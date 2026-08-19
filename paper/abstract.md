@@ -4,12 +4,16 @@
 
 **Motivation:**
 
-Resolving a transcript-level HGVS variant description to genomic coordinates requires
-accurate, versioned transcript-to-genome alignments. The standard source for this,
-UTA, requires a PostgreSQL database, covers only
-~{{ literature.uta_count | commas }} alignments, retains limited transcript history,
-and omits Ensembl, while the descriptions real pipelines receive are often malformed or
-cite retired transcript versions.
+cdot was built for the Australian Genomics Shariant project [@Tudini2022], which pools
+variant classifications from clinical laboratories across the country, each recorded
+against whatever transcript version the submitting lab used at the time. Making that
+shared history usable meant resolving as many real-world transcript-level HGVS
+descriptions as possible, including the malformed strings and long-retired transcript
+versions that accumulate in variant databases and clinical records. The standard
+transcript source for the Python HGVS libraries, UTA, forces a tradeoff between a
+locally installed PostgreSQL database and a slow public server that many clinical
+networks firewall; it covers only ~{{ literature.uta_count | commas }} RefSeq
+alignments, retains limited transcript history, and omits Ensembl.
 
 **Results:**
 
@@ -21,16 +25,18 @@ the Python HGVS libraries, T2T-CHM13v2.0, as a single gzipped JSON file or a RES
 version that is no longer current, cdot resolved
 {{ clinvar_submitted.cdot_resolved_pct | dp(1) }}% versus
 {{ clinvar_submitted.uta_resolved_pct | dp(1) }}% for UTA. Loaded in memory, cdot
-resolves ~{{ benchmark.cdot_local_tps | commas }} HGVS/second, nearly four orders of
-magnitude above the public UTA server. A parser-independent cleaning step
+resolves ~{{ benchmark.cdot_local_tps | commas }} HGVS/second, about four times a
+locally installed UTA, and compared remote-to-remote its REST API is roughly two orders
+of magnitude faster than the public UTA server. A parser-independent cleaning step
 (`clean_hgvs()`) repairs common formatting errors before resolution, and an opt-in
-fallback substitutes a retired transcript version only when a coordinate-safety check
-confirms the substitution does not move the variant.
+version-substitution step supplies a retired transcript version only when a
+coordinate-safety check confirms it does not change the variant's coordinate.
 
 **Availability and Implementation:**
 
-https://github.com/SACGF/cdot; `pip install cdot`; MIT licence. Data files (JSON.gz) at
-cdotlib.org and [Zenodo DOI].
+https://github.com/SACGF/cdot; `pip install cdot`; MIT licence. Data files (JSON.gz) are
+published on the GitHub releases page and archived at [Zenodo DOI]; a REST API is served
+at cdotlib.org.
 
 **Contact:** [email]
 

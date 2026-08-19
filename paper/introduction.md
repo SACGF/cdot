@@ -14,12 +14,9 @@ over five years of production logs, only
 ~{{ literature.mutalyzer_error_pct | dp(0) }}% contained a syntactic or semantic error,
 and Mutalyzer could automatically correct only
 ~{{ literature.mutalyzer_autocorrect_pct | dp(0) }}% (all rates per unique description)
-[@Lefter2021]. Transcript choice also matters downstream: only
-{{ literature.lof_agreement_pct | dp(0) }}% of putative loss-of-function variants were
-classified as loss-of-function by both RefSeq and Ensembl annotation sets in ANNOVAR
-[@McCarthy2014], so covering both annotation sources matters.
+[@Lefter2021].
 
-The two dominant Python HGVS libraries are biocommons/hgvs [@Hart2015; @Wang2018] and
+The two dominant Python HGVS libraries are biocommons/hgvs [@Wang2018] and
 PyHGVS. biocommons/hgvs reads from a pluggable data provider behind a common interface,
 which other tools such as hgvs-weaver [@HgvsWeaver] also implement, so a single
 transcript backend serves multiple clients; PyHGVS loads transcripts from its own data
@@ -40,9 +37,13 @@ whichever transcript version the lab used at the time, so making them usable mea
 resolving as many of these real-world strings as possible, including ones that
 reference transcript versions long retired from the current annotation.
 
-To do this, cdot generates compact JSON files from all available RefSeq GFF3 and
-Ensembl GTF annotation releases, covering {{ coverage.total_count | commas }} versioned
-transcript alignments across GRCh37, GRCh38, and T2T-CHM13v2.0 [@Nurk2022]. The files
-load locally in seconds and can also be served on demand through a REST API
-(cdotlib.org), so the same data backs both a fast in-memory provider and lightweight
-remote access.
+To resolve as many of those descriptions as possible, cdot combines three things: broad
+versioned transcript coverage, so the cited version is present in the first place;
+parser-independent string cleaning, so a malformed description still parses; and an
+opt-in, coordinate-safe version substitution for the cases where the exact cited version
+is genuinely gone. For coverage, cdot generates compact JSON files from all available
+RefSeq GFF3 and Ensembl GTF annotation releases, covering
+{{ coverage.total_count | commas }} versioned transcript alignments across GRCh37,
+GRCh38, and T2T-CHM13v2.0 [@Nurk2022]. The files load locally in seconds and can also be
+served on demand through a REST API (cdotlib.org), so the same data backs both a fast
+in-memory provider and lightweight remote access.

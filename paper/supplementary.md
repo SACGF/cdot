@@ -27,7 +27,7 @@ as a missing accession prefix), so both tools are eligible on every case.
 
 ### Shariant corpus resolution protocol
 
-The Shariant corpus (Results R2, Tier 2) is resolved as pure coordinate projection with
+The Shariant corpus (Results R2, private data) is resolved as pure coordinate projection with
 `replace_reference=False`, so the sequence layer never differs between the two
 backends.
 
@@ -136,7 +136,7 @@ notations are not miscounted.
 laboratories citing mostly current RefSeq versions, so this is a clean, public,
 reproducible scale check that cdot resolves real variants at scale, not an unbiased sample
 of the transcripts clinical labs use. The unbiased real-world complement is the Shariant
-historical corpus (Results R2, Tier 2). The pair builder extracts both RefSeq and Ensembl
+historical corpus (Results R2, private data). The pair builder extracts both RefSeq and Ensembl
 c.HGVS and reports the measured source mix, but ClinVar's `variant_summary` Name column is
 RefSeq-centric, so the Ensembl share at this scale is near zero. ClinVar's comprehensive
 Ensembl HGVS lives in `hgvs4variation.txt.gz`, which this pass does not ingest; the
@@ -196,27 +196,9 @@ commands in each script's docstring; totals also appear in
 `paper/empirical_results/cleaning.csv`, `lovd_comparison.csv` and
 `vv_mutalyzer_comparison.csv`.
 
-| Injected error (example → target) | n | `clean_hgvs()` | LOVD top-1 | VV | Mutalyzer |
-|---|---|---|---|---|---|
-| Whitespace (` NM_000059.4: c.68del`) | 200 | 100% | 100% | 96.5% | 89.5% |
-| Lowercased bases (`c.316g>a`) | 200 | 100% | 100% | 96.0% | 89.5% |
-| Trailing protein suffix (`c.68del p.Arg100Ter`) | 200 | 100% | 91.5% | 0% | 0% |
-| Gene wrapper with colon (`NM_000059.4:(BRCA2):c.68del`) | 200 | 100% | 0% | 0% | 0% |
-| Gene/transcript swapped (`BRCA2(NM_000059.4):c.68del`) | 200 | 100% | 49.5% | 94.5% | 0% |
-| Surrounding quotes (`"NM_000059.4:c.68del"`) | 200 | 100% | 0% | 97.5% | 0% |
-| Doubled colon (`NM_000059.4::c.68del`) | 200 | 100% | 0% | 99.0% | 0% |
-| Unbalanced bracket (`(NM_000059.4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
-| Separator typo (`NM_000059.4:c,68del`) | 200 | 100% | 100% | 0% | 0% |
-| Doubled version dot (`NM_000059..4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
-| Leading junk (`GRCh38.p2 NM_000059.4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
-| Doubled kind (`NM_000059.4:c.c.68del`) | 200 | 100% | 0% | 0% | 0% |
-| Lowercased accession (`nm_000059.4:c.68del`) | 200 | 100% | 52.0% | 94.0% | 35.5% |
-| Redundant del/dup count (`c.68_69del23`) | 77 | 100% | 0% | 0% | 0% |
-| Missing accession underscore (`NM000059.4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
-| Colon in accession prefix (`NM:_000059.4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
-| Uppercased mutation type (`c.68DEL`) | 142 | 100% | 100% | 94.4% | 0% |
-| Dropped accession letter (`M_000059.4:c.68del`) | 200 | 100% | 0% | 0% | 0% |
-| **Total** | **{{ lovd_comparison.n_cases | commas }}** | **{{ lovd_comparison.cdot_pct | dp(1) }}%** | **{{ lovd_comparison.lovd_top1_pct | dp(1) }}%** | **{{ vv_mutalyzer_comparison.vv_pct | dp(1) }}%** | **{{ vv_mutalyzer_comparison.mut_pct | dp(1) }}%** |
+<!-- include-csv: empirical_results/injection_benchmark.csv
+  align: left
+-->
 
 Weighted by the production rescue-op distribution (Results Table 2) the totals are
 {{ lovd_comparison.cdot_weighted_pct | dp(1) }}% for `clean_hgvs()`,
@@ -253,24 +235,19 @@ could not parse embedded the LOVD syntax checker's ranked suggestions in
 
 ### Table S6: Residual error classes after cleaning
 
-**[Tier 2].** Single-label classification of the 1,075 production queries (826 unique
-strings) that still fail to parse after cleaning (Results, "Residual errors"), under a
-fixed decision-tree taxonomy. Of the eight classes, the seven repair-relevant ones are
-shown; the eighth was non-HGVS input (81 queries, 7.5%: pasted URLs, report templates,
-or prose), excluded here as there is nothing in it for cleaning to repair. Counts and %
-are of the 1,075 residual queries; examples are synthesised from public BRCA2
-`NM_000059.4`. *(Tier 2; frozen constants from a deterministic run over the production
-corpus.)*
+**[private data].** Single-label classification of the {{ cleaning_corpus.residual_n | commas }}
+genuine-HGVS production queries
+that still fail to parse after cleaning (Results, "Residual errors"), under a fixed
+decision-tree taxonomy. A further {{ cleaning_corpus.nonhgvs_n | int }} residual queries were non-HGVS input (pasted URLs,
+report templates, or prose) that slipped the corpus regex; these are a data-collection
+artifact with nothing in them for cleaning to repair, so they are removed from the
+corpus and excluded here (Results). Counts and % below are of the {{ cleaning_corpus.residual_n | commas }} residual queries;
+examples are synthesised from public BRCA2 `NM_000059.4`. *(Private data; frozen constants
+from a deterministic run over the production corpus.)*
 
-| Class | Queries | What it is (*example*) |
-|---|---|---|
-| Truncated | 284 (26.4%) | cut off before a complete variant: `NM_000059.4:c.68_69` (range, no edit) |
-| No reference | 277 (25.8%) | a bare variant body, no transcript/gene/accession: `c.68_69delAG` |
-| Bad accession | 124 (11.5%) | misplaced or truncated version, or a missing prefix with no unique data match: `NM_000059/4:c.68del` (slash in place of the version dot) |
-| Edit syntax | 113 (10.5%) | malformed or non-standard edit operation: `NM_000059.4:c.68AG>T` (multi-base reference in a substitution) |
-| Trailing / concatenated | 85 (7.9%) | extra characters after a complete variant, or several run together: `NM_000059.4:c.68delAG;c.70A>G` |
-| Grammar gap | 81 (7.5%) | legitimate HGVS the biocommons grammar rejects: `NM_000059.4:c.(67+1_68-1)_(70+1_71-1)del` (uncertain-range deletion) |
-| Insertion (length only) | 30 (2.8%) | an insertion given as a base count, not a sequence: `NM_000059.4:c.68_69ins5` (position and length recoverable; inserted bases not) |
+<!-- include-csv: empirical_results/residual_taxonomy.csv
+  align: left
+-->
 
 *Method and limitation:* classification was performed by a large language model (Claude
 Opus 4, Anthropic; 2026-06-17) applying the shared decision tree to each unique string,

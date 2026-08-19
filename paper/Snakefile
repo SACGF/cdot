@@ -88,7 +88,8 @@ FROZEN_FACTS = ["literature.csv",
                 "clinvar_submitted.csv", "clinvar_submitted_residual.csv",
                 "clinvar_vcf.csv", "clinvar_vcf_residual.csv",
                 "clinvar_residual_positions.csv", "genomic_mismatch.csv",
-                "historical.csv", "version_safety_validation.csv"]
+                "historical.csv", "version_safety_validation.csv",
+                "cleaning_corpus.csv"]
 
 FACT_FILES = COMPUTED_FACTS + FROZEN_FACTS
 

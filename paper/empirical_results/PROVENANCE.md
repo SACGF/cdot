@@ -82,51 +82,99 @@ comparison on strings as the submitting labs wrote them.
 The variant_summary-based corpora take c.HGVS from ClinVar's recomputed `Name` column,
 always at the current transcript version, so they are a current-version ceiling. This
 corpus instead uses the per-SCV HGVS attributes of the VCV XML (submitted strings
-verbatim), joined to the ClinVar VCF coordinate via AlleleID. The corpus (built from a
-ClinVar XML download) is not committed, but a 500-pair seed-42 sample is
+verbatim), joined to the ClinVar VCF coordinate via AlleleID, and tags each pair with
+the earliest SCV submission date so it can be sampled by era. The corpus (built from a
+ClinVar XML download) is not committed, but a 500-pair seed-42 random sample is
 (`tests/test_data/clinvar_hgvs/clinvar_submitted_500.tsv`).
 
-Measured 2026-08-17 (ClinVarVCVRelease_2026-06, cdot 0.2.34 refseq GRCh38, local
-uta_20241220):
+Two 3,000-pair samples are scored (seed 42): a whole-file **random** draw (reflects the
+live file, recency-biased) and a **time-bucketed** draw (even across submission-year
+eras 2008-2026, the fair historical picture). R2 leads with the fair sample; the random
+draw's numbers are the `rnd_*` columns. The fair draw is harder and widens the cdot-UTA
+gap because it up-weights old submissions citing superseded versions.
+
+Measured 2026-08-19 (ClinVarVCVRelease_2026-06, cdot 0.2.34 refseq GRCh38, local
+uta_20241220, SeqRepo for UTA sequence):
 
 ```bash
-# corpus: 5,652,560 SCV HGVS values -> 3,495,275 transcript c./n. strings
-# -> 2,933,667 unique (AlleleID, string) pairs; 100.00% RefSeq, 0 ENST
+# corpus: 4,027,987 SCV transcript expressions -> 3,198,528 unique (AlleleID, string)
+# pairs; 100% RefSeq, 0 ENST; all dated (2008-2026). Larger than the earlier 2,933,667:
+# the XML path scans to the first *transcript* HGVS per assertion, capturing SCVs whose
+# first HGVS attribute is genomic/protein (the --scv-csv-dir path dropped those).
 python paper/scripts/build_clinvar_submitted_pairs.py \
     --xml ClinVarVCVRelease_2026-06.xml.gz clinvar.GRCh38.vcf.gz \
-    clinvar_submitted_pairs.GRCh38.tsv     # (or --scv-csv-dir extraction)
+    clinvar_submitted_pairs_dated.GRCh38.tsv --sample 3000 --seed 42 \
+    --sample-out submitted_random_3000.tsv \
+    --time-bucketed-out submitted_bucketed_3000.tsv
 
-# version age vs the current annotation release (RS_2025_08, auto-detected
-# from per-transcript source URLs in the cdot JSON):
+# version age vs the current annotation release (RS_2025_08): 75.13% not-current
 python paper/scripts/compute_submitted_version_age.py \
-    clinvar_submitted_pairs.GRCh38.tsv \
+    clinvar_submitted_pairs_dated.GRCh38.tsv \
     --refseq-grch38 cdot-0.2.34.refseq.GRCh38.json.gz \
     --refseq-allbuilds cdot-0.2.34.all-builds-refseq-....json.gz
 
-# resolution on the seed-42 3,000-pair sample (VCF-coordinate scoring):
+# resolution on each sample (VCF-coordinate scoring), cdot then UTA:
 F=GCF_000001405.39_GRCh38.p13_genomic.fna.gz
-python paper/scripts/resolve_clinvar_pass.py clinvar_submitted_sample3000.tsv \
-    --json cdot-0.2.34.refseq.GRCh38.json.gz --fasta $F --with-fixes \
-    --out submitted_pass_cdot_3000.csv
-UTA_DB_URL=... HGVS_SEQREPO_DIR=... python paper/scripts/resolve_clinvar_pass.py \
-    clinvar_submitted_sample3000.tsv --uta --out submitted_pass_uta_3000.csv
+for S in random bucketed; do
+  python paper/scripts/resolve_clinvar_pass.py submitted_${S}_3000.tsv \
+      --json cdot-0.2.34.refseq.GRCh38.json.gz --fasta $F --with-fixes \
+      --out ${S}_pass_cdot.csv
+  UTA_DB_URL=postgresql://postgres@127.0.0.1:5433/uta/uta_20241220 \
+  HGVS_SEQREPO_DIR=... python paper/scripts/resolve_clinvar_pass.py \
+      submitted_${S}_3000.tsv --uta --out ${S}_pass_uta.csv
+done
 ```
 
-`clinvar_submitted_residual.csv` is derived from the cdot pass rows with
-`fixed_bucket != correct` (37 of 3,000):
+`clinvar_submitted_residual.csv` is derived from the **time-bucketed** (headline) cdot
+pass rows with `fixed_bucket != correct` (61 of 3,000), the error subtypes recovered by
+re-resolving the residual strings and catching the exception class:
 
-* `version_refused` (26): cited version absent from the data; the adjacent-version
+* `coordinate_drift` (29): resolves through the cited historical version to a coordinate
+  that differs from ClinVar's current interpretation (`incorrect` bucket).
+* `reference_mismatch` (18): the cited reference base does not exist on the cited
+  version (`HGVSInvalidVariantError`).
+* `version_refused` (5): cited version absent from the data; the adjacent-version
   fallback declined to substitute because coordinate-safety could not be verified
-  (REFUSED_UNSAFE_VERSION; no false rescues by design). Split from `no_data` via
-  `summarize_clinvar_pass.py --split-no-data` (26 unknown-version).
-* `unknown_accession` (1): no version of the accession in the data.
-* `coordinate_drift` (4): resolves through the cited historical version to a
-  coordinate that differs from ClinVar's current interpretation.
-* `position_out_of_bounds` (3) / `reference_mismatch` (1): the cited position or base
-  does not exist on the cited version (raises `HGVSInvalidIntervalError` /
-  `HGVSInvalidVariantError`).
-* `grammar_unsupported` (2): repeat `ref[N]` and allele `[..]` notation the biocommons
-  grammar rejects.
+  (`no_data` where the accession holds other versions, via `get_tx_versions`).
+* `grammar_unsupported` (5): repeat `ref[N]` / allele `[..]` notation the biocommons
+  grammar rejects (`HGVSParseError`).
+* `position_out_of_bounds` (4): the cited position does not exist on the cited version
+  (`HGVSInvalidIntervalError`).
+* `unknown_accession` (0): no version of the accession in the data.
+
+## injection_benchmark.csv, residual_taxonomy.csv (table CSVs, not facts)
+
+Multi-row table CSVs rendered inline by the `<!-- include-csv: ... -->` directive in
+`supplementary.md` (Tables S5 and S6), so the numbers live in a CSV rather than hardcoded
+in the markdown. `vibepaper`'s fact loader skips multi-row CSVs, so these are not `{{ }}`
+facts; edit the CSV to change the table.
+
+* `injection_benchmark.csv` (Table S5): per-category recovery of `clean_hgvs()` vs LOVD /
+  VariantValidator / Mutalyzer on the injection benchmark. Body rows from
+  `inject_and_clean.py` + the LOVD / VV / Mutalyzer head-to-heads; the **Total** row is
+  the frozen aggregate (matches `lovd_comparison.csv` / `vv_mutalyzer_comparison.csv`).
+  Refresh by re-running those scripts and re-transcribing.
+* `residual_taxonomy.csv` (Table S6): the seven repair-relevant residual classes of the
+  private cleaning corpus (frozen LLM classification; see `cleaning_corpus.csv`). Percentages
+  are of the 994 genuine-HGVS residual queries.
+
+## cleaning_corpus.csv (frozen, Tier 2)
+
+R4 production cleaning-corpus headline numbers, transcribed from a deterministic run of
+`cdot_private/analyze_cleaning.py` (`clean_hgvs()` plus provider-verified accession
+restoration) over the private search-box corpus (issue #112). Not reproducible here (the
+corpus is private); these are the literal constants R4 / Table 2 / Table S6 render from.
+
+`corpus_n` (32,671) is the loosely-HGVS search-box corpus after removing a small residue
+of non-HGVS input (81 queries: pasted URLs, report templates, prose) that slipped the
+collection regex and is a data-collection artifact, not something cleaning could repair
+(issue #112 feedback). Removing it from the denominator: as-submitted parseable
+`as_submitted_pct` 91.7%, after-cleaning `after_pct` 97.0% (`gain_pct` +5.3%, `rescued`
+1,721 = `rescued_share_pct` ~63% of the `failed_pp` 8.3 points that failed
+as-submitted), residual `residual_n` 994 (`residual_pct` 3.0%); `nonhgvs_n` 81. The
+per-fix Table 2 counts and the Table S6 residual taxonomy stay literal (LLM
+classification, not re-run). Refresh by re-running `analyze_cleaning.py` and editing
+this CSV.
 
 ## historical.csv (frozen, Tier 2)
 
