@@ -64,9 +64,10 @@ variant_summary, ClinVar's own recomputed preferred-transcript name, always at t
 current transcript version. They therefore measure a current-version ceiling and cannot
 exercise historical transcript depth.
 
-### What laboratories submitted
+### ClinVar submissions as a historical record of transcripts used
 
-To measure what laboratories actually submitted over the years, we built a second public
+To read ClinVar's submission history as a record of the transcript versions labs
+actually used over the years, we built a second public
 corpus from the per-submission (SCV) HGVS attributes of the ClinVar VCV XML: each
 submitted string kept verbatim and joined to the variant's VCF coordinate as ground
 truth via its AlleleID ({{ clinvar_submitted.n_unique_pairs | commas }} unique
@@ -85,28 +86,41 @@ transcript no longer annotated at any version. cdot's merged release history hol
 only {{ clinvar_submitted.absent_cdot_pct | dp(1) }}% of cited versions are absent from
 its GRCh38 data.
 
-On a fixed-seed sample of {{ clinvar_submitted.n_sample | commas }} submitted pairs,
-cdot resolved
+Because ClinVar grows over time, a flat random draw over-represents recent submissions,
+so we scored two {{ clinvar_submitted.n_sample | commas }}-pair samples (seed 42): one
+balanced evenly across submission-year eras (2008-2026), which represents the historical
+record fairly, and one drawn at random, which reflects the current file's recency skew
+(Methods).
+
+On the fair era-balanced sample, cdot resolved
 {{ clinvar_submitted.cdot_resolved_pct | dp(1) }}% and reproduced ClinVar's VCF
-coordinate for {{ clinvar_submitted.cdot_matched_pct | dp(1) }}%, versus
-{{ clinvar_submitted.uta_resolved_pct | dp(1) }}% for the same locally loaded UTA. On
-submitted strings, the RefSeq gap invisible at the current-version ceiling (both
-backends {{ clinvar.cdot_refseq_pct | dp(1) }}% above) opens to
-{{ clinvar_submitted.cdot_only_pct | dp(1) }} points: UTA holds no GRCh38 alignment for
-{{ clinvar_submitted.uta_no_data_pct | dp(1) }}% of the cited versions, and
+coordinate for {{ clinvar_submitted.after_fix_matched_pct | dp(1) }}%, versus
+{{ clinvar_submitted.uta_resolved_pct | dp(1) }}% for the same locally loaded UTA. The
+RefSeq gap invisible at the current-version ceiling (both backends
+{{ clinvar.cdot_refseq_pct | dp(1) }}% above) opens to
+{{ clinvar_submitted.cdot_only_pct | dp(1) }} points:
 {{ clinvar_submitted.cdot_only | commas }} of the
 {{ clinvar_submitted.n_sample | commas }} pairs resolve through cdot alone (one through
-UTA alone). The submitted strings are largely well-formed, so cleaning has little to
-rescue (`fix_hgvs()` repaired {{ clinvar_submitted.rescued_by_fix | int }} string, with
+UTA alone), because UTA holds no GRCh38 alignment for
+{{ clinvar_submitted.uta_no_data_pct | dp(1) }}% of the cited versions. The random draw
+is easier on both backends ({{ clinvar_submitted.rnd_after_fix_matched_pct | dp(1) }}%
+cdot versus {{ clinvar_submitted.rnd_uta_resolved_pct | dp(1) }}% UTA, a
+{{ clinvar_submitted.rnd_cdot_only_pct | dp(1) }}-point gap): it is dominated by recent
+submissions, and the fair sample is harder precisely because older submissions cite the
+superseded versions this corpus exists to exercise.
+
+The submitted strings are largely well-formed, so cleaning has little to rescue
+(`fix_hgvs()` repaired {{ clinvar_submitted.rescued_by_fix | int }} string, with
 {{ clinvar_submitted.regressions | int }} regressions). The residual
-{{ clinvar_submitted.residual_pct | dp(1) }}% after cleaning and version substitution
-({{ clinvar_submitted.residual_n | int }} of
-{{ clinvar_submitted.n_sample | commas }}) is dominated by version effects, not
-formatting: {{ clinvar_submitted_residual.version_refused | int }} cite a version
-absent from the data, where the substitution step declines to act because coordinate
-safety cannot be verified, and
-{{ clinvar_submitted_residual.coordinate_drift | int }} resolve through the cited
-historical version to a coordinate that differs from ClinVar's current interpretation;
+{{ clinvar_submitted.residual_pct | dp(1) }}% on the fair sample after cleaning and
+version substitution ({{ clinvar_submitted.residual_n | int }} of
+{{ clinvar_submitted.n_sample | commas }}) is dominated by historical-version effects,
+not formatting: {{ clinvar_submitted_residual.coordinate_drift | int }} resolve through
+the cited version to a coordinate that differs from ClinVar's current interpretation,
+{{ clinvar_submitted_residual.reference_mismatch | int }} cite a reference base that
+does not exist on the cited version, and
+{{ clinvar_submitted_residual.version_refused | int }} cite a version absent from the
+data where substitution declines to act because coordinate safety cannot be verified;
 the full breakdown is in Supplementary Table S8.
 
 **[private data].** The same gap holds on the historical clinical data that motivated cdot:
@@ -172,17 +186,24 @@ to close to a year.
 
 ## R4: String cleaning recovers malformed real-world HGVS
 
-**[private data].** The main test of cleaning is a production query stream: N = 32,752
+**[private data].** The main test of cleaning is a production query stream:
+N = {{ cleaning_corpus.corpus_n | commas }}
 real search-box queries from clinical and research variant-curation platforms based on
 VariantGrid [@VariantGrid], restricted to the subset that matched a broad HGVS regex
 (loosely HGVS-shaped strings a cleaner could plausibly repair, not arbitrary free-text
-search terms). The strings are whatever a clinician or curator pasted or typed, carrying
+search terms), with a small residue of non-HGVS input that slipped the regex (pasted
+URLs, report templates, prose) excluded as a collection artifact (see Residual errors,
+below). The strings are whatever a clinician or curator pasted or typed, carrying
 the damage of their route to the box: whitespace and
 non-printable characters from Word documents and report PDFs, lost casing, transposed
 punctuation, trailing protein annotations. The cleaning pipeline (`clean_hgvs()` plus
 the provider-verified accession-prefix restoration, Methods) raised the fraction
-parseable by biocommons/hgvs from 91.5% as-submitted to 96.7%, a +5.3% absolute gain
-(1,721 strings rescued, about 62% of the 8.5 percentage points that failed
+parseable by biocommons/hgvs from {{ cleaning_corpus.as_submitted_pct | dp(1) }}%
+as-submitted to {{ cleaning_corpus.after_pct | dp(1) }}%, a
++{{ cleaning_corpus.gain_pct | dp(1) }}% absolute gain
+({{ cleaning_corpus.rescued | commas }} strings rescued, about
+{{ cleaning_corpus.rescued_share_pct | int }}% of the
+{{ cleaning_corpus.failed_pp | dp(1) }} percentage points that failed
 as-submitted) with zero regressions (no already-valid string was broken). Table 2
 breaks the rescues down by fix type: whitespace removal and structural-punctuation
 repair dominate, followed by gene/transcript-wrapper repair and structure
@@ -196,7 +217,7 @@ well-formed and fail by transcript-version age, whereas interactive human-typed 
 carries the formatting damage cleaning repairs. cdot addresses the first with
 historical transcript depth and the second with `clean_hgvs()`.
 
-**Table 2. Fixes applied across the production corpus (N = 32,752).** Each row is a
+**Table 2. Fixes applied across the production corpus (N = {{ cleaning_corpus.corpus_n | commas }}).** Each row is a
 cleaning fix category, with the number of rescued queries in which it fired and its
 share of the 1,721 rescued queries. Categories overlap (a single query may need several
 fixes), so the counts sum to more than the total. *(Private data; counts are frozen constants
@@ -215,7 +236,7 @@ provider-verified accession-prefix restoration, over the production corpus.)*
 | Other (del/dup count, mutation-type case, …) | `NM_000059.4:c.1_2del2` → `…del` | 11 | 0.6% |
 | Prefix / kind restoration | `NM_000059.4:1A>G` → `NM_000059.4:c.1A>G` | 4 | 0.2% |
 | Accession prefix restoration (provider-verified) | `000059.4:c.68del` → `NM_000059.4:c.68del` | 1 | 0.1% |
-| **Total unique queries rescued** | | **1,721** | **100%** |
+| **Total unique queries rescued** | | **{{ cleaning_corpus.rescued | commas }}** | **100%** |
 
 As a control, `paper/scripts/inject_and_clean.py` injects each
 `clean_hgvs()` fix category into a seeded sample of clean, parseable ClinVar c.HGVS
@@ -227,14 +248,17 @@ no-regression guarantee on which the production result depends.
 
 ### Residual errors: the ceiling of cleaning *(Table S6)*
 
-**[private data].** The 3.3% of the production corpus (1,075 queries; 826 unique strings)
-that still fail to parse after cleaning define the ceiling of pure string repair.
-Classified under a fixed decision-tree taxonomy (Supplementary Table S6, with
-synthesised examples and the classification method and its limitations), just over half
-is incomplete or reference-less input that no string-level repair can invent, about 30%
-is in principle fixable and marks the frontier for future cleaning rules, and the
-remainder splits evenly between valid HGVS the biocommons grammar rejects and non-HGVS
-input (pasted URLs, report templates, prose) that should not be parsed at all.
+**[private data].** A small residue of non-HGVS input ({{ cleaning_corpus.nonhgvs_n | int }}
+queries: pasted URLs, report templates, prose) that slipped the corpus regex is a
+data-collection artifact, not something cleaning could ever repair, so it is excluded
+from the corpus above. The remaining {{ cleaning_corpus.residual_pct | dp(1) }}%
+({{ cleaning_corpus.residual_n | commas }} queries) of genuine HGVS-shaped input that
+still fails to parse after cleaning defines the ceiling of pure string repair. Classified under a fixed
+decision-tree taxonomy (Supplementary Table S6, with synthesised examples and the
+classification method and its limitations), well over half is incomplete or
+reference-less input that no string-level repair can invent, about a third is in
+principle fixable and marks the frontier for future cleaning rules, and the remaining
+~8% is valid HGVS the biocommons grammar rejects.
 
 ## R5: Transcript version substitution and coordinate safety
 

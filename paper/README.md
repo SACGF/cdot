@@ -124,7 +124,7 @@ The full-scale ClinVar throughput runs take ~1.5 h each — see `claude/benchmar
 - **Tier 1 (reproducible)** lives in the fact CSVs above and regenerates from public
   data committed here.
 - **Tier 2 (production validation, not reproducible)** — the cleaning rescue rate
-  (91.5% → 96.7%), the per-fix rescue distribution (Results Table 2), and the residual
+  (91.7% → 97.0%), the per-fix rescue distribution (Results Table 2), and the residual
   error taxonomy — comes from the private `cdot_private` corpus and is written into
   `results.md` as **literal frozen constants**, not regenerable facts. No corpus string
   ever enters this repo. When the corpus is re-analysed (`cdot_private/analyze_cleaning.py`),

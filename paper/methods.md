@@ -167,9 +167,13 @@ The submitted-string corpus (Results R2) is built by
 `build_clinvar_submitted_pairs.py` from the per-submission HGVS attributes of a ClinVar
 VCV XML release (ClinVarVCVRelease_2026-06): each SCV's first transcript c./n.
 expression is joined verbatim to the variant's VCF coordinate via its AlleleID and
-collapsed to unique (AlleleID, string) pairs (Supplementary Methods). Samples are drawn
-with a fixed seed (42): 3,000 pairs for the cdot-versus-UTA comparison and a committed
-500-pair sample. Scoring uses the VCF coordinate rather than the g.HGVS string, since a
+collapsed to unique (AlleleID, string) pairs, each tagged with the earliest SCV
+submission date (Supplementary Methods). Two 3,000-pair samples are drawn with a fixed
+seed (42) for the cdot-versus-UTA comparison: a whole-file random draw, which reflects
+the live file and so is recency-biased as ClinVar grows, and a time-bucketed draw that
+allocates evenly across submission-year eras so historical submissions are represented
+fairly; a 500-pair random sample is committed for reproduction. Scoring uses the VCF
+coordinate rather than the g.HGVS string, since a
 submitted string may legitimately spell an indel differently from ClinVar's normalised
 form. Transcript version age is computed by `compute_submitted_version_age.py` against
 the released cdot RefSeq JSON, whose per-transcript source URL identifies whether an

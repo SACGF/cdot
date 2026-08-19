@@ -4,8 +4,10 @@
 
 **Motivation:**
 
-Clinical and research pipelines must resolve transcript-level HGVS variant descriptions
-to genomic coordinates, and the practical goal is to resolve as many real-world
+cdot was built for the Australian Genomics Shariant project [@Tudini2022], which pools
+variant classifications from clinical laboratories across the country, each recorded
+against whatever transcript version the submitting lab used at the time. Making that
+shared history usable meant resolving as many real-world transcript-level HGVS
 descriptions as possible, including the malformed strings and long-retired transcript
 versions that accumulate in variant databases and clinical records. The standard
 transcript source for the Python HGVS libraries, UTA, forces a tradeoff between a
