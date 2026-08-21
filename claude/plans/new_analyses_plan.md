@@ -133,6 +133,42 @@ release).
 earns a place in the paper (probably a short paragraph in R2 or Discussion) before
 investing heavily.
 
+**Code DONE 2026-08-19 (Dave: "just do everything"), run pending.** `submitter_attribution.py`
+streams the VCV XML, attributes each SCV's first RefSeq transcript citation to its
+submitter (`ClinVarAccession@SubmitterName`, else `ClinVarSubmissionID@submitter`), and
+flags absent-from-cdot versions using the same version-set test as
+`compute_submitted_version_age.py`. Reports concentration (top-N submitter share of
+absent citations) and the self-alignment signature (absent versions cited by a single
+submitter). Validated on a synthetic XML. Full run deferred until item 1's timed pass
+finishes (heavy parse would confound item 1 throughput); will run alongside item 4.
+
+## Item 4 RESULT (full-scale, 2026-08-21)
+
+Ran the full submitted corpus (3,198,528 pairs) through cdot (--fasta --with-fixes, ~20h
+single-core) and local UTA (SeqRepo, ~7.5h). Full head-to-head:
+
+| | cdot | UTA |
+|---|---|---|
+| matched VCF coordinate | 99.0% (3,166,066) | 81.9% (2,618,768) |
+| resolves through this backend alone | 548,524 (17.2 pts) | 1,226 |
+| no_data | 19,124 | 573,994 (18.0%) |
+
+Per-era: 2008-2015 cdot 97.3% / UTA 76.2%; 2016-2020 99.3% / 88.8%; 2021-2026 99.0% /
+81.0%. Residual 1.0% (32,462), 0 regressions. The full-scale numbers land near the
+recency-weighted random draw; the per-era split is the fair view without sampling.
+R2 rewritten to full-scale + per-era, dropping the two-sample framing (superseded).
+Note: cdot --fasta is the bottleneck (~43 HGVS/s, historical versions force genome
+reconstruction); UTA-full was actually the fast part.
+
+## Status 2026-08-19 (PR #128 MERGED; items 1/4/5 on new branch paper-benchmarks-2026-08-19)
+
+- Items 2, 3 + all PR #128 feedback: merged to main.
+- Item 1 (warm-cache) + Item 4 (full UTA): RUNNING (sequential background runner PID
+  357490, monitor b4g9mry9g). Item 1 first (~4h), then item 4 cdot-full + UTA-full (~15h).
+- Item 5: code ready, run queued for after item 1's timed pass.
+- When results land: update R3 (hot-cache throughput), R2 (full-scale head-to-head), add
+  item 5 paragraph; open new PR from paper-benchmarks-2026-08-19.
+
 ## 4. Warm-cache benchmark rerun  [R3]
 
 **Why:** the full-scale R3 paragraph currently says the local-JSON and REST runs' "cache
