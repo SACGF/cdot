@@ -86,42 +86,47 @@ transcript no longer annotated at any version. cdot's merged release history hol
 only {{ clinvar_submitted.absent_cdot_pct | dp(1) }}% of cited versions are absent from
 its GRCh38 data.
 
-Because ClinVar grows over time, a flat random draw over-represents recent submissions,
-so we scored two {{ clinvar_submitted.n_sample | commas }}-pair samples (seed 42): one
-balanced evenly across submission-year eras (2008-2026), which represents the historical
-record fairly, and one drawn at random, which reflects the current file's recency skew
-(Methods).
+Because cdot ingests every RefSeq and Ensembl annotation release, a version absent from
+its data should be one that never appeared in an official release, and that is what the
+absent citations are: attributing each absent-version citation to its submitting
+laboratory, of {{ submitter_attribution.n_submitters_total | commas }} submitters only
+{{ submitter_attribution.n_submitters_with_absent | int }} ever cite a version cdot
+lacks, a single large laboratory accounts for
+{{ submitter_attribution.top1_absent_share_pct | dp(1) }}% of all absent-version
+citations, and {{ submitter_attribution.single_submitter_version_pct | dp(1) }}% of the
+{{ submitter_attribution.n_absent_versions | int }} distinct absent versions are cited by
+one submitter alone. These are the signature of transcripts a laboratory aligned to the
+genome itself rather than drawing from a published release, so they are resolved by
+version substitution (R5), not by deeper ingest.
 
-On the fair era-balanced sample, cdot resolved
-{{ clinvar_submitted.cdot_resolved_pct | dp(1) }}% and reproduced ClinVar's VCF
-coordinate for {{ clinvar_submitted.after_fix_matched_pct | dp(1) }}%, versus
+cdot resolved the full set of {{ clinvar_submitted.full_n | commas }} submitted pairs,
+reproducing ClinVar's VCF coordinate for
+{{ clinvar_submitted.cdot_resolved_pct | dp(1) }}%, versus
 {{ clinvar_submitted.uta_resolved_pct | dp(1) }}% for the same locally loaded UTA. The
 RefSeq gap invisible at the current-version ceiling (both backends
 {{ clinvar.cdot_refseq_pct | dp(1) }}% above) opens to
 {{ clinvar_submitted.cdot_only_pct | dp(1) }} points:
-{{ clinvar_submitted.cdot_only | commas }} of the
-{{ clinvar_submitted.n_sample | commas }} pairs resolve through cdot alone (one through
-UTA alone), because UTA holds no GRCh38 alignment for
-{{ clinvar_submitted.uta_no_data_pct | dp(1) }}% of the cited versions. The random draw
-is easier on both backends ({{ clinvar_submitted.rnd_after_fix_matched_pct | dp(1) }}%
-cdot versus {{ clinvar_submitted.rnd_uta_resolved_pct | dp(1) }}% UTA, a
-{{ clinvar_submitted.rnd_cdot_only_pct | dp(1) }}-point gap): it is dominated by recent
-submissions, and the fair sample is harder precisely because older submissions cite the
-superseded versions this corpus exists to exercise.
+{{ clinvar_submitted.cdot_only | commas }} pairs resolve through cdot alone and
+{{ clinvar_submitted.uta_only | commas }} through UTA alone, because UTA holds no GRCh38
+alignment for {{ clinvar_submitted.uta_no_data_pct | dp(1) }}% of the cited versions.
+Splitting by submission era locates the gap: cdot stays near
+{{ clinvar_submitted.era_recent_cdot_pct | dp(1) }}% across all years, while UTA falls
+from {{ clinvar_submitted.era_recent_uta_pct | dp(1) }}% on recent (2021-2026)
+submissions to {{ clinvar_submitted.era_old_uta_pct | dp(1) }}% on the oldest
+(2008-2015), which cite the most superseded versions.
 
 The submitted strings are largely well-formed, so cleaning has little to rescue
-(`fix_hgvs()` repaired {{ clinvar_submitted.rescued_by_fix | int }} string, with
+(`fix_hgvs()` repaired {{ clinvar_submitted.rescued_by_fix | commas }} strings, with
 {{ clinvar_submitted.regressions | int }} regressions). The residual
-{{ clinvar_submitted.residual_pct | dp(1) }}% on the fair sample after cleaning and
-version substitution ({{ clinvar_submitted.residual_n | int }} of
-{{ clinvar_submitted.n_sample | commas }}) is dominated by historical-version effects,
-not formatting: {{ clinvar_submitted_residual.coordinate_drift | int }} resolve through
-the cited version to a coordinate that differs from ClinVar's current interpretation,
-{{ clinvar_submitted_residual.reference_mismatch | int }} cite a reference base that
-does not exist on the cited version, and
-{{ clinvar_submitted_residual.version_refused | int }} cite a version absent from the
-data where substitution declines to act because coordinate safety cannot be verified;
-the full breakdown is in Supplementary Table S8.
+{{ clinvar_submitted.residual_pct | dp(1) }}% after cleaning and version substitution
+({{ clinvar_submitted.residual_n | commas }} of {{ clinvar_submitted.full_n | commas }})
+is dominated not by formatting but by historical-version effects:
+{{ clinvar_submitted_residual.version_refused | commas }} cite a version absent from the
+data where substitution declines to act because coordinate safety cannot be verified,
+and {{ clinvar_submitted_residual.coordinate_drift | commas }} resolve through the cited
+version to a coordinate that differs from ClinVar's current interpretation; the remainder
+cite a position or base that does not exist on the cited version, or notation the
+biocommons grammar rejects (Supplementary Table S8).
 
 **[private data].** The same gap holds on the historical clinical data that motivated cdot:
 the complete set of {{ historical.n_lines | commas }} unique HGVS descriptions imported
@@ -175,14 +180,17 @@ request per transcript, no prefetch) is more than two orders of magnitude faster
 public UTA server's {{ benchmark.uta_remote_tps | dp(2) }} HGVS/s, which pays wide-area
 round trips to a shared database on every lookup.
 
-At scale, a single local-JSON process resolved the entire set of 3,660,452 unique
-ClinVar (g.HGVS, c.HGVS) pairs in ~92 minutes (665 HGVS/s; 99.3% produced a genomic
-coordinate, 98.8% matched the ClinVar genomic HGVS exactly), and the REST provider,
-after one batch cache warm (21,277 distinct transcripts in ~6 s), in ~83 minutes
-(731 HGVS/s). The two runs' sequence-layer cache conditions differed, so their small
-difference is not evidence of REST outrunning local JSON; the controlled comparison is
-Table 1. The same exhaustive pass against the public remote UTA database extrapolates
-to close to a year.
+At scale, a single local-JSON process resolved the full set of
+{{ benchmark_fullscale.n_pairs | commas }} unique ClinVar (g.HGVS, c.HGVS) pairs in
+~{{ benchmark_fullscale.wall_min | int }} minutes,
+{{ benchmark_fullscale.resolved_pct | dp(1) }}% producing a genomic coordinate. Timing a
+hot-cache repeat (a first pass discarded to warm the sequence cache, the next timed) gave
+{{ benchmark_fullscale.hot_tps | int }} HGVS/s, within 1% of the cold pass
+({{ benchmark_fullscale.cold_tps | int }} HGVS/s), so full-scale local-JSON throughput is
+bounded by the shared engine and sequence layer, not by the state of the sequence cache.
+The controlled like-for-like backend comparison, with the sequence layer held identical,
+is Table 1, where local JSON and prefetched REST fall within 1% of each other. The same
+exhaustive pass against the public remote UTA database extrapolates to close to a year.
 
 ## R4: String cleaning recovers malformed real-world HGVS
 

@@ -12,8 +12,8 @@ what defines "the" submitted string when an SCV carries several HGVS expressions
 Submitted HGVS is not deduplicated across SCVs in ClinVar, so the builder collapses SCV
 rows to unique (AlleleID, submitted string) pairs, retaining the collapsed submission
 count; distinct strings for the same variant (for example, two laboratories citing
-different transcript versions) are all kept. The 3,000-pair benchmark sample is sized
-to match the seeded current-version sample used for the cdot-versus-UTA comparison.
+different transcript versions) are all kept. The cdot-versus-UTA comparison (Results R2)
+is run over the whole corpus; the committed 500-pair sample is for quick reproduction.
 
 ### LOVD head-to-head scoring detail
 
@@ -126,11 +126,11 @@ refused by default.
 ### Table S4: ClinVar benchmark details
 
 Full-scale resolution of every RefSeq and Ensembl c.HGVS in ClinVar through cdot alone
-(GRCh38, cdot 0.2.33). Unlike the cdot-vs-UTA comparison in Results R2 (gated to a sample
-by UTA's throughput), every variant is summarised here because only cdot is in the loop. The
-projection is scored as a VCF coordinate (CHROM/POS/REF/ALT) against ClinVar's own VCF,
-not as a g.HGVS string, so equivalent representations and ClinVar's tandem-repeat / identity
-notations are not miscounted.
+(GRCh38, cdot 0.2.33): a cdot-only accuracy check on the current-version `Name` corpus,
+complementary to the cdot-vs-UTA head-to-head on the historical submitted-string corpus
+(Results R2). The projection is scored as a VCF coordinate (CHROM/POS/REF/ALT) against
+ClinVar's own VCF, not as a g.HGVS string, so equivalent representations and ClinVar's
+tandem-repeat / identity notations are not miscounted.
 
 **Caveat.** ClinVar submissions are dominated by a handful of large (largely US) clinical
 laboratories citing mostly current RefSeq versions, so this is a clean, public,
@@ -330,17 +330,17 @@ supplied) restores a fully dropped RefSeq prefix (`000059.4:c.68del` →
 applying the fix only when exactly one candidate accession exists in the loaded data
 (Methods).
 
-### Table S8: Residual outcomes on the submitted-string sample
+### Table S8: Residual outcomes on the submitted-string corpus
 
-The {{ clinvar_submitted.residual_n | int }} of
-{{ clinvar_submitted.n_sample | commas }} sampled submitted-string pairs (Results R2)
+The {{ clinvar_submitted.residual_n | commas }} of
+{{ clinvar_submitted.full_n | commas }} submitted-string pairs (Results R2)
 that remain unresolved after cleaning and version fallback, by cause.
 
 | Cause | n |
 |---|---|
-| Cited version absent from the data; the fallback declines to substitute because coordinate safety cannot be verified (no false rescues, by design) | {{ clinvar_submitted_residual.version_refused | int }} |
-| Resolves through the cited historical version to a coordinate that differs from ClinVar's current interpretation | {{ clinvar_submitted_residual.coordinate_drift | int }} |
-| Cited position does not exist on the cited version | {{ clinvar_submitted_residual.position_out_of_bounds | int }} |
-| Cited reference base does not exist on the cited version | {{ clinvar_submitted_residual.reference_mismatch | int }} |
-| Repeat or allele notation the biocommons grammar rejects | {{ clinvar_submitted_residual.grammar_unsupported | int }} |
-| Accession absent entirely | {{ clinvar_submitted_residual.unknown_accession | int }} |
+| Cited version absent from the data; the fallback declines to substitute because coordinate safety cannot be verified (no false rescues, by design) | {{ clinvar_submitted_residual.version_refused | commas }} |
+| Resolves through the cited historical version to a coordinate that differs from ClinVar's current interpretation | {{ clinvar_submitted_residual.coordinate_drift | commas }} |
+| Cited position does not exist on the cited version | {{ clinvar_submitted_residual.position_out_of_bounds | commas }} |
+| Cited reference base does not exist on the cited version | {{ clinvar_submitted_residual.reference_mismatch | commas }} |
+| Repeat or allele notation the biocommons grammar rejects | {{ clinvar_submitted_residual.grammar_unsupported | commas }} |
+| Accession absent entirely | {{ clinvar_submitted_residual.unknown_accession | commas }} |

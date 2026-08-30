@@ -87,14 +87,14 @@ the earliest SCV submission date so it can be sampled by era. The corpus (built 
 ClinVar XML download) is not committed, but a 500-pair seed-42 random sample is
 (`tests/test_data/clinvar_hgvs/clinvar_submitted_500.tsv`).
 
-Two 3,000-pair samples are scored (seed 42): a whole-file **random** draw (reflects the
-live file, recency-biased) and a **time-bucketed** draw (even across submission-year
-eras 2008-2026, the fair historical picture). R2 leads with the fair sample; the random
-draw's numbers are the `rnd_*` columns. The fair draw is harder and widens the cdot-UTA
-gap because it up-weights old submissions citing superseded versions.
+The cdot-vs-UTA head-to-head is run over the **whole** corpus (no sampling) and broken
+down by submission-year era (`era_*` columns); a committed 500-pair random sample
+supports quick checks. The full run supersedes the earlier two-sample approach (a
+time-bucketed and a random draw); `build_clinvar_submitted_pairs.py` still emits those
+draws (`--sample-out` / `--time-bucketed-out`) but R2 now reports the full corpus.
 
-Measured 2026-08-19 (ClinVarVCVRelease_2026-06, cdot 0.2.34 refseq GRCh38, local
-uta_20241220, SeqRepo for UTA sequence):
+Measured 2026-08-20/21 (ClinVarVCVRelease_2026-06, cdot 0.2.34 refseq GRCh38, local
+uta_20241220; FastaSeqFetcher for cdot, SeqRepo for UTA sequence):
 
 ```bash
 # corpus: 4,027,987 SCV transcript expressions -> 3,198,528 unique (AlleleID, string)
@@ -103,44 +103,70 @@ uta_20241220, SeqRepo for UTA sequence):
 # first HGVS attribute is genomic/protein (the --scv-csv-dir path dropped those).
 python paper/scripts/build_clinvar_submitted_pairs.py \
     --xml ClinVarVCVRelease_2026-06.xml.gz clinvar.GRCh38.vcf.gz \
-    clinvar_submitted_pairs_dated.GRCh38.tsv --sample 3000 --seed 42 \
-    --sample-out submitted_random_3000.tsv \
-    --time-bucketed-out submitted_bucketed_3000.tsv
+    clinvar_submitted_pairs_dated.GRCh38.tsv
 
 # version age vs the current annotation release (RS_2025_08): 75.13% not-current
-python paper/scripts/compute_submitted_version_age.py \
-    clinvar_submitted_pairs_dated.GRCh38.tsv \
-    --refseq-grch38 cdot-0.2.34.refseq.GRCh38.json.gz \
-    --refseq-allbuilds cdot-0.2.34.all-builds-refseq-....json.gz
+python paper/scripts/compute_submitted_version_age.py clinvar_submitted_pairs_dated.GRCh38.tsv \
+    --refseq-grch38 cdot-0.2.34.refseq.GRCh38.json.gz --refseq-allbuilds ...
 
-# resolution on each sample (VCF-coordinate scoring), cdot then UTA:
+# full-corpus resolution (VCF-coordinate scoring), cdot (~20 h) then UTA (~7.5 h):
 F=GCF_000001405.39_GRCh38.p13_genomic.fna.gz
-for S in random bucketed; do
-  python paper/scripts/resolve_clinvar_pass.py submitted_${S}_3000.tsv \
-      --json cdot-0.2.34.refseq.GRCh38.json.gz --fasta $F --with-fixes \
-      --out ${S}_pass_cdot.csv
-  UTA_DB_URL=postgresql://postgres@127.0.0.1:5433/uta/uta_20241220 \
-  HGVS_SEQREPO_DIR=... python paper/scripts/resolve_clinvar_pass.py \
-      submitted_${S}_3000.tsv --uta --out ${S}_pass_uta.csv
-done
+python paper/scripts/resolve_clinvar_pass.py clinvar_submitted_pairs_dated.GRCh38.tsv \
+    --json cdot-0.2.34.refseq.GRCh38.json.gz --fasta $F --with-fixes --out submitted_full_cdot.csv
+UTA_DB_URL=postgresql://postgres@127.0.0.1:5433/uta/uta_20241220 HGVS_SEQREPO_DIR=... \
+python paper/scripts/resolve_clinvar_pass.py clinvar_submitted_pairs_dated.GRCh38.tsv \
+    --uta --out submitted_full_uta.csv
 ```
 
-`clinvar_submitted_residual.csv` is derived from the **time-bucketed** (headline) cdot
-pass rows with `fixed_bucket != correct` (61 of 3,000), the error subtypes recovered by
-re-resolving the residual strings and catching the exception class:
+Full head-to-head over 3,198,528 pairs: cdot 99.0% vs UTA 81.9% matched; 548,524 resolve
+through cdot alone, 1,226 through UTA alone. Per-era: 2008-2015 cdot 97.3% / UTA 76.2%;
+2016-2020 99.3% / 88.8%; 2021-2026 99.0% / 81.0%.
 
-* `coordinate_drift` (29): resolves through the cited historical version to a coordinate
-  that differs from ClinVar's current interpretation (`incorrect` bucket).
-* `reference_mismatch` (18): the cited reference base does not exist on the cited
-  version (`HGVSInvalidVariantError`).
-* `version_refused` (5): cited version absent from the data; the adjacent-version
-  fallback declined to substitute because coordinate-safety could not be verified
-  (`no_data` where the accession holds other versions, via `get_tx_versions`).
-* `grammar_unsupported` (5): repeat `ref[N]` / allele `[..]` notation the biocommons
-  grammar rejects (`HGVSParseError`).
-* `position_out_of_bounds` (4): the cited position does not exist on the cited version
-  (`HGVSInvalidIntervalError`).
-* `unknown_accession` (0): no version of the accession in the data.
+`clinvar_submitted_residual.csv` is derived from the full cdot pass rows with
+`fixed_bucket != correct` (32,462 of 3,198,528); the `no_data` bucket is split into
+`version_refused` (accession holds other versions, via `get_tx_versions`) vs
+`unknown_accession`, `incorrect` maps to `coordinate_drift`, and the `error` bucket is
+re-resolved to recover the exception class (`HGVSInvalidVariantError` reference_mismatch,
+`HGVSInvalidIntervalError` position_out_of_bounds, `HGVSParseError` grammar_unsupported).
+
+## submitter_attribution.csv (frozen)
+
+R2 submitter attribution of absent-from-cdot transcript versions (why version
+substitution is needed at all). `paper/scripts/submitter_attribution.py` streams the
+VCV XML, attributes each SCV's first RefSeq transcript citation to its submitting
+laboratory, and flags versions cdot does not hold (same test as
+`compute_submitted_version_age.py`). Measured 2026-08-19 (ClinVarVCVRelease_2026-06,
+cdot 0.2.34 RefSeq GRCh38):
+
+```bash
+python paper/scripts/submitter_attribution.py --xml ClinVarVCVRelease_2026-06.xml.gz \
+    --refseq-grch38 cdot-0.2.34.refseq.GRCh38.json.gz --out submitter_attribution.csv
+```
+
+18,077 of 4,027,987 versioned RefSeq citations (0.449%) cite a version absent from cdot.
+Of 2,894 submitters only 85 ever do; a single laboratory contributes 94.9% of absent
+citations, and 83.2% of the 286 distinct absent versions are cited by one submitter
+alone (the self-alignment signature). Only the aggregate CSV is committed; the
+per-submitter table (`--top-out`, which names laboratories) is NOT checked in.
+
+## benchmark_fullscale.csv (frozen)
+
+R3 full-scale throughput of a single local-JSON process over the whole current ClinVar
+(g.HGVS, c.HGVS) pair set (`clinvar_pairs.GRCh38.tsv`, cdot 0.2.34 RefSeq GRCh38, local
+SeqRepo), measured 2026-08-19 with the hot-cache protocol that replaces the old
+"cache conditions differed" note: a first pass warms the OS sequence cache and is
+discarded, the next is timed.
+
+```bash
+HGVS_SEQREPO_DIR=... SEQREPO_FD_CACHE_MAXSIZE=128 \
+python paper/scripts/resolve_clinvar_pass.py clinvar_pairs.GRCh38.tsv \
+    --json cdot-0.2.34.refseq.GRCh38.json.gz --out /dev/null   # x2 (discard 1st)
+```
+
+`n_pairs` 4,423,358; `resolved_pct` 99.4; `cold_tps` 632 HGVS/s (first pass, wall
+7003 s); `hot_tps` 640 HGVS/s (timed pass, wall 6916 s), ~1% apart, so full-scale
+local-JSON throughput is not sequence-cache-limited. The controlled backend comparison
+(local JSON vs prefetched REST) stays in Table 1 / `benchmark.csv`.
 
 ## injection_benchmark.csv, residual_taxonomy.csv (table CSVs, not facts)
 
