@@ -7,6 +7,7 @@
 [HGVS](http://varnomen.hgvs.org/) variants - the gene/transcript coordinates, exon structure and
 genome alignments - for the two most popular Python HGVS libraries:
 [biocommons HGVS](https://github.com/biocommons/hgvs) and [PyHGVS](https://github.com/counsyl/hgvs).
+It also provides tools to repair the malformed or outdated HGVS strings common in real-world data.
 
 To do HGVS work (e.g. convert `NM_001637.3:c.1582G>A` to genomic coordinates) those libraries need a
 transcript data source. The usual source, [UTA](https://github.com/biocommons/uta), is a PostgreSQL
@@ -19,6 +20,17 @@ files (GTF/GFF3) into compact JSON** and ships fast loaders for the HGVS librari
 Because it reads the released annotation files directly, cdot covers **1.58 million transcript/genome
 alignments**, including historical transcript versions - vs ~141k in UTA (v.20210129) - which matters
 when resolving legacy HGVS. See [cdot vs UTA](https://github.com/SACGF/cdot/blob/main/docs/cdot_vs_uta.md) for the trade-offs.
+
+Transcript data alone doesn't get real-world HGVS resolved. Strings pasted from reports, spreadsheets and
+old lab archives are often slightly malformed, name a gene instead of a transcript, or cite a transcript
+version that has since been retired. cdot also includes tools for this in `cdot.hgvs` (see
+[Fixing real-world HGVS](#fixing-real-world-hgvs)):
+
+* **Cleaning** - `clean_hgvs()` repairs common formatting errors (whitespace, case, punctuation typos,
+  swapped gene/transcript, trailing `p.` annotations) and reports every change it made.
+* **Gene symbols** - `BRCA2:c.68_69del` resolves to the MANE Select transcript.
+* **Version substitution** - opt-in: if the cited transcript version isn't available, use an adjacent
+  version, but only when a check confirms the variant's genomic coordinate won't change.
 
 Recent changes are in the [changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG.md), and changes to the published transcript data in the [data changelog](https://github.com/SACGF/cdot/blob/main/CHANGELOG-data.md).
 
@@ -64,7 +76,7 @@ am.c_to_g(var_c)
 > [`FastaSeqFetcher`](https://github.com/SACGF/cdot/blob/main/docs/fasta_seqfetcher.md) (chained after SeqRepo) so every cdot transcript
 > resolves against a local genome FASTA.
 
-For fixing messy HGVS input and fast bulk processing, see [Advanced usage](https://github.com/SACGF/cdot/blob/main/docs/advanced_usage.md).
+For fast bulk processing over the REST API, see [read-ahead batch retrieval](https://github.com/SACGF/cdot/blob/main/docs/advanced_usage.md#read-ahead-batch-retrieval).
 
 [PyHGVS](https://github.com/counsyl/hgvs) example (needs `pip install 'cdot[fasta]'` for pysam):
 
@@ -81,6 +93,46 @@ pyhgvs.parse_hgvs_name('NM_001637.3:c.1582G>A', genome, get_transcript=factory.g
 
 [more PyHGVS examples](https://github.com/SACGF/cdot/blob/main/docs/examples_pyhgvs.md):
 
+## Fixing real-world HGVS
+
+biocommons HGVS rejects strings that are almost, but not quite, valid. `fix_hgvs()` cleans them up first
+and returns a list of `HGVSFix` records (severity, code, message) so you can decide whether to trust,
+log or reject the result:
+
+```python
+from cdot.hgvs import fix_hgvs
+
+result, fixes = fix_hgvs("BRCA2(NM_000059.4):c.68_69DEL p.(Glu23fs)")
+# result = "NM_000059.4(BRCA2):c.68_69del"
+for fix in fixes:
+    print(fix)
+# Removed trailing protein (p.) annotation
+# Lowercased mutation type 'DEL'
+# Swapped gene/transcript
+```
+
+Cleaning is a pure string operation, needing no data or parser, so you can run it ahead of any HGVS
+library. Give `fix_hgvs()` a data provider and genome build and it can also resolve gene symbols and
+(if you opt in) substitute a missing transcript version:
+
+```python
+from cdot.hgvs import fix_hgvs, VersionStrategy
+
+# Gene symbol -> MANE Select transcript
+result, fixes = fix_hgvs("BRCA2:c.68_69del", hdp, "GRCh38")
+# result = "NM_000059.4:c.68_69del"
+
+# Retired transcript version -> adjacent version, only if coordinate-safe
+result, fixes = fix_hgvs("NM_000059.2:c.36del", hdp, "GRCh38",
+                         version_fallback=VersionStrategy.UP_THEN_DOWN)
+```
+
+Version substitution is off by default. When it is on, a substitution that can't be verified
+coordinate-safe (same coding structure, alignment gaps and relevant UTR length as the cited version) is
+refused by default, returning an ERROR fix and leaving the string unchanged. See [Advanced usage](https://github.com/SACGF/cdot/blob/main/docs/advanced_usage.md)
+for all the options, and [transcript-version safety](https://github.com/SACGF/cdot/blob/main/docs/transcript_version_safety.md)
+for how the safety check works and the evidence behind it.
+
 ## Documentation
 
 See [docs/](https://github.com/SACGF/cdot/tree/main/docs) for reference and how-to guides:
@@ -88,6 +140,7 @@ See [docs/](https://github.com/SACGF/cdot/tree/main/docs) for reference and how-
 * [JSON data format](https://github.com/SACGF/cdot/blob/main/docs/json_data_format.md) - every field in a cdot JSON(.gz) file
 * [Coordinates & exon alignments](https://github.com/SACGF/cdot/blob/main/docs/coordinates_and_exons.md) - how exon coordinates and gap strings work
 * [Advanced usage](https://github.com/SACGF/cdot/blob/main/docs/advanced_usage.md) - fixing messy HGVS input, and bulk read-ahead retrieval
+* [Transcript-version safety](https://github.com/SACGF/cdot/blob/main/docs/transcript_version_safety.md) - when substituting a different transcript version is coordinate-safe
 
 See the [docs index](https://github.com/SACGF/cdot/blob/main/docs/README.md) for the full list (examples, FastaSeqFetcher, creating data, cdot vs UTA, …).
 
