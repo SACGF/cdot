@@ -148,6 +148,15 @@ class Transcript(_DictAccessStruct, forbid_unknown_fields=False):
     """Annotation source(s) this transcript came from (e.g. ``['NCBI']``)."""
     partial: Optional[int] = None
     """Non-zero if the transcript is annotated as partial/incomplete."""
+    transl_except: Optional[Dict[str, List[int]]] = None
+    """Codons that code for another amino acid than ``transl_table`` says (coding only): amino acid
+    (as in the RefSeq ``transl_except`` attribute, eg ``'Sec'``, ``'TERM'``, ``'Met'``) -> codon numbers,
+    1-based within the CDS, ie the amino acid positions in the protein. ``'Sec'`` comes from RefSeq
+    ``transl_except`` and Ensembl GTF ``Selenocysteine`` rows. ``'TERM'`` marks a stop codon, eg one that
+    the poly(A) tail completes. The CDS length is then not a multiple of 3. Data schema >= 0.2.35."""
+    transl_table: Optional[int] = None
+    """NCBI genetic code of the CDS (eg ``2`` for vertebrate mitochondria), when the source names one
+    (RefSeq ``transl_table``). Absent means the standard code or unknown. Data schema >= 0.2.35."""
 
 
 class Gene(_DictAccessStruct, forbid_unknown_fields=False):

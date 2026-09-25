@@ -26,6 +26,10 @@ class Test(unittest.TestCase):
     REFSEQ_GFF3_FILENAME_HISTORICAL = os.path.join(test_data_dir, "refseq_test.historical_RS_2024_08.gff")
     REFSEQ_GFF3_FILENAME_GRCH37_MT = os.path.join(test_data_dir, "refseq_grch37_mt.gff")
     REFSEQ_GFF3_FILENAME_GRCH38_MT = os.path.join(test_data_dir, "refseq_grch38.p14_mt.gff")
+    # SELENOM (- strand, selenocysteine codon in exon 2) from RefSeq 110 and Ensembl 108
+    REFSEQ_GFF3_FILENAME_SELENOPROTEIN = os.path.join(test_data_dir, "refseq_test.selenoprotein.gff")
+    ENSEMBL_108_GTF_FILENAME_SELENOPROTEIN = os.path.join(test_data_dir,
+                                                          "ensembl_test.GRCh38.108.selenoprotein.gtf")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
     FAKE_URL = "http://fake.url"
 
@@ -199,6 +203,44 @@ class Test(unittest.TestCase):
     def test_mito_no_mrna(self):
         """ Need to make fake MT transcripts for RefSeq @see https://github.com/SACGF/cdot/issues/72 """
         self._test_mito(self.REFSEQ_GFF3_FILENAME_GRCH37_MT, "GRCh37")
+
+    def test_mito_transl_except_and_transl_table(self):
+        """ RefSeq MT CDS rows carry transl_table=2, and transl_except=(...,aa:TERM) where the stop
+            codon is completed by the poly(A) tail """
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_GRCH38_MT, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        for transcript_accession in self.FAKE_MT_TRANSCRIPTS:
+            self.assertEqual(transcripts[transcript_accession]["transl_table"], 2, transcript_accession)
+
+        # ND1: CDS of 956 bases, the last 2 bases (TA) of the stop codon are in the genome
+        nd1 = transcripts["fake-rna-ND1"]
+        self.assertEqual(nd1["stop_codon"] - nd1["start_codon"], 956)
+        self.assertEqual(nd1["transl_except"], {"TERM": [319]})
+        # ATP8 has a complete stop codon
+        self.assertNotIn("transl_except", transcripts["fake-rna-ATP8"])
+
+    def test_refseq_gff3_selenocysteine(self):
+        """ RefSeq names the selenocysteine codon in transl_except on every CDS row """
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_SELENOPROTEIN, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        transcript = transcripts["NM_080430.4"]
+        self.assertEqual(transcript["transl_except"], {"Sec": [48]})
+        # Nuclear CDS rows have no transl_table (the standard code)
+        self.assertNotIn("transl_table", transcript)
+
+    def test_ensembl_gtf_selenocysteine(self):
+        """ Ensembl GTF writes the selenocysteine codon as a 'Selenocysteine' row """
+        genome_build = "GRCh38"
+        parser = GTFParser(self.ENSEMBL_108_GTF_FILENAME_SELENOPROTEIN, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        transcript = transcripts["ENST00000400299.6"]
+        self.assertEqual(transcript["transl_except"], {"Sec": [48]})
+        # The Selenocysteine row must not change the transcript, exons or CDS
+        exons = transcript["genome_builds"][genome_build]["exons"]
+        self.assertEqual(len(exons), 5)
+        self.assertEqual(transcript["stop_codon"] - transcript["start_codon"], 438)
 
     def test_transcript_position_across_coordinate_hole(self):
         """ A few RefSeq alignments leave a run of transcript bases unaligned between two exons, so

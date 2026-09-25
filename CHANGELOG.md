@@ -1,5 +1,9 @@
 ## [unreleased]
 
+### Added
+
+- #131 - `models.Transcript` has the optional data fields `transl_except` and `transl_table` (data schema >= 0.2.35)
+
 ## [0.2.31] - 2026-08-19
 
 ### Added
