@@ -12,8 +12,6 @@ Performance comparison: UTA public DB ~1s/transcript vs cdot JSON.gz ~500-1000 t
 
 **Never run code against full datasets.** Processing full GTF/GFF3 files or complete JSON.gz data releases takes a very long time. Always use test data (in `tests/`) when verifying changes.
 
-On this dev machine the raw source annotation files (RefSeq GFF3 and Ensembl GTF, every release cdot is built from, for GRCh37, GRCh38 and T2T-CHM13v2.0) are in `/data/cdot/downloads/`, eg `Homo_sapiens_GRCh38_Ensembl_116.gtf.gz`, `Homo_sapiens_GRCh38_RefSeq_RS_2025_08.gff.gz`. Grep them (`zgrep`) to find real examples, then cut the few rows you need into a small test file in `tests/test_data/`. Don't run the parser over a whole file.
-
 **PyHGVS is abandoned — prefer biocommons HGVS.** The `cdot/pyhgvs/` integration exists for legacy compatibility but PyHGVS is no longer maintained. Do not write new features that require significant PyHGVS-specific work. Focus new development on the biocommons HGVS path (`cdot/hgvs/dataproviders/`). If a feature is straightforward to support in both libraries, fine; if it requires real effort for PyHGVS, skip it and biocommons-only is acceptable.
 
 **Keep the changelogs up to date.** There are two, because code and data are released separately, on independent version numbers:
