@@ -24,7 +24,7 @@ make this claim; this script can.
 Use the SAME provider/build that built the A1 table, so `converted_g` (the V side)
 and the W resolution are produced identically.
 
-Per CLAUDE.md: never run against full datasets in development. Verify the logic
+Per AGENTS.md: never run against full datasets in development. Verify the logic
 with a small table from tests/test_data/clinvar_hgvs/; the headline is a dedicated
 run over the full-ClinVar A1 table.
 

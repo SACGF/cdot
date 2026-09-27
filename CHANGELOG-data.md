@@ -11,6 +11,8 @@ is built and published see [docs/data_release_workflow.md](docs/data_release_wor
 
 ## [unreleased]
 
+## [0.2.35] - 2026-09-27
+
 ### Added
 
 - #131 - Translation exceptions per transcript. `transl_except` maps an amino acid to the codons that code for it in place of the genetic code, as codon numbers in the CDS (1-based, ie protein positions), eg `{"Sec": [48]}` for SELENOM. Selenocysteine codons (`Sec`) come from RefSeq `transl_except` and Ensembl GTF `Selenocysteine` rows, so a consumer can read UGA as selenocysteine at these codons only. RefSeq stop codons completed by the poly(A) tail are `TERM`. `transl_table` holds the RefSeq genetic code, eg `2` for mitochondrial transcripts. Both keys are optional and absent when the source has no such data

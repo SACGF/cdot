@@ -29,7 +29,7 @@ differences as errors. Written to output/facts/genomic_mismatch.csv.
 
 This replaces the stale PyHGVS/GRCh37 investigate_fails.py stub.
 
-Per CLAUDE.md: never run against full datasets in development. Verify the logic
+Per AGENTS.md: never run against full datasets in development. Verify the logic
 with a small table built from tests/test_data/clinvar_hgvs/; the real breakdown is
 a dedicated run over the full-ClinVar A1 table.
 

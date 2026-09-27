@@ -31,7 +31,7 @@ to this repo. The per-category injection *weights* are frozen CONSTANTS derived
 from the aggregate rescue-op distribution measured on a private production corpus
 (``cdot_private/output/cleaning_analysis_20260617.txt``, N=32,752; issue #112).
 Only the aggregate counts are cited here — no corpus string is copied into this
-repo, per CLAUDE.md.
+repo, per AGENTS.md.
 
 Usage::
 

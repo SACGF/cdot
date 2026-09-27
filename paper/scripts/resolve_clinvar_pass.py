@@ -32,7 +32,7 @@ pass.
 Provider is pluggable (shared with benchmark_resolution.py): defaults to cdot REST
 so it runs with no local data; pass --json a cdot release for the offline run.
 
-Per CLAUDE.md: never run against full datasets in development. Verify with the
+Per AGENTS.md: never run against full datasets in development. Verify with the
 committed pairs in tests/test_data/clinvar_hgvs/; the full pass is a dedicated run.
 
 Usage:

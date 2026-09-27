@@ -24,7 +24,7 @@ historical corpus (Results R1, Tier 2), whose older-version, multi-lab traffic i
 exactly what ClinVar's recency and submitter skew leave out. S4 should be read with
 that caveat stated.
 
-Per CLAUDE.md: never run against full datasets in development. Verify on a table
+Per AGENTS.md: never run against full datasets in development. Verify on a table
 built from tests/test_data/clinvar_hgvs/; the real S4 is a dedicated full run.
 
 Usage:

@@ -2,7 +2,7 @@
 """Compute transcript coverage counts from cdot JSON.gz files and write facts CSV.
 
 Run this script against the production data files to populate output/facts/coverage.csv.
-Per CLAUDE.md, do NOT run against full datasets during development — use production
+Per AGENTS.md, do NOT run against full datasets during development — use production
 data files on a dedicated run.
 
 Usage:

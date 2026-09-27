@@ -21,7 +21,7 @@ non-coding / unbinnable counts. The committed snapshot lives at
 paper/empirical_results/clinvar_residual_positions.csv (no Snakefile rule, like
 the other clinvar_vcf facts: the per-variant table is a dedicated multi-hour run).
 
-Per CLAUDE.md: never run against full datasets in development; verify on a small
+Per AGENTS.md: never run against full datasets in development; verify on a small
 table from tests/test_data/clinvar_hgvs/ first.
 
 Usage:

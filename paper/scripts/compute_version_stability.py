@@ -22,7 +22,7 @@ version-bump pairs. Because drift is overwhelmingly whole-CDS (a relocation,
 position independent), the positional curve is emitted both conditioned on the
 partial-drift pairs (where any positional effect must live) and unconditioned.
 
-Per CLAUDE.md, run this only against production release files on a dedicated run,
+Per AGENTS.md, run this only against production release files on a dedicated run,
 never the GTF/GFF generation pipeline. Sampling (--sample) keeps it cheap and
 deterministic (--seed).
 
