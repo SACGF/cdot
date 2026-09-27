@@ -78,7 +78,7 @@ class HGVSFixCode(Enum):
     # Accession prefix restoration for a bare-number accession, verified against
     # a data provider (see gene_hgvs.resolve_missing_accession_prefix; WARNING)
     ADDED_ACCESSION_PREFIX       = "added_accession_prefix"
-    # c. to p. translation checks from cdot's translation data (see translation.c_to_p)
+    # c. to p. translation checks from cdot's translation data (see translation.fix_c_to_p)
     USED_TRANSLATION_TABLE       = "used_translation_table"         # WARNING
     NEW_UGA_READ_AS_STOP         = "new_uga_read_as_stop"           # WARNING
     UGA_MAY_BE_READ_AS_SEC       = "uga_may_be_read_as_sec"         # WARNING

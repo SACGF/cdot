@@ -1,5 +1,5 @@
 """
-Tests for cdot.hgvs.translation.c_to_p - c. to p. using cdot's translation data (#131, #76).
+Tests for cdot.hgvs.translation.fix_c_to_p - c. to p. using cdot's translation data (#131, #76).
 
 Transcript data is from the translation test GFFs (see test_gff_parsers). The transcript
 sequences are spliced from the genome, as FastaSeqFetcher would, so ACTN3 on GRCh37 has the
@@ -16,7 +16,7 @@ from hgvs.exceptions import HGVSUnsupportedOperationError
 
 from cdot.hgvs.clean import HGVSFixCode, HGVSFixSeverity
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
-from cdot.hgvs.translation import _build_warning_fixes, _exception_fixes, c_to_p
+from cdot.hgvs.translation import _build_warning_fixes, _exception_fixes, fix_c_to_p
 from tests.mock_seqfetcher import MockSeqFetcher
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
@@ -55,29 +55,29 @@ class TestSelenoprotein:
         assert str(am_grch38.c_to_p(hp.parse("NM_002085.5:c.100G>A"))) == "NP_002076.2:p.?"
 
     def test_missense(self, am_grch38):
-        var_p, fixes = c_to_p(am_grch38, hp.parse("NM_002085.5:c.100G>A"))
+        var_p, fixes = fix_c_to_p(am_grch38, hp.parse("NM_002085.5:c.100G>A"))
         assert str(var_p) == "NP_002076.2:p.(Asp34Asn)"
         assert _codes(fixes) == [(W, C.USED_TRANSLATION_TABLE)]
 
     def test_sec_codon(self, am_grch38):
-        var_p, _ = c_to_p(am_grch38, hp.parse("NM_002085.5:c.217T>C"))
+        var_p, _ = fix_c_to_p(am_grch38, hp.parse("NM_002085.5:c.217T>C"))
         assert str(var_p) == "NP_002076.2:p.(Sec73Arg)"
 
     def test_new_uga_is_stop(self, am_grch38):
-        var_p, fixes = c_to_p(am_grch38, hp.parse("NM_002085.5:c.105G>A"))
+        var_p, fixes = fix_c_to_p(am_grch38, hp.parse("NM_002085.5:c.105G>A"))
         assert str(var_p) == "NP_002076.2:p.(Trp35Ter)"
         assert _codes(fixes) == [(W, C.USED_TRANSLATION_TABLE), (W, C.NEW_UGA_READ_AS_STOP)]
         assert fixes[-1].original == "NP_002076.2:p.(Trp35Sec)"
         assert fixes[-1].fixed == "NP_002076.2:p.(Trp35Ter)"
 
     def test_frameshift_warns(self, am_grch38):
-        var_p, fixes = c_to_p(am_grch38, hp.parse("NM_002085.5:c.105del"))
+        var_p, fixes = fix_c_to_p(am_grch38, hp.parse("NM_002085.5:c.105del"))
         assert "fs" in str(var_p)
         assert (W, C.UGA_MAY_BE_READ_AS_SEC) in _codes(fixes)
 
     def test_explicit_translation_table_is_used(self, am_grch38):
         """ Forcing the standard code reads Sec as a stop, which the codon check catches """
-        var_p, fixes = c_to_p(am_grch38, hp.parse("NM_002085.5:c.100G>A"),
+        var_p, fixes = fix_c_to_p(am_grch38, hp.parse("NM_002085.5:c.100G>A"),
                               translation_table=TranslationTable.standard)
         assert var_p is None
         assert _codes(fixes) == [(E, C.REFERENCE_CODON_MISMATCH)]
@@ -85,26 +85,26 @@ class TestSelenoprotein:
 
 
 def test_mitochondrial(am_grch38):
-    var_p, fixes = c_to_p(am_grch38, hp.parse("fake-rna-COX1:c.100A>G"))
+    var_p, fixes = fix_c_to_p(am_grch38, hp.parse("fake-rna-COX1:c.100A>G"))
     assert str(var_p) == "YP_003024028.1:p.(Ser34Gly)"
     assert _codes(fixes) == [(W, C.USED_TRANSLATION_TABLE)]
 
 
 class TestRibosomalSlippage:
     def test_error(self, am_grch38):
-        var_p, fixes = c_to_p(am_grch38, hp.parse("NM_015068.3:c.100G>A"))
+        var_p, fixes = fix_c_to_p(am_grch38, hp.parse("NM_015068.3:c.100G>A"))
         assert var_p is None
         assert _codes(fixes) == [(E, C.RIBOSOMAL_SLIPPAGE_UNSUPPORTED)]
 
     def test_raise_on_errors(self, am_grch38):
         with pytest.raises(HGVSUnsupportedOperationError):
-            c_to_p(am_grch38, hp.parse("NM_015068.3:c.100G>A"), raise_on_errors=True)
+            fix_c_to_p(am_grch38, hp.parse("NM_015068.3:c.100G>A"), raise_on_errors=True)
 
 
 class TestGenomeMismatch:
     def test_genome_stop_codon_is_error(self, am_grch37):
         """ GRCh37 has the ACTN3 R577X stop allele, so the genome derived sequence has a premature stop """
-        var_p, fixes = c_to_p(am_grch37, hp.parse("NM_001104.4:c.100G>A"))
+        var_p, fixes = fix_c_to_p(am_grch37, hp.parse("NM_001104.4:c.100G>A"))
         assert var_p is None
         assert _codes(fixes) == [(E, C.REFERENCE_CODON_MISMATCH)]
         assert "codon 577" in fixes[0].message
@@ -124,7 +124,7 @@ class TestGenomeMismatch:
         refseq_sequences.write_text(json.dumps(sequences))
 
         am = _assembly_mapper("GRCh37", seqfetcher=MockSeqFetcher(str(refseq_sequences)))
-        var_p, fixes = c_to_p(am, hp.parse("NM_001104.4:c.100G>A"))
+        var_p, fixes = fix_c_to_p(am, hp.parse("NM_001104.4:c.100G>A"))
         assert str(var_p) == "NP_001095.2:p.(Asp34Asn)"
         assert fixes == []
 

@@ -2,7 +2,7 @@
 c. to p. conversion that uses cdot's translation data (data schema >= 0.2.35).
 
 biocommons HGVS translates the CDS of the transcript sequence with one genetic code, and
-doesn't know about RefSeq translation exceptions. c_to_p() wraps a biocommons VariantMapper
+doesn't know about RefSeq translation exceptions. fix_c_to_p() wraps a biocommons VariantMapper
 or AssemblyMapper c_to_p() call, and uses cdot's transcript data to:
 
 * pick the genetic code: the vertebrate mitochondrial code for ``transl_table`` 2, and the
@@ -34,12 +34,12 @@ _TRANSLATION_TABLES = {
     2: (TranslationTable.vertebrate_mitochondrial, "vertebrate mitochondrial"),
 }
 
-# RefSeq CDS exceptions c_to_p deals with (or checks by codon) so doesn't report as not applied
+# RefSeq CDS exceptions fix_c_to_p deals with (or checks by codon) so doesn't report as not applied
 _EXCEPTION_RIBOSOMAL_SLIPPAGE = "ribosomal slippage"
 _START_CODON_EXCEPTIONS = {"alternative start codon", "translation initiation by tRNA-Leu at CUG codon"}
 
 
-def c_to_p(variant_mapper, var_c, raise_on_errors: bool = False, **kwargs) -> tuple:
+def fix_c_to_p(variant_mapper, var_c, raise_on_errors: bool = False, **kwargs) -> tuple:
     """
     Convert a c. SequenceVariant to p. with a biocommons VariantMapper or AssemblyMapper,
     using cdot's translation data (from the mapper's data provider) to choose the genetic code,
@@ -58,7 +58,7 @@ def c_to_p(variant_mapper, var_c, raise_on_errors: bool = False, **kwargs) -> tu
 
     Example::
 
-        var_p, fixes = c_to_p(am, hp.parse("NM_002085.5:c.217T>C"))
+        var_p, fixes = fix_c_to_p(am, hp.parse("NM_002085.5:c.217T>C"))
         # var_p = NP_002076.2:p.(Sec73Arg)
         # fixes = [HGVSFix(WARNING, USED_TRANSLATION_TABLE, ...)]
     """
