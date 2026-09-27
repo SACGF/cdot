@@ -217,6 +217,24 @@
           "default": null,
           "description": "NCBI genetic code of the CDS (eg `2` for vertebrate mitochondria), when the source names one (RefSeq `transl_table`). Absent means the standard code or unknown. Data schema >= 0.2.35."
         },
+        "ribosomal_slippage": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Programmed ribosomal frameshifts in the CDS (RefSeq `exception=ribosomal slippage`, eg PEG10, OAZ1). Each is `{\"cds_position\": N, \"shift\": S}`: N is the 1-based position in the CDS (as in c. numbering), S is `-1` (base N is read twice) or `1` (base N is skipped). Translating the CDS needs these applied, so its length is then not a multiple of 3. Does not affect c. to g. mapping. Data schema >= 0.2.35."
+        },
         "warnings": {
           "anyOf": [
             {
@@ -227,7 +245,7 @@
             }
           ],
           "default": null,
-          "description": "Problems cdot hit converting this transcript from the source annotation, keyed by warning type. Absent when there were none. Data schema >= 0.2.35. Types: `'transl_except_unplaced'`: amino acids (eg `['Sec']`) the source gives a translation exception for, but that cdot couldn't place as a codon of the CDS (eg a partial CDS), so `transl_except` is missing some or all of their codons."
+          "description": "Problems cdot hit converting this transcript from the source annotation, keyed by warning type. Absent when there were none. Data schema >= 0.2.35. Types: `'transl_except_unplaced'`: amino acids (eg `['Sec']`) the source gives a translation exception for, but that cdot couldn't place as a codon of the CDS (eg a partial CDS), so `transl_except` is missing some or all of their codons. `'ribosomal_slippage_unplaced'`: `True` when the source says the CDS has a ribosomal frameshift, but cdot couldn't find or place it, so `ribosomal_slippage` is missing some or all of them."
         }
       },
       "required": [

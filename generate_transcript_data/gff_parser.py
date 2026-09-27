@@ -186,6 +186,8 @@ class GFFParser(abc.ABC):
                     self._add_transl_except(transcript_accession, start, end, amino_acid)
             if transl_table := feature.attr.get("transl_table"):
                 transcript["transl_table"] = int(transl_table)
+            if "ribosomal slippage" in feature.attr.get("exception", ""):
+                features_by_type["ribosomal_slippage_cds"].append(feature_tuple)
 
     @staticmethod
     def _parse_transl_except(transl_except):
@@ -236,6 +238,40 @@ class GFFParser(abc.ABC):
             unplaced.add(amino_acid)
         codons = {amino_acid: sorted(codons) for amino_acid, codons in codons_by_amino_acid.items() if codons}
         return codons, unplaced
+
+    @staticmethod
+    def _get_ribosomal_slippage(transcript_accession, transcript_data, forward_strand, exons_stranded_order,
+                                slippage_cds):
+        """ RefSeq marks a ribosomal frameshift with 'exception=ribosomal slippage' on the CDS rows, and
+            splits the CDS there: rows overlapping by 1 base is a -1 frameshift (that base is read twice),
+            a 1 base gap between rows is a +1 frameshift (that base is skipped).
+            Returns ([{"cds_position": 1-based position in the CDS (as c. numbering), "shift": -1 or 1}],
+                     any_unplaced) """
+        slippage = []
+        unplaced = False
+        slippage_cds = sorted(set(slippage_cds))
+        for (_, prev_end), (next_start, _) in zip(slippage_cds, slippage_cds[1:]):
+            if next_start == prev_end - 1:
+                shift, base = -1, prev_end - 1
+            elif next_start == prev_end + 1:
+                shift, base = 1, prev_end
+            else:
+                continue  # an intron
+            try:
+                genomic_coordinate = base if forward_strand else base + 1
+                transcript_position = GFFParser._get_transcript_position(forward_strand, exons_stranded_order,
+                                                                         genomic_coordinate)
+            except ValueError as e:
+                logging.warning("%s: couldn't place ribosomal slippage at %d: %s", transcript_accession, base + 1, e)
+                unplaced = True
+                continue
+            cds_position = transcript_position - transcript_data["start_codon"] + 1
+            slippage.append({"cds_position": cds_position, "shift": shift})
+        if not slippage:
+            unplaced = True
+            logging.warning("%s: CDS has a ribosomal slippage exception, but couldn't find where",
+                            transcript_accession)
+        return sorted(slippage, key=lambda s: s["cds_position"]), unplaced
 
     def _finish_process_features(self):
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
@@ -300,6 +336,18 @@ class GFFParser(abc.ABC):
                     # Consumers can't tell a missing transl_except from none, so record it
                     warnings = transcript_data.setdefault("warnings", {})
                     warnings["transl_except_unplaced"] = sorted(unplaced)
+
+            if slippage_cds := features_by_type.get("ribosomal_slippage_cds"):
+                unplaced = True
+                if "start_codon" in transcript_data:
+                    slippage, unplaced = self._get_ribosomal_slippage(transcript_accession, transcript_data,
+                                                                      forward_strand, exons_stranded_order,
+                                                                      slippage_cds)
+                    if slippage:
+                        transcript_data["ribosomal_slippage"] = slippage
+                if unplaced:
+                    warnings = transcript_data.setdefault("warnings", {})
+                    warnings["ribosomal_slippage_unplaced"] = True
 
             exons_genomic_order = exons_stranded_order
             if not forward_strand:

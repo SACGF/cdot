@@ -168,6 +168,11 @@ class TestModels(unittest.TestCase):
         d["warnings"] = {"transl_except_unplaced": ["Sec"]}
         tx = models.transcript_from_dict(d)
         self.assertEqual(tx.warnings, {"transl_except_unplaced": ["Sec"]})
+        self.assertIsNone(tx.ribosomal_slippage)
+
+        d["ribosomal_slippage"] = [{"cds_position": 957, "shift": -1}]
+        tx = models.transcript_from_dict(d)
+        self.assertEqual(tx.ribosomal_slippage, [{"cds_position": 957, "shift": -1}])
 
     def test_loads_accepts_genome_build_source_str_or_list(self):
         """Regression: genome_builds[...].source is a str in early 0.2.32 data but a

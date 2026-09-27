@@ -36,6 +36,9 @@ class Test(unittest.TestCase):
     # GPX4 (+ strand) and SELENOH ENST00000528798 (cds_start_NF, CDS out of frame) from Ensembl 115
     ENSEMBL_115_GTF_FILENAME_SELENOPROTEIN = os.path.join(test_data_dir,
                                                           "ensembl_test.GRCh38.115.selenoprotein.gtf")
+    # PEG10 (-1 frameshift), OAZ1 (+1) and OAZ2 (+1, - strand) from RefSeq RS_2025_08
+    REFSEQ_GFF3_FILENAME_RIBOSOMAL_SLIPPAGE = os.path.join(test_data_dir,
+                                                           "refseq_test.RS_2025_08.ribosomal_slippage.gff")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
     FAKE_URL = "http://fake.url"
 
@@ -301,6 +304,45 @@ class Test(unittest.TestCase):
         gpx4 = transcripts["ENST00000354171.13"]
         self.assertEqual(gpx4["transl_except"], {"Sec": [60]})
         self.assertNotIn("warnings", gpx4)
+
+    def test_refseq_gff3_ribosomal_slippage(self):
+        """ RefSeq splits the CDS at a ribosomal frameshift: rows overlapping by a base is -1 (base read
+            twice), a 1 base gap is +1 (base skipped) @see https://github.com/SACGF/cdot/issues/76 """
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_RIBOSOMAL_SLIPPAGE, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        # (cds_position, shift, protein length incl stop codon)
+        expected = {
+            "NM_015068.3": (957, -1, 709),  # PEG10
+            "NM_004152.3": (205, 1, 229),  # OAZ1, skips the U of UGA at codon 69
+            "NM_002537.3": (97, 1, 190),  # OAZ2, - strand
+        }
+        for transcript_accession, (cds_position, shift, num_codons) in expected.items():
+            transcript = transcripts[transcript_accession]
+            self.assertEqual(transcript["ribosomal_slippage"], [{"cds_position": cds_position, "shift": shift}],
+                             transcript_accession)
+            self.assertNotIn("warnings", transcript)
+            # Applying the shift gives a whole number of codons
+            translated_length = transcript["stop_codon"] - transcript["start_codon"] - shift
+            self.assertEqual(translated_length, num_codons * 3, transcript_accession)
+
+    def test_refseq_gff3_ribosomal_slippage_unplaced(self):
+        """ A slippage exception where the CDS rows don't show where must be flagged """
+        with open(self.REFSEQ_GFF3_FILENAME_RIBOSOMAL_SLIPPAGE) as f:
+            lines = f.readlines()
+        # Move PEG10's 2nd CDS row off the overlap
+        lines = [line.replace("\t94664513\t94665682\t", "\t94664520\t94665682\t") for line in lines]
+
+        genome_build = "GRCh38"
+        with tempfile.NamedTemporaryFile("w", suffix=".gff") as f:
+            f.writelines(lines)
+            f.flush()
+            parser = GFF3Parser(f.name, genome_build, self.FAKE_URL)
+            with self.assertLogs(level="WARNING"):
+                _, transcripts = parser.get_genes_and_transcripts()
+        transcript = transcripts["NM_015068.3"]
+        self.assertNotIn("ribosomal_slippage", transcript)
+        self.assertEqual(transcript["warnings"], {"ribosomal_slippage_unplaced": True})
 
     def test_transcript_position_across_coordinate_hole(self):
         """ A few RefSeq alignments leave a run of transcript bases unaligned between two exons, so
