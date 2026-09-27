@@ -204,10 +204,11 @@ class GFFParser(abc.ABC):
     @staticmethod
     def _get_transl_except_codons(transcript_accession, transcript_data, forward_strand, exons_stranded_order,
                                   transl_except):
-        """ Returns {amino_acid: [codon numbers]}, the codon numbers 1-based within the CDS
-            (ie the amino acid positions in the protein) """
+        """ Returns ({amino_acid: [codon numbers]}, {unplaced amino acids}), the codon numbers 1-based
+            within the CDS (ie the amino acid positions in the protein) """
         codons_by_amino_acid = defaultdict(set)
         cds_length = transcript_data["stop_codon"] - transcript_data["start_codon"]
+        not_codon_starts = []  # (amino_acid, cds_position or None, start, end)
         for start, end, amino_acid in transl_except:
             # First base of the codon, in transcript direction
             genomic_coordinate = start if forward_strand else end
@@ -217,14 +218,24 @@ class GFFParser(abc.ABC):
             except ValueError as e:
                 logging.warning("%s: couldn't place transl_except %s at %d-%d: %s",
                                 transcript_accession, amino_acid, start + 1, end, e)
+                not_codon_starts.append((amino_acid, None, start, end))
                 continue
             cds_position = transcript_position - transcript_data["start_codon"]
             if 0 <= cds_position < cds_length and cds_position % 3 == 0:
                 codons_by_amino_acid[amino_acid].add(cds_position // 3 + 1)
             else:
+                not_codon_starts.append((amino_acid, cds_position, start, end))
+
+        unplaced = set()
+        for amino_acid, cds_position, start, end in not_codon_starts:
+            if cds_position is not None:
+                if 0 <= cds_position < cds_length and cds_position // 3 + 1 in codons_by_amino_acid[amino_acid]:
+                    continue  # Rest of a codon split across exons (Ensembl writes a row per exon)
                 logging.warning("%s: transl_except %s at %d-%d is not a codon of the CDS",
                                 transcript_accession, amino_acid, start + 1, end)
-        return {amino_acid: sorted(codons) for amino_acid, codons in codons_by_amino_acid.items()}
+            unplaced.add(amino_acid)
+        codons = {amino_acid: sorted(codons) for amino_acid, codons in codons_by_amino_acid.items() if codons}
+        return codons, unplaced
 
     def _finish_process_features(self):
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
@@ -276,10 +287,19 @@ class GFFParser(abc.ABC):
                     logging.warning("Couldn't set %s transcript positions from %s: %s", coding_right, cds_max, e)
 
             transl_except = features_by_type.get("transl_except")
-            if transl_except and "start_codon" in transcript_data and "stop_codon" in transcript_data:
-                if codons := self._get_transl_except_codons(transcript_accession, transcript_data, forward_strand,
-                                                            exons_stranded_order, transl_except):
-                    transcript_data["transl_except"] = codons
+            if transl_except:
+                if "start_codon" in transcript_data and "stop_codon" in transcript_data:
+                    codons, unplaced = self._get_transl_except_codons(transcript_accession, transcript_data,
+                                                                      forward_strand, exons_stranded_order,
+                                                                      transl_except)
+                    if codons:
+                        transcript_data["transl_except"] = codons
+                else:
+                    unplaced = {amino_acid for _, _, amino_acid in transl_except}
+                if unplaced:
+                    # Consumers can't tell a missing transl_except from none, so record it
+                    warnings = transcript_data.setdefault("warnings", {})
+                    warnings["transl_except_unplaced"] = sorted(unplaced)
 
             exons_genomic_order = exons_stranded_order
             if not forward_strand:

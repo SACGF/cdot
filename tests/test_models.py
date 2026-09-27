@@ -139,7 +139,7 @@ class TestModels(unittest.TestCase):
         self.assertEqual(build.get("source"), "BestRefSeq")
 
     def test_transcript_translation_fields(self):
-        """transl_except/transl_table are optional: kept when present, None when absent."""
+        """transl_except/transl_table/warnings are optional: kept when present, None when absent."""
         d = {
             "id": "NM_FAKE.1",
             "genome_builds": {
@@ -163,6 +163,11 @@ class TestModels(unittest.TestCase):
         tx = models.transcript_from_dict(d)
         self.assertIsNone(tx.transl_except)
         self.assertIsNone(tx.transl_table)
+        self.assertIsNone(tx.warnings)
+
+        d["warnings"] = {"transl_except_unplaced": ["Sec"]}
+        tx = models.transcript_from_dict(d)
+        self.assertEqual(tx.warnings, {"transl_except_unplaced": ["Sec"]})
 
     def test_loads_accepts_genome_build_source_str_or_list(self):
         """Regression: genome_builds[...].source is a str in early 0.2.32 data but a

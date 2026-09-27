@@ -14,6 +14,7 @@ is built and published see [docs/data_release_workflow.md](docs/data_release_wor
 ### Added
 
 - #131 - Translation exceptions per transcript. `transl_except` maps an amino acid to the codons that code for it in place of the genetic code, as codon numbers in the CDS (1-based, ie protein positions), eg `{"Sec": [48]}` for SELENOM. Selenocysteine codons (`Sec`) come from RefSeq `transl_except` and Ensembl GTF `Selenocysteine` rows, so a consumer can read UGA as selenocysteine at these codons only. RefSeq stop codons completed by the poly(A) tail are `TERM`. `transl_table` holds the RefSeq genetic code, eg `2` for mitochondrial transcripts. Both keys are optional and absent when the source has no such data
+- #131 - `warnings` per transcript, for problems cdot hit converting it from the source annotation, keyed by warning type. The first is `transl_except_unplaced`, listing amino acids with a translation exception cdot couldn't place as a codon of the CDS (eg `{"transl_except_unplaced": ["Sec"]}` for a CDS that starts out of frame), so a missing `transl_except` isn't mistaken for there being none. Absent when there were no problems
 
 ## [0.2.34] - 2026-08-13
 
