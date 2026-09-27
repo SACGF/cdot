@@ -98,5 +98,5 @@ The same team works on the REST server - http://github.com/SACGF/cdot_rest the R
 Commit only as the configured git user. Do NOT add `Co-Authored-By: Claude` trailers or any `Claude-Session` / Claude attribution lines to commit messages.
 
 ## GitHub Comments
-When writing any comment on a GitHub issue or pull request, always preface it with 🤖 Written by Claude.
+When writing any comment on a GitHub issue or pull request, always preface it with 🤖 By Claude followed by the model that wrote it, eg `🤖 By Claude Opus 5.5`.
 Do NOT close GitHub issues unless instructed by the user.
