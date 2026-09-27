@@ -67,7 +67,8 @@ is built and published see [docs/data_release_workflow.md](docs/data_release_wor
 <!-- Data releases before 0.2.29 were not separately recorded; see the git history of
      generate_transcript_data/ for those. -->
 
-[unreleased]: https://github.com/SACGF/cdot/compare/data_v0.2.34...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/data_v0.2.35...HEAD
+[0.2.35]: https://github.com/SACGF/cdot/compare/data_v0.2.34...data_v0.2.35
 [0.2.34]: https://github.com/SACGF/cdot/compare/data_v0.2.33...data_v0.2.34
 [0.2.33]: https://github.com/SACGF/cdot/compare/data_v0.2.32...data_v0.2.33
 [0.2.32]: https://github.com/SACGF/cdot/compare/data_v0.2.31...data_v0.2.32

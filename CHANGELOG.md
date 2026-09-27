@@ -1,5 +1,7 @@
 ## [unreleased]
 
+## [0.2.32] - 2026-09-27
+
 ### Added
 
 - #131, #76 - `models`: `Transcript.translation` (new `Translation` struct), `GenomeBuild.genome_mismatch` (new `GenomeMismatch` struct) and `GenomeBuild.warnings`, all optional (data schema >= 0.2.35)
@@ -319,7 +321,8 @@ All other changes in this release were for data (and contained in data_v0.2.26)
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.31...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.32...HEAD
+[0.2.32]: https://github.com/SACGF/cdot/compare/v0.2.31...v0.2.32
 [0.2.31]: https://github.com/SACGF/cdot/compare/v0.2.30...v0.2.31
 [0.2.30]: https://github.com/SACGF/cdot/compare/v0.2.28...v0.2.30
 [0.2.28]: https://github.com/SACGF/cdot/compare/v0.2.27...v0.2.28
