@@ -26,6 +26,16 @@ class Test(unittest.TestCase):
     REFSEQ_GFF3_FILENAME_HISTORICAL = os.path.join(test_data_dir, "refseq_test.historical_RS_2024_08.gff")
     REFSEQ_GFF3_FILENAME_GRCH37_MT = os.path.join(test_data_dir, "refseq_grch37_mt.gff")
     REFSEQ_GFF3_FILENAME_GRCH38_MT = os.path.join(test_data_dir, "refseq_grch38.p14_mt.gff")
+    # SELENOM (- strand, selenocysteine codon in exon 2) from RefSeq 110 and Ensembl 108
+    REFSEQ_GFF3_FILENAME_SELENOPROTEIN = os.path.join(test_data_dir, "refseq_test.selenoprotein.gff")
+    ENSEMBL_108_GTF_FILENAME_SELENOPROTEIN = os.path.join(test_data_dir,
+                                                          "ensembl_test.GRCh38.108.selenoprotein.gtf")
+    # GPX4 (+ strand) and SELENOP (- strand, 10 selenocysteines) from RefSeq RS_2024_08
+    REFSEQ_GFF3_FILENAME_SELENOPROTEIN_RS_2024_08 = os.path.join(test_data_dir,
+                                                                 "refseq_test.RS_2024_08.selenoprotein.gff")
+    # GPX4 (+ strand) and SELENOH ENST00000528798 (cds_start_NF, CDS out of frame) from Ensembl 115
+    ENSEMBL_115_GTF_FILENAME_SELENOPROTEIN = os.path.join(test_data_dir,
+                                                          "ensembl_test.GRCh38.115.selenoprotein.gtf")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
     FAKE_URL = "http://fake.url"
 
@@ -199,6 +209,98 @@ class Test(unittest.TestCase):
     def test_mito_no_mrna(self):
         """ Need to make fake MT transcripts for RefSeq @see https://github.com/SACGF/cdot/issues/72 """
         self._test_mito(self.REFSEQ_GFF3_FILENAME_GRCH37_MT, "GRCh37")
+
+    def test_mito_transl_except_and_transl_table(self):
+        """ RefSeq MT CDS rows carry transl_table=2, and transl_except=(...,aa:TERM) where the stop
+            codon is completed by the poly(A) tail """
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_GRCH38_MT, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        for transcript_accession in self.FAKE_MT_TRANSCRIPTS:
+            self.assertEqual(transcripts[transcript_accession]["transl_table"], 2, transcript_accession)
+
+        # ND1: CDS of 956 bases, the last 2 bases (TA) of the stop codon are in the genome
+        nd1 = transcripts["fake-rna-ND1"]
+        self.assertEqual(nd1["stop_codon"] - nd1["start_codon"], 956)
+        self.assertEqual(nd1["transl_except"], {"TERM": [319]})
+        # ATP8 has a complete stop codon
+        self.assertNotIn("transl_except", transcripts["fake-rna-ATP8"])
+
+    def test_refseq_gff3_selenocysteine(self):
+        """ RefSeq names the selenocysteine codon in transl_except on every CDS row """
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_SELENOPROTEIN, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        transcript = transcripts["NM_080430.4"]
+        self.assertEqual(transcript["transl_except"], {"Sec": [48]})
+        # Nuclear CDS rows have no transl_table (the standard code)
+        self.assertNotIn("transl_table", transcript)
+
+    def test_ensembl_gtf_selenocysteine(self):
+        """ Ensembl GTF writes the selenocysteine codon as a 'Selenocysteine' row """
+        genome_build = "GRCh38"
+        parser = GTFParser(self.ENSEMBL_108_GTF_FILENAME_SELENOPROTEIN, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        transcript = transcripts["ENST00000400299.6"]
+        self.assertEqual(transcript["transl_except"], {"Sec": [48]})
+        # The Selenocysteine row must not change the transcript, exons or CDS
+        exons = transcript["genome_builds"][genome_build]["exons"]
+        self.assertEqual(len(exons), 5)
+        self.assertEqual(transcript["stop_codon"] - transcript["start_codon"], 438)
+        self.assertNotIn("warnings", transcript)
+
+    def test_refseq_gff3_selenocysteine_plus_strand_and_multiple(self):
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_SELENOPROTEIN_RS_2024_08, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        # GPX4 U73
+        gpx4 = transcripts["NM_002085.5"]
+        self.assertEqual(gpx4["genome_builds"][genome_build]["strand"], "+")
+        self.assertEqual(gpx4["transl_except"], {"Sec": [73]})
+        # SELENOP, as in UniProt P49908
+        selenop = transcripts["NM_005410.4"]
+        self.assertEqual(selenop["transl_except"], {"Sec": [59, 300, 318, 330, 345, 352, 367, 369, 376, 378]})
+        for transcript in (gpx4, selenop):
+            self.assertNotIn("warnings", transcript)
+
+    def test_ensembl_gtf_selenocysteine_plus_strand(self):
+        genome_build = "GRCh38"
+        parser = GTFParser(self.ENSEMBL_115_GTF_FILENAME_SELENOPROTEIN, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        gpx4 = transcripts["ENST00000354171.13"]
+        self.assertEqual(gpx4["transl_except"], {"Sec": [73]})
+        self.assertNotIn("warnings", gpx4)
+
+    def test_ensembl_gtf_selenocysteine_unplaced(self):
+        """ SELENOH ENST00000528798 is cds_start_NF, and its CDS starts out of frame, so the
+            selenocysteine can't be given a codon number. It must be flagged, not silently dropped """
+        genome_build = "GRCh38"
+        parser = GTFParser(self.ENSEMBL_115_GTF_FILENAME_SELENOPROTEIN, genome_build, self.FAKE_URL)
+        with self.assertLogs(level="WARNING"):
+            _, transcripts = parser.get_genes_and_transcripts()
+        transcript = transcripts["ENST00000528798.1"]
+        self.assertNotIn("transl_except", transcript)
+        self.assertEqual(transcript["warnings"], {"transl_except_unplaced": ["Sec"]})
+
+    def test_ensembl_gtf_selenocysteine_split_across_exons(self):
+        """ A codon split across exons would be a Selenocysteine row per exon (not seen in real data yet).
+            GPX4 codon 60 spans exons 2/3, the 2nd piece is mid-codon but must not be flagged unplaced """
+        with open(self.ENSEMBL_115_GTF_FILENAME_SELENOPROTEIN) as f:
+            lines = f.readlines()
+        sec_line = next(line for line in lines if "\tSelenocysteine\t1105403\t1105405\t" in line)
+        split_lines = [sec_line.replace("\t1105403\t1105405\t", "\t1105279\t1105280\t"),
+                       sec_line.replace("\t1105403\t1105405\t", "\t1105366\t1105366\t")]
+        lines = [line for line in lines if line is not sec_line] + split_lines
+
+        genome_build = "GRCh38"
+        with tempfile.NamedTemporaryFile("w", suffix=".gtf") as f:
+            f.writelines(lines)
+            f.flush()
+            parser = GTFParser(f.name, genome_build, self.FAKE_URL)
+            _, transcripts = parser.get_genes_and_transcripts()
+        gpx4 = transcripts["ENST00000354171.13"]
+        self.assertEqual(gpx4["transl_except"], {"Sec": [60]})
+        self.assertNotIn("warnings", gpx4)
 
     def test_transcript_position_across_coordinate_hole(self):
         """ A few RefSeq alignments leave a run of transcript bases unaligned between two exons, so

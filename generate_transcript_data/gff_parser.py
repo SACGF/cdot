@@ -179,6 +179,64 @@ class GFFParser(abc.ABC):
         if note := feature.attr.get("Note"):
             transcript["note"] = note
 
+        if feature.type == "CDS":
+            # RefSeq repeats these on every CDS row
+            if transl_except := feature.attr.get("transl_except"):
+                for start, end, amino_acid in self._parse_transl_except(transl_except):
+                    self._add_transl_except(transcript_accession, start, end, amino_acid)
+            if transl_table := feature.attr.get("transl_table"):
+                transcript["transl_table"] = int(transl_table)
+
+    @staticmethod
+    def _parse_transl_except(transl_except):
+        """ RefSeq, eg '(pos:complement(31105951..31105953)%2Caa:Sec),(pos:4261..4262%2Caa:TERM)'
+            Yields (start, end, amino_acid) with 0-based half-open genomic coordinates """
+        for pos, amino_acid in re.findall(r"pos:(.+?)(?:%2C|,)aa:(\w+)", transl_except):
+            coordinates = [int(c) for c in re.findall(r"\d+", pos)]
+            yield min(coordinates) - 1, max(coordinates), amino_acid
+
+    def _add_transl_except(self, transcript_accession, start, end, amino_acid):
+        """ A codon that codes for amino_acid rather than what the translation table says.
+            Converted to a codon number in _finish_process_features, once the exons and CDS are known """
+        features_by_type = self.transcript_features_by_type[transcript_accession]
+        features_by_type["transl_except"].append((start, end, amino_acid))
+
+    @staticmethod
+    def _get_transl_except_codons(transcript_accession, transcript_data, forward_strand, exons_stranded_order,
+                                  transl_except):
+        """ Returns ({amino_acid: [codon numbers]}, {unplaced amino acids}), the codon numbers 1-based
+            within the CDS (ie the amino acid positions in the protein) """
+        codons_by_amino_acid = defaultdict(set)
+        cds_length = transcript_data["stop_codon"] - transcript_data["start_codon"]
+        not_codon_starts = []  # (amino_acid, cds_position or None, start, end)
+        for start, end, amino_acid in transl_except:
+            # First base of the codon, in transcript direction
+            genomic_coordinate = start if forward_strand else end
+            try:
+                transcript_position = GFFParser._get_transcript_position(forward_strand, exons_stranded_order,
+                                                                         genomic_coordinate)
+            except ValueError as e:
+                logging.warning("%s: couldn't place transl_except %s at %d-%d: %s",
+                                transcript_accession, amino_acid, start + 1, end, e)
+                not_codon_starts.append((amino_acid, None, start, end))
+                continue
+            cds_position = transcript_position - transcript_data["start_codon"]
+            if 0 <= cds_position < cds_length and cds_position % 3 == 0:
+                codons_by_amino_acid[amino_acid].add(cds_position // 3 + 1)
+            else:
+                not_codon_starts.append((amino_acid, cds_position, start, end))
+
+        unplaced = set()
+        for amino_acid, cds_position, start, end in not_codon_starts:
+            if cds_position is not None:
+                if 0 <= cds_position < cds_length and cds_position // 3 + 1 in codons_by_amino_acid[amino_acid]:
+                    continue  # Rest of a codon split across exons (Ensembl writes a row per exon)
+                logging.warning("%s: transl_except %s at %d-%d is not a codon of the CDS",
+                                transcript_accession, amino_acid, start + 1, end)
+            unplaced.add(amino_acid)
+        codons = {amino_acid: sorted(codons) for amino_acid, codons in codons_by_amino_acid.items() if codons}
+        return codons, unplaced
+
     def _finish_process_features(self):
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
             features_by_type = self.transcript_features_by_type.get(transcript_accession, {})
@@ -227,6 +285,21 @@ class GFFParser(abc.ABC):
                                                                                        cds_max)
                 except ValueError as e:
                     logging.warning("Couldn't set %s transcript positions from %s: %s", coding_right, cds_max, e)
+
+            transl_except = features_by_type.get("transl_except")
+            if transl_except:
+                if "start_codon" in transcript_data and "stop_codon" in transcript_data:
+                    codons, unplaced = self._get_transl_except_codons(transcript_accession, transcript_data,
+                                                                      forward_strand, exons_stranded_order,
+                                                                      transl_except)
+                    if codons:
+                        transcript_data["transl_except"] = codons
+                else:
+                    unplaced = {amino_acid for _, _, amino_acid in transl_except}
+                if unplaced:
+                    # Consumers can't tell a missing transl_except from none, so record it
+                    warnings = transcript_data.setdefault("warnings", {})
+                    warnings["transl_except_unplaced"] = sorted(unplaced)
 
             exons_genomic_order = exons_stranded_order
             if not forward_strand:
@@ -434,7 +507,7 @@ class GTFParser(GFFParser):
 
     """
     GTF_TRANSCRIPTS_DATA = GFFParser.CODING_FEATURES | {"exon"}
-    FEATURE_ALLOW_LIST = GTF_TRANSCRIPTS_DATA | {"gene", "transcript"}
+    FEATURE_ALLOW_LIST = GTF_TRANSCRIPTS_DATA | {"gene", "transcript", "Selenocysteine"}
 
     def __init__(self, *args, **kwargs):
         super(GTFParser, self).__init__(*args, **kwargs)
@@ -462,6 +535,8 @@ class GTFParser(GFFParser):
             # No need to store chrom/strand for each feature, will use transcript
             if feature.type in self.GTF_TRANSCRIPTS_DATA:
                 self._gtf_handle_transcript_data(transcript_accession, transcript, feature)
+            elif feature.type == "Selenocysteine":  # Ensembl
+                self._add_transl_except(transcript_accession, feature.iv.start, feature.iv.end, "Sec")
 
             biotype = feature.attr.get("gene_biotype")
             if biotype is None:

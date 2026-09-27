@@ -138,6 +138,37 @@ class TestModels(unittest.TestCase):
         self.assertEqual(build["ccds"], "CCDS123.1")
         self.assertEqual(build.get("source"), "BestRefSeq")
 
+    def test_transcript_translation_fields(self):
+        """transl_except/transl_table/warnings are optional: kept when present, None when absent."""
+        d = {
+            "id": "NM_FAKE.1",
+            "genome_builds": {
+                "GRCh38": {
+                    "contig": "NC_000001.11",
+                    "strand": "+",
+                    "exons": [[100, 400, 1, 1, 300, None]],
+                }
+            },
+            "start_codon": 0,
+            "stop_codon": 300,
+            "transl_except": {"Sec": [48], "TERM": [100]},
+            "transl_table": 1,
+        }
+        tx = models.transcript_from_dict(d)
+        self.assertEqual(tx.transl_except, {"Sec": [48], "TERM": [100]})
+        self.assertEqual(tx.transl_table, 1)
+        self.assertEqual(tx["transl_except"]["Sec"], [48])
+
+        del d["transl_except"], d["transl_table"]
+        tx = models.transcript_from_dict(d)
+        self.assertIsNone(tx.transl_except)
+        self.assertIsNone(tx.transl_table)
+        self.assertIsNone(tx.warnings)
+
+        d["warnings"] = {"transl_except_unplaced": ["Sec"]}
+        tx = models.transcript_from_dict(d)
+        self.assertEqual(tx.warnings, {"transl_except_unplaced": ["Sec"]})
+
     def test_loads_accepts_genome_build_source_str_or_list(self):
         """Regression: genome_builds[...].source is a str in early 0.2.32 data but a
         list (e.g. ['BestRefSeq']) from 0.2.33 on. The strict msgspec loads() path

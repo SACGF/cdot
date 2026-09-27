@@ -2,7 +2,7 @@
 
 > Auto-generated from the typed models in [`cdot/models.py`](../cdot/models.py) by `generate_transcript_data/generate_json_docs.py`. Do not edit by hand.
 
-Generated from cdot **0.2.30**. A machine-readable [JSON Schema](cdot-json-schema.json) is generated alongside this file.
+Generated from cdot **0.2.31**. A machine-readable [JSON Schema](cdot-json-schema.json) is generated alongside this file.
 
 See [Coordinates & exon alignments](coordinates_and_exons.md) for a conceptual walk-through of exon coordinates, exon ordering and the alignment gap strings.
 
@@ -47,6 +47,9 @@ A single transcript and its per-build coordinates.
 | `cdot` | string or null | no | cdot version that generated/last touched this transcript record. |
 | `source` | array of string or null | no | Annotation source(s) this transcript came from (e.g. `['NCBI']`). |
 | `partial` | integer or null | no | Non-zero if the transcript is annotated as partial/incomplete. |
+| `transl_except` | object (array of integer values) or null | no | Codons that code for another amino acid than `transl_table` says (coding only): amino acid (as in the RefSeq `transl_except` attribute, eg `'Sec'`, `'TERM'`, `'Met'`) -> codon numbers, 1-based within the CDS, ie the amino acid positions in the protein. `'Sec'` comes from RefSeq `transl_except` and Ensembl GTF `Selenocysteine` rows. `'TERM'` marks a stop codon, eg one that the poly(A) tail completes. The CDS length is then not a multiple of 3. Data schema >= 0.2.35. |
+| `transl_table` | integer or null | no | NCBI genetic code of the CDS (eg `2` for vertebrate mitochondria), when the source names one (RefSeq `transl_table`). Absent means the standard code or unknown. Data schema >= 0.2.35. |
+| `warnings` | object (any values) or null | no | Problems cdot hit converting this transcript from the source annotation, keyed by warning type. Absent when there were none. Data schema >= 0.2.35. Types: `'transl_except_unplaced'`: amino acids (eg `['Sec']`) the source gives a translation exception for, but that cdot couldn't place as a codon of the CDS (eg a partial CDS), so `transl_except` is missing some or all of their codons. |
 
 ## GenomeBuild
 
