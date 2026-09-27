@@ -27,3 +27,4 @@ from cdot.hgvs.gene_hgvs import (
     UnsafeVersionPolicy,
 )
 from cdot.hgvs.version_safety import intrinsic_cds_structure
+from cdot.hgvs.translation import c_to_p

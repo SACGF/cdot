@@ -1,0 +1,204 @@
+{
+ "cdot_version": "0.2.35",
+ "genome_builds": [
+  "GRCh38"
+ ],
+ "metadata": {
+  "cdot_version": "0.2.35",
+  "genome_builds": [
+   "GRCh38"
+  ],
+  "input_files": [],
+  "method": "test",
+  "sys.argv": "",
+  "url_counts": {
+   "x": 3
+  }
+ },
+ "transcripts": {
+  "NM_002085.5": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "GPX4",
+   "gene_version": "2879",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS42457.1",
+     "cds_end": 1106572,
+     "cds_start": 1104043,
+     "contig": "NC_000019.10",
+     "exons": [
+      [
+       1103993,
+       1104127,
+       0,
+       1,
+       134,
+       null
+      ],
+      [
+       1105185,
+       1105280,
+       1,
+       135,
+       229,
+       null
+      ],
+      [
+       1105365,
+       1105510,
+       2,
+       230,
+       374,
+       null
+      ],
+      [
+       1105657,
+       1105809,
+       3,
+       375,
+       526,
+       null
+      ],
+      [
+       1106241,
+       1106266,
+       4,
+       527,
+       551,
+       null
+      ],
+      [
+       1106399,
+       1106459,
+       5,
+       552,
+       611,
+       null
+      ],
+      [
+       1106539,
+       1106779,
+       6,
+       612,
+       851,
+       null
+      ]
+     ],
+     "note": "UGA stop codon recoded as selenocysteine%3B isoform A precursor is encoded by transcript variant 1",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "tag": "MANE Select",
+     "url": "x"
+    }
+   },
+   "hgnc": "4556",
+   "id": "NM_002085.5",
+   "protein": "NP_002076.2",
+   "start_codon": 50,
+   "stop_codon": 644,
+   "translation": {
+    "transl_except": {
+     "Sec": [
+      73
+     ]
+    }
+   }
+  },
+  "NM_015068.3": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "PEG10",
+   "gene_version": "23089",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 94665682,
+     "cds_start": 94663556,
+     "contig": "NC_000007.14",
+     "exons": [
+      [
+       94656324,
+       94656580,
+       0,
+       1,
+       256,
+       null
+      ],
+      [
+       94663333,
+       94669695,
+       1,
+       257,
+       6618,
+       null
+      ]
+     ],
+     "note": "protein translation is dependent on -1 ribosomal frameshift%3B isoform 1 is encoded by transcript variant 1",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "x"
+    }
+   },
+   "hgnc": "14005",
+   "id": "NM_015068.3",
+   "protein": "NP_055883.2",
+   "start_codon": 479,
+   "stop_codon": 2605,
+   "translation": {
+    "exceptions": [
+     "ribosomal slippage"
+    ],
+    "ribosomal_slippage": [
+     {
+      "cds_position": 957,
+      "shift": -1
+     }
+    ]
+   }
+  },
+  "fake-rna-COX1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "COX1",
+   "gene_version": "4512",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 7445,
+     "cds_start": 5903,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       5903,
+       7445,
+       0,
+       1,
+       1542,
+       null
+      ]
+     ],
+     "note": "cytochrome c oxidase I",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "x"
+    }
+   },
+   "hgnc": "7419",
+   "id": "fake-rna-COX1",
+   "protein": "YP_003024028.1",
+   "start_codon": 0,
+   "stop_codon": 1542,
+   "translation": {
+    "transl_table": 2
+   }
+  }
+ }
+}
