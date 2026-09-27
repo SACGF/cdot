@@ -47,10 +47,18 @@ A single transcript and its per-build coordinates.
 | `cdot` | string or null | no | cdot version that generated/last touched this transcript record. |
 | `source` | array of string or null | no | Annotation source(s) this transcript came from (e.g. `['NCBI']`). |
 | `partial` | integer or null | no | Non-zero if the transcript is annotated as partial/incomplete. |
-| `transl_except` | object (array of integer values) or null | no | Codons that code for another amino acid than `transl_table` says (coding only): amino acid (as in the RefSeq `transl_except` attribute, eg `'Sec'`, `'TERM'`, `'Met'`) -> codon numbers, 1-based within the CDS, ie the amino acid positions in the protein. `'Sec'` comes from RefSeq `transl_except` and Ensembl GTF `Selenocysteine` rows. `'TERM'` marks a stop codon, eg one that the poly(A) tail completes. The CDS length is then not a multiple of 3. Data schema >= 0.2.35. |
-| `transl_table` | integer or null | no | NCBI genetic code of the CDS (eg `2` for vertebrate mitochondria), when the source names one (RefSeq `transl_table`). Absent means the standard code or unknown. Data schema >= 0.2.35. |
-| `ribosomal_slippage` | array of object (integer values) or null | no | Programmed ribosomal frameshifts in the CDS (RefSeq `exception=ribosomal slippage`, eg PEG10, OAZ1). Each is `{"cds_position": N, "shift": S}`: N is the 1-based position in the CDS (as in c. numbering), S is `-1` (base N is read twice) or `1` (base N is skipped). Translating the CDS needs these applied, so its length is then not a multiple of 3. Does not affect c. to g. mapping. Data schema >= 0.2.35. |
-| `warnings` | object (any values) or null | no | Problems cdot hit converting this transcript from the source annotation, keyed by warning type. Absent when there were none. Data schema >= 0.2.35. Types: `'transl_except_unplaced'`: amino acids (eg `['Sec']`) the source gives a translation exception for, but that cdot couldn't place as a codon of the CDS (eg a partial CDS), so `transl_except` is missing some or all of their codons. `'ribosomal_slippage_unplaced'`: `True` when the source says the CDS has a ribosomal frameshift, but cdot couldn't find or place it, so `ribosomal_slippage` is missing some or all of them. |
+| `translation` | [Translation](#translation) or null | no | How to translate the CDS where the standard genetic code isn't enough (coding only). The same on every genome build. Absent when the source has nothing to add. Data schema >= 0.2.35. |
+
+## Translation
+
+How to translate a transcript's CDS (`Transcript.translation`). Data schema >= 0.2.35.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `transl_table` | integer or null | no | NCBI genetic code of the CDS (eg `2` for vertebrate mitochondria), when the source names one (RefSeq `transl_table`). Absent means the standard code or unknown. |
+| `transl_except` | object (array of integer values) or null | no | Codons that code for another amino acid than `transl_table` says: amino acid (as in the RefSeq `transl_except` attribute) -> codon numbers, 1-based within the CDS, ie the amino acid positions in the protein. `'Sec'` (selenocysteine) comes from RefSeq `transl_except` and Ensembl GTF `Selenocysteine` rows. `'TERM'` marks a stop codon, eg one that the poly(A) tail completes, so the CDS length is not a multiple of 3. `'Other'` is eg stop codon readthrough. Codon 1 is a non-AUG start (eg `'Met'` or `'Leu'`). RefSeq corrections of a codon where the genome differs from the transcript depend on the build, so are in `GenomeBuild.genome_mismatch` instead. |
+| `ribosomal_slippage` | array of object (integer values) or null | no | Programmed ribosomal frameshifts in the CDS (RefSeq `exception=ribosomal slippage`, eg PEG10, OAZ1). Each is `{"cds_position": N, "shift": S}`: N is the 1-based position in the CDS (as in c. numbering), S is `-1` (base N is read twice) or `1` (base N is skipped). Translating the CDS needs these applied, so its length is then not a multiple of 3. Does not affect c. to g. mapping. |
+| `exceptions` | array of string or null | no | RefSeq CDS `exception` values, verbatim (eg `'ribosomal slippage'`, `'alternative start codon'`, `'unclassified translation discrepancy'`), except `'annotated by transcript or proteomic data'`, which is in `GenomeBuild.genome_mismatch`. Kept so types cdot doesn't interpret are still visible. |
 
 ## GenomeBuild
 
@@ -72,6 +80,19 @@ A transcript's coordinates on one genome build (e.g. `GRCh38`).
 | `source` | string or array of string or null | no | Annotation source (GTF/GFF column 2, e.g. `'BestRefSeq'`); data schema >= 0.2.32. A single string in early 0.2.32 data, a list (e.g. `['BestRefSeq']`) from 0.2.33 on. |
 | `ccds` | string or null | no | CCDS id, when present; data schema >= 0.2.33. |
 | `transcript_support_level` | string or null | no | Ensembl transcript support level (TSL); data schema >= 0.2.33. |
+| `genome_mismatch` | [GenomeMismatch](#genomemismatch) or null | no | Where the source says the transcript differs from this genome; data schema >= 0.2.35. |
+| `warnings` | object (any values) or null | no | Problems cdot hit converting this transcript from the source annotation on this build, keyed by warning type. Absent when there were none; data schema >= 0.2.35. Types: `'transl_except_unplaced'`: amino acids (eg `['Sec']`) the source gives a translation exception for, but that cdot couldn't place as a codon of the CDS (eg a CDS that starts out of frame), so `transl_except` is missing some or all of their codons. `'ribosomal_slippage_unplaced'`: `True` when the source says the CDS has a ribosomal frameshift, but cdot couldn't find or place it. `'codons_unplaced'`: which of `['start_codon', 'stop_codon']` couldn't be placed on the transcript, so the transcript has a CDS but is missing them. |
+
+## GenomeMismatch
+
+Where the source says the transcript differs from this build's genome
+(`GenomeBuild.genome_mismatch`). RefSeq only, Ensembl transcripts match the genome.
+Data schema >= 0.2.35.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `transl_except` | object (array of integer values) or null | no | Codons RefSeq corrects because this genome differs from the transcript: amino acid -> codon numbers (1-based within the CDS). Needed to translate a transcript built from genome sequence, eg the GRCh37 reference has the ACTN3 R577X stop allele, so `NM_001104.4` has `{'Arg': [577]}` on GRCh37 only. |
+| `exceptions` | array of string or null | no | RefSeq `exception` values on the exon/CDS rows, verbatim, eg `'annotated by transcript or proteomic data'`. |
 
 ## Exon
 

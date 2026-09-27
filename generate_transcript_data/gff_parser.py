@@ -87,7 +87,7 @@ class GFFParser(abc.ABC):
         # These are fields that differ per transcript/genome build, anything NOT in here should be a property of
         # the transcript across all builds
         GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "other_chroms", "source",
-                               "tag", "note", "ccds", "transcript_support_level"]
+                               "tag", "note", "ccds", "transcript_support_level", "genome_mismatch", "warnings"]
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
             if protein := self.transcript_proteins.get(transcript_accession):
                 transcript_data["protein"] = protein
@@ -155,6 +155,9 @@ class GFFParser(abc.ABC):
         other_chroms.add(feature.iv.chrom)
         data["other_chroms"] = other_chroms
 
+    EXCEPTION_GENOME_MISMATCH = "annotated by transcript or proteomic data"
+    EXCEPTION_RIBOSOMAL_SLIPPAGE = "ribosomal slippage"
+
     def _add_transcript_data(self, transcript_accession, transcript, feature):
         if feature.iv.chrom != transcript[CONTIG]:
             self._store_other_chrom(transcript, feature)
@@ -179,15 +182,31 @@ class GFFParser(abc.ABC):
         if note := feature.attr.get("Note"):
             transcript["note"] = note
 
+        exceptions = self._parse_exception(feature.attr.get("exception"))
         if feature.type == "CDS":
             # RefSeq repeats these on every CDS row
             if transl_except := feature.attr.get("transl_except"):
                 for start, end, amino_acid in self._parse_transl_except(transl_except):
                     self._add_transl_except(transcript_accession, start, end, amino_acid)
             if transl_table := feature.attr.get("transl_table"):
-                transcript["transl_table"] = int(transl_table)
-            if "ribosomal slippage" in feature.attr.get("exception", ""):
+                features_by_type["transl_table"] = [int(transl_table)]
+            if self.EXCEPTION_RIBOSOMAL_SLIPPAGE in exceptions:
                 features_by_type["ribosomal_slippage_cds"].append(feature_tuple)
+            for exception in exceptions:
+                if exception == self.EXCEPTION_GENOME_MISMATCH:
+                    features_by_type["genome_mismatch_exceptions"].append(exception)
+                else:
+                    features_by_type["translation_exceptions"].append(exception)
+        else:
+            # RefSeq exon rows: the transcript differs from this genome
+            features_by_type["genome_mismatch_exceptions"].extend(exceptions)
+
+    @staticmethod
+    def _parse_exception(exception):
+        """ RefSeq 'exception' attribute, eg 'alternative start codon%2C annotated by transcript or proteomic data' """
+        if not exception:
+            return []
+        return [e.strip() for e in exception.replace("%2C", ",").split(",") if e.strip()]
 
     @staticmethod
     def _parse_transl_except(transl_except):
@@ -273,6 +292,70 @@ class GFFParser(abc.ABC):
                             transcript_accession)
         return sorted(slippage, key=lambda s: s["cds_position"]), unplaced
 
+    @staticmethod
+    def _add_warning(transcript_data, warning, value=None):
+        """ Problems converting this transcript (stored per genome build), keyed by warning type.
+            Warnings with a value are a sorted list of them, otherwise True """
+        warnings = transcript_data.setdefault("warnings", {})
+        if value is None:
+            warnings[warning] = True
+        else:
+            warnings[warning] = sorted(set(warnings.get(warning, [])) | {value})
+
+    @staticmethod
+    def _is_transcript_transl_except(amino_acid, codon):
+        """ Sec, stops (TERM, eg completed by the poly(A) tail), 'Other' (eg stop codon readthrough) and
+            non-AUG starts are properties of the transcript. The rest are RefSeq correcting a codon where this
+            genome differs from the transcript, which depends on the genome build """
+        return amino_acid in {"Sec", "TERM", "Other"} or codon == 1
+
+    def _add_translation(self, transcript_accession, transcript_data, features_by_type, forward_strand,
+                         exons_stranded_order):
+        translation = {}
+        genome_mismatch = {}
+        if transl_table := features_by_type.get("transl_table"):
+            translation["transl_table"] = transl_table[0]
+
+        has_codons = "start_codon" in transcript_data and "stop_codon" in transcript_data
+        if transl_except := features_by_type.get("transl_except"):
+            if has_codons:
+                codons, unplaced = self._get_transl_except_codons(transcript_accession, transcript_data,
+                                                                  forward_strand, exons_stranded_order,
+                                                                  transl_except)
+                for amino_acid, codon_numbers in codons.items():
+                    for codon in codon_numbers:
+                        if self._is_transcript_transl_except(amino_acid, codon):
+                            d = translation
+                        else:
+                            d = genome_mismatch
+                        d.setdefault("transl_except", {}).setdefault(amino_acid, []).append(codon)
+            else:
+                unplaced = {amino_acid for _, _, amino_acid in transl_except}
+            # Consumers can't tell a missing transl_except from none, so record it
+            for amino_acid in unplaced:
+                self._add_warning(transcript_data, "transl_except_unplaced", amino_acid)
+
+        if slippage_cds := features_by_type.get("ribosomal_slippage_cds"):
+            unplaced = True
+            if has_codons:
+                slippage, unplaced = self._get_ribosomal_slippage(transcript_accession, transcript_data,
+                                                                  forward_strand, exons_stranded_order,
+                                                                  slippage_cds)
+                if slippage:
+                    translation["ribosomal_slippage"] = slippage
+            if unplaced:
+                self._add_warning(transcript_data, "ribosomal_slippage_unplaced")
+
+        if exceptions := features_by_type.get("translation_exceptions"):
+            translation["exceptions"] = sorted(set(exceptions))
+        if exceptions := features_by_type.get("genome_mismatch_exceptions"):
+            genome_mismatch["exceptions"] = sorted(set(exceptions))
+
+        if translation:
+            transcript_data["translation"] = translation
+        if genome_mismatch:
+            transcript_data["genome_mismatch"] = genome_mismatch
+
     def _finish_process_features(self):
         for transcript_accession, transcript_data in self.transcript_data_by_accession.items():
             features_by_type = self.transcript_features_by_type.get(transcript_accession, {})
@@ -314,6 +397,7 @@ class GFFParser(abc.ABC):
                                                                                       cds_min)
                 except ValueError as e:
                     logging.warning("Couldn't set %s transcript position from %s: %s", coding_left, cds_min, e)
+                    self._add_warning(transcript_data, "codons_unplaced", coding_left)
 
                 try:
                     transcript_data[coding_right] = GFFParser._get_transcript_position(forward_strand,
@@ -321,33 +405,10 @@ class GFFParser(abc.ABC):
                                                                                        cds_max)
                 except ValueError as e:
                     logging.warning("Couldn't set %s transcript positions from %s: %s", coding_right, cds_max, e)
+                    self._add_warning(transcript_data, "codons_unplaced", coding_right)
 
-            transl_except = features_by_type.get("transl_except")
-            if transl_except:
-                if "start_codon" in transcript_data and "stop_codon" in transcript_data:
-                    codons, unplaced = self._get_transl_except_codons(transcript_accession, transcript_data,
-                                                                      forward_strand, exons_stranded_order,
-                                                                      transl_except)
-                    if codons:
-                        transcript_data["transl_except"] = codons
-                else:
-                    unplaced = {amino_acid for _, _, amino_acid in transl_except}
-                if unplaced:
-                    # Consumers can't tell a missing transl_except from none, so record it
-                    warnings = transcript_data.setdefault("warnings", {})
-                    warnings["transl_except_unplaced"] = sorted(unplaced)
-
-            if slippage_cds := features_by_type.get("ribosomal_slippage_cds"):
-                unplaced = True
-                if "start_codon" in transcript_data:
-                    slippage, unplaced = self._get_ribosomal_slippage(transcript_accession, transcript_data,
-                                                                      forward_strand, exons_stranded_order,
-                                                                      slippage_cds)
-                    if slippage:
-                        transcript_data["ribosomal_slippage"] = slippage
-                if unplaced:
-                    warnings = transcript_data.setdefault("warnings", {})
-                    warnings["ribosomal_slippage_unplaced"] = True
+            self._add_translation(transcript_accession, transcript_data, features_by_type, forward_strand,
+                                  exons_stranded_order)
 
             exons_genomic_order = exons_stranded_order
             if not forward_strand:

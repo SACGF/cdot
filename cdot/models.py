@@ -87,6 +87,43 @@ class Exon(msgspec.Struct, array_like=True, forbid_unknown_fields=False):
         return (getattr(self, f) for f in self.__struct_fields__)
 
 
+class Translation(_DictAccessStruct, forbid_unknown_fields=False):
+    """How to translate a transcript's CDS (``Transcript.translation``). Data schema >= 0.2.35."""
+    transl_table: Optional[int] = None
+    """NCBI genetic code of the CDS (eg ``2`` for vertebrate mitochondria), when the source names one
+    (RefSeq ``transl_table``). Absent means the standard code or unknown."""
+    transl_except: Optional[Dict[str, List[int]]] = None
+    """Codons that code for another amino acid than ``transl_table`` says: amino acid (as in the RefSeq
+    ``transl_except`` attribute) -> codon numbers, 1-based within the CDS, ie the amino acid positions in
+    the protein. ``'Sec'`` (selenocysteine) comes from RefSeq ``transl_except`` and Ensembl GTF
+    ``Selenocysteine`` rows. ``'TERM'`` marks a stop codon, eg one that the poly(A) tail completes, so the
+    CDS length is not a multiple of 3. ``'Other'`` is eg stop codon readthrough. Codon 1 is a non-AUG start
+    (eg ``'Met'`` or ``'Leu'``). RefSeq corrections of a codon where the genome differs from the transcript
+    depend on the build, so are in ``GenomeBuild.genome_mismatch`` instead."""
+    ribosomal_slippage: Optional[List[Dict[str, int]]] = None
+    """Programmed ribosomal frameshifts in the CDS (RefSeq ``exception=ribosomal slippage``, eg PEG10,
+    OAZ1). Each is ``{"cds_position": N, "shift": S}``: N is the 1-based position in the CDS (as in c.
+    numbering), S is ``-1`` (base N is read twice) or ``1`` (base N is skipped). Translating the CDS needs
+    these applied, so its length is then not a multiple of 3. Does not affect c. to g. mapping."""
+    exceptions: Optional[List[str]] = None
+    """RefSeq CDS ``exception`` values, verbatim (eg ``'ribosomal slippage'``, ``'alternative start codon'``,
+    ``'unclassified translation discrepancy'``), except ``'annotated by transcript or proteomic data'``,
+    which is in ``GenomeBuild.genome_mismatch``. Kept so types cdot doesn't interpret are still visible."""
+
+
+class GenomeMismatch(_DictAccessStruct, forbid_unknown_fields=False):
+    """Where the source says the transcript differs from this build's genome
+    (``GenomeBuild.genome_mismatch``). RefSeq only, Ensembl transcripts match the genome.
+    Data schema >= 0.2.35."""
+    transl_except: Optional[Dict[str, List[int]]] = None
+    """Codons RefSeq corrects because this genome differs from the transcript: amino acid -> codon numbers
+    (1-based within the CDS). Needed to translate a transcript built from genome sequence, eg the GRCh37
+    reference has the ACTN3 R577X stop allele, so ``NM_001104.4`` has ``{'Arg': [577]}`` on GRCh37 only."""
+    exceptions: Optional[List[str]] = None
+    """RefSeq ``exception`` values on the exon/CDS rows, verbatim, eg
+    ``'annotated by transcript or proteomic data'``."""
+
+
 class GenomeBuild(_DictAccessStruct, forbid_unknown_fields=False):
     """A transcript's coordinates on one genome build (e.g. ``GRCh38``)."""
     contig: str
@@ -121,6 +158,18 @@ class GenomeBuild(_DictAccessStruct, forbid_unknown_fields=False):
     """CCDS id, when present; data schema >= 0.2.33."""
     transcript_support_level: Optional[str] = None
     """Ensembl transcript support level (TSL); data schema >= 0.2.33."""
+    genome_mismatch: Optional[GenomeMismatch] = None
+    """Where the source says the transcript differs from this genome; data schema >= 0.2.35."""
+    warnings: Optional[Dict[str, Any]] = None
+    """Problems cdot hit converting this transcript from the source annotation on this build, keyed by
+    warning type. Absent when there were none; data schema >= 0.2.35. Types:
+    ``'transl_except_unplaced'``: amino acids (eg ``['Sec']``) the source gives a translation exception
+    for, but that cdot couldn't place as a codon of the CDS (eg a CDS that starts out of frame), so
+    ``transl_except`` is missing some or all of their codons.
+    ``'ribosomal_slippage_unplaced'``: ``True`` when the source says the CDS has a ribosomal frameshift,
+    but cdot couldn't find or place it.
+    ``'codons_unplaced'``: which of ``['start_codon', 'stop_codon']`` couldn't be placed on the transcript,
+    so the transcript has a CDS but is missing them."""
 
 
 class Transcript(_DictAccessStruct, forbid_unknown_fields=False):
@@ -148,28 +197,9 @@ class Transcript(_DictAccessStruct, forbid_unknown_fields=False):
     """Annotation source(s) this transcript came from (e.g. ``['NCBI']``)."""
     partial: Optional[int] = None
     """Non-zero if the transcript is annotated as partial/incomplete."""
-    transl_except: Optional[Dict[str, List[int]]] = None
-    """Codons that code for another amino acid than ``transl_table`` says (coding only): amino acid
-    (as in the RefSeq ``transl_except`` attribute, eg ``'Sec'``, ``'TERM'``, ``'Met'``) -> codon numbers,
-    1-based within the CDS, ie the amino acid positions in the protein. ``'Sec'`` comes from RefSeq
-    ``transl_except`` and Ensembl GTF ``Selenocysteine`` rows. ``'TERM'`` marks a stop codon, eg one that
-    the poly(A) tail completes. The CDS length is then not a multiple of 3. Data schema >= 0.2.35."""
-    transl_table: Optional[int] = None
-    """NCBI genetic code of the CDS (eg ``2`` for vertebrate mitochondria), when the source names one
-    (RefSeq ``transl_table``). Absent means the standard code or unknown. Data schema >= 0.2.35."""
-    ribosomal_slippage: Optional[List[Dict[str, int]]] = None
-    """Programmed ribosomal frameshifts in the CDS (RefSeq ``exception=ribosomal slippage``, eg PEG10, OAZ1).
-    Each is ``{"cds_position": N, "shift": S}``: N is the 1-based position in the CDS (as in c. numbering),
-    S is ``-1`` (base N is read twice) or ``1`` (base N is skipped). Translating the CDS needs these applied,
-    so its length is then not a multiple of 3. Does not affect c. to g. mapping. Data schema >= 0.2.35."""
-    warnings: Optional[Dict[str, Any]] = None
-    """Problems cdot hit converting this transcript from the source annotation, keyed by warning type.
-    Absent when there were none. Data schema >= 0.2.35. Types:
-    ``'transl_except_unplaced'``: amino acids (eg ``['Sec']``) the source gives a translation exception for,
-    but that cdot couldn't place as a codon of the CDS (eg a partial CDS), so ``transl_except`` is missing
-    some or all of their codons.
-    ``'ribosomal_slippage_unplaced'``: ``True`` when the source says the CDS has a ribosomal frameshift, but
-    cdot couldn't find or place it, so ``ribosomal_slippage`` is missing some or all of them."""
+    translation: Optional[Translation] = None
+    """How to translate the CDS where the standard genetic code isn't enough (coding only). The same on
+    every genome build. Absent when the source has nothing to add. Data schema >= 0.2.35."""
 
 
 class Gene(_DictAccessStruct, forbid_unknown_fields=False):

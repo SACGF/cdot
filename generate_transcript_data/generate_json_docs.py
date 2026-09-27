@@ -25,7 +25,8 @@ import msgspec.inspect as mi
 from cdot import models, __version__
 
 # Document the structures top-down
-STRUCTS = [models.CdotData, models.Transcript, models.GenomeBuild, models.Exon, models.Gene]
+STRUCTS = [models.CdotData, models.Transcript, models.Translation, models.GenomeBuild,
+           models.GenomeMismatch, models.Exon, models.Gene]
 
 # Curated notes for "strangeness" that can't be read off the struct types (issue #77):
 # how the object maps are keyed, and source-specific quirks.

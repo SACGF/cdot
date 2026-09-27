@@ -1,10 +1,12 @@
 
+import argparse
 import gzip
+import json
 import os
 import tempfile
 from inspect import getsourcefile
 import unittest
-from generate_transcript_data.cdot_json import add_gencode_hgnc
+from generate_transcript_data.cdot_json import add_gencode_hgnc, combine_builds, write_cdot_json
 from generate_transcript_data.gff_parser import GTFParser, GFF3Parser
 
 
@@ -39,6 +41,9 @@ class Test(unittest.TestCase):
     # PEG10 (-1 frameshift), OAZ1 (+1) and OAZ2 (+1, - strand) from RefSeq RS_2025_08
     REFSEQ_GFF3_FILENAME_RIBOSOMAL_SLIPPAGE = os.path.join(test_data_dir,
                                                            "refseq_test.RS_2025_08.ribosomal_slippage.gff")
+    # ACTN3: the GRCh37 reference has the R577X stop allele, which RefSeq corrects on GRCh37 only
+    REFSEQ_GFF3_FILENAME_GRCH37_ACTN3 = os.path.join(test_data_dir, "refseq_test.GRCh37.105.20220307.ACTN3.gff")
+    REFSEQ_GFF3_FILENAME_GRCH38_ACTN3 = os.path.join(test_data_dir, "refseq_test.RS_2025_08.ACTN3.gff")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
     FAKE_URL = "http://fake.url"
 
@@ -220,14 +225,14 @@ class Test(unittest.TestCase):
         parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_GRCH38_MT, genome_build, self.FAKE_URL)
         _, transcripts = parser.get_genes_and_transcripts()
         for transcript_accession in self.FAKE_MT_TRANSCRIPTS:
-            self.assertEqual(transcripts[transcript_accession]["transl_table"], 2, transcript_accession)
+            self.assertEqual(transcripts[transcript_accession]["translation"]["transl_table"], 2, transcript_accession)
 
         # ND1: CDS of 956 bases, the last 2 bases (TA) of the stop codon are in the genome
         nd1 = transcripts["fake-rna-ND1"]
         self.assertEqual(nd1["stop_codon"] - nd1["start_codon"], 956)
-        self.assertEqual(nd1["transl_except"], {"TERM": [319]})
+        self.assertEqual(nd1["translation"]["transl_except"], {"TERM": [319]})
         # ATP8 has a complete stop codon
-        self.assertNotIn("transl_except", transcripts["fake-rna-ATP8"])
+        self.assertNotIn("transl_except", transcripts["fake-rna-ATP8"]["translation"])
 
     def test_refseq_gff3_selenocysteine(self):
         """ RefSeq names the selenocysteine codon in transl_except on every CDS row """
@@ -235,9 +240,7 @@ class Test(unittest.TestCase):
         parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_SELENOPROTEIN, genome_build, self.FAKE_URL)
         _, transcripts = parser.get_genes_and_transcripts()
         transcript = transcripts["NM_080430.4"]
-        self.assertEqual(transcript["transl_except"], {"Sec": [48]})
-        # Nuclear CDS rows have no transl_table (the standard code)
-        self.assertNotIn("transl_table", transcript)
+        self.assertEqual(transcript["translation"], {"transl_except": {"Sec": [48]}})  # no transl_table on nuclear CDS
 
     def test_ensembl_gtf_selenocysteine(self):
         """ Ensembl GTF writes the selenocysteine codon as a 'Selenocysteine' row """
@@ -245,12 +248,12 @@ class Test(unittest.TestCase):
         parser = GTFParser(self.ENSEMBL_108_GTF_FILENAME_SELENOPROTEIN, genome_build, self.FAKE_URL)
         _, transcripts = parser.get_genes_and_transcripts()
         transcript = transcripts["ENST00000400299.6"]
-        self.assertEqual(transcript["transl_except"], {"Sec": [48]})
+        self.assertEqual(transcript["translation"], {"transl_except": {"Sec": [48]}})
         # The Selenocysteine row must not change the transcript, exons or CDS
         exons = transcript["genome_builds"][genome_build]["exons"]
         self.assertEqual(len(exons), 5)
         self.assertEqual(transcript["stop_codon"] - transcript["start_codon"], 438)
-        self.assertNotIn("warnings", transcript)
+        self.assertNotIn("warnings", transcript["genome_builds"][genome_build])
 
     def test_refseq_gff3_selenocysteine_plus_strand_and_multiple(self):
         genome_build = "GRCh38"
@@ -259,20 +262,20 @@ class Test(unittest.TestCase):
         # GPX4 U73
         gpx4 = transcripts["NM_002085.5"]
         self.assertEqual(gpx4["genome_builds"][genome_build]["strand"], "+")
-        self.assertEqual(gpx4["transl_except"], {"Sec": [73]})
+        self.assertEqual(gpx4["translation"]["transl_except"], {"Sec": [73]})
         # SELENOP, as in UniProt P49908
         selenop = transcripts["NM_005410.4"]
-        self.assertEqual(selenop["transl_except"], {"Sec": [59, 300, 318, 330, 345, 352, 367, 369, 376, 378]})
+        self.assertEqual(selenop["translation"]["transl_except"], {"Sec": [59, 300, 318, 330, 345, 352, 367, 369, 376, 378]})
         for transcript in (gpx4, selenop):
-            self.assertNotIn("warnings", transcript)
+            self.assertNotIn("warnings", transcript["genome_builds"][genome_build])
 
     def test_ensembl_gtf_selenocysteine_plus_strand(self):
         genome_build = "GRCh38"
         parser = GTFParser(self.ENSEMBL_115_GTF_FILENAME_SELENOPROTEIN, genome_build, self.FAKE_URL)
         _, transcripts = parser.get_genes_and_transcripts()
         gpx4 = transcripts["ENST00000354171.13"]
-        self.assertEqual(gpx4["transl_except"], {"Sec": [73]})
-        self.assertNotIn("warnings", gpx4)
+        self.assertEqual(gpx4["translation"]["transl_except"], {"Sec": [73]})
+        self.assertNotIn("warnings", gpx4["genome_builds"][genome_build])
 
     def test_ensembl_gtf_selenocysteine_unplaced(self):
         """ SELENOH ENST00000528798 is cds_start_NF, and its CDS starts out of frame, so the
@@ -282,8 +285,8 @@ class Test(unittest.TestCase):
         with self.assertLogs(level="WARNING"):
             _, transcripts = parser.get_genes_and_transcripts()
         transcript = transcripts["ENST00000528798.1"]
-        self.assertNotIn("transl_except", transcript)
-        self.assertEqual(transcript["warnings"], {"transl_except_unplaced": ["Sec"]})
+        self.assertNotIn("translation", transcript)
+        self.assertEqual(transcript["genome_builds"][genome_build]["warnings"], {"transl_except_unplaced": ["Sec"]})
 
     def test_ensembl_gtf_selenocysteine_split_across_exons(self):
         """ A codon split across exons would be a Selenocysteine row per exon (not seen in real data yet).
@@ -302,8 +305,8 @@ class Test(unittest.TestCase):
             parser = GTFParser(f.name, genome_build, self.FAKE_URL)
             _, transcripts = parser.get_genes_and_transcripts()
         gpx4 = transcripts["ENST00000354171.13"]
-        self.assertEqual(gpx4["transl_except"], {"Sec": [60]})
-        self.assertNotIn("warnings", gpx4)
+        self.assertEqual(gpx4["translation"]["transl_except"], {"Sec": [60]})
+        self.assertNotIn("warnings", gpx4["genome_builds"][genome_build])
 
     def test_refseq_gff3_ribosomal_slippage(self):
         """ RefSeq splits the CDS at a ribosomal frameshift: rows overlapping by a base is -1 (base read
@@ -319,9 +322,11 @@ class Test(unittest.TestCase):
         }
         for transcript_accession, (cds_position, shift, num_codons) in expected.items():
             transcript = transcripts[transcript_accession]
-            self.assertEqual(transcript["ribosomal_slippage"], [{"cds_position": cds_position, "shift": shift}],
+            self.assertEqual(transcript["translation"]["ribosomal_slippage"],
+                             [{"cds_position": cds_position, "shift": shift}],
                              transcript_accession)
-            self.assertNotIn("warnings", transcript)
+            self.assertEqual(transcript["translation"]["exceptions"], ["ribosomal slippage"])
+            self.assertNotIn("warnings", transcript["genome_builds"][genome_build])
             # Applying the shift gives a whole number of codons
             translated_length = transcript["stop_codon"] - transcript["start_codon"] - shift
             self.assertEqual(translated_length, num_codons * 3, transcript_accession)
@@ -341,8 +346,37 @@ class Test(unittest.TestCase):
             with self.assertLogs(level="WARNING"):
                 _, transcripts = parser.get_genes_and_transcripts()
         transcript = transcripts["NM_015068.3"]
-        self.assertNotIn("ribosomal_slippage", transcript)
-        self.assertEqual(transcript["warnings"], {"ribosomal_slippage_unplaced": True})
+        self.assertNotIn("ribosomal_slippage", transcript["translation"])
+        self.assertEqual(transcript["genome_builds"][genome_build]["warnings"], {"ribosomal_slippage_unplaced": True})
+
+    def test_refseq_genome_mismatch_per_build(self):
+        """ RefSeq transl_except that correct a genome codon depend on the build, so go in genome_builds,
+            and must stay with their build when builds are combined """
+        transcript_accession = "NM_001104.4"
+        builds = {"GRCh37": self.REFSEQ_GFF3_FILENAME_GRCH37_ACTN3, "GRCh38": self.REFSEQ_GFF3_FILENAME_GRCH38_ACTN3}
+        with tempfile.TemporaryDirectory() as temp_dir:
+            args = {"output": os.path.join(temp_dir, "combined.json.gz")}
+            for genome_build, filename in builds.items():
+                _, transcripts = GFF3Parser(filename, genome_build, self.FAKE_URL).get_genes_and_transcripts()
+                transcript = transcripts[transcript_accession]
+                self.assertNotIn("translation", transcript)
+                build_data = transcript["genome_builds"][genome_build]
+                if genome_build == "GRCh37":
+                    self.assertEqual(build_data["genome_mismatch"],
+                                     {"transl_except": {"Arg": [577]},
+                                      "exceptions": ["annotated by transcript or proteomic data"]})
+                else:
+                    self.assertNotIn("genome_mismatch", build_data)
+                args[genome_build.lower()] = os.path.join(temp_dir, f"{genome_build}.json.gz")
+                write_cdot_json(args[genome_build.lower()], "test", [], {}, transcripts, [genome_build])
+            args["t2t_chm13v2"] = os.path.join(temp_dir, "T2T.json.gz")
+            write_cdot_json(args["t2t_chm13v2"], "test", [], {}, {}, ["T2T-CHM13v2.0"])
+
+            combine_builds(argparse.Namespace(**args))
+            with gzip.open(args["output"]) as f:
+                combined = json.load(f)["transcripts"][transcript_accession]["genome_builds"]
+        self.assertEqual(combined["GRCh37"]["genome_mismatch"]["transl_except"], {"Arg": [577]})
+        self.assertNotIn("genome_mismatch", combined["GRCh38"])
 
     def test_transcript_position_across_coordinate_hole(self):
         """ A few RefSeq alignments leave a run of transcript bases unaligned between two exons, so

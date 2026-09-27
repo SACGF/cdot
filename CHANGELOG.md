@@ -2,7 +2,7 @@
 
 ### Added
 
-- #131, #76 - `models.Transcript` has the optional data fields `transl_except`, `transl_table`, `ribosomal_slippage` and `warnings` (data schema >= 0.2.35)
+- #131, #76 - `models`: `Transcript.translation` (new `Translation` struct), `GenomeBuild.genome_mismatch` (new `GenomeMismatch` struct) and `GenomeBuild.warnings`, all optional (data schema >= 0.2.35)
 
 ## [0.2.31] - 2026-08-19
 
