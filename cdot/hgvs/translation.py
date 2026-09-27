@@ -22,7 +22,7 @@ Problems are returned as HGVSFix, as with fix_hgvs().
 import copy
 from typing import Optional
 
-from bioutils.sequences import TranslationTable, aa3_to_aa1, translate_cds
+from bioutils.sequences import TranslationTable, aa1_to_aa3, aa3_to_aa1, translate_cds
 from hgvs.edit import AAExt, AAFs, AASub
 from hgvs.exceptions import HGVSUnsupportedOperationError
 
@@ -212,7 +212,7 @@ def _codon_fixes(hdp, tx_ac: str, transcript, translation, translation_table) ->
                 severity=HGVSFixSeverity.WARNING,
                 code=HGVSFixCode.TRANSLATION_EXCEPTION_NOT_APPLIED,
                 message=f"{tx_ac} codon {codon} ({codon_seq}) is a non-standard amino acid in the RefSeq protein "
-                        f"(eg stop codon readthrough), but is translated as {_aa3(translated_aa)}",
+                        f"(eg stop codon readthrough), but is translated as {aa1_to_aa3(translated_aa)}",
             ))
             continue
         expected_aa = aa3_to_aa1(amino_acid)
@@ -233,20 +233,10 @@ def _codon_fixes(hdp, tx_ac: str, transcript, translation, translation_table) ->
             fixes.append(HGVSFix(
                 severity=HGVSFixSeverity.WARNING,
                 code=HGVSFixCode.REFERENCE_CODON_MISMATCH,
-                message=f"{tx_ac} codon {codon} is {codon_seq} ({_aa3(translated_aa)}) in the transcript sequence "
+                message=f"{tx_ac} codon {codon} is {codon_seq} ({aa1_to_aa3(translated_aa)}) in the transcript sequence "
                         f"used, but {amino_acid} in the RefSeq protein",
             ))
     return fixes
-
-
-def _aa3(aa1: str) -> str:
-    return "Ter" if aa1 == "*" else _AA1_TO_AA3.get(aa1, aa1)
-
-
-_AA1_TO_AA3 = {aa3_to_aa1(aa3): aa3 for aa3 in (
-    "Ala", "Arg", "Asn", "Asp", "Cys", "Gln", "Glu", "Gly", "His", "Ile", "Leu", "Lys", "Met",
-    "Phe", "Pro", "Ser", "Thr", "Trp", "Tyr", "Val", "Sec",
-)}
 
 
 def _fix_selenoprotein_p(var_p, sec_codons: set) -> tuple:
