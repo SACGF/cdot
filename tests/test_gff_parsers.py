@@ -8,6 +8,7 @@ from inspect import getsourcefile
 import unittest
 from generate_transcript_data.cdot_json import add_gencode_hgnc, combine_builds, write_cdot_json
 from generate_transcript_data.gff_parser import GTFParser, GFF3Parser
+from generate_transcript_data.transcript_coordinates import get_transcript_position
 
 
 class Test(unittest.TestCase):
@@ -45,6 +46,8 @@ class Test(unittest.TestCase):
     REFSEQ_GFF3_FILENAME_GRCH37_ACTN3 = os.path.join(test_data_dir, "refseq_test.GRCh37.105.20220307.ACTN3.gff")
     REFSEQ_GFF3_FILENAME_GRCH38_ACTN3 = os.path.join(test_data_dir, "refseq_test.RS_2025_08.ACTN3.gff")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
+    # Ensembl GFF3 (chrMT up to the first CDS) - not supported, CDS rows have no protein version
+    ENSEMBL_115_GFF3_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.115.MT.gff3")
     FAKE_URL = "http://fake.url"
 
     FAKE_MT_TRANSCRIPTS = [
@@ -81,6 +84,13 @@ class Test(unittest.TestCase):
 
         protein = transcript.get("protein")
         self.assertEqual(protein, "ENSP00000350283.3")
+
+    def test_ensembl_gff3_not_supported(self):
+        """ Ensembl GFF3 CDS rows carry protein_id but no version, so only the Ensembl GTF is supported.
+            The error must say so rather than just 'missing version' @see https://github.com/SACGF/cdot/issues/101 """
+        parser = GFF3Parser(self.ENSEMBL_115_GFF3_FILENAME, "GRCh38", self.FAKE_URL)
+        with self.assertRaisesRegex(ValueError, "Ensembl GFF3 files do not carry protein versions"):
+            parser.get_genes_and_transcripts()
 
     def test_refseq_gff3_2021(self):
         genome_build = "GRCh38"
@@ -391,9 +401,9 @@ class Test(unittest.TestCase):
             (3_000, 3_100, 2, 231, 330, None),
         ]
         # 50 bases into the exon that follows the hole
-        self.assertEqual(GFF3Parser._get_transcript_position(True, exons, 3_050), 280)
+        self.assertEqual(get_transcript_position(True, exons, 3_050), 280)
         # Exons before the hole are unaffected
-        self.assertEqual(GFF3Parser._get_transcript_position(True, exons, 2_050), 150)
+        self.assertEqual(get_transcript_position(True, exons, 2_050), 150)
 
         # Same again on the minus strand (exons in stranded order, so genomic order is reversed)
         rev_exons = [
@@ -401,8 +411,8 @@ class Test(unittest.TestCase):
             (2_000, 2_100, 1, 101, 200, None),
             (1_000, 1_100, 2, 231, 330, None),
         ]
-        self.assertEqual(GFF3Parser._get_transcript_position(False, rev_exons, 1_050), 280)
-        self.assertEqual(GFF3Parser._get_transcript_position(False, rev_exons, 2_050), 150)
+        self.assertEqual(get_transcript_position(False, rev_exons, 1_050), 280)
+        self.assertEqual(get_transcript_position(False, rev_exons, 2_050), 150)
 
     def test_codon_positions_across_coordinate_hole(self):
         """ End to end version of the above: the codon positions the parser writes out must be in
