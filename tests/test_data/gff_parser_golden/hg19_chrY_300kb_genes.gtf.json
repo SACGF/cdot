@@ -1,0 +1,396 @@
+{
+ "genes": {
+  "PLCXD1": {
+   "biotype": [
+    "mRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "PLCXD1",
+   "source": [
+    "stdin"
+   ],
+   "url": "http://fake.url"
+  },
+  "PPP2R3B": {
+   "biotype": [
+    "mRNA"
+   ],
+   "description": null,
+   "gene_symbol": "PPP2R3B",
+   "source": [
+    "stdin"
+   ],
+   "url": "http://fake.url"
+  },
+  "PPP2R3B-AS1": {
+   "biotype": [
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "PPP2R3B-AS1",
+   "source": [
+    "stdin"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "NM_013239": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "PPP2R3B",
+   "gene_version": "PPP2R3B",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 297426,
+     "cds_start": 245101,
+     "contig": "chrY",
+     "exons": [
+      [
+       244667,
+       245252,
+       12,
+       1842,
+       2426,
+       null
+      ],
+      [
+       249338,
+       249445,
+       11,
+       1735,
+       1841,
+       null
+      ],
+      [
+       249512,
+       249631,
+       10,
+       1616,
+       1734,
+       null
+      ],
+      [
+       251499,
+       251675,
+       9,
+       1440,
+       1615,
+       null
+      ],
+      [
+       252041,
+       252131,
+       8,
+       1350,
+       1439,
+       null
+      ],
+      [
+       252617,
+       252666,
+       7,
+       1301,
+       1349,
+       null
+      ],
+      [
+       256250,
+       256407,
+       6,
+       1144,
+       1300,
+       null
+      ],
+      [
+       256908,
+       256995,
+       5,
+       1057,
+       1143,
+       null
+      ],
+      [
+       257435,
+       257510,
+       4,
+       982,
+       1056,
+       null
+      ],
+      [
+       257968,
+       258071,
+       3,
+       879,
+       981,
+       null
+      ],
+      [
+       258324,
+       258428,
+       2,
+       775,
+       878,
+       null
+      ],
+      [
+       272139,
+       272325,
+       1,
+       589,
+       774,
+       null
+      ],
+      [
+       297102,
+       297690,
+       0,
+       1,
+       588,
+       null
+      ]
+     ],
+     "source": [
+      "stdin"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "NM_013239",
+   "start_codon": 264,
+   "stop_codon": 1992
+  },
+  "NM_018390_2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "PLCXD1",
+   "gene_version": "PLCXD1",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 166002,
+     "cds_start": 150854,
+     "contig": "chrY",
+     "exons": [
+      [
+       148060,
+       148351,
+       0,
+       1,
+       291,
+       null
+      ],
+      [
+       150833,
+       150981,
+       1,
+       292,
+       439,
+       null
+      ],
+      [
+       155399,
+       155536,
+       2,
+       440,
+       576,
+       null
+      ],
+      [
+       157314,
+       157443,
+       3,
+       577,
+       705,
+       null
+      ],
+      [
+       158165,
+       158321,
+       4,
+       706,
+       861,
+       null
+      ],
+      [
+       159701,
+       159885,
+       5,
+       862,
+       1045,
+       null
+      ],
+      [
+       165763,
+       170022,
+       6,
+       1046,
+       5304,
+       null
+      ]
+     ],
+     "source": [
+      "stdin"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "NM_018390_2",
+   "start_codon": 312,
+   "stop_codon": 1284
+  },
+  "NR_027231": {
+   "biotype": [
+    "ncRNA"
+   ],
+   "gene_name": "PPP2R3B-AS1",
+   "gene_version": "PPP2R3B-AS1",
+   "genome_builds": {
+    "GRCh37": {
+     "contig": "chrY",
+     "exons": [
+      [
+       231384,
+       232054,
+       0,
+       1,
+       670,
+       null
+      ]
+     ],
+     "source": [
+      "stdin"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "NR_027231"
+  },
+  "NR_027232": {
+   "biotype": [
+    "ncRNA"
+   ],
+   "gene_name": "PPP2R3B-AS1",
+   "gene_version": "PPP2R3B-AS1",
+   "genome_builds": {
+    "GRCh37": {
+     "contig": "chrY",
+     "exons": [
+      [
+       231384,
+       232054,
+       0,
+       1,
+       670,
+       null
+      ]
+     ],
+     "source": [
+      "stdin"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "NR_027232"
+  },
+  "NR_028057_2": {
+   "biotype": [
+    "ncRNA"
+   ],
+   "gene_name": "PLCXD1",
+   "gene_version": "PLCXD1",
+   "genome_builds": {
+    "GRCh37": {
+     "contig": "chrY",
+     "exons": [
+      [
+       142990,
+       143061,
+       0,
+       1,
+       71,
+       null
+      ],
+      [
+       148148,
+       148351,
+       1,
+       72,
+       274,
+       null
+      ],
+      [
+       150833,
+       150981,
+       2,
+       275,
+       422,
+       null
+      ],
+      [
+       155399,
+       155536,
+       3,
+       423,
+       559,
+       null
+      ],
+      [
+       157314,
+       157443,
+       4,
+       560,
+       688,
+       null
+      ],
+      [
+       158165,
+       158321,
+       5,
+       689,
+       844,
+       null
+      ],
+      [
+       159701,
+       159885,
+       6,
+       845,
+       1028,
+       null
+      ],
+      [
+       165763,
+       166059,
+       7,
+       1029,
+       1324,
+       null
+      ],
+      [
+       169259,
+       170022,
+       8,
+       1325,
+       2087,
+       null
+      ]
+     ],
+     "source": [
+      "stdin"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "NR_028057_2"
+  }
+ }
+}

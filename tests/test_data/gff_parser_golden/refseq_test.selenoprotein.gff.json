@@ -1,0 +1,95 @@
+{
+ "genes": {
+  "140606": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "selenoprotein M",
+   "gene_symbol": "SELENOM",
+   "hgnc": "30397",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "NM_080430.4": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SELENOM",
+   "gene_version": "140606",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS43003.1",
+     "cds_end": 31107505,
+     "cds_start": 31104969,
+     "contig": "NC_000022.11",
+     "exons": [
+      [
+       31104776,
+       31105128,
+       4,
+       343,
+       694,
+       null
+      ],
+      [
+       31105207,
+       31105286,
+       3,
+       264,
+       342,
+       null
+      ],
+      [
+       31105657,
+       31105692,
+       2,
+       229,
+       263,
+       null
+      ],
+      [
+       31105929,
+       31105965,
+       1,
+       193,
+       228,
+       null
+      ],
+      [
+       31107376,
+       31107568,
+       0,
+       1,
+       192,
+       null
+      ]
+     ],
+     "note": "UGA stop codon recoded as selenocysteine",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "tag": "MANE Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "30397",
+   "id": "NM_080430.4",
+   "protein": "NP_536355.1",
+   "start_codon": 63,
+   "stop_codon": 501,
+   "translation": {
+    "transl_except": {
+     "Sec": [
+      48
+     ]
+    }
+   }
+  }
+ }
+}

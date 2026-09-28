@@ -1,0 +1,209 @@
+{
+ "genes": {
+  "ENSG00000167468": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "GPX4",
+   "source": [
+    "ensembl_havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000167468.20": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "GPX4",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000211450": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "SELENOH",
+   "source": [
+    "ensembl_havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000211450.11": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "SELENOH",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "ENST00000354171.13": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "GPX4",
+   "gene_version": "ENSG00000167468.20",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS42457",
+     "cds_end": 1106572,
+     "cds_start": 1104043,
+     "contig": "NC_000019.10",
+     "exons": [
+      [
+       1103993,
+       1104127,
+       0,
+       1,
+       134,
+       null
+      ],
+      [
+       1105185,
+       1105280,
+       1,
+       135,
+       229,
+       null
+      ],
+      [
+       1105365,
+       1105510,
+       2,
+       230,
+       374,
+       null
+      ],
+      [
+       1105657,
+       1105809,
+       3,
+       375,
+       526,
+       null
+      ],
+      [
+       1106241,
+       1106266,
+       4,
+       527,
+       551,
+       null
+      ],
+      [
+       1106399,
+       1106459,
+       5,
+       552,
+       611,
+       null
+      ],
+      [
+       1106539,
+       1106779,
+       6,
+       612,
+       851,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "CCDS,seleno,gencode_basic,gencode_primary,MANE_Select,Ensembl_canonical",
+     "transcript_support_level": "1 (assigned to previous version 12)",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000354171.13",
+   "protein": "ENSP00000346103.7",
+   "start_codon": 50,
+   "stop_codon": 644,
+   "translation": {
+    "transl_except": {
+     "Sec": [
+      73
+     ]
+    }
+   }
+  },
+  "ENST00000528798.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SELENOH",
+   "gene_version": "ENSG00000211450.11",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 57742217,
+     "cds_start": 57741681,
+     "contig": "NC_000011.10",
+     "exons": [
+      [
+       57741681,
+       57741717,
+       0,
+       1,
+       36,
+       null
+      ],
+      [
+       57741808,
+       57741954,
+       1,
+       37,
+       182,
+       null
+      ],
+      [
+       57742116,
+       57742227,
+       2,
+       183,
+       293,
+       null
+      ],
+      [
+       57742862,
+       57743038,
+       3,
+       294,
+       469,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "seleno,cds_start_NF,mRNA_start_NF",
+     "transcript_support_level": "2",
+     "url": "http://fake.url",
+     "warnings": {
+      "transl_except_unplaced": [
+       "Sec"
+      ]
+     }
+    }
+   },
+   "id": "ENST00000528798.1",
+   "protein": "ENSP00000434875.2",
+   "start_codon": 0,
+   "stop_codon": 283
+  }
+ }
+}

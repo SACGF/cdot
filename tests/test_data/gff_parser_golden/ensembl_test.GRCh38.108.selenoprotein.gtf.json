@@ -1,0 +1,105 @@
+{
+ "genes": {
+  "ENSG00000198832": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "SELENOM",
+   "source": [
+    "ensembl_havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000198832.11": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "SELENOM",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "ENST00000400299.6": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SELENOM",
+   "gene_version": "ENSG00000198832.11",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS43003",
+     "cds_end": 31107505,
+     "cds_start": 31104969,
+     "contig": "NC_000022.11",
+     "exons": [
+      [
+       31104776,
+       31105128,
+       4,
+       343,
+       694,
+       null
+      ],
+      [
+       31105207,
+       31105286,
+       3,
+       264,
+       342,
+       null
+      ],
+      [
+       31105657,
+       31105692,
+       2,
+       229,
+       263,
+       null
+      ],
+      [
+       31105929,
+       31105965,
+       1,
+       193,
+       228,
+       null
+      ],
+      [
+       31107376,
+       31107568,
+       0,
+       1,
+       192,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "tag": "CCDS,seleno,basic,Ensembl_canonical,MANE_Select",
+     "transcript_support_level": "1",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000400299.6",
+   "protein": "ENSP00000383155.2",
+   "start_codon": 63,
+   "stop_codon": 501,
+   "translation": {
+    "transl_except": {
+     "Sec": [
+      48
+     ]
+    }
+   }
+  }
+ }
+}

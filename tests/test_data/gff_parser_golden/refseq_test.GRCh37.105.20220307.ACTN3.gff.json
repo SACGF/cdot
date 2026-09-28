@@ -1,0 +1,226 @@
+{
+ "genes": {
+  "89": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "actinin alpha 3",
+   "gene_symbol": "ACTN3",
+   "hgnc": "165",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "NM_001104.4": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ACTN3",
+   "gene_version": "89",
+   "genome_builds": {
+    "GRCh37": {
+     "ccds": "CCDS53663.1",
+     "cds_end": 66330664,
+     "cds_start": 66314408,
+     "contig": "NC_000011.9",
+     "exons": [
+      [
+       66314373,
+       66314555,
+       0,
+       1,
+       182,
+       null
+      ],
+      [
+       66318709,
+       66318824,
+       1,
+       183,
+       297,
+       null
+      ],
+      [
+       66318998,
+       66319118,
+       2,
+       298,
+       417,
+       null
+      ],
+      [
+       66321515,
+       66321602,
+       3,
+       418,
+       504,
+       null
+      ],
+      [
+       66322006,
+       66322094,
+       4,
+       505,
+       592,
+       null
+      ],
+      [
+       66322600,
+       66322679,
+       5,
+       593,
+       671,
+       null
+      ],
+      [
+       66322756,
+       66322838,
+       6,
+       672,
+       753,
+       null
+      ],
+      [
+       66323615,
+       66323701,
+       7,
+       754,
+       839,
+       null
+      ],
+      [
+       66324603,
+       66324696,
+       8,
+       840,
+       932,
+       null
+      ],
+      [
+       66325169,
+       66325400,
+       9,
+       933,
+       1163,
+       null
+      ],
+      [
+       66325497,
+       66325645,
+       10,
+       1164,
+       1311,
+       null
+      ],
+      [
+       66326706,
+       66326857,
+       11,
+       1312,
+       1462,
+       null
+      ],
+      [
+       66327438,
+       66327547,
+       12,
+       1463,
+       1571,
+       null
+      ],
+      [
+       66327641,
+       66327782,
+       13,
+       1572,
+       1712,
+       null
+      ],
+      [
+       66328043,
+       66328226,
+       14,
+       1713,
+       1895,
+       null
+      ],
+      [
+       66328697,
+       66328832,
+       15,
+       1896,
+       2030,
+       null
+      ],
+      [
+       66328928,
+       66329108,
+       16,
+       2031,
+       2210,
+       null
+      ],
+      [
+       66329492,
+       66329639,
+       17,
+       2211,
+       2357,
+       null
+      ],
+      [
+       66329727,
+       66329793,
+       18,
+       2358,
+       2423,
+       null
+      ],
+      [
+       66330266,
+       66330425,
+       19,
+       2424,
+       2582,
+       null
+      ],
+      [
+       66330505,
+       66330805,
+       20,
+       2583,
+       2882,
+       null
+      ]
+     ],
+     "genome_mismatch": {
+      "exceptions": [
+       "annotated by transcript or proteomic data"
+      ],
+      "transl_except": {
+       "Arg": [
+        577
+       ]
+      }
+     },
+     "note": "isoform 1 is encoded by transcript variant 1%2C coding%3B The RefSeq protein has 1 substitution compared to this genomic sequence",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "tag": "RefSeq Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "165",
+   "id": "NM_001104.4",
+   "protein": "NP_001095.2",
+   "start_codon": 35,
+   "stop_codon": 2741
+  }
+ }
+}

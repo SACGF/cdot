@@ -1,0 +1,259 @@
+{
+ "genes": {
+  "23089": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "paternally expressed 10",
+   "gene_symbol": "PEG10",
+   "hgnc": "14005",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4946": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "ornithine decarboxylase antizyme 1",
+   "gene_symbol": "OAZ1",
+   "hgnc": "8095",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4947": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "ornithine decarboxylase antizyme 2",
+   "gene_symbol": "OAZ2",
+   "hgnc": "8096",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "NM_002537.3": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "OAZ2",
+   "gene_version": "4947",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS58372.1",
+     "cds_end": 64703048,
+     "cds_start": 64688703,
+     "contig": "NC_000015.10",
+     "exons": [
+      [
+       64687573,
+       64688834,
+       4,
+       674,
+       1934,
+       null
+      ],
+      [
+       64689083,
+       64689169,
+       3,
+       588,
+       673,
+       null
+      ],
+      [
+       64690373,
+       64690549,
+       2,
+       412,
+       587,
+       null
+      ],
+      [
+       64691433,
+       64691591,
+       1,
+       254,
+       411,
+       null
+      ],
+      [
+       64703028,
+       64703281,
+       0,
+       1,
+       253,
+       null
+      ]
+     ],
+     "note": "protein translation is dependent on polyamine-induced +1 ribosomal frameshift%3B isoform 1 is encoded by transcript variant 1",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "tag": "RefSeq Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "8096",
+   "id": "NM_002537.3",
+   "protein": "NP_002528.1",
+   "start_codon": 233,
+   "stop_codon": 804,
+   "translation": {
+    "exceptions": [
+     "ribosomal slippage"
+    ],
+    "ribosomal_slippage": [
+     {
+      "cds_position": 97,
+      "shift": 1
+     }
+    ]
+   }
+  },
+  "NM_004152.3": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "OAZ1",
+   "gene_version": "4946",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS58639.1",
+     "cds_end": 2273108,
+     "cds_start": 2269598,
+     "contig": "NC_000019.10",
+     "exons": [
+      [
+       2269485,
+       2269744,
+       0,
+       1,
+       259,
+       null
+      ],
+      [
+       2271384,
+       2271530,
+       1,
+       260,
+       405,
+       null
+      ],
+      [
+       2271781,
+       2271954,
+       2,
+       406,
+       578,
+       null
+      ],
+      [
+       2272734,
+       2272820,
+       3,
+       579,
+       664,
+       null
+      ],
+      [
+       2272971,
+       2273488,
+       4,
+       665,
+       1181,
+       null
+      ]
+     ],
+     "note": "protein translation is dependent on +1 polyamine-induced ribosomal frameshift%3B isoform 1 is encoded by transcript variant 1",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "tag": "RefSeq Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "8095",
+   "id": "NM_004152.3",
+   "protein": "NP_004143.1",
+   "start_codon": 113,
+   "stop_codon": 801,
+   "translation": {
+    "exceptions": [
+     "ribosomal slippage"
+    ],
+    "ribosomal_slippage": [
+     {
+      "cds_position": 205,
+      "shift": 1
+     }
+    ]
+   }
+  },
+  "NM_015068.3": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "PEG10",
+   "gene_version": "23089",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 94665682,
+     "cds_start": 94663556,
+     "contig": "NC_000007.14",
+     "exons": [
+      [
+       94656324,
+       94656580,
+       0,
+       1,
+       256,
+       null
+      ],
+      [
+       94663333,
+       94669695,
+       1,
+       257,
+       6618,
+       null
+      ]
+     ],
+     "note": "protein translation is dependent on -1 ribosomal frameshift%3B isoform 1 is encoded by transcript variant 1",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "14005",
+   "id": "NM_015068.3",
+   "protein": "NP_055883.2",
+   "start_codon": 479,
+   "stop_codon": 2605,
+   "translation": {
+    "exceptions": [
+     "ribosomal slippage"
+    ],
+    "ribosomal_slippage": [
+     {
+      "cds_position": 957,
+      "shift": -1
+     }
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,11071 @@
+{
+ "genes": {
+  "ENSG00000142149": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "HUNK",
+   "source": [
+    "ensembl_havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000142149.11": {
+   "biotype": [
+    "mRNA",
+    "ncRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "HUNK",
+   "source": [
+    "ensembl_havana",
+    "havana",
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000142168": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "SOD1",
+   "source": [
+    "ensembl_havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000142168.17": {
+   "biotype": [
+    "mRNA",
+    "ncRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "SOD1",
+   "source": [
+    "ensembl_havana",
+    "havana",
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000142207": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "URB1",
+   "source": [
+    "ensembl_havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000142207.9": {
+   "biotype": [
+    "mRNA",
+    "ncRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "URB1",
+   "source": [
+    "ensembl_havana",
+    "havana",
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000156304": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "SCAF4",
+   "source": [
+    "ensembl_havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000156304.17": {
+   "biotype": [
+    "mRNA",
+    "ncRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "SCAF4",
+   "source": [
+    "ensembl_havana",
+    "havana",
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000159055": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "MIS18A",
+   "source": [
+    "ensembl_havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000159055.6": {
+   "biotype": [
+    "mRNA",
+    "ncRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "MIS18A",
+   "source": [
+    "ensembl_havana",
+    "havana",
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000170262": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "MRAP",
+   "source": [
+    "ensembl_havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000170262.15": {
+   "biotype": [
+    "mRNA",
+    "ncRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "MRAP",
+   "source": [
+    "ensembl_havana",
+    "havana",
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000200792": {
+   "biotype": [
+    "snoRNA"
+   ],
+   "description": null,
+   "gene_symbol": "SNORA80A",
+   "source": [
+    "ensembl"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000200792.1": {
+   "biotype": [
+    "ncRNA",
+    "snoRNA"
+   ],
+   "description": null,
+   "gene_symbol": "SNORA80A",
+   "source": [
+    "ensembl"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000227256": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "MIS18A-AS1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000227256.2": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "MIS18A-AS1",
+   "source": [
+    "havana",
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000229007": {
+   "biotype": [
+    "processed_pseudogene"
+   ],
+   "description": null,
+   "gene_symbol": "EXOSC3P1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000229007.1": {
+   "biotype": [
+    "ncRNA",
+    "processed_pseudogene"
+   ],
+   "description": null,
+   "gene_symbol": "EXOSC3P1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000229046": {
+   "biotype": [
+    "processed_pseudogene"
+   ],
+   "description": null,
+   "gene_symbol": "HMGN1P2",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000229046.1": {
+   "biotype": [
+    "ncRNA",
+    "processed_pseudogene"
+   ],
+   "description": null,
+   "gene_symbol": "HMGN1P2",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000230323": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "LINC00159",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000230323.7": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "LINC00159",
+   "source": [
+    "havana",
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000230870": {
+   "biotype": [
+    "processed_pseudogene"
+   ],
+   "description": null,
+   "gene_symbol": "FBXW11P1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000230870.2": {
+   "biotype": [
+    "ncRNA",
+    "processed_pseudogene"
+   ],
+   "description": null,
+   "gene_symbol": "FBXW11P1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000232623": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "MRAP-AS1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000232623.2": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "MRAP-AS1",
+   "source": [
+    "havana",
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000234107": {
+   "biotype": [
+    "processed_pseudogene"
+   ],
+   "description": null,
+   "gene_symbol": "TPT1P1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000234107.1": {
+   "biotype": [
+    "ncRNA",
+    "processed_pseudogene"
+   ],
+   "description": null,
+   "gene_symbol": "TPT1P1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000234509": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "SOD1-DT",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000234509.2": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "SOD1-DT",
+   "source": [
+    "havana",
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000237138": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "HUNK-AS1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000237138.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "HUNK-AS1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000237594": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TIAM1-AS1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000237594.2": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TIAM1-AS1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000238390": {
+   "biotype": [
+    "snoRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "ensembl"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000238390.1": {
+   "biotype": [
+    "ncRNA",
+    "snoRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "ensembl"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000256073": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "URB1-AS1",
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000256073.5": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "URB1-AS1",
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000261610": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000261610.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000273091": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000273091.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000273271": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000273271.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000295250": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000295250.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000297999": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000297999.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000298022": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000298022.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000298042": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000298042.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000300283": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000300283.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000304272": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000304272.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000308154": {
+   "biotype": [
+    "lncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000308154.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": null,
+   "source": [
+    "havana_tagene"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "ENST00000270112.7": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "HUNK",
+   "gene_version": "ENSG00000142149.11",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13610",
+     "cds_end": 31999184,
+     "cds_start": 31873674,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31873019,
+       31873935,
+       0,
+       1,
+       916,
+       null
+      ],
+      [
+       31924467,
+       31924760,
+       1,
+       917,
+       1209,
+       null
+      ],
+      [
+       31940164,
+       31940220,
+       2,
+       1210,
+       1265,
+       null
+      ],
+      [
+       31946035,
+       31946171,
+       3,
+       1266,
+       1401,
+       null
+      ],
+      [
+       31958842,
+       31958970,
+       4,
+       1402,
+       1529,
+       null
+      ],
+      [
+       31968249,
+       31968385,
+       5,
+       1530,
+       1665,
+       null
+      ],
+      [
+       31974554,
+       31974717,
+       6,
+       1666,
+       1828,
+       null
+      ],
+      [
+       31983525,
+       31983609,
+       7,
+       1829,
+       1912,
+       null
+      ],
+      [
+       31990128,
+       31990176,
+       8,
+       1913,
+       1960,
+       null
+      ],
+      [
+       31995767,
+       31995948,
+       9,
+       1961,
+       2141,
+       null
+      ],
+      [
+       31998525,
+       32004064,
+       10,
+       2142,
+       7680,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "+",
+     "tag": "CCDS,gencode_basic,gencode_primary,MANE_Select,Ensembl_canonical",
+     "transcript_support_level": "1 (assigned to previous version 6)",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000270112.7",
+   "protein": "ENSP00000270112.2",
+   "start_codon": 655,
+   "stop_codon": 2800
+  },
+  "ENST00000270142.11": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS33536",
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659692,
+       31659841,
+       0,
+       1,
+       149,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       150,
+       246,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       247,
+       316,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       317,
+       434,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       435,
+       895,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "+",
+     "tag": "CCDS,gencode_basic,gencode_primary,MANE_Select,Ensembl_canonical",
+     "transcript_support_level": "1 (assigned to previous version 10)",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000270142.11",
+   "protein": "ENSP00000270142.7",
+   "start_codon": 77,
+   "stop_codon": 542
+  },
+  "ENST00000286835.12": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS33537",
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31670999,
+       31672354,
+       19,
+       2915,
+       4269,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       18,
+       2723,
+       2914,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2636,
+       2722,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2470,
+       2635,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2312,
+       2469,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2155,
+       2311,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2041,
+       2154,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       1940,
+       2040,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1749,
+       1939,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       10,
+       1663,
+       1748,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1495,
+       1662,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1386,
+       1494,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1204,
+       1385,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1027,
+       1203,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       884,
+       1026,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       748,
+       883,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       586,
+       747,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       541,
+       585,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       457,
+       540,
+       null
+      ],
+      [
+       31731662,
+       31732118,
+       0,
+       1,
+       456,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "-",
+     "tag": "CCDS,gencode_basic,gencode_primary,MANE_Select,Ensembl_canonical",
+     "transcript_support_level": "1 (assigned to previous version 11)",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000286835.12",
+   "protein": "ENSP00000286835.7",
+   "start_codon": 426,
+   "stop_codon": 3870
+  },
+  "ENST00000290130.4": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MIS18A",
+   "gene_version": "ENSG00000159055.6",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13611",
+     "cds_end": 32279014,
+     "cds_start": 32269036,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32268227,
+       32269117,
+       4,
+       657,
+       1546,
+       null
+      ],
+      [
+       32269706,
+       32269803,
+       3,
+       560,
+       656,
+       null
+      ],
+      [
+       32270406,
+       32270529,
+       2,
+       437,
+       559,
+       null
+      ],
+      [
+       32274829,
+       32274896,
+       1,
+       370,
+       436,
+       null
+      ],
+      [
+       32278680,
+       32279049,
+       0,
+       1,
+       369,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "-",
+     "tag": "CCDS,gencode_basic,gencode_primary,MANE_Select,Ensembl_canonical",
+     "transcript_support_level": "1 (assigned to previous version 3)",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000290130.4",
+   "protein": "ENSP00000290130.3",
+   "start_codon": 35,
+   "stop_codon": 737
+  },
+  "ENST00000303645.10": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "ENSG00000170262.15",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13613",
+     "cds_end": 32311996,
+     "cds_start": 32298971,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32298854,
+       32299077,
+       0,
+       1,
+       223,
+       null
+      ],
+      [
+       32306639,
+       32306739,
+       1,
+       224,
+       323,
+       null
+      ],
+      [
+       32311683,
+       32312290,
+       2,
+       324,
+       930,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "+",
+     "tag": "CCDS,gencode_basic,gencode_primary,MANE_Select,Ensembl_canonical",
+     "transcript_support_level": "1 (assigned to previous version 9)",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000303645.10",
+   "protein": "ENSP00000306697.5",
+   "start_codon": 117,
+   "stop_codon": 636
+  },
+  "ENST00000339944.4": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "ENSG00000170262.15",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13612",
+     "cds_end": 32314653,
+     "cds_start": 32298971,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32298971,
+       32299077,
+       0,
+       1,
+       106,
+       null
+      ],
+      [
+       32306639,
+       32306739,
+       1,
+       107,
+       206,
+       null
+      ],
+      [
+       32314550,
+       32314784,
+       2,
+       207,
+       440,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "+",
+     "tag": "CCDS,gencode_basic,gencode_primary",
+     "transcript_support_level": "1",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000339944.4",
+   "protein": "ENSP00000343661.4",
+   "start_codon": 0,
+   "stop_codon": 309
+  },
+  "ENST00000363922.1": {
+   "biotype": [
+    "ncRNA",
+    "snoRNA"
+   ],
+   "gene_name": "SNORA80A",
+   "gene_version": "ENSG00000200792.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32377186,
+       32377322,
+       0,
+       1,
+       136,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000363922.1"
+  },
+  "ENST00000382751.4": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "URB1",
+   "gene_version": "ENSG00000142207.9",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS46645",
+     "cds_end": 32392910,
+     "cds_start": 32314917,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32311017,
+       32315099,
+       38,
+       6737,
+       10818,
+       null
+      ],
+      [
+       32316465,
+       32317065,
+       37,
+       6137,
+       6736,
+       null
+      ],
+      [
+       32317675,
+       32317917,
+       36,
+       5895,
+       6136,
+       null
+      ],
+      [
+       32319216,
+       32319414,
+       35,
+       5697,
+       5894,
+       null
+      ],
+      [
+       32320530,
+       32320640,
+       34,
+       5587,
+       5696,
+       null
+      ],
+      [
+       32321800,
+       32321944,
+       33,
+       5443,
+       5586,
+       null
+      ],
+      [
+       32322477,
+       32322584,
+       32,
+       5336,
+       5442,
+       null
+      ],
+      [
+       32324490,
+       32324602,
+       31,
+       5224,
+       5335,
+       null
+      ],
+      [
+       32325228,
+       32325389,
+       30,
+       5063,
+       5223,
+       null
+      ],
+      [
+       32333316,
+       32333419,
+       29,
+       4960,
+       5062,
+       null
+      ],
+      [
+       32334162,
+       32334334,
+       28,
+       4788,
+       4959,
+       null
+      ],
+      [
+       32337093,
+       32337157,
+       27,
+       4724,
+       4787,
+       null
+      ],
+      [
+       32337403,
+       32337514,
+       26,
+       4613,
+       4723,
+       null
+      ],
+      [
+       32338706,
+       32338900,
+       25,
+       4419,
+       4612,
+       null
+      ],
+      [
+       32341465,
+       32341524,
+       24,
+       4360,
+       4418,
+       null
+      ],
+      [
+       32344569,
+       32344756,
+       23,
+       4173,
+       4359,
+       null
+      ],
+      [
+       32345373,
+       32345575,
+       22,
+       3971,
+       4172,
+       null
+      ],
+      [
+       32346955,
+       32347811,
+       21,
+       3115,
+       3970,
+       null
+      ],
+      [
+       32349303,
+       32349483,
+       20,
+       2935,
+       3114,
+       null
+      ],
+      [
+       32350703,
+       32350922,
+       19,
+       2716,
+       2934,
+       null
+      ],
+      [
+       32352709,
+       32352906,
+       18,
+       2519,
+       2715,
+       null
+      ],
+      [
+       32353932,
+       32354103,
+       17,
+       2348,
+       2518,
+       null
+      ],
+      [
+       32354858,
+       32354997,
+       16,
+       2209,
+       2347,
+       null
+      ],
+      [
+       32355448,
+       32355565,
+       15,
+       2092,
+       2208,
+       null
+      ],
+      [
+       32357536,
+       32357656,
+       14,
+       1972,
+       2091,
+       null
+      ],
+      [
+       32359795,
+       32359908,
+       13,
+       1859,
+       1971,
+       null
+      ],
+      [
+       32361006,
+       32361123,
+       12,
+       1742,
+       1858,
+       null
+      ],
+      [
+       32361891,
+       32362021,
+       11,
+       1612,
+       1741,
+       null
+      ],
+      [
+       32363155,
+       32363329,
+       10,
+       1438,
+       1611,
+       null
+      ],
+      [
+       32366617,
+       32366755,
+       9,
+       1300,
+       1437,
+       null
+      ],
+      [
+       32368402,
+       32368598,
+       8,
+       1104,
+       1299,
+       null
+      ],
+      [
+       32372506,
+       32372631,
+       7,
+       979,
+       1103,
+       null
+      ],
+      [
+       32373646,
+       32373772,
+       6,
+       853,
+       978,
+       null
+      ],
+      [
+       32375397,
+       32375483,
+       5,
+       767,
+       852,
+       null
+      ],
+      [
+       32378444,
+       32378541,
+       4,
+       670,
+       766,
+       null
+      ],
+      [
+       32383421,
+       32383554,
+       3,
+       537,
+       669,
+       null
+      ],
+      [
+       32384312,
+       32384464,
+       2,
+       385,
+       536,
+       null
+      ],
+      [
+       32385544,
+       32385684,
+       1,
+       245,
+       384,
+       null
+      ],
+      [
+       32392768,
+       32393012,
+       0,
+       1,
+       244,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "-",
+     "tag": "CCDS,gencode_basic,gencode_primary,MANE_Select,Ensembl_canonical",
+     "transcript_support_level": "1 (assigned to previous version 3)",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000382751.4",
+   "protein": "ENSP00000372199.3",
+   "start_codon": 102,
+   "stop_codon": 6918
+  },
+  "ENST00000389995.4": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659665,
+       31659784,
+       0,
+       1,
+       119,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       120,
+       216,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       217,
+       286,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       287,
+       404,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       405,
+       865,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "transcript_support_level": "3",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000389995.4",
+   "protein": "ENSP00000374645.4",
+   "start_codon": 104,
+   "stop_codon": 512
+  },
+  "ENST00000393804.2": {
+   "biotype": [
+    "ncRNA",
+    "processed_pseudogene"
+   ],
+   "gene_name": "FBXW11P1",
+   "gene_version": "ENSG00000230870.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31627126,
+       31628600,
+       0,
+       1,
+       1474,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000393804.2"
+  },
+  "ENST00000399784.7": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "ENSG00000170262.15",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13613",
+     "cds_end": 32311996,
+     "cds_start": 32298971,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32291812,
+       32291849,
+       0,
+       1,
+       37,
+       null
+      ],
+      [
+       32292992,
+       32293132,
+       1,
+       38,
+       177,
+       null
+      ],
+      [
+       32298961,
+       32299077,
+       2,
+       178,
+       293,
+       null
+      ],
+      [
+       32306639,
+       32306739,
+       3,
+       294,
+       393,
+       null
+      ],
+      [
+       32311683,
+       32314781,
+       4,
+       394,
+       3491,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "CCDS,gencode_basic",
+     "transcript_support_level": "1",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000399784.7",
+   "protein": "ENSP00000382684.2",
+   "start_codon": 187,
+   "stop_codon": 706
+  },
+  "ENST00000399804.6": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS46644",
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       19,
+       2915,
+       7778,
+       null
+      ],
+      [
+       31685048,
+       31685174,
+       18,
+       2789,
+       2914,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2702,
+       2788,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2536,
+       2701,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2378,
+       2535,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2221,
+       2377,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2107,
+       2220,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       2006,
+       2106,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1815,
+       2005,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       10,
+       1729,
+       1814,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1561,
+       1728,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1452,
+       1560,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1270,
+       1451,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1093,
+       1269,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "tag": "CCDS,gencode_basic",
+     "transcript_support_level": "1",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000399804.6",
+   "protein": "ENSP00000382703.1",
+   "start_codon": 492,
+   "stop_codon": 3870
+  },
+  "ENST00000411605.6": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "LINC00159",
+   "gene_version": "ENSG00000230323.7",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32080315,
+       32080517,
+       4,
+       366,
+       567,
+       null
+      ],
+      [
+       32083473,
+       32083617,
+       3,
+       222,
+       365,
+       null
+      ],
+      [
+       32086203,
+       32086298,
+       2,
+       127,
+       221,
+       null
+      ],
+      [
+       32245121,
+       32245201,
+       1,
+       47,
+       126,
+       null
+      ],
+      [
+       32247220,
+       32247266,
+       0,
+       1,
+       46,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "3 (assigned to previous version 5)",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000411605.6"
+  },
+  "ENST00000414877.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "LINC00159",
+   "gene_version": "ENSG00000230323.7",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32080315,
+       32080517,
+       3,
+       227,
+       428,
+       null
+      ],
+      [
+       32086203,
+       32086295,
+       2,
+       135,
+       226,
+       null
+      ],
+      [
+       32156407,
+       32156502,
+       1,
+       40,
+       134,
+       null
+      ],
+      [
+       32197774,
+       32197813,
+       0,
+       1,
+       39,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "transcript_support_level": "4",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000414877.1"
+  },
+  "ENST00000430354.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "HUNK",
+   "gene_version": "ENSG00000142149.11",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31968334,
+     "cds_start": 31924551,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31924551,
+       31924760,
+       0,
+       1,
+       209,
+       null
+      ],
+      [
+       31940164,
+       31940220,
+       1,
+       210,
+       265,
+       null
+      ],
+      [
+       31946035,
+       31946171,
+       2,
+       266,
+       401,
+       null
+      ],
+      [
+       31968249,
+       31968334,
+       3,
+       402,
+       486,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "cds_end_NF,cds_start_NF,mRNA_end_NF,mRNA_start_NF",
+     "transcript_support_level": "3",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000430354.1",
+   "protein": "ENSP00000411860.1",
+   "start_codon": 0,
+   "stop_codon": 486
+  },
+  "ENST00000433071.2": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "TIAM1-AS1",
+   "gene_version": "ENSG00000237594.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31559244,
+       31559595,
+       0,
+       1,
+       351,
+       null
+      ],
+      [
+       31560016,
+       31560487,
+       1,
+       352,
+       822,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "1",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000433071.2"
+  },
+  "ENST00000434667.4": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS54482",
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       18,
+       2936,
+       7799,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       17,
+       2744,
+       2935,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2657,
+       2743,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2491,
+       2656,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2333,
+       2490,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       2176,
+       2332,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       2062,
+       2175,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1961,
+       2061,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1770,
+       1960,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       9,
+       1684,
+       1769,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1516,
+       1683,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1407,
+       1515,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       6,
+       1225,
+       1406,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       5,
+       1048,
+       1224,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       4,
+       905,
+       1047,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       3,
+       769,
+       904,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       2,
+       607,
+       768,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "-",
+     "tag": "CCDS,gencode_basic",
+     "transcript_support_level": "1",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000434667.4",
+   "protein": "ENSP00000402377.2",
+   "start_codon": 492,
+   "stop_codon": 3891
+  },
+  "ENST00000437109.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "HUNK-AS1",
+   "gene_version": "ENSG00000237138.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32020965,
+       32021278,
+       1,
+       304,
+       616,
+       null
+      ],
+      [
+       32021479,
+       32021782,
+       0,
+       1,
+       303,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "3",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000437109.1"
+  },
+  "ENST00000439107.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "HUNK",
+   "gene_version": "ENSG00000142149.11",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32044112,
+     "cds_start": 31974702,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31974702,
+       31974717,
+       0,
+       1,
+       15,
+       null
+      ],
+      [
+       31983525,
+       31983609,
+       1,
+       16,
+       99,
+       null
+      ],
+      [
+       31990128,
+       31990176,
+       2,
+       100,
+       147,
+       null
+      ],
+      [
+       31995767,
+       31995948,
+       3,
+       148,
+       328,
+       null
+      ],
+      [
+       32044101,
+       32044633,
+       4,
+       329,
+       860,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "cds_start_NF,mRNA_start_NF",
+     "transcript_support_level": "5",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000439107.1",
+   "protein": "ENSP00000408219.1",
+   "start_codon": 0,
+   "stop_codon": 339
+  },
+  "ENST00000445197.1": {
+   "biotype": [
+    "ncRNA",
+    "processed_pseudogene"
+   ],
+   "gene_name": "HMGN1P2",
+   "gene_version": "ENSG00000229046.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31706554,
+       31706864,
+       0,
+       1,
+       310,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000445197.1"
+  },
+  "ENST00000448649.1": {
+   "biotype": [
+    "ncRNA",
+    "processed_pseudogene"
+   ],
+   "gene_name": "EXOSC3P1",
+   "gene_version": "ENSG00000229007.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32496811,
+       32497311,
+       0,
+       1,
+       500,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000448649.1"
+  },
+  "ENST00000449339.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "SOD1-DT",
+   "gene_version": "ENSG00000234509.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31653592,
+       31655427,
+       2,
+       399,
+       2233,
+       null
+      ],
+      [
+       31657933,
+       31658227,
+       1,
+       105,
+       398,
+       null
+      ],
+      [
+       31659396,
+       31659500,
+       0,
+       1,
+       104,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "transcript_support_level": "3",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000449339.1"
+  },
+  "ENST00000450936.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "MRAP-AS1",
+   "gene_version": "ENSG00000232623.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32306463,
+       32306826,
+       1,
+       220,
+       582,
+       null
+      ],
+      [
+       32308518,
+       32308737,
+       0,
+       1,
+       219,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "transcript_support_level": "1",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000450936.1"
+  },
+  "ENST00000453549.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "MIS18A-AS1",
+   "gene_version": "ENSG00000227256.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32277862,
+       32278084,
+       0,
+       1,
+       222,
+       null
+      ],
+      [
+       32278380,
+       32278531,
+       1,
+       223,
+       373,
+       null
+      ],
+      [
+       32280592,
+       32280988,
+       2,
+       374,
+       769,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "5",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000453549.1"
+  },
+  "ENST00000458495.1": {
+   "biotype": [
+    "ncRNA",
+    "processed_pseudogene"
+   ],
+   "gene_name": "TPT1P1",
+   "gene_version": "ENSG00000234107.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31840340,
+       31840858,
+       0,
+       1,
+       518,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000458495.1"
+  },
+  "ENST00000458922.1": {
+   "biotype": [
+    "ncRNA",
+    "snoRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000238390.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31664305,
+       31664482,
+       0,
+       1,
+       177,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000458922.1"
+  },
+  "ENST00000465574.1": {
+   "biotype": [
+    "ncRNA",
+    "protein_coding"
+   ],
+   "gene_name": "HUNK",
+   "gene_version": "ENSG00000142149.11",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31974177,
+       31974717,
+       0,
+       1,
+       540,
+       null
+      ],
+      [
+       31983525,
+       31983609,
+       1,
+       541,
+       624,
+       null
+      ],
+      [
+       31990128,
+       31990176,
+       2,
+       625,
+       672,
+       null
+      ],
+      [
+       31995767,
+       31995927,
+       3,
+       673,
+       832,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "transcript_support_level": "5",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000465574.1"
+  },
+  "ENST00000467731.1": {
+   "biotype": [
+    "ncRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31683994,
+       31685240,
+       13,
+       1731,
+       2976,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       12,
+       1644,
+       1730,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       11,
+       1478,
+       1643,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       10,
+       1320,
+       1477,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       9,
+       1163,
+       1319,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       8,
+       1049,
+       1162,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       7,
+       948,
+       1048,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       6,
+       757,
+       947,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       5,
+       671,
+       756,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       4,
+       503,
+       670,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       3,
+       394,
+       502,
+       null
+      ],
+      [
+       31696568,
+       31696736,
+       2,
+       226,
+       393,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       1,
+       49,
+       225,
+       null
+      ],
+      [
+       31701775,
+       31701823,
+       0,
+       1,
+       48,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "transcript_support_level": "1",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000467731.1"
+  },
+  "ENST00000470944.1": {
+   "biotype": [
+    "ncRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659708,
+       31660708,
+       0,
+       1,
+       1000,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       1001,
+       1097,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       1098,
+       1167,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       1168,
+       1285,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       1286,
+       1746,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "transcript_support_level": "2",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000470944.1"
+  },
+  "ENST00000472318.1": {
+   "biotype": [
+    "ncRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31690820,
+       31690953,
+       2,
+       664,
+       796,
+       null
+      ],
+      [
+       31691816,
+       31692442,
+       1,
+       38,
+       663,
+       null
+      ],
+      [
+       31693293,
+       31693330,
+       0,
+       1,
+       37,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "transcript_support_level": "3",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000472318.1"
+  },
+  "ENST00000476106.5": {
+   "biotype": [
+    "ncRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659692,
+       31659841,
+       0,
+       1,
+       149,
+       null
+      ],
+      [
+       31661548,
+       31661734,
+       1,
+       150,
+       335,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       2,
+       336,
+       432,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       3,
+       433,
+       502,
+       null
+      ],
+      [
+       31667257,
+       31667341,
+       4,
+       503,
+       586,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "transcript_support_level": "5",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000476106.5"
+  },
+  "ENST00000480196.2": {
+   "biotype": [
+    "ncRNA",
+    "protein_coding"
+   ],
+   "gene_name": "URB1",
+   "gene_version": "ENSG00000142207.9",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32333112,
+       32333419,
+       1,
+       173,
+       479,
+       null
+      ],
+      [
+       32334162,
+       32334334,
+       0,
+       1,
+       172,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "transcript_support_level": "3",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000480196.2"
+  },
+  "ENST00000485790.1": {
+   "biotype": [
+    "ncRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31700758,
+       31701171,
+       6,
+       870,
+       1282,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       727,
+       869,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       591,
+       726,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       429,
+       590,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       384,
+       428,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       300,
+       383,
+       null
+      ],
+      [
+       31731662,
+       31731961,
+       0,
+       1,
+       299,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "transcript_support_level": "2",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000485790.1"
+  },
+  "ENST00000486363.1": {
+   "biotype": [
+    "ncRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MIS18A",
+   "gene_version": "ENSG00000159055.6",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32269607,
+       32269803,
+       1,
+       173,
+       368,
+       null
+      ],
+      [
+       32270406,
+       32270578,
+       0,
+       1,
+       172,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "transcript_support_level": "3",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000486363.1"
+  },
+  "ENST00000492603.1": {
+   "biotype": [
+    "ncRNA",
+    "protein_coding"
+   ],
+   "gene_name": "URB1",
+   "gene_version": "ENSG00000142207.9",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32334208,
+       32334334,
+       1,
+       426,
+       551,
+       null
+      ],
+      [
+       32335205,
+       32335630,
+       0,
+       1,
+       425,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "transcript_support_level": "4",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000492603.1"
+  },
+  "ENST00000497833.1": {
+   "biotype": [
+    "ncRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "ENSG00000170262.15",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32291812,
+       32291849,
+       0,
+       1,
+       37,
+       null
+      ],
+      [
+       32292992,
+       32293132,
+       1,
+       38,
+       177,
+       null
+      ],
+      [
+       32306639,
+       32306739,
+       2,
+       178,
+       277,
+       null
+      ],
+      [
+       32311683,
+       32312290,
+       3,
+       278,
+       884,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "transcript_support_level": "1",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000497833.1"
+  },
+  "ENST00000534991.5": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "URB1-AS1",
+   "gene_version": "ENSG00000256073.5",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32393047,
+       32394380,
+       0,
+       1,
+       1333,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA (assigned to previous version 3)",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000534991.5"
+  },
+  "ENST00000565959.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000261610.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32259803,
+       32261585,
+       0,
+       1,
+       1782,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000565959.1"
+  },
+  "ENST00000609934.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000273271.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31666727,
+       31667247,
+       0,
+       1,
+       520,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000609934.1"
+  },
+  "ENST00000610276.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000273091.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31735731,
+       31736407,
+       0,
+       1,
+       676,
+       null
+      ]
+     ],
+     "source": [
+      "havana"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000610276.1"
+  },
+  "ENST00000658887.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "LINC00159",
+   "gene_version": "ENSG00000230323.7",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32080320,
+       32080517,
+       2,
+       1029,
+       1225,
+       null
+      ],
+      [
+       32086203,
+       32086295,
+       1,
+       937,
+       1028,
+       null
+      ],
+      [
+       32097534,
+       32098470,
+       0,
+       1,
+       936,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000658887.1"
+  },
+  "ENST00000728824.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000295250.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31871858,
+       31872456,
+       1,
+       291,
+       888,
+       null
+      ],
+      [
+       31873857,
+       31874147,
+       0,
+       1,
+       290,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000728824.1"
+  },
+  "ENST00000728825.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000295250.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31871858,
+       31872456,
+       1,
+       161,
+       758,
+       null
+      ],
+      [
+       31872727,
+       31872887,
+       0,
+       1,
+       160,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000728825.1"
+  },
+  "ENST00000752262.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "SOD1-DT",
+   "gene_version": "ENSG00000234509.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31624033,
+       31625045,
+       2,
+       361,
+       1372,
+       null
+      ],
+      [
+       31655273,
+       31655427,
+       1,
+       207,
+       360,
+       null
+      ],
+      [
+       31657933,
+       31658139,
+       0,
+       1,
+       206,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000752262.1"
+  },
+  "ENST00000752384.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000297999.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31560853,
+       31561146,
+       2,
+       200,
+       492,
+       null
+      ],
+      [
+       31562465,
+       31562556,
+       1,
+       109,
+       199,
+       null
+      ],
+      [
+       31566005,
+       31566113,
+       0,
+       1,
+       108,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000752384.1"
+  },
+  "ENST00000752532.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000298022.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31654925,
+       31655489,
+       0,
+       1,
+       564,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000752532.1"
+  },
+  "ENST00000752684.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000298042.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31593204,
+       31593316,
+       0,
+       1,
+       112,
+       null
+      ],
+      [
+       31593400,
+       31593723,
+       1,
+       113,
+       435,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000752684.1"
+  },
+  "ENST00000770567.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000300283.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31732287,
+       31732409,
+       0,
+       1,
+       122,
+       null
+      ],
+      [
+       31732545,
+       31732874,
+       1,
+       123,
+       451,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000770567.1"
+  },
+  "ENST00000783173.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "MIS18A-AS1",
+   "gene_version": "ENSG00000227256.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32279199,
+       32280999,
+       0,
+       1,
+       1800,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000783173.1"
+  },
+  "ENST00000783174.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "MIS18A-AS1",
+   "gene_version": "ENSG00000227256.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32279206,
+       32279404,
+       0,
+       1,
+       198,
+       null
+      ],
+      [
+       32280534,
+       32280999,
+       1,
+       199,
+       663,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000783174.1"
+  },
+  "ENST00000801744.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000304272.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31541791,
+       31542259,
+       2,
+       418,
+       885,
+       null
+      ],
+      [
+       31542842,
+       31542940,
+       1,
+       320,
+       417,
+       null
+      ],
+      [
+       31543017,
+       31543336,
+       0,
+       1,
+       319,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000801744.1"
+  },
+  "ENST00000801745.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000304272.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31541793,
+       31542256,
+       2,
+       404,
+       866,
+       null
+      ],
+      [
+       31542842,
+       31542940,
+       1,
+       306,
+       403,
+       null
+      ],
+      [
+       31543017,
+       31543322,
+       0,
+       1,
+       305,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000801745.1"
+  },
+  "ENST00000825722.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "MRAP-AS1",
+   "gene_version": "ENSG00000232623.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32283688,
+       32284155,
+       1,
+       73,
+       539,
+       null
+      ],
+      [
+       32308656,
+       32308728,
+       0,
+       1,
+       72,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_primary,Ensembl_canonical",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000825722.1"
+  },
+  "ENST00000825723.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "MRAP-AS1",
+   "gene_version": "ENSG00000232623.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32283681,
+       32284155,
+       1,
+       191,
+       664,
+       null
+      ],
+      [
+       32308518,
+       32308708,
+       0,
+       1,
+       190,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000825723.1"
+  },
+  "ENST00000825724.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "MRAP-AS1",
+   "gene_version": "ENSG00000232623.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32283689,
+       32284155,
+       2,
+       280,
+       745,
+       null
+      ],
+      [
+       32291961,
+       32292050,
+       1,
+       191,
+       279,
+       null
+      ],
+      [
+       32308518,
+       32308708,
+       0,
+       1,
+       190,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000825724.1"
+  },
+  "ENST00000825725.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "MRAP-AS1",
+   "gene_version": "ENSG00000232623.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32302538,
+       32302844,
+       1,
+       191,
+       496,
+       null
+      ],
+      [
+       32308518,
+       32308708,
+       0,
+       1,
+       190,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000825725.1"
+  },
+  "ENST00000825726.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "MRAP-AS1",
+   "gene_version": "ENSG00000232623.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32306466,
+       32306826,
+       1,
+       52,
+       411,
+       null
+      ],
+      [
+       32308656,
+       32308707,
+       0,
+       1,
+       51,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000825726.1"
+  },
+  "ENST00000831887.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "LINC00159",
+   "gene_version": "ENSG00000230323.7",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32080315,
+       32080517,
+       2,
+       303,
+       504,
+       null
+      ],
+      [
+       32086203,
+       32086295,
+       1,
+       211,
+       302,
+       null
+      ],
+      [
+       32096073,
+       32096283,
+       0,
+       1,
+       210,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000831887.1"
+  },
+  "ENST00000831888.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "LINC00159",
+   "gene_version": "ENSG00000230323.7",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32080315,
+       32080517,
+       3,
+       407,
+       608,
+       null
+      ],
+      [
+       32083473,
+       32083617,
+       2,
+       263,
+       406,
+       null
+      ],
+      [
+       32086203,
+       32086295,
+       1,
+       171,
+       262,
+       null
+      ],
+      [
+       32096073,
+       32096243,
+       0,
+       1,
+       170,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000831888.1"
+  },
+  "ENST00000831889.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "LINC00159",
+   "gene_version": "ENSG00000230323.7",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32080318,
+       32080517,
+       2,
+       178,
+       376,
+       null
+      ],
+      [
+       32086203,
+       32086298,
+       1,
+       83,
+       177,
+       null
+      ],
+      [
+       32096073,
+       32096155,
+       0,
+       1,
+       82,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000831889.1"
+  },
+  "ENST00000831890.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "LINC00159",
+   "gene_version": "ENSG00000230323.7",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32080313,
+       32080517,
+       1,
+       401,
+       604,
+       null
+      ],
+      [
+       32086203,
+       32086603,
+       0,
+       1,
+       400,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000831890.1"
+  },
+  "ENST00000831891.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "LINC00159",
+   "gene_version": "ENSG00000230323.7",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32080313,
+       32080517,
+       2,
+       538,
+       741,
+       null
+      ],
+      [
+       32083473,
+       32083617,
+       1,
+       394,
+       537,
+       null
+      ],
+      [
+       32086203,
+       32086596,
+       0,
+       1,
+       393,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000831891.1"
+  },
+  "ENST00000831892.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": "LINC00159",
+   "gene_version": "ENSG00000230323.7",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32080320,
+       32080517,
+       1,
+       103,
+       299,
+       null
+      ],
+      [
+       32085935,
+       32086037,
+       0,
+       1,
+       102,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000831892.1"
+  },
+  "ENST00000832017.1": {
+   "biotype": [
+    "lncRNA",
+    "ncRNA"
+   ],
+   "gene_name": null,
+   "gene_version": "ENSG00000308154.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32132164,
+       32132300,
+       0,
+       1,
+       136,
+       null
+      ],
+      [
+       32135741,
+       32136169,
+       1,
+       137,
+       564,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000832017.1"
+  },
+  "ENST00000864001.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "URB1",
+   "gene_version": "ENSG00000142207.9",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32392910,
+     "cds_start": 32314917,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32311017,
+       32315099,
+       37,
+       6623,
+       10704,
+       null
+      ],
+      [
+       32316465,
+       32317065,
+       36,
+       6023,
+       6622,
+       null
+      ],
+      [
+       32317675,
+       32317917,
+       35,
+       5781,
+       6022,
+       null
+      ],
+      [
+       32319216,
+       32319414,
+       34,
+       5583,
+       5780,
+       null
+      ],
+      [
+       32320530,
+       32320640,
+       33,
+       5473,
+       5582,
+       null
+      ],
+      [
+       32322477,
+       32322584,
+       32,
+       5366,
+       5472,
+       null
+      ],
+      [
+       32324490,
+       32324602,
+       31,
+       5254,
+       5365,
+       null
+      ],
+      [
+       32325228,
+       32325389,
+       30,
+       5093,
+       5253,
+       null
+      ],
+      [
+       32333316,
+       32333419,
+       29,
+       4990,
+       5092,
+       null
+      ],
+      [
+       32334162,
+       32334334,
+       28,
+       4818,
+       4989,
+       null
+      ],
+      [
+       32337093,
+       32337157,
+       27,
+       4754,
+       4817,
+       null
+      ],
+      [
+       32337403,
+       32337514,
+       26,
+       4643,
+       4753,
+       null
+      ],
+      [
+       32338706,
+       32338900,
+       25,
+       4449,
+       4642,
+       null
+      ],
+      [
+       32341465,
+       32341524,
+       24,
+       4390,
+       4448,
+       null
+      ],
+      [
+       32344569,
+       32344756,
+       23,
+       4203,
+       4389,
+       null
+      ],
+      [
+       32345373,
+       32345575,
+       22,
+       4001,
+       4202,
+       null
+      ],
+      [
+       32346955,
+       32347811,
+       21,
+       3145,
+       4000,
+       null
+      ],
+      [
+       32349303,
+       32349483,
+       20,
+       2965,
+       3144,
+       null
+      ],
+      [
+       32350703,
+       32350922,
+       19,
+       2746,
+       2964,
+       null
+      ],
+      [
+       32352709,
+       32352906,
+       18,
+       2549,
+       2745,
+       null
+      ],
+      [
+       32353932,
+       32354103,
+       17,
+       2378,
+       2548,
+       null
+      ],
+      [
+       32354858,
+       32354997,
+       16,
+       2239,
+       2377,
+       null
+      ],
+      [
+       32355448,
+       32355565,
+       15,
+       2122,
+       2238,
+       null
+      ],
+      [
+       32357536,
+       32357656,
+       14,
+       2002,
+       2121,
+       null
+      ],
+      [
+       32359795,
+       32359908,
+       13,
+       1889,
+       2001,
+       null
+      ],
+      [
+       32361006,
+       32361123,
+       12,
+       1772,
+       1888,
+       null
+      ],
+      [
+       32361891,
+       32362021,
+       11,
+       1642,
+       1771,
+       null
+      ],
+      [
+       32363155,
+       32363329,
+       10,
+       1468,
+       1641,
+       null
+      ],
+      [
+       32366617,
+       32366755,
+       9,
+       1330,
+       1467,
+       null
+      ],
+      [
+       32368402,
+       32368598,
+       8,
+       1134,
+       1329,
+       null
+      ],
+      [
+       32372506,
+       32372631,
+       7,
+       1009,
+       1133,
+       null
+      ],
+      [
+       32373646,
+       32373772,
+       6,
+       883,
+       1008,
+       null
+      ],
+      [
+       32375397,
+       32375483,
+       5,
+       797,
+       882,
+       null
+      ],
+      [
+       32378444,
+       32378541,
+       4,
+       700,
+       796,
+       null
+      ],
+      [
+       32383421,
+       32383554,
+       3,
+       567,
+       699,
+       null
+      ],
+      [
+       32384312,
+       32384464,
+       2,
+       415,
+       566,
+       null
+      ],
+      [
+       32385544,
+       32385684,
+       1,
+       275,
+       414,
+       null
+      ],
+      [
+       32392768,
+       32393042,
+       0,
+       1,
+       274,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000864001.2",
+   "protein": "ENSP00000534060.1",
+   "start_codon": 132,
+   "stop_codon": 6804
+  },
+  "ENST00000877328.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659667,
+       31660001,
+       0,
+       1,
+       334,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       1,
+       335,
+       404,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       2,
+       405,
+       522,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       3,
+       523,
+       983,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000877328.2",
+   "protein": "ENSP00000547387.1",
+   "start_codon": 102,
+   "stop_codon": 630
+  },
+  "ENST00000877329.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659650,
+       31659786,
+       0,
+       1,
+       136,
+       null
+      ],
+      [
+       31663794,
+       31663886,
+       1,
+       137,
+       228,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       229,
+       298,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       299,
+       416,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       417,
+       877,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000877329.2",
+   "protein": "ENSP00000547388.1",
+   "start_codon": 119,
+   "stop_codon": 524
+  },
+  "ENST00000877330.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659632,
+       31659841,
+       0,
+       1,
+       209,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       210,
+       306,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       307,
+       376,
+       null
+      ],
+      [
+       31667257,
+       31667372,
+       3,
+       377,
+       491,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       492,
+       952,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000877330.2",
+   "protein": "ENSP00000547389.1",
+   "start_codon": 137,
+   "stop_codon": 599
+  },
+  "ENST00000877331.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659632,
+       31659841,
+       0,
+       1,
+       209,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       210,
+       306,
+       null
+      ],
+      [
+       31666315,
+       31666345,
+       2,
+       307,
+       336,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       3,
+       337,
+       406,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       4,
+       407,
+       524,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       5,
+       525,
+       985,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000877331.2",
+   "protein": "ENSP00000547390.1",
+   "start_codon": 137,
+   "stop_codon": 632
+  },
+  "ENST00000877332.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659692,
+       31659979,
+       0,
+       1,
+       287,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       288,
+       384,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       385,
+       454,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       455,
+       572,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       573,
+       1033,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000877332.2",
+   "protein": "ENSP00000547391.1",
+   "start_codon": 77,
+   "stop_codon": 680
+  },
+  "ENST00000908755.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       18,
+       2738,
+       7601,
+       null
+      ],
+      [
+       31685048,
+       31685174,
+       17,
+       2612,
+       2737,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2525,
+       2611,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2359,
+       2524,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2201,
+       2358,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       2044,
+       2200,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       1930,
+       2043,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1829,
+       1929,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1638,
+       1828,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       9,
+       1552,
+       1637,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1384,
+       1551,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1275,
+       1383,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       6,
+       1093,
+       1274,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000908755.2",
+   "protein": "ENSP00000578814.1",
+   "start_codon": 492,
+   "stop_codon": 3693
+  },
+  "ENST00000908756.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       19,
+       2903,
+       7766,
+       null
+      ],
+      [
+       31685048,
+       31685174,
+       18,
+       2777,
+       2902,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2690,
+       2776,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2524,
+       2689,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2366,
+       2523,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2209,
+       2365,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2095,
+       2208,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       1994,
+       2094,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1803,
+       1993,
+       null
+      ],
+      [
+       31694215,
+       31694289,
+       10,
+       1729,
+       1802,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1561,
+       1728,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1452,
+       1560,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1270,
+       1451,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1093,
+       1269,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000908756.2",
+   "protein": "ENSP00000578815.1",
+   "start_codon": 492,
+   "stop_codon": 3858
+  },
+  "ENST00000908757.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       18,
+       2804,
+       7667,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       17,
+       2612,
+       2803,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2525,
+       2611,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2359,
+       2524,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2201,
+       2358,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       2044,
+       2200,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       1930,
+       2043,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1829,
+       1929,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1638,
+       1828,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       9,
+       1552,
+       1637,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1384,
+       1551,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1275,
+       1383,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       6,
+       1093,
+       1274,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000908757.2",
+   "protein": "ENSP00000578816.1",
+   "start_codon": 492,
+   "stop_codon": 3759
+  },
+  "ENST00000908758.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       19,
+       2978,
+       7841,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       18,
+       2786,
+       2977,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2699,
+       2785,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2533,
+       2698,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2375,
+       2532,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2218,
+       2374,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2104,
+       2217,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       2003,
+       2103,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1812,
+       2002,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       10,
+       1726,
+       1811,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1558,
+       1725,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1449,
+       1557,
+       null
+      ],
+      [
+       31696568,
+       31696747,
+       7,
+       1270,
+       1448,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1093,
+       1269,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000908758.2",
+   "protein": "ENSP00000578817.1",
+   "start_codon": 492,
+   "stop_codon": 3933
+  },
+  "ENST00000908759.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       19,
+       2909,
+       7772,
+       null
+      ],
+      [
+       31685048,
+       31685174,
+       18,
+       2783,
+       2908,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2696,
+       2782,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2530,
+       2695,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2372,
+       2529,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2215,
+       2371,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2101,
+       2214,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       2000,
+       2100,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1809,
+       1999,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       10,
+       1723,
+       1808,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1555,
+       1722,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1446,
+       1554,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1264,
+       1445,
+       null
+      ],
+      [
+       31700994,
+       31701165,
+       6,
+       1093,
+       1263,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000908759.2",
+   "protein": "ENSP00000578818.1",
+   "start_codon": 492,
+   "stop_codon": 3864
+  },
+  "ENST00000908760.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       19,
+       2912,
+       7775,
+       null
+      ],
+      [
+       31685048,
+       31685174,
+       18,
+       2786,
+       2911,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2699,
+       2785,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2533,
+       2698,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2375,
+       2532,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2218,
+       2374,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2104,
+       2217,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       2003,
+       2103,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1812,
+       2002,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       10,
+       1726,
+       1811,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1558,
+       1725,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1449,
+       1557,
+       null
+      ],
+      [
+       31696568,
+       31696747,
+       7,
+       1270,
+       1448,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1093,
+       1269,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000908760.2",
+   "protein": "ENSP00000578819.1",
+   "start_codon": 492,
+   "stop_codon": 3867
+  },
+  "ENST00000908761.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       19,
+       2969,
+       7832,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       18,
+       2777,
+       2968,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2690,
+       2776,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2524,
+       2689,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2366,
+       2523,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2209,
+       2365,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2095,
+       2208,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       1994,
+       2094,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1803,
+       1993,
+       null
+      ],
+      [
+       31694215,
+       31694289,
+       10,
+       1729,
+       1802,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1561,
+       1728,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1452,
+       1560,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1270,
+       1451,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1093,
+       1269,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000908761.2",
+   "protein": "ENSP00000578820.1",
+   "start_codon": 492,
+   "stop_codon": 3924
+  },
+  "ENST00000908762.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       19,
+       2975,
+       7838,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       18,
+       2783,
+       2974,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2696,
+       2782,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2530,
+       2695,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2372,
+       2529,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2215,
+       2371,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2101,
+       2214,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       2000,
+       2100,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1809,
+       1999,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       10,
+       1723,
+       1808,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1555,
+       1722,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1446,
+       1554,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1264,
+       1445,
+       null
+      ],
+      [
+       31700994,
+       31701165,
+       6,
+       1093,
+       1263,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000908762.2",
+   "protein": "ENSP00000578821.1",
+   "start_codon": 492,
+   "stop_codon": 3930
+  },
+  "ENST00000908763.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       18,
+       2801,
+       7664,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       17,
+       2609,
+       2800,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2522,
+       2608,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2356,
+       2521,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2198,
+       2355,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       2041,
+       2197,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       1927,
+       2040,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1826,
+       1926,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1635,
+       1825,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       9,
+       1549,
+       1634,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1381,
+       1548,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1272,
+       1380,
+       null
+      ],
+      [
+       31696568,
+       31696747,
+       6,
+       1093,
+       1271,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000908763.2",
+   "protein": "ENSP00000578822.1",
+   "start_codon": 492,
+   "stop_codon": 3756
+  },
+  "ENST00000908764.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       18,
+       2792,
+       7655,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       17,
+       2600,
+       2791,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2513,
+       2599,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2347,
+       2512,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2189,
+       2346,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       2032,
+       2188,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       1918,
+       2031,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1817,
+       1917,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1626,
+       1816,
+       null
+      ],
+      [
+       31694215,
+       31694289,
+       9,
+       1552,
+       1625,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1384,
+       1551,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1275,
+       1383,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       6,
+       1093,
+       1274,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000908764.2",
+   "protein": "ENSP00000578823.1",
+   "start_codon": 492,
+   "stop_codon": 3747
+  },
+  "ENST00000908765.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       18,
+       2870,
+       7733,
+       null
+      ],
+      [
+       31685048,
+       31685174,
+       17,
+       2744,
+       2869,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2657,
+       2743,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2491,
+       2656,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2333,
+       2490,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       2176,
+       2332,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       2062,
+       2175,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1961,
+       2061,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1770,
+       1960,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       9,
+       1684,
+       1769,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1516,
+       1683,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1407,
+       1515,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       6,
+       1225,
+       1406,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       5,
+       1048,
+       1224,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       4,
+       905,
+       1047,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       3,
+       769,
+       904,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       2,
+       607,
+       768,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000908765.2",
+   "protein": "ENSP00000578824.1",
+   "start_codon": 492,
+   "stop_codon": 3825
+  },
+  "ENST00000913255.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "URB1",
+   "gene_version": "ENSG00000142207.9",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32392910,
+     "cds_start": 32314917,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32311017,
+       32315099,
+       38,
+       6710,
+       10791,
+       null
+      ],
+      [
+       32316465,
+       32317065,
+       37,
+       6110,
+       6709,
+       null
+      ],
+      [
+       32317675,
+       32317917,
+       36,
+       5868,
+       6109,
+       null
+      ],
+      [
+       32319216,
+       32319414,
+       35,
+       5670,
+       5867,
+       null
+      ],
+      [
+       32320530,
+       32320640,
+       34,
+       5560,
+       5669,
+       null
+      ],
+      [
+       32321800,
+       32321944,
+       33,
+       5416,
+       5559,
+       null
+      ],
+      [
+       32322477,
+       32322584,
+       32,
+       5309,
+       5415,
+       null
+      ],
+      [
+       32324490,
+       32324602,
+       31,
+       5197,
+       5308,
+       null
+      ],
+      [
+       32325228,
+       32325389,
+       30,
+       5036,
+       5196,
+       null
+      ],
+      [
+       32333316,
+       32333419,
+       29,
+       4933,
+       5035,
+       null
+      ],
+      [
+       32334162,
+       32334334,
+       28,
+       4761,
+       4932,
+       null
+      ],
+      [
+       32337093,
+       32337157,
+       27,
+       4697,
+       4760,
+       null
+      ],
+      [
+       32337403,
+       32337514,
+       26,
+       4586,
+       4696,
+       null
+      ],
+      [
+       32338706,
+       32338900,
+       25,
+       4392,
+       4585,
+       null
+      ],
+      [
+       32341465,
+       32341524,
+       24,
+       4333,
+       4391,
+       null
+      ],
+      [
+       32344569,
+       32344756,
+       23,
+       4146,
+       4332,
+       null
+      ],
+      [
+       32345373,
+       32345575,
+       22,
+       3944,
+       4145,
+       null
+      ],
+      [
+       32346955,
+       32347811,
+       21,
+       3088,
+       3943,
+       null
+      ],
+      [
+       32349303,
+       32349483,
+       20,
+       2908,
+       3087,
+       null
+      ],
+      [
+       32350703,
+       32350922,
+       19,
+       2689,
+       2907,
+       null
+      ],
+      [
+       32352709,
+       32352906,
+       18,
+       2492,
+       2688,
+       null
+      ],
+      [
+       32353932,
+       32354103,
+       17,
+       2321,
+       2491,
+       null
+      ],
+      [
+       32354858,
+       32354997,
+       16,
+       2182,
+       2320,
+       null
+      ],
+      [
+       32355448,
+       32355565,
+       15,
+       2065,
+       2181,
+       null
+      ],
+      [
+       32357536,
+       32357656,
+       14,
+       1945,
+       2064,
+       null
+      ],
+      [
+       32359795,
+       32359908,
+       13,
+       1832,
+       1944,
+       null
+      ],
+      [
+       32361006,
+       32361123,
+       12,
+       1715,
+       1831,
+       null
+      ],
+      [
+       32361891,
+       32362021,
+       11,
+       1585,
+       1714,
+       null
+      ],
+      [
+       32363155,
+       32363272,
+       10,
+       1468,
+       1584,
+       null
+      ],
+      [
+       32366617,
+       32366755,
+       9,
+       1330,
+       1467,
+       null
+      ],
+      [
+       32368402,
+       32368598,
+       8,
+       1134,
+       1329,
+       null
+      ],
+      [
+       32372506,
+       32372631,
+       7,
+       1009,
+       1133,
+       null
+      ],
+      [
+       32373646,
+       32373772,
+       6,
+       883,
+       1008,
+       null
+      ],
+      [
+       32375397,
+       32375483,
+       5,
+       797,
+       882,
+       null
+      ],
+      [
+       32378444,
+       32378541,
+       4,
+       700,
+       796,
+       null
+      ],
+      [
+       32383421,
+       32383554,
+       3,
+       567,
+       699,
+       null
+      ],
+      [
+       32384312,
+       32384464,
+       2,
+       415,
+       566,
+       null
+      ],
+      [
+       32385544,
+       32385684,
+       1,
+       275,
+       414,
+       null
+      ],
+      [
+       32392768,
+       32393042,
+       0,
+       1,
+       274,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000913255.2",
+   "protein": "ENSP00000583314.1",
+   "start_codon": 132,
+   "stop_codon": 6891
+  },
+  "ENST00000926599.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MIS18A",
+   "gene_version": "ENSG00000159055.6",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32279014,
+     "cds_start": 32269036,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32268223,
+       32269117,
+       4,
+       715,
+       1608,
+       null
+      ],
+      [
+       32269706,
+       32269803,
+       3,
+       618,
+       714,
+       null
+      ],
+      [
+       32270406,
+       32270529,
+       2,
+       495,
+       617,
+       null
+      ],
+      [
+       32274829,
+       32274896,
+       1,
+       428,
+       494,
+       null
+      ],
+      [
+       32278671,
+       32279098,
+       0,
+       1,
+       427,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000926599.1",
+   "protein": "ENSP00000596658.1",
+   "start_codon": 84,
+   "stop_codon": 795
+  },
+  "ENST00000928717.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659632,
+       31659841,
+       0,
+       1,
+       209,
+       null
+      ],
+      [
+       31663789,
+       31663890,
+       1,
+       210,
+       310,
+       null
+      ],
+      [
+       31666458,
+       31666518,
+       2,
+       311,
+       370,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       371,
+       488,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       489,
+       949,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000928717.1",
+   "protein": "ENSP00000598776.1",
+   "start_codon": 137,
+   "stop_codon": 596
+  },
+  "ENST00000928718.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659632,
+       31659841,
+       0,
+       1,
+       209,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       210,
+       306,
+       null
+      ],
+      [
+       31666463,
+       31666518,
+       2,
+       307,
+       361,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       362,
+       479,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       480,
+       940,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000928718.2",
+   "protein": "ENSP00000598777.1",
+   "start_codon": 137,
+   "stop_codon": 587
+  },
+  "ENST00000928719.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659632,
+       31659841,
+       0,
+       1,
+       209,
+       null
+      ],
+      [
+       31663789,
+       31663858,
+       1,
+       210,
+       278,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       2,
+       279,
+       739,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000928719.2",
+   "protein": "ENSP00000598778.1",
+   "start_codon": 137,
+   "stop_codon": 386
+  },
+  "ENST00000928720.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659650,
+       31659786,
+       0,
+       1,
+       136,
+       null
+      ],
+      [
+       31663794,
+       31663886,
+       1,
+       137,
+       228,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       229,
+       298,
+       null
+      ],
+      [
+       31667257,
+       31667372,
+       3,
+       299,
+       413,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       414,
+       874,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000928720.2",
+   "protein": "ENSP00000598779.1",
+   "start_codon": 119,
+   "stop_codon": 521
+  },
+  "ENST00000928721.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659650,
+       31659786,
+       0,
+       1,
+       136,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       1,
+       137,
+       254,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       2,
+       255,
+       715,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000928721.2",
+   "protein": "ENSP00000598780.1",
+   "start_codon": 119,
+   "stop_codon": 362
+  },
+  "ENST00000931674.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       19,
+       2972,
+       7835,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       18,
+       2780,
+       2971,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2693,
+       2779,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2527,
+       2692,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2369,
+       2526,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2212,
+       2368,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2098,
+       2211,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       1997,
+       2097,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1806,
+       1996,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       10,
+       1720,
+       1805,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1552,
+       1719,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1443,
+       1551,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1261,
+       1442,
+       null
+      ],
+      [
+       31700994,
+       31701162,
+       6,
+       1093,
+       1260,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000931674.2",
+   "protein": "ENSP00000601733.1",
+   "start_codon": 492,
+   "stop_codon": 3927
+  },
+  "ENST00000931675.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       18,
+       2879,
+       7742,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       17,
+       2687,
+       2878,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2600,
+       2686,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2434,
+       2599,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2276,
+       2433,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       2119,
+       2275,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       2005,
+       2118,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1904,
+       2004,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1713,
+       1903,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       9,
+       1627,
+       1712,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1459,
+       1626,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1350,
+       1458,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       6,
+       1168,
+       1349,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       5,
+       991,
+       1167,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       4,
+       848,
+       990,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       3,
+       712,
+       847,
+       null
+      ],
+      [
+       31703764,
+       31703869,
+       2,
+       607,
+       711,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000931675.2",
+   "protein": "ENSP00000601734.1",
+   "start_codon": 492,
+   "stop_codon": 3834
+  },
+  "ENST00000931676.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       13,
+       2234,
+       7097,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       12,
+       2042,
+       2233,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       11,
+       1955,
+       2041,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       10,
+       1789,
+       1954,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       9,
+       1631,
+       1788,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       8,
+       1474,
+       1630,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       7,
+       1360,
+       1473,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       6,
+       1259,
+       1359,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       5,
+       1068,
+       1258,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       4,
+       982,
+       1067,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       3,
+       814,
+       981,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       2,
+       705,
+       813,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       1,
+       523,
+       704,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000931676.2",
+   "protein": "ENSP00000601735.1",
+   "start_codon": 492,
+   "stop_codon": 3189
+  },
+  "ENST00000931898.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "HUNK",
+   "gene_version": "ENSG00000142149.11",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31999184,
+     "cds_start": 31873674,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31872804,
+       31873935,
+       0,
+       1,
+       1131,
+       null
+      ],
+      [
+       31924467,
+       31924760,
+       1,
+       1132,
+       1424,
+       null
+      ],
+      [
+       31940164,
+       31940220,
+       2,
+       1425,
+       1480,
+       null
+      ],
+      [
+       31946035,
+       31946171,
+       3,
+       1481,
+       1616,
+       null
+      ],
+      [
+       31958842,
+       31958970,
+       4,
+       1617,
+       1744,
+       null
+      ],
+      [
+       31968249,
+       31968385,
+       5,
+       1745,
+       1880,
+       null
+      ],
+      [
+       31974554,
+       31974717,
+       6,
+       1881,
+       2043,
+       null
+      ],
+      [
+       31983525,
+       31983609,
+       7,
+       2044,
+       2127,
+       null
+      ],
+      [
+       31995767,
+       31995948,
+       8,
+       2128,
+       2308,
+       null
+      ],
+      [
+       31998525,
+       32004071,
+       9,
+       2309,
+       7854,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000931898.2",
+   "protein": "ENSP00000601957.1",
+   "start_codon": 870,
+   "stop_codon": 2967
+  },
+  "ENST00000947585.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "URB1",
+   "gene_version": "ENSG00000142207.9",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32392910,
+     "cds_start": 32314917,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32311017,
+       32315099,
+       37,
+       6647,
+       10728,
+       null
+      ],
+      [
+       32316465,
+       32317065,
+       36,
+       6047,
+       6646,
+       null
+      ],
+      [
+       32317675,
+       32317917,
+       35,
+       5805,
+       6046,
+       null
+      ],
+      [
+       32319216,
+       32319414,
+       34,
+       5607,
+       5804,
+       null
+      ],
+      [
+       32320530,
+       32320640,
+       33,
+       5497,
+       5606,
+       null
+      ],
+      [
+       32321800,
+       32321944,
+       32,
+       5353,
+       5496,
+       null
+      ],
+      [
+       32322477,
+       32322584,
+       31,
+       5246,
+       5352,
+       null
+      ],
+      [
+       32324490,
+       32324602,
+       30,
+       5134,
+       5245,
+       null
+      ],
+      [
+       32325228,
+       32325389,
+       29,
+       4973,
+       5133,
+       null
+      ],
+      [
+       32333316,
+       32333419,
+       28,
+       4870,
+       4972,
+       null
+      ],
+      [
+       32334162,
+       32334334,
+       27,
+       4698,
+       4869,
+       null
+      ],
+      [
+       32337093,
+       32337157,
+       26,
+       4634,
+       4697,
+       null
+      ],
+      [
+       32337403,
+       32337514,
+       25,
+       4523,
+       4633,
+       null
+      ],
+      [
+       32338706,
+       32338900,
+       24,
+       4329,
+       4522,
+       null
+      ],
+      [
+       32341465,
+       32341524,
+       23,
+       4270,
+       4328,
+       null
+      ],
+      [
+       32344569,
+       32344756,
+       22,
+       4083,
+       4269,
+       null
+      ],
+      [
+       32345373,
+       32345575,
+       21,
+       3881,
+       4082,
+       null
+      ],
+      [
+       32346955,
+       32347811,
+       20,
+       3025,
+       3880,
+       null
+      ],
+      [
+       32349303,
+       32349483,
+       19,
+       2845,
+       3024,
+       null
+      ],
+      [
+       32350703,
+       32350922,
+       18,
+       2626,
+       2844,
+       null
+      ],
+      [
+       32352709,
+       32352906,
+       17,
+       2429,
+       2625,
+       null
+      ],
+      [
+       32353932,
+       32354103,
+       16,
+       2258,
+       2428,
+       null
+      ],
+      [
+       32354858,
+       32354997,
+       15,
+       2119,
+       2257,
+       null
+      ],
+      [
+       32355448,
+       32355565,
+       14,
+       2002,
+       2118,
+       null
+      ],
+      [
+       32359795,
+       32359908,
+       13,
+       1889,
+       2001,
+       null
+      ],
+      [
+       32361006,
+       32361123,
+       12,
+       1772,
+       1888,
+       null
+      ],
+      [
+       32361891,
+       32362021,
+       11,
+       1642,
+       1771,
+       null
+      ],
+      [
+       32363155,
+       32363329,
+       10,
+       1468,
+       1641,
+       null
+      ],
+      [
+       32366617,
+       32366755,
+       9,
+       1330,
+       1467,
+       null
+      ],
+      [
+       32368402,
+       32368598,
+       8,
+       1134,
+       1329,
+       null
+      ],
+      [
+       32372506,
+       32372631,
+       7,
+       1009,
+       1133,
+       null
+      ],
+      [
+       32373646,
+       32373772,
+       6,
+       883,
+       1008,
+       null
+      ],
+      [
+       32375397,
+       32375483,
+       5,
+       797,
+       882,
+       null
+      ],
+      [
+       32378444,
+       32378541,
+       4,
+       700,
+       796,
+       null
+      ],
+      [
+       32383421,
+       32383554,
+       3,
+       567,
+       699,
+       null
+      ],
+      [
+       32384312,
+       32384464,
+       2,
+       415,
+       566,
+       null
+      ],
+      [
+       32385544,
+       32385684,
+       1,
+       275,
+       414,
+       null
+      ],
+      [
+       32392768,
+       32393042,
+       0,
+       1,
+       274,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000947585.2",
+   "protein": "ENSP00000617644.1",
+   "start_codon": 132,
+   "stop_codon": 6828
+  },
+  "ENST00000949917.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       19,
+       2963,
+       7826,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       18,
+       2771,
+       2962,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2684,
+       2770,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2518,
+       2683,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2360,
+       2517,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2203,
+       2359,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2089,
+       2202,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       1988,
+       2088,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1797,
+       1987,
+       null
+      ],
+      [
+       31694215,
+       31694289,
+       10,
+       1723,
+       1796,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1555,
+       1722,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1446,
+       1554,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1264,
+       1445,
+       null
+      ],
+      [
+       31700994,
+       31701165,
+       6,
+       1093,
+       1263,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000949917.2",
+   "protein": "ENSP00000619976.1",
+   "start_codon": 492,
+   "stop_codon": 3918
+  },
+  "ENST00000956396.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MIS18A",
+   "gene_version": "ENSG00000159055.6",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32279014,
+     "cds_start": 32269036,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32268223,
+       32269117,
+       3,
+       571,
+       1464,
+       null
+      ],
+      [
+       32269706,
+       32269803,
+       2,
+       474,
+       570,
+       null
+      ],
+      [
+       32274829,
+       32274896,
+       1,
+       407,
+       473,
+       null
+      ],
+      [
+       32278680,
+       32279086,
+       0,
+       1,
+       406,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000956396.2",
+   "protein": "ENSP00000626455.1",
+   "start_codon": 72,
+   "stop_codon": 651
+  },
+  "ENST00000961467.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "ENSG00000170262.15",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32311996,
+     "cds_start": 32298971,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32298849,
+       32299077,
+       0,
+       1,
+       228,
+       null
+      ],
+      [
+       32306639,
+       32306739,
+       1,
+       229,
+       328,
+       null
+      ],
+      [
+       32311689,
+       32312286,
+       2,
+       329,
+       925,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000961467.2",
+   "protein": "ENSP00000631526.1",
+   "start_codon": 122,
+   "stop_codon": 635
+  },
+  "ENST00000989286.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31667283,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659616,
+       31659841,
+       0,
+       1,
+       225,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       1,
+       226,
+       295,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       2,
+       296,
+       413,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       3,
+       414,
+       874,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000989286.1",
+   "protein": "ENSP00000659103.1",
+   "start_codon": 153,
+   "stop_codon": 321
+  },
+  "ENST00000989287.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31666448,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659687,
+       31659841,
+       0,
+       1,
+       154,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       155,
+       251,
+       null
+      ],
+      [
+       31666422,
+       31666518,
+       2,
+       252,
+       347,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       348,
+       465,
+       null
+      ],
+      [
+       31668470,
+       31668928,
+       4,
+       466,
+       923,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000989287.1",
+   "protein": "ENSP00000659104.1",
+   "start_codon": 82,
+   "stop_codon": 277
+  },
+  "ENST00000989288.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31667283,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659688,
+       31659841,
+       0,
+       1,
+       153,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       154,
+       250,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       2,
+       251,
+       368,
+       null
+      ],
+      [
+       31668470,
+       31668673,
+       3,
+       369,
+       571,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000989288.1",
+   "protein": "ENSP00000659105.1",
+   "start_codon": 81,
+   "stop_codon": 276
+  },
+  "ENST00001001741.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MIS18A",
+   "gene_version": "ENSG00000159055.6",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32279014,
+     "cds_start": 32269101,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32268223,
+       32269117,
+       3,
+       597,
+       1490,
+       null
+      ],
+      [
+       32270406,
+       32270529,
+       2,
+       474,
+       596,
+       null
+      ],
+      [
+       32274829,
+       32274896,
+       1,
+       407,
+       473,
+       null
+      ],
+      [
+       32278680,
+       32279086,
+       0,
+       1,
+       406,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001001741.1",
+   "protein": "ENSP00000671558.1",
+   "start_codon": 72,
+   "stop_codon": 612
+  },
+  "ENST00001055593.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31660021,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659693,
+       31660350,
+       0,
+       1,
+       657,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       658,
+       754,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       755,
+       824,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       825,
+       942,
+       null
+      ],
+      [
+       31668470,
+       31668922,
+       4,
+       943,
+       1394,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001055593.1",
+   "protein": "ENSP00000725410.1",
+   "start_codon": 76,
+   "stop_codon": 328
+  },
+  "ENST00001074764.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MIS18A",
+   "gene_version": "ENSG00000159055.6",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32279014,
+     "cds_start": 32269792,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32268220,
+       32269117,
+       4,
+       680,
+       1576,
+       null
+      ],
+      [
+       32269706,
+       32269803,
+       3,
+       583,
+       679,
+       null
+      ],
+      [
+       32270406,
+       32270529,
+       2,
+       460,
+       582,
+       null
+      ],
+      [
+       32274833,
+       32274896,
+       1,
+       397,
+       459,
+       null
+      ],
+      [
+       32278680,
+       32279076,
+       0,
+       1,
+       396,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001074764.1",
+   "protein": "ENSP00000744570.1",
+   "start_codon": 62,
+   "stop_codon": 593
+  },
+  "ENST00001077173.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31667290,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659637,
+       31659841,
+       0,
+       1,
+       204,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       205,
+       301,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       302,
+       371,
+       null
+      ],
+      [
+       31667268,
+       31667375,
+       3,
+       372,
+       478,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       479,
+       939,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001077173.1",
+   "protein": "ENSP00000746979.1",
+   "start_codon": 132,
+   "stop_codon": 393
+  },
+  "ENST00001077174.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31667283,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659640,
+       31659841,
+       0,
+       1,
+       201,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       202,
+       298,
+       null
+      ],
+      [
+       31666458,
+       31666518,
+       2,
+       299,
+       358,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       359,
+       476,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       477,
+       937,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001077174.1",
+   "protein": "ENSP00000746980.1",
+   "start_codon": 129,
+   "stop_codon": 384
+  },
+  "ENST00001077178.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31667283,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659679,
+       31659841,
+       0,
+       1,
+       162,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       1,
+       163,
+       232,
+       null
+      ],
+      [
+       31667257,
+       31667372,
+       2,
+       233,
+       347,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       3,
+       348,
+       808,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001077178.1",
+   "protein": "ENSP00000746984.1",
+   "start_codon": 90,
+   "stop_codon": 258
+  },
+  "ENST00001077188.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31667283,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659632,
+       31659841,
+       0,
+       1,
+       209,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       1,
+       210,
+       279,
+       null
+      ],
+      [
+       31667257,
+       31668677,
+       2,
+       280,
+       1699,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001077188.1",
+   "protein": "ENSP00000746994.1",
+   "start_codon": 137,
+   "stop_codon": 305
+  },
+  "ENST00001077189.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31667283,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659692,
+       31659841,
+       0,
+       1,
+       149,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       150,
+       246,
+       null
+      ],
+      [
+       31666488,
+       31666518,
+       2,
+       247,
+       276,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       277,
+       394,
+       null
+      ],
+      [
+       31668470,
+       31668595,
+       4,
+       395,
+       519,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001077189.1",
+   "protein": "ENSP00000746995.1",
+   "start_codon": 77,
+   "stop_codon": 302
+  },
+  "ENST00001094105.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668478,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659632,
+       31659841,
+       0,
+       1,
+       209,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       210,
+       306,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       307,
+       376,
+       null
+      ],
+      [
+       31667257,
+       31667379,
+       3,
+       377,
+       498,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       499,
+       959,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001094105.1",
+   "protein": "ENSP00000763911.1",
+   "start_codon": 137,
+   "stop_codon": 506
+  },
+  "ENST00001094106.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31668458,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659632,
+       31659841,
+       0,
+       1,
+       209,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       210,
+       306,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       307,
+       376,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       377,
+       494,
+       null
+      ],
+      [
+       31668446,
+       31668683,
+       4,
+       495,
+       731,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001094106.1",
+   "protein": "ENSP00000763912.1",
+   "start_codon": 137,
+   "stop_codon": 506
+  },
+  "ENST00001097199.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "ENSG00000170262.15",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32311836,
+     "cds_start": 32298971,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32298849,
+       32299077,
+       0,
+       1,
+       228,
+       null
+      ],
+      [
+       32306639,
+       32306743,
+       1,
+       229,
+       332,
+       null
+      ],
+      [
+       32311683,
+       32314781,
+       2,
+       333,
+       3430,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001097199.1",
+   "protein": "ENSP00000767005.1",
+   "start_codon": 122,
+   "stop_codon": 485
+  },
+  "ENST00001107828.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31684974,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31683994,
+       31685240,
+       18,
+       2789,
+       4034,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2702,
+       2788,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2536,
+       2701,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2378,
+       2535,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2221,
+       2377,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2107,
+       2220,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       2006,
+       2106,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1815,
+       2005,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       10,
+       1729,
+       1814,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1561,
+       1728,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1452,
+       1560,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1270,
+       1451,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1093,
+       1269,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001107828.1",
+   "protein": "ENSP00000777633.1",
+   "start_codon": 492,
+   "stop_codon": 3054
+  },
+  "ENST00001112303.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31700829,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31700772,
+       31701165,
+       6,
+       1093,
+       1485,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001112303.1",
+   "protein": "ENSP00000782108.1",
+   "start_codon": 492,
+   "stop_codon": 1428
+  },
+  "ENST00001125455.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "ENSG00000170262.15",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32311916,
+     "cds_start": 32298971,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32298849,
+       32299077,
+       0,
+       1,
+       228,
+       null
+      ],
+      [
+       32311683,
+       32314781,
+       1,
+       229,
+       3326,
+       null
+      ]
+     ],
+     "source": [
+      "havana_tagene"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001125455.1",
+   "protein": "ENSP00000795260.1",
+   "start_codon": 122,
+   "stop_codon": 461
+  },
+  "ENST00001131410.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "ENSG00000156304.17",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS33537",
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31667490,
+       31672354,
+       19,
+       2981,
+       7844,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       18,
+       2789,
+       2980,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2702,
+       2788,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2536,
+       2701,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2378,
+       2535,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2221,
+       2377,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2107,
+       2220,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       2006,
+       2106,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1815,
+       2005,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       10,
+       1729,
+       1814,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1561,
+       1728,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1452,
+       1560,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1270,
+       1451,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1093,
+       1269,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       950,
+       1092,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       814,
+       949,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       652,
+       813,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       607,
+       651,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       523,
+       606,
+       null
+      ],
+      [
+       31731662,
+       31732184,
+       0,
+       1,
+       522,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "-",
+     "tag": "CCDS,gencode_basic,ens_canon_extended",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001131410.1",
+   "protein": "ENSP00000804638.1",
+   "start_codon": 492,
+   "stop_codon": 3936
+  },
+  "ENST00001131499.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "HUNK",
+   "gene_version": "ENSG00000142149.11",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13610",
+     "cds_end": 31999184,
+     "cds_start": 31873674,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31872804,
+       31873935,
+       0,
+       1,
+       1131,
+       null
+      ],
+      [
+       31924467,
+       31924760,
+       1,
+       1132,
+       1424,
+       null
+      ],
+      [
+       31940164,
+       31940220,
+       2,
+       1425,
+       1480,
+       null
+      ],
+      [
+       31946035,
+       31946171,
+       3,
+       1481,
+       1616,
+       null
+      ],
+      [
+       31958842,
+       31958970,
+       4,
+       1617,
+       1744,
+       null
+      ],
+      [
+       31968249,
+       31968385,
+       5,
+       1745,
+       1880,
+       null
+      ],
+      [
+       31974554,
+       31974717,
+       6,
+       1881,
+       2043,
+       null
+      ],
+      [
+       31983525,
+       31983609,
+       7,
+       2044,
+       2127,
+       null
+      ],
+      [
+       31990128,
+       31990176,
+       8,
+       2128,
+       2175,
+       null
+      ],
+      [
+       31995767,
+       31995948,
+       9,
+       2176,
+       2356,
+       null
+      ],
+      [
+       31998525,
+       32004071,
+       10,
+       2357,
+       7902,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "+",
+     "tag": "CCDS,gencode_basic,ens_canon_extended",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001131499.1",
+   "protein": "ENSP00000804027.1",
+   "start_codon": 870,
+   "stop_codon": 3015
+  },
+  "ENST00001131524.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "URB1",
+   "gene_version": "ENSG00000142207.9",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS46645",
+     "cds_end": 32392910,
+     "cds_start": 32314917,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32311017,
+       32315099,
+       38,
+       6767,
+       10848,
+       null
+      ],
+      [
+       32316465,
+       32317065,
+       37,
+       6167,
+       6766,
+       null
+      ],
+      [
+       32317675,
+       32317917,
+       36,
+       5925,
+       6166,
+       null
+      ],
+      [
+       32319216,
+       32319414,
+       35,
+       5727,
+       5924,
+       null
+      ],
+      [
+       32320530,
+       32320640,
+       34,
+       5617,
+       5726,
+       null
+      ],
+      [
+       32321800,
+       32321944,
+       33,
+       5473,
+       5616,
+       null
+      ],
+      [
+       32322477,
+       32322584,
+       32,
+       5366,
+       5472,
+       null
+      ],
+      [
+       32324490,
+       32324602,
+       31,
+       5254,
+       5365,
+       null
+      ],
+      [
+       32325228,
+       32325389,
+       30,
+       5093,
+       5253,
+       null
+      ],
+      [
+       32333316,
+       32333419,
+       29,
+       4990,
+       5092,
+       null
+      ],
+      [
+       32334162,
+       32334334,
+       28,
+       4818,
+       4989,
+       null
+      ],
+      [
+       32337093,
+       32337157,
+       27,
+       4754,
+       4817,
+       null
+      ],
+      [
+       32337403,
+       32337514,
+       26,
+       4643,
+       4753,
+       null
+      ],
+      [
+       32338706,
+       32338900,
+       25,
+       4449,
+       4642,
+       null
+      ],
+      [
+       32341465,
+       32341524,
+       24,
+       4390,
+       4448,
+       null
+      ],
+      [
+       32344569,
+       32344756,
+       23,
+       4203,
+       4389,
+       null
+      ],
+      [
+       32345373,
+       32345575,
+       22,
+       4001,
+       4202,
+       null
+      ],
+      [
+       32346955,
+       32347811,
+       21,
+       3145,
+       4000,
+       null
+      ],
+      [
+       32349303,
+       32349483,
+       20,
+       2965,
+       3144,
+       null
+      ],
+      [
+       32350703,
+       32350922,
+       19,
+       2746,
+       2964,
+       null
+      ],
+      [
+       32352709,
+       32352906,
+       18,
+       2549,
+       2745,
+       null
+      ],
+      [
+       32353932,
+       32354103,
+       17,
+       2378,
+       2548,
+       null
+      ],
+      [
+       32354858,
+       32354997,
+       16,
+       2239,
+       2377,
+       null
+      ],
+      [
+       32355448,
+       32355565,
+       15,
+       2122,
+       2238,
+       null
+      ],
+      [
+       32357536,
+       32357656,
+       14,
+       2002,
+       2121,
+       null
+      ],
+      [
+       32359795,
+       32359908,
+       13,
+       1889,
+       2001,
+       null
+      ],
+      [
+       32361006,
+       32361123,
+       12,
+       1772,
+       1888,
+       null
+      ],
+      [
+       32361891,
+       32362021,
+       11,
+       1642,
+       1771,
+       null
+      ],
+      [
+       32363155,
+       32363329,
+       10,
+       1468,
+       1641,
+       null
+      ],
+      [
+       32366617,
+       32366755,
+       9,
+       1330,
+       1467,
+       null
+      ],
+      [
+       32368402,
+       32368598,
+       8,
+       1134,
+       1329,
+       null
+      ],
+      [
+       32372506,
+       32372631,
+       7,
+       1009,
+       1133,
+       null
+      ],
+      [
+       32373646,
+       32373772,
+       6,
+       883,
+       1008,
+       null
+      ],
+      [
+       32375397,
+       32375483,
+       5,
+       797,
+       882,
+       null
+      ],
+      [
+       32378444,
+       32378541,
+       4,
+       700,
+       796,
+       null
+      ],
+      [
+       32383421,
+       32383554,
+       3,
+       567,
+       699,
+       null
+      ],
+      [
+       32384312,
+       32384464,
+       2,
+       415,
+       566,
+       null
+      ],
+      [
+       32385544,
+       32385684,
+       1,
+       275,
+       414,
+       null
+      ],
+      [
+       32392768,
+       32393042,
+       0,
+       1,
+       274,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "-",
+     "tag": "CCDS,gencode_basic,ens_canon_extended",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001131524.1",
+   "protein": "ENSP00000811340.1",
+   "start_codon": 132,
+   "stop_codon": 6948
+  },
+  "ENST00001131527.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "ENSG00000170262.15",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13613",
+     "cds_end": 32311996,
+     "cds_start": 32298971,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32298849,
+       32299077,
+       0,
+       1,
+       228,
+       null
+      ],
+      [
+       32306639,
+       32306739,
+       1,
+       229,
+       328,
+       null
+      ],
+      [
+       32311683,
+       32314781,
+       2,
+       329,
+       3426,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "+",
+     "tag": "CCDS,gencode_basic,ens_canon_extended",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001131527.1",
+   "protein": "ENSP00000805854.1",
+   "start_codon": 122,
+   "stop_codon": 641
+  },
+  "ENST00001131562.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "ENSG00000142168.17",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS33536",
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659632,
+       31659841,
+       0,
+       1,
+       209,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       210,
+       306,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       307,
+       376,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       377,
+       494,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       495,
+       955,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "+",
+     "tag": "CCDS,gencode_basic,ens_canon_extended",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001131562.1",
+   "protein": "ENSP00000804030.1",
+   "start_codon": 137,
+   "stop_codon": 602
+  },
+  "ENST00001131632.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MIS18A",
+   "gene_version": "ENSG00000159055.6",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13611",
+     "cds_end": 32279014,
+     "cds_start": 32269036,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32268223,
+       32269117,
+       4,
+       694,
+       1587,
+       null
+      ],
+      [
+       32269706,
+       32269803,
+       3,
+       597,
+       693,
+       null
+      ],
+      [
+       32270406,
+       32270529,
+       2,
+       474,
+       596,
+       null
+      ],
+      [
+       32274829,
+       32274896,
+       1,
+       407,
+       473,
+       null
+      ],
+      [
+       32278680,
+       32279086,
+       0,
+       1,
+       406,
+       null
+      ]
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "-",
+     "tag": "CCDS,gencode_basic,ens_canon_extended",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00001131632.1",
+   "protein": "ENSP00000804755.1",
+   "start_codon": 72,
+   "stop_codon": 774
+  }
+ }
+}
