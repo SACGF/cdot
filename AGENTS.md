@@ -70,8 +70,9 @@ Schema versioning (`cdot/__init__.py`) uses major.minor; clients validate compat
 ### Key Data Flows
 
 **GTF/GFF3 → JSON** (`generate_transcript_data/`):
-1. Parse with HTSeq (`gff_parser.py`: `GFF3Parser` or `GTFParser`)
-2. Extract transcript/gene/exon features; compute CDS coords from start/stop codon features
+1. Parse with HTSeq (`gff_parser.py`: `GFF3Parser` or `GTFParser` work out the gene/transcript/exon hierarchy for their file format)
+2. Consortium-specific conventions (`annotation_consortium.py`: `RefSeq` / `Ensembl`, detected from the file or `--annotation-consortium`) supply HGNC, CCDS, protein versions, translation exceptions, RefSeq mito fakes
+3. `transcript_builder.py` collects the features and computes exons, CDS coords and codon positions (coordinate maths in `transcript_coordinates.py`). Output must stay byte-identical to `tests/test_data/gff_parser_golden/` (`tests/test_gff_parser_golden.py`)
 3. Normalize contig names via bioutils assemblies
 4. Convert CIGAR strings for alignment gaps
 5. Optionally merge sources (`merge_historical`) or combine genome builds (`combine_builds`)
