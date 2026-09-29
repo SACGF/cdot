@@ -9,9 +9,9 @@ Ensembl FTP sites:
 1. **RefSeq GFF3**: {{ sources.refseq_grch37_releases | int }} GRCh37,
    {{ sources.refseq_grch38_releases | int }} GRCh38, and
    {{ sources.refseq_t2t_releases | int }} T2T-CHM13v2.0 NCBI annotation releases
-   through the dated RS_2025_08 release (Supplementary Table S1), plus NCBI's
-   historical transcript-alignment file (RS_2024_08), covering GRCh38 versions
-   replaced or suppressed before any archived release.
+   through RS_2025_08 (Supplementary Table S1), plus NCBI's historical
+   transcript-alignment file (RS_2024_08), covering GRCh38 versions replaced or
+   suppressed before any archived release.
 
 2. **Ensembl GTF**: {{ sources.ensembl_grch37_releases | int }} GRCh37,
    {{ sources.ensembl_grch38_releases | int }} GRCh38, and
@@ -54,15 +54,14 @@ grammar rejects the string; cdot repairs it instead.
 repaired string with structured `HGVSFix` records describing every change. It needs no
 genome build, sequence, parser, or data provider, so it can run as a pre-pass anywhere,
 whichever downstream library consumes the result. Cleaning is an ordered pipeline of
-single-purpose operations; callers may restrict it to a subset, which filters but never
-reorders. The operations strip extraneous characters, repair structural punctuation,
-normalise casing and prefixes, and rebuild the canonical `transcript(GENE):c.` shape,
-including a transposed gene symbol and accession; the per-operation catalogue, with
-examples, is Supplementary Table S7. Each `HGVSFix` carries a severity, a stable code,
-a message, and the before/after values, so a caller can audit exactly what changed. A
-final validation pass flags what cleaning cannot fix (no colon at all, a bare variant
-body, an insertion given as a length instead of a sequence) as `ERROR`-level fixes; by
-default cleaning never raises and returns its best attempt.
+single-purpose operations that strip extraneous characters, repair structural
+punctuation, normalise casing and prefixes, and rebuild the canonical
+`transcript(GENE):c.` shape; the per-operation catalogue, with examples, is
+Supplementary Table S7. Each `HGVSFix` carries a severity, a stable code, a message,
+and the before/after values, so a caller can audit exactly what changed. What cleaning
+cannot fix (no colon at all, a bare variant body, an insertion given as a length instead
+of a sequence) is flagged as an `ERROR`-level fix; cleaning never raises and returns its
+best attempt.
 
 One repair needs transcript data: a bare-number accession whose RefSeq prefix was
 dropped entirely (`000059.4:c.68del`). `resolve_missing_accession_prefix()`, applied by
@@ -89,10 +88,8 @@ The check is validated against ClinVar in Results R5.
 
 cdot's client stack (Figure 1B) offers three data providers behind the same interface.
 
-**Local JSON**: `JSONDataProvider` loads a JSON.gz file into memory
-(~{{ benchmark.grch38_load_time_s | dp(0) }} seconds for GRCh38 RefSeq) with lazy
-interval trees and lookup dictionaries; retrieval is O(1) and end-to-end resolution
-throughput ~{{ benchmark.cdot_local_tps | commas }} HGVS/second (Results, Table 1).
+**Local JSON**: `JSONDataProvider` loads a JSON.gz file into memory with lazy interval
+trees and lookup dictionaries; retrieval is O(1).
 
 **REST API**: `cdot_rest` (https://github.com/SACGF/cdot_rest) serves the same JSON
 data at cdotlib.org. `RESTDataProvider` fetches one transcript version per request,
@@ -100,7 +97,7 @@ suited to occasional lookups without downloading the full file, and can warm its
 with a single batched `prefetch()` request (Results R3).
 
 **Ensembl TARK**: `EnsemblTarkDataProvider` exposes the Ensembl Transcript Archive
-(TARK) REST service through the same interface (Discussion).
+(TARK) REST service through the same interface.
 
 **biocommons/hgvs integration**: cdot implements the full
 `biocommons.hgvs.dataproviders.interface.Interface`, so it is a drop-in replacement for
@@ -116,8 +113,7 @@ reconstructs a transcript sequence by splicing its exon ranges out of a local ge
 FASTA, enabling fully offline operation. That reproduces an Ensembl transcript exactly
 but is not guaranteed to match a curated RefSeq transcript, whose sequence can differ
 from the genome at a few positions (Supplementary Methods). `ChainedSeqFetcher` tries
-several sequence sources in a caller-defined order, so a pipeline can prefer SeqRepo
-and fall back to the FASTA, or the reverse.
+several sequence sources in a caller-defined order.
 
 **PyHGVS integration**: `JSONPyHGVSTranscriptFactory` exposes the same data to the
 Counsyl PyHGVS library. PyHGVS is no longer maintained, so new development targets the
@@ -135,10 +131,10 @@ choice.
 ## Benchmarking
 
 Resolution accuracy and throughput are measured with scripts committed to the
-repository (`paper/scripts/`); protocol detail beyond what follows is in Supplementary
-Methods. `benchmark_resolution.py` resolves real (g.HGVS, c.HGVS) pairs through a
-pluggable provider (local JSON, REST, or UTA) and reports resolution rate, recovery
-from cleaning and version substitution, and speed; the ClinVar pair set is built by
+repository (`paper/scripts/`); protocol detail is in Supplementary Methods.
+`benchmark_resolution.py` resolves real (g.HGVS, c.HGVS) pairs through a pluggable
+provider (local JSON, REST, or UTA) and reports resolution rate, recovery from cleaning
+and version substitution, and speed; the ClinVar pair set is built by
 `build_clinvar_pairs.py`. Cleaning is evaluated on a production query corpus and, as a
 reproducible control, with `inject_and_clean.py`, which injects each fix category into
 clean ClinVar strings. `lovd_head_to_head.py` runs the same injected cases through both
@@ -152,31 +148,25 @@ originals.
 sequence-aware validation services, VariantValidator [@Freeman2018] and Mutalyzer
 [@Lefter2021], over their public REST APIs
 ({{ vv_mutalyzer_comparison.service_date }}; remote services cannot be version-pinned,
-so the facts record the service date and each API's reported version). A case counts as
-recovered when the service's validated description matches the target; on the
+so the service date and each API's reported version are recorded instead). On the
 uncorrupted originals, a valid input the service *alters* is a false correction while one
-it *rejects* is counted separately as a validity or coverage position, matching how
-LOVD's flagged-invalid originals are reported. The per-service request routing and
-matching rules are in Supplementary Methods. Version-substitution safety is measured by
-`compute_version_stability.py` on
-GRCh38, over a seeded {{ version_stability.sample_n | commas }}-accession sample of
-accessions cdot holds at two or more versions; the same run bins preserved coding bases
-by relative CDS position (Supplementary Figure S1).
+it *rejects* is counted separately as a validity or coverage position. Version-substitution
+safety is measured by `compute_version_stability.py` on GRCh38, over a seeded
+{{ version_stability.sample_n | commas }}-accession sample of accessions cdot holds at
+two or more versions; the same run bins preserved coding bases by relative CDS position
+(Supplementary Figure S1).
 
 The submitted-string corpus (Results R2) is built by
 `build_clinvar_submitted_pairs.py` from the per-submission HGVS attributes of a ClinVar
 VCV XML release (ClinVarVCVRelease_2026-06): each SCV's first transcript c./n.
 expression is joined verbatim to the variant's VCF coordinate via its AlleleID and
 collapsed to unique (AlleleID, string) pairs, each tagged with the earliest SCV
-submission date (Supplementary Methods). The cdot-versus-UTA comparison is run over the
-whole corpus and broken down by submission-year era, so recency skew is reported rather
-than hidden; a 500-pair random sample (seed 42) and the era-tagged corpus support
-reproduction. Scoring uses the VCF
-coordinate rather than the g.HGVS string, since a
-submitted string may legitimately spell an indel differently from ClinVar's normalised
-form. Transcript version age is computed by `compute_submitted_version_age.py` against
-the released cdot RefSeq JSON, whose per-transcript source URL identifies whether an
-entry survives only through cdot's historical releases.
+submission date (Supplementary Methods). Scoring uses the VCF coordinate rather than
+the g.HGVS string, since a submitted string may legitimately spell an indel differently
+from ClinVar's normalised form. Transcript version age is computed by
+`compute_submitted_version_age.py` against the released cdot RefSeq JSON, whose
+per-transcript source URL identifies whether an entry survives only through cdot's
+historical releases.
 
 Throughput (Table 1) is measured by `compute_benchmark.py`: every configuration
 resolves the identical committed set of {{ benchmark.n_pairs | commas }} ClinVar pairs

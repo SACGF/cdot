@@ -13,7 +13,8 @@ Submitted HGVS is not deduplicated across SCVs in ClinVar, so the builder collap
 rows to unique (AlleleID, submitted string) pairs, retaining the collapsed submission
 count; distinct strings for the same variant (for example, two laboratories citing
 different transcript versions) are all kept. The cdot-versus-UTA comparison (Results R2)
-is run over the whole corpus; the committed 500-pair sample is for quick reproduction.
+is run over the whole corpus; a committed 500-pair random sample (seed 42) is for quick
+reproduction.
 
 ### LOVD head-to-head scoring detail
 
@@ -126,22 +127,17 @@ refused by default.
 ### Table S4: ClinVar benchmark details
 
 Full-scale resolution of every RefSeq and Ensembl c.HGVS in ClinVar through cdot alone
-(GRCh38, cdot 0.2.33): a cdot-only accuracy check on the current-version `Name` corpus,
-complementary to the cdot-vs-UTA head-to-head on the historical submitted-string corpus
-(Results R2). The projection is scored as a VCF coordinate (CHROM/POS/REF/ALT) against
-ClinVar's own VCF, not as a g.HGVS string, so equivalent representations and ClinVar's
+(GRCh38, cdot 0.2.33), scored as a VCF coordinate (CHROM/POS/REF/ALT) against ClinVar's
+own VCF, not as a g.HGVS string, so equivalent representations and ClinVar's
 tandem-repeat / identity notations are not miscounted.
 
 **Caveat.** ClinVar submissions are dominated by a handful of large (largely US) clinical
-laboratories citing mostly current RefSeq versions, so this is a clean, public,
-reproducible scale check that cdot resolves real variants at scale, not an unbiased sample
-of the transcripts clinical labs use. The unbiased real-world complement is the Shariant
-historical corpus (Results R2, private data). The pair builder extracts both RefSeq and Ensembl
-c.HGVS and reports the measured source mix, but ClinVar's `variant_summary` Name column is
-RefSeq-centric, so the Ensembl share at this scale is near zero. ClinVar's comprehensive
-Ensembl HGVS lives in `hgvs4variation.txt.gz`, which this pass does not ingest; the
-Ensembl resolution evidence is therefore the R2 sample (per-source split) and the Shariant
-corpus, not this table.
+laboratories citing mostly current RefSeq versions, so this is a reproducible scale
+check, not an unbiased sample of the transcripts clinical labs use. ClinVar's
+`variant_summary` Name column is RefSeq-centric, so the Ensembl share at this scale is
+near zero; ClinVar's comprehensive Ensembl HGVS lives in `hgvs4variation.txt.gz`, which
+this pass does not ingest. The Ensembl resolution evidence is therefore the R2 sample
+(per-source split) and the Shariant corpus, not this table.
 
 Total pairs: {{ clinvar_vcf.n_pairs | commas }}.
 
@@ -182,17 +178,14 @@ Reproducible injection benchmark (`paper/scripts/inject_and_clean.py`): each
 `clean_hgvs()` fix category is injected into a seeded sample of {{ cleaning.inject_sample_size | commas }}
 clean, parseable public ClinVar c.HGVS strings (committed to the repository, seed 112,
 at most 200 cases per category), and recovery is an exact string match to the known
-canonical target. The LOVD columns come from `paper/scripts/lovd_head_to_head.py`, which
-runs the same cases through the LOVD HGVS syntax checker (v1.2.2, local PHP CLI) under
-the same scoring rule (Methods); "top-1" scores the checker's highest-confidence
-suggested correction. The VariantValidator (VV) and Mutalyzer columns come from
-`paper/scripts/vv_mutalyzer_head_to_head.py`, which runs the same cases through the two
-services' public REST APIs ({{ vv_mutalyzer_comparison.service_date }}; Methods) under
-the same rule, scoring the validated (VV) or corrected/normalized (Mutalyzer)
-description. Production ops with no string-level injector (structure reconstruction,
-empty-version dropping, provider-verified accession-prefix restoration) are absent by
-design. Examples are synthesised from public `NM_000059.4` (BRCA2). Regenerate with the
-commands in each script's docstring; totals also appear in
+canonical target. The LOVD columns come from `paper/scripts/lovd_head_to_head.py`
+(LOVD HGVS syntax checker v1.2.2, local PHP CLI; "top-1" scores the checker's
+highest-confidence suggested correction) and the VariantValidator (VV) and Mutalyzer
+columns from `paper/scripts/vv_mutalyzer_head_to_head.py` (public REST APIs,
+{{ vv_mutalyzer_comparison.service_date }}), all under the scoring rule in Methods.
+Production ops with no string-level injector (structure reconstruction, empty-version
+dropping, provider-verified accession-prefix restoration) are absent by design.
+Examples are synthesised from public `NM_000059.4` (BRCA2). Totals also appear in
 `paper/empirical_results/cleaning.csv`, `lovd_comparison.csv` and
 `vv_mutalyzer_comparison.csv`.
 
@@ -236,14 +229,12 @@ could not parse embedded the LOVD syntax checker's ranked suggestions in
 ### Table S6: Residual error classes after cleaning
 
 **[private data].** Single-label classification of the {{ cleaning_corpus.residual_n | commas }}
-genuine-HGVS production queries
-that still fail to parse after cleaning (Results, "Residual errors"), under a fixed
-decision-tree taxonomy. A further {{ cleaning_corpus.nonhgvs_n | int }} residual queries were non-HGVS input (pasted URLs,
-report templates, or prose) that slipped the corpus regex; these are a data-collection
-artifact with nothing in them for cleaning to repair, so they are removed from the
-corpus and excluded here (Results). Counts and % below are of the {{ cleaning_corpus.residual_n | commas }} residual queries;
-examples are synthesised from public BRCA2 `NM_000059.4`. *(Private data; frozen constants
-from a deterministic run over the production corpus.)*
+genuine-HGVS production queries that still fail to parse after cleaning (Results,
+"Residual errors"), under a fixed decision-tree taxonomy. The
+{{ cleaning_corpus.nonhgvs_n | int }} non-HGVS queries that slipped the corpus regex
+are excluded (Results). Counts and % below are of the
+{{ cleaning_corpus.residual_n | commas }} residual queries; examples are synthesised
+from public BRCA2 `NM_000059.4`.
 
 <!-- include-csv: empirical_results/residual_taxonomy.csv
   align: left
@@ -283,9 +274,7 @@ essentially flat (RefSeq {{ positional_drift.refseq_all_decile1_pct | dp(1) }}% 
 {{ positional_drift.ensembl_all_decile1_pct | dp(1) }}% to
 {{ positional_drift.ensembl_all_decile10_pct | dp(1) }}%): most drift is a whole-CDS
 relocation, position independent and reliably flagged by the intrinsic-structure check
-(Results R5). The positional effect is confined to the rare partial-drift tail, which is
-what makes a 5' coding variant safer to substitute than a 3' one when a version must be
-swapped. Produced by `compute_version_stability.py` (facts) and
+(Results R5). Produced by `compute_version_stability.py` (facts) and
 `make_positional_figure.py` (rendering).
 
 ### Table S7: `clean_hgvs()` operation catalogue
