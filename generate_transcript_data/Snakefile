@@ -209,6 +209,7 @@ rule cdot_gff_json:
                 "{input.gff_file}" \
                 --url "{params.url}" \
                 --genome-build="{wildcards.genome_build}" \
+                --annotation-consortium="{wildcards.annotation_consortium}" \
                 --output "{output}" \
                 --gene-info-json="{input.gene_info_json}" \
                 {params.gencode_param} \

@@ -1,0 +1,792 @@
+{
+ "genes": {
+  "178": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "amylo-alpha-1%2C 6-glucosidase%2C 4-alpha-glucanotransferase",
+   "gene_symbol": "AGL",
+   "hgnc": "321",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "34": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "acyl-CoA dehydrogenase medium chain",
+   "gene_symbol": "ACADM",
+   "hgnc": "89",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4879": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "natriuretic peptide B",
+   "gene_symbol": "NPPB",
+   "hgnc": "7940",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "732": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "complement C8 beta chain",
+   "gene_symbol": "C8B",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "NM_000016.2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ACADM",
+   "gene_version": "34",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS668.1",
+     "cds_end": 75762763,
+     "cds_start": 75724787,
+     "contig": "NC_000001.11",
+     "exons": [
+      [
+       75724596,
+       75724817,
+       0,
+       1,
+       221,
+       null
+      ],
+      [
+       75728400,
+       75728488,
+       1,
+       222,
+       309,
+       null
+      ],
+      [
+       75732643,
+       75732741,
+       2,
+       310,
+       407,
+       null
+      ],
+      [
+       75732852,
+       75732922,
+       3,
+       408,
+       477,
+       null
+      ],
+      [
+       75733527,
+       75733628,
+       4,
+       478,
+       578,
+       null
+      ],
+      [
+       75734790,
+       75734871,
+       5,
+       579,
+       659,
+       null
+      ],
+      [
+       75739979,
+       75740110,
+       6,
+       660,
+       790,
+       null
+      ],
+      [
+       75745805,
+       75745914,
+       7,
+       791,
+       899,
+       null
+      ],
+      [
+       75749418,
+       75749559,
+       8,
+       900,
+       1040,
+       null
+      ],
+      [
+       75750450,
+       75750546,
+       9,
+       1041,
+       1136,
+       null
+      ],
+      [
+       75761121,
+       75761370,
+       10,
+       1137,
+       1385,
+       null
+      ],
+      [
+       75762691,
+       75763498,
+       11,
+       1386,
+       2192,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "89",
+   "id": "NM_000016.2",
+   "protein": "NP_000007.1",
+   "start_codon": 191,
+   "stop_codon": 1457
+  },
+  "NM_000016.3": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ACADM",
+   "gene_version": "34",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS668.1",
+     "cds_end": 75762763,
+     "cds_start": 75724787,
+     "contig": "NC_000001.11",
+     "exons": [
+      [
+       75724357,
+       75724817,
+       0,
+       1,
+       460,
+       null
+      ],
+      [
+       75728400,
+       75728488,
+       1,
+       461,
+       548,
+       null
+      ],
+      [
+       75732643,
+       75732741,
+       2,
+       549,
+       646,
+       null
+      ],
+      [
+       75732852,
+       75732922,
+       3,
+       647,
+       716,
+       null
+      ],
+      [
+       75733527,
+       75733628,
+       4,
+       717,
+       817,
+       null
+      ],
+      [
+       75734790,
+       75734871,
+       5,
+       818,
+       898,
+       null
+      ],
+      [
+       75739979,
+       75740110,
+       6,
+       899,
+       1029,
+       null
+      ],
+      [
+       75745805,
+       75745914,
+       7,
+       1030,
+       1138,
+       null
+      ],
+      [
+       75749418,
+       75749559,
+       8,
+       1139,
+       1279,
+       null
+      ],
+      [
+       75750450,
+       75750546,
+       9,
+       1280,
+       1375,
+       null
+      ],
+      [
+       75761121,
+       75761370,
+       10,
+       1376,
+       1624,
+       null
+      ],
+      [
+       75762691,
+       75763490,
+       11,
+       1625,
+       2423,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "89",
+   "id": "NM_000016.3",
+   "protein": "NP_000007.1",
+   "start_codon": 430,
+   "stop_codon": 1696
+  },
+  "NM_000028.1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "AGL",
+   "gene_version": "178",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS759.1",
+     "cds_end": 99921651,
+     "cds_start": 99851042,
+     "contig": "NC_000001.11",
+     "exons": [
+      [
+       99850488,
+       99850898,
+       0,
+       1,
+       410,
+       null
+      ],
+      [
+       99850974,
+       99851124,
+       1,
+       411,
+       560,
+       null
+      ],
+      [
+       99861502,
+       99861713,
+       2,
+       561,
+       771,
+       null
+      ],
+      [
+       99862256,
+       99862423,
+       3,
+       772,
+       938,
+       null
+      ],
+      [
+       99864385,
+       99864589,
+       4,
+       939,
+       1142,
+       null
+      ],
+      [
+       99870399,
+       99870581,
+       5,
+       1143,
+       1324,
+       null
+      ],
+      [
+       99870757,
+       99870869,
+       6,
+       1325,
+       1436,
+       null
+      ],
+      [
+       99874686,
+       99874810,
+       7,
+       1437,
+       1560,
+       null
+      ],
+      [
+       99875153,
+       99875256,
+       8,
+       1561,
+       1663,
+       null
+      ],
+      [
+       99875357,
+       99875455,
+       9,
+       1664,
+       1761,
+       null
+      ],
+      [
+       99876457,
+       99876597,
+       10,
+       1762,
+       1901,
+       null
+      ],
+      [
+       99877640,
+       99877828,
+       11,
+       1902,
+       2089,
+       null
+      ],
+      [
+       99879922,
+       99880046,
+       12,
+       2090,
+       2213,
+       null
+      ],
+      [
+       99880631,
+       99880795,
+       13,
+       2214,
+       2377,
+       null
+      ],
+      [
+       99881075,
+       99881177,
+       14,
+       2378,
+       2479,
+       null
+      ],
+      [
+       99881291,
+       99881447,
+       15,
+       2480,
+       2635,
+       null
+      ],
+      [
+       99881540,
+       99881691,
+       16,
+       2636,
+       2786,
+       null
+      ],
+      [
+       99884119,
+       99884244,
+       17,
+       2787,
+       2911,
+       null
+      ],
+      [
+       99884338,
+       99884451,
+       18,
+       2912,
+       3024,
+       null
+      ],
+      [
+       99884568,
+       99884703,
+       19,
+       3025,
+       3159,
+       null
+      ],
+      [
+       99887977,
+       99888108,
+       20,
+       3160,
+       3290,
+       null
+      ],
+      [
+       99891219,
+       99891356,
+       21,
+       3291,
+       3427,
+       null
+      ],
+      [
+       99891605,
+       99891739,
+       22,
+       3428,
+       3561,
+       null
+      ],
+      [
+       99892431,
+       99892607,
+       23,
+       3562,
+       3737,
+       null
+      ],
+      [
+       99896285,
+       99896388,
+       24,
+       3738,
+       3840,
+       null
+      ],
+      [
+       99900635,
+       99900861,
+       25,
+       3841,
+       4066,
+       null
+      ],
+      [
+       99902682,
+       99902794,
+       26,
+       4067,
+       4178,
+       null
+      ],
+      [
+       99910711,
+       99910847,
+       27,
+       4179,
+       4314,
+       null
+      ],
+      [
+       99912404,
+       99912517,
+       28,
+       4315,
+       4427,
+       null
+      ],
+      [
+       99913526,
+       99913738,
+       29,
+       4428,
+       4639,
+       null
+      ],
+      [
+       99915388,
+       99915486,
+       30,
+       4640,
+       4737,
+       null
+      ],
+      [
+       99916409,
+       99916497,
+       31,
+       4738,
+       4825,
+       null
+      ],
+      [
+       99916597,
+       99916731,
+       32,
+       4826,
+       4959,
+       null
+      ],
+      [
+       99921533,
+       99924020,
+       33,
+       4960,
+       7444,
+       "M148 D1 M35 D2 M371 I2 M1135 D1 M794"
+      ]
+     ],
+     "genome_mismatch": {
+      "exceptions": [
+       "annotated by transcript or proteomic data"
+      ]
+     },
+     "note": "splice variant 4%2C protein isoform 1~isoform 1 is encoded by transcript variant 4%3B The RefSeq protein has 1 substitution compared to this genomic sequence",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "321",
+   "id": "NM_000028.1",
+   "protein": "NP_000019.1",
+   "start_codon": 478,
+   "stop_codon": 5077
+  },
+  "NM_000066.1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "C8B",
+   "gene_version": "732",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 56965948,
+     "cds_start": 56929403,
+     "contig": "NC_000001.11",
+     "exons": [
+      [
+       56929211,
+       56929558,
+       11,
+       1649,
+       1995,
+       null
+      ],
+      [
+       56931809,
+       56931878,
+       10,
+       1580,
+       1648,
+       null
+      ],
+      [
+       56933334,
+       56933488,
+       9,
+       1426,
+       1579,
+       null
+      ],
+      [
+       56940848,
+       56941012,
+       8,
+       1262,
+       1425,
+       null
+      ],
+      [
+       56943695,
+       56943824,
+       7,
+       1133,
+       1261,
+       null
+      ],
+      [
+       56945820,
+       56946061,
+       6,
+       892,
+       1132,
+       null
+      ],
+      [
+       56949554,
+       56949752,
+       5,
+       694,
+       891,
+       null
+      ],
+      [
+       56952047,
+       56952180,
+       4,
+       561,
+       693,
+       null
+      ],
+      [
+       56954685,
+       56954827,
+       3,
+       419,
+       560,
+       null
+      ],
+      [
+       56956768,
+       56956910,
+       2,
+       277,
+       418,
+       null
+      ],
+      [
+       56960019,
+       56960176,
+       1,
+       120,
+       276,
+       null
+      ],
+      [
+       56965856,
+       56965976,
+       0,
+       1,
+       119,
+       "M26 D1 M93"
+      ]
+     ],
+     "genome_mismatch": {
+      "exceptions": [
+       "annotated by transcript or proteomic data"
+      ]
+     },
+     "note": "The RefSeq transcript has 1 substitution%2C 1 non-frameshifting indel compared to this genomic sequence",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "NM_000066.1",
+   "protein": "NP_000057.1",
+   "start_codon": 27,
+   "stop_codon": 1803
+  },
+  "NM_002521.1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "NPPB",
+   "gene_version": "4879",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS140.1",
+     "cds_end": 11858833,
+     "cds_start": 11857654,
+     "contig": "NC_000001.11",
+     "exons": [
+      [
+       11857466,
+       11857671,
+       2,
+       488,
+       692,
+       null
+      ],
+      [
+       11858213,
+       11858469,
+       1,
+       232,
+       487,
+       null
+      ],
+      [
+       11858701,
+       11858931,
+       0,
+       2,
+       231,
+       null
+      ]
+     ],
+     "genome_mismatch": {
+      "exceptions": [
+       "annotated by transcript or proteomic data"
+      ]
+     },
+     "note": "The RefSeq transcript has 1 non-frameshifting indel compared to this genomic sequence",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7940",
+   "id": "NM_002521.1",
+   "protein": "NP_002512.1",
+   "start_codon": 99,
+   "stop_codon": 504
+  }
+ }
+}

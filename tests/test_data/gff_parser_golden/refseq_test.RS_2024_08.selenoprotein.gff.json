@@ -1,0 +1,209 @@
+{
+ "genes": {
+  "2879": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "glutathione peroxidase 4",
+   "gene_symbol": "GPX4",
+   "hgnc": "4556",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "6414": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "selenoprotein P",
+   "gene_symbol": "SELENOP",
+   "hgnc": "10751",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "NM_002085.5": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "GPX4",
+   "gene_version": "2879",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS42457.1",
+     "cds_end": 1106572,
+     "cds_start": 1104043,
+     "contig": "NC_000019.10",
+     "exons": [
+      [
+       1103993,
+       1104127,
+       0,
+       1,
+       134,
+       null
+      ],
+      [
+       1105185,
+       1105280,
+       1,
+       135,
+       229,
+       null
+      ],
+      [
+       1105365,
+       1105510,
+       2,
+       230,
+       374,
+       null
+      ],
+      [
+       1105657,
+       1105809,
+       3,
+       375,
+       526,
+       null
+      ],
+      [
+       1106241,
+       1106266,
+       4,
+       527,
+       551,
+       null
+      ],
+      [
+       1106399,
+       1106459,
+       5,
+       552,
+       611,
+       null
+      ],
+      [
+       1106539,
+       1106779,
+       6,
+       612,
+       851,
+       null
+      ]
+     ],
+     "note": "UGA stop codon recoded as selenocysteine%3B isoform A precursor is encoded by transcript variant 1",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "tag": "MANE Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "4556",
+   "id": "NM_002085.5",
+   "protein": "NP_002076.2",
+   "start_codon": 50,
+   "stop_codon": 644,
+   "translation": {
+    "transl_except": {
+     "Sec": [
+      73
+     ]
+    }
+   }
+  },
+  "NM_005410.4": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SELENOP",
+   "gene_version": "6414",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS43311.1",
+     "cds_end": 42808353,
+     "cds_start": 42800719,
+     "contig": "NC_000005.10",
+     "exons": [
+      [
+       42799879,
+       42801331,
+       4,
+       605,
+       2056,
+       null
+      ],
+      [
+       42804655,
+       42804773,
+       3,
+       487,
+       604,
+       null
+      ],
+      [
+       42806895,
+       42807108,
+       2,
+       274,
+       486,
+       null
+      ],
+      [
+       42808150,
+       42808366,
+       1,
+       58,
+       273,
+       null
+      ],
+      [
+       42811835,
+       42811892,
+       0,
+       1,
+       57,
+       null
+      ]
+     ],
+     "note": "UGA stop codons recoded as selenocysteine%3B isoform 1 precursor is encoded by transcript variant 1",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "tag": "MANE Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "10751",
+   "id": "NM_005410.4",
+   "protein": "NP_005401.3",
+   "start_codon": 70,
+   "stop_codon": 1216,
+   "translation": {
+    "transl_except": {
+     "Sec": [
+      59,
+      300,
+      318,
+      330,
+      345,
+      352,
+      367,
+      369,
+      376,
+      378
+     ]
+    }
+   }
+  }
+ }
+}

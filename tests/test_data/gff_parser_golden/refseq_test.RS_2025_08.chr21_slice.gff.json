@@ -1,0 +1,3476 @@
+{
+ "genes": {
+  "100131268": {
+   "biotype": [
+    "pseudogene"
+   ],
+   "description": "TPT1 pseudogene 1",
+   "gene_symbol": "TPT1P1",
+   "hgnc": "16742",
+   "source": [
+    "Curated Genomic"
+   ],
+   "url": "http://fake.url"
+  },
+  "100151640": {
+   "biotype": [
+    "pseudogene"
+   ],
+   "description": "exosome component 3 pseudogene 1",
+   "gene_symbol": "EXOSC3P1",
+   "hgnc": "33989",
+   "source": [
+    "Curated Genomic"
+   ],
+   "url": "http://fake.url"
+  },
+  "100551499": {
+   "biotype": [
+    "lncRNA",
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "description": "long intergenic non-protein coding RNA 159",
+   "gene_symbol": "LINC00159",
+   "hgnc": "1285",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "100874202": {
+   "biotype": [
+    "lncRNA",
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "description": "MIS18A antisense RNA 1",
+   "gene_symbol": "MIS18A-AS1",
+   "hgnc": "40106",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "101928078": {
+   "biotype": [
+    "pseudogene"
+   ],
+   "description": "histone demethylase UTY-like",
+   "gene_symbol": "LOC101928078",
+   "source": [
+    "Gnomon"
+   ],
+   "url": "http://fake.url"
+  },
+  "102724449": {
+   "biotype": [
+    "lncRNA",
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "description": "SOD1 divergent transcript",
+   "gene_symbol": "SOD1-DT",
+   "hgnc": "55683",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "105372779": {
+   "biotype": [
+    "lncRNA",
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "description": "MRAP antisense RNA 1",
+   "gene_symbol": "MRAP-AS1",
+   "hgnc": "40108",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "107985488": {
+   "biotype": [
+    "lncRNA",
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "description": "uncharacterized LOC107985488",
+   "gene_symbol": "LOC107985488",
+   "source": [
+    "Gnomon"
+   ],
+   "url": "http://fake.url"
+  },
+  "124900469": {
+   "biotype": [
+    "ncRNA",
+    "snoRNA"
+   ],
+   "description": "small nucleolar RNA SNORA81",
+   "gene_symbol": "LOC124900469",
+   "source": [
+    "cmsearch"
+   ],
+   "url": "http://fake.url"
+  },
+  "124905008": {
+   "biotype": [
+    "lncRNA",
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "description": "uncharacterized LOC124905008",
+   "gene_symbol": "LOC124905008",
+   "source": [
+    "Gnomon"
+   ],
+   "url": "http://fake.url"
+  },
+  "124905009": {
+   "biotype": [
+    "lncRNA",
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "description": "uncharacterized LOC124905009",
+   "gene_symbol": "LOC124905009",
+   "source": [
+    "Gnomon"
+   ],
+   "url": "http://fake.url"
+  },
+  "150051": {
+   "biotype": [
+    "lncRNA",
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "description": "TIAM1 antisense RNA 1",
+   "gene_symbol": "TIAM1-AS1",
+   "hgnc": "54361",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "30811": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "hormonally up-regulated Neu-associated kinase",
+   "gene_symbol": "HUNK",
+   "hgnc": "13326",
+   "source": [
+    "BestRefSeq%2CGnomon"
+   ],
+   "url": "http://fake.url"
+  },
+  "54048": {
+   "biotype": [
+    "pseudogene"
+   ],
+   "description": "high mobility group nucleosome binding domain 1 pseudogene 2",
+   "gene_symbol": "HMGN1P2",
+   "hgnc": "4985",
+   "source": [
+    "Curated Genomic"
+   ],
+   "url": "http://fake.url"
+  },
+  "54069": {
+   "biotype": [
+    "mRNA",
+    "ncRNA",
+    "protein_coding"
+   ],
+   "description": "MIS18 kinetochore protein A",
+   "gene_symbol": "MIS18A",
+   "hgnc": "1286",
+   "source": [
+    "BestRefSeq%2CGnomon"
+   ],
+   "url": "http://fake.url"
+  },
+  "54099": {
+   "biotype": [
+    "pseudogene"
+   ],
+   "description": "F-box and WD repeat domain containing 11 pseudogene 1",
+   "gene_symbol": "FBXW11P1",
+   "hgnc": "1145",
+   "source": [
+    "Curated Genomic"
+   ],
+   "url": "http://fake.url"
+  },
+  "56246": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "melanocortin 2 receptor accessory protein",
+   "gene_symbol": "MRAP",
+   "hgnc": "1304",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "57466": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "SR-related CTD associated factor 4",
+   "gene_symbol": "SCAF4",
+   "hgnc": "19304",
+   "source": [
+    "BestRefSeq%2CGnomon"
+   ],
+   "url": "http://fake.url"
+  },
+  "6647": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "superoxide dismutase 1",
+   "gene_symbol": "SOD1",
+   "hgnc": "11179",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "677846": {
+   "biotype": [
+    "ncRNA",
+    "snoRNA"
+   ],
+   "description": "small nucleolar RNA%2C H/ACA box 80A",
+   "gene_symbol": "SNORA80A",
+   "hgnc": "32666",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "84996": {
+   "biotype": [
+    "lncRNA",
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "description": "URB1 antisense RNA 1 (head to head)",
+   "gene_symbol": "URB1-AS1",
+   "hgnc": "23128",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "9875": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "URB1 ribosome biogenesis factor",
+   "gene_symbol": "URB1",
+   "hgnc": "17344",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "NM_000454.5": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SOD1",
+   "gene_version": "6647",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS33536.1",
+     "cds_end": 31668578,
+     "cds_start": 31659769,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31659692,
+       31659841,
+       0,
+       1,
+       149,
+       null
+      ],
+      [
+       31663789,
+       31663886,
+       1,
+       150,
+       246,
+       null
+      ],
+      [
+       31666448,
+       31666518,
+       2,
+       247,
+       316,
+       null
+      ],
+      [
+       31667257,
+       31667375,
+       3,
+       317,
+       434,
+       null
+      ],
+      [
+       31668470,
+       31668931,
+       4,
+       435,
+       895,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "tag": "MANE Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "11179",
+   "id": "NM_000454.5",
+   "protein": "NP_000445.1",
+   "start_codon": 77,
+   "stop_codon": 542
+  },
+  "NM_001145444.1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "57466",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS54482.1",
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31670999,
+       31672354,
+       18,
+       2870,
+       4224,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       17,
+       2678,
+       2869,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2591,
+       2677,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2425,
+       2590,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2267,
+       2424,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       2110,
+       2266,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       1996,
+       2109,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1895,
+       1995,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1704,
+       1894,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       9,
+       1618,
+       1703,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1450,
+       1617,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1341,
+       1449,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       6,
+       1159,
+       1340,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       5,
+       982,
+       1158,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       4,
+       839,
+       981,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       3,
+       703,
+       838,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       2,
+       541,
+       702,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       457,
+       540,
+       null
+      ],
+      [
+       31731662,
+       31732118,
+       0,
+       1,
+       456,
+       null
+      ]
+     ],
+     "note": "isoform 2 is encoded by transcript variant 2",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "19304",
+   "id": "NM_001145444.1",
+   "protein": "NP_001138916.1",
+   "start_codon": 426,
+   "stop_codon": 3825
+  },
+  "NM_001145445.1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "57466",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS46644.1",
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31670999,
+       31672354,
+       19,
+       2849,
+       4203,
+       null
+      ],
+      [
+       31685048,
+       31685174,
+       18,
+       2723,
+       2848,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2636,
+       2722,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2470,
+       2635,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2312,
+       2469,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2155,
+       2311,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2041,
+       2154,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       1940,
+       2040,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1749,
+       1939,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       10,
+       1663,
+       1748,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1495,
+       1662,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1386,
+       1494,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1204,
+       1385,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1027,
+       1203,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       884,
+       1026,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       748,
+       883,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       586,
+       747,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       541,
+       585,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       457,
+       540,
+       null
+      ],
+      [
+       31731662,
+       31732118,
+       0,
+       1,
+       456,
+       null
+      ]
+     ],
+     "note": "isoform 3 is encoded by transcript variant 3",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "19304",
+   "id": "NM_001145445.1",
+   "protein": "NP_001138917.1",
+   "start_codon": 426,
+   "stop_codon": 3804
+  },
+  "NM_001285394.2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "56246",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32311996,
+     "cds_start": 32306710,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32291812,
+       32291849,
+       0,
+       1,
+       37,
+       null
+      ],
+      [
+       32292992,
+       32293132,
+       1,
+       38,
+       177,
+       null
+      ],
+      [
+       32306639,
+       32306739,
+       2,
+       178,
+       277,
+       null
+      ],
+      [
+       32311683,
+       32312290,
+       3,
+       278,
+       884,
+       null
+      ]
+     ],
+     "note": "isoform c is encoded by transcript variant 3",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "1304",
+   "id": "NM_001285394.2",
+   "protein": "NP_001272323.1",
+   "start_codon": 248,
+   "stop_codon": 590
+  },
+  "NM_001379228.1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "56246",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13613.1",
+     "cds_end": 32311996,
+     "cds_start": 32298971,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32298854,
+       32299077,
+       0,
+       1,
+       223,
+       null
+      ],
+      [
+       32306639,
+       32306739,
+       1,
+       224,
+       323,
+       null
+      ],
+      [
+       32311683,
+       32312290,
+       2,
+       324,
+       930,
+       null
+      ]
+     ],
+     "note": "isoform alpha is encoded by transcript variant 4",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "tag": "MANE Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "1304",
+   "id": "NM_001379228.1",
+   "protein": "NP_001366157.1",
+   "start_codon": 117,
+   "stop_codon": 636
+  },
+  "NM_014586.2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "HUNK",
+   "gene_version": "30811",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13610.1",
+     "cds_end": 31999184,
+     "cds_start": 31873674,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31873019,
+       31873935,
+       0,
+       1,
+       916,
+       null
+      ],
+      [
+       31924467,
+       31924760,
+       1,
+       917,
+       1209,
+       null
+      ],
+      [
+       31940164,
+       31940220,
+       2,
+       1210,
+       1265,
+       null
+      ],
+      [
+       31946035,
+       31946171,
+       3,
+       1266,
+       1401,
+       null
+      ],
+      [
+       31958842,
+       31958970,
+       4,
+       1402,
+       1529,
+       null
+      ],
+      [
+       31968249,
+       31968385,
+       5,
+       1530,
+       1665,
+       null
+      ],
+      [
+       31974554,
+       31974717,
+       6,
+       1666,
+       1828,
+       null
+      ],
+      [
+       31983525,
+       31983609,
+       7,
+       1829,
+       1912,
+       null
+      ],
+      [
+       31990128,
+       31990176,
+       8,
+       1913,
+       1960,
+       null
+      ],
+      [
+       31995767,
+       31995948,
+       9,
+       1961,
+       2141,
+       null
+      ],
+      [
+       31998525,
+       32004064,
+       10,
+       2142,
+       7680,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "tag": "MANE Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "13326",
+   "id": "NM_014586.2",
+   "protein": "NP_055401.1",
+   "start_codon": 655,
+   "stop_codon": 2800
+  },
+  "NM_014825.3": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "URB1",
+   "gene_version": "9875",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS46645.1",
+     "cds_end": 32392910,
+     "cds_start": 32314917,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32311017,
+       32315099,
+       38,
+       6737,
+       10818,
+       null
+      ],
+      [
+       32316465,
+       32317065,
+       37,
+       6137,
+       6736,
+       null
+      ],
+      [
+       32317675,
+       32317917,
+       36,
+       5895,
+       6136,
+       null
+      ],
+      [
+       32319216,
+       32319414,
+       35,
+       5697,
+       5894,
+       null
+      ],
+      [
+       32320530,
+       32320640,
+       34,
+       5587,
+       5696,
+       null
+      ],
+      [
+       32321800,
+       32321944,
+       33,
+       5443,
+       5586,
+       null
+      ],
+      [
+       32322477,
+       32322584,
+       32,
+       5336,
+       5442,
+       null
+      ],
+      [
+       32324490,
+       32324602,
+       31,
+       5224,
+       5335,
+       null
+      ],
+      [
+       32325228,
+       32325389,
+       30,
+       5063,
+       5223,
+       null
+      ],
+      [
+       32333316,
+       32333419,
+       29,
+       4960,
+       5062,
+       null
+      ],
+      [
+       32334162,
+       32334334,
+       28,
+       4788,
+       4959,
+       null
+      ],
+      [
+       32337093,
+       32337157,
+       27,
+       4724,
+       4787,
+       null
+      ],
+      [
+       32337403,
+       32337514,
+       26,
+       4613,
+       4723,
+       null
+      ],
+      [
+       32338706,
+       32338900,
+       25,
+       4419,
+       4612,
+       null
+      ],
+      [
+       32341465,
+       32341524,
+       24,
+       4360,
+       4418,
+       null
+      ],
+      [
+       32344569,
+       32344756,
+       23,
+       4173,
+       4359,
+       null
+      ],
+      [
+       32345373,
+       32345575,
+       22,
+       3971,
+       4172,
+       null
+      ],
+      [
+       32346955,
+       32347811,
+       21,
+       3115,
+       3970,
+       null
+      ],
+      [
+       32349303,
+       32349483,
+       20,
+       2935,
+       3114,
+       null
+      ],
+      [
+       32350703,
+       32350922,
+       19,
+       2716,
+       2934,
+       null
+      ],
+      [
+       32352709,
+       32352906,
+       18,
+       2519,
+       2715,
+       null
+      ],
+      [
+       32353932,
+       32354103,
+       17,
+       2348,
+       2518,
+       null
+      ],
+      [
+       32354858,
+       32354997,
+       16,
+       2209,
+       2347,
+       null
+      ],
+      [
+       32355448,
+       32355565,
+       15,
+       2092,
+       2208,
+       null
+      ],
+      [
+       32357536,
+       32357656,
+       14,
+       1972,
+       2091,
+       null
+      ],
+      [
+       32359795,
+       32359908,
+       13,
+       1859,
+       1971,
+       null
+      ],
+      [
+       32361006,
+       32361123,
+       12,
+       1742,
+       1858,
+       null
+      ],
+      [
+       32361891,
+       32362021,
+       11,
+       1612,
+       1741,
+       null
+      ],
+      [
+       32363155,
+       32363329,
+       10,
+       1438,
+       1611,
+       null
+      ],
+      [
+       32366617,
+       32366755,
+       9,
+       1300,
+       1437,
+       null
+      ],
+      [
+       32368402,
+       32368598,
+       8,
+       1104,
+       1299,
+       null
+      ],
+      [
+       32372506,
+       32372631,
+       7,
+       979,
+       1103,
+       null
+      ],
+      [
+       32373646,
+       32373772,
+       6,
+       853,
+       978,
+       null
+      ],
+      [
+       32375397,
+       32375483,
+       5,
+       767,
+       852,
+       null
+      ],
+      [
+       32378444,
+       32378541,
+       4,
+       670,
+       766,
+       null
+      ],
+      [
+       32383421,
+       32383554,
+       3,
+       537,
+       669,
+       null
+      ],
+      [
+       32384312,
+       32384464,
+       2,
+       385,
+       536,
+       null
+      ],
+      [
+       32385544,
+       32385684,
+       1,
+       245,
+       384,
+       null
+      ],
+      [
+       32392768,
+       32393012,
+       0,
+       1,
+       244,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "tag": "MANE Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "17344",
+   "id": "NM_014825.3",
+   "protein": "NP_055640.2",
+   "start_codon": 102,
+   "stop_codon": 6918
+  },
+  "NM_018944.3": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "MIS18A",
+   "gene_version": "54069",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13611.1",
+     "cds_end": 32279014,
+     "cds_start": 32269036,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32268227,
+       32269117,
+       4,
+       657,
+       1546,
+       null
+      ],
+      [
+       32269706,
+       32269803,
+       3,
+       560,
+       656,
+       null
+      ],
+      [
+       32270406,
+       32270529,
+       2,
+       437,
+       559,
+       null
+      ],
+      [
+       32274829,
+       32274896,
+       1,
+       370,
+       436,
+       null
+      ],
+      [
+       32278680,
+       32279049,
+       0,
+       1,
+       369,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "tag": "MANE Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "1286",
+   "id": "NM_018944.3",
+   "protein": "NP_061817.1",
+   "start_codon": 35,
+   "stop_codon": 737
+  },
+  "NM_020706.2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "57466",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS33537.1",
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31670999,
+       31672354,
+       19,
+       2915,
+       4269,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       18,
+       2723,
+       2914,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2636,
+       2722,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2470,
+       2635,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2312,
+       2469,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2155,
+       2311,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2041,
+       2154,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       1940,
+       2040,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1749,
+       1939,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       10,
+       1663,
+       1748,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1495,
+       1662,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1386,
+       1494,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1204,
+       1385,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1027,
+       1203,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       884,
+       1026,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       748,
+       883,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       586,
+       747,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       541,
+       585,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       457,
+       540,
+       null
+      ],
+      [
+       31731662,
+       31732118,
+       0,
+       1,
+       456,
+       null
+      ]
+     ],
+     "note": "isoform 1 is encoded by transcript variant 1",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "tag": "MANE Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "19304",
+   "id": "NM_020706.2",
+   "protein": "NP_065757.1",
+   "start_codon": 426,
+   "stop_codon": 3870
+  },
+  "NM_178817.4": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "56246",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13613.1",
+     "cds_end": 32311996,
+     "cds_start": 32298971,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32291812,
+       32291849,
+       0,
+       1,
+       37,
+       null
+      ],
+      [
+       32292992,
+       32293132,
+       1,
+       38,
+       177,
+       null
+      ],
+      [
+       32298961,
+       32299077,
+       2,
+       178,
+       293,
+       null
+      ],
+      [
+       32306639,
+       32306739,
+       3,
+       294,
+       393,
+       null
+      ],
+      [
+       32311683,
+       32312290,
+       4,
+       394,
+       1000,
+       null
+      ]
+     ],
+     "note": "isoform alpha is encoded by transcript variant 1",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "1304",
+   "id": "NM_178817.4",
+   "protein": "NP_848932.1",
+   "start_codon": 187,
+   "stop_codon": 706
+  },
+  "NM_206898.2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "MRAP",
+   "gene_version": "56246",
+   "genome_builds": {
+    "GRCh38": {
+     "ccds": "CCDS13612.1",
+     "cds_end": 32314653,
+     "cds_start": 32298971,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32291812,
+       32291849,
+       0,
+       1,
+       37,
+       null
+      ],
+      [
+       32292992,
+       32293132,
+       1,
+       38,
+       177,
+       null
+      ],
+      [
+       32298961,
+       32299077,
+       2,
+       178,
+       293,
+       null
+      ],
+      [
+       32306639,
+       32306739,
+       3,
+       294,
+       393,
+       null
+      ],
+      [
+       32314550,
+       32314784,
+       4,
+       394,
+       627,
+       null
+      ]
+     ],
+     "note": "isoform beta is encoded by transcript variant 2",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "1304",
+   "id": "NM_206898.2",
+   "protein": "NP_996781.1",
+   "start_codon": 187,
+   "stop_codon": 496
+  },
+  "NR_002996.2": {
+   "biotype": [
+    "ncRNA",
+    "snoRNA"
+   ],
+   "gene_name": "SNORA80A",
+   "gene_version": "677846",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32377186,
+       32377322,
+       0,
+       1,
+       136,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "32666",
+   "id": "NR_002996.2"
+  },
+  "NR_026845.1": {
+   "biotype": [
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "gene_name": "URB1-AS1",
+   "gene_version": "84996",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32393132,
+       32393960,
+       0,
+       1,
+       828,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "23128",
+   "id": "NR_026845.1"
+  },
+  "NR_038033.1": {
+   "biotype": [
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "gene_name": "LINC00159",
+   "gene_version": "100551499",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32080480,
+       32080517,
+       1,
+       93,
+       129,
+       null
+      ],
+      [
+       32086203,
+       32086295,
+       0,
+       1,
+       92,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "1285",
+   "id": "NR_038033.1"
+  },
+  "NR_046576.1": {
+   "biotype": [
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "gene_name": "MIS18A-AS1",
+   "gene_version": "100874202",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32279204,
+       32280999,
+       0,
+       1,
+       1795,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "40106",
+   "id": "NR_046576.1"
+  },
+  "NR_171013.1": {
+   "biotype": [
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "gene_name": "TIAM1-AS1",
+   "gene_version": "150051",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31559232,
+       31559595,
+       0,
+       1,
+       363,
+       null
+      ],
+      [
+       31560016,
+       31560487,
+       1,
+       364,
+       834,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "54361",
+   "id": "NR_171013.1"
+  },
+  "NR_187556.1": {
+   "biotype": [
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "gene_name": "MRAP-AS1",
+   "gene_version": "105372779",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32306463,
+       32306826,
+       1,
+       218,
+       580,
+       null
+      ],
+      [
+       32308518,
+       32308735,
+       0,
+       1,
+       217,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "40108",
+   "id": "NR_187556.1"
+  },
+  "NR_187558.1": {
+   "biotype": [
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "gene_name": "SOD1-DT",
+   "gene_version": "102724449",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31653586,
+       31655427,
+       2,
+       791,
+       2632,
+       "M1153 I1 M688"
+      ],
+      [
+       31657933,
+       31658095,
+       1,
+       629,
+       790,
+       null
+      ],
+      [
+       31659396,
+       31660024,
+       0,
+       1,
+       628,
+       null
+      ]
+     ],
+     "genome_mismatch": {
+      "exceptions": [
+       "annotated by transcript or proteomic data"
+      ]
+     },
+     "note": "The RefSeq transcript has 1 non-frameshifting indel compared to this genomic sequence",
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "55683",
+   "id": "NR_187558.1"
+  },
+  "XM_005261017.4": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "57466",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31670999,
+       31672354,
+       18,
+       2738,
+       4092,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       17,
+       2546,
+       2737,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2459,
+       2545,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2293,
+       2458,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2135,
+       2292,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       1978,
+       2134,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       1864,
+       1977,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1763,
+       1863,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1572,
+       1762,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       9,
+       1486,
+       1571,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1318,
+       1485,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1209,
+       1317,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       6,
+       1027,
+       1208,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       884,
+       1026,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       748,
+       883,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       586,
+       747,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       541,
+       585,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       457,
+       540,
+       null
+      ],
+      [
+       31731662,
+       31732118,
+       0,
+       1,
+       456,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "19304",
+   "id": "XM_005261017.4",
+   "protein": "XP_005261074.1",
+   "start_codon": 426,
+   "stop_codon": 3693
+  },
+  "XM_006724035.4": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "57466",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31670999,
+       31672354,
+       19,
+       2903,
+       4257,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       18,
+       2711,
+       2902,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2624,
+       2710,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2458,
+       2623,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2300,
+       2457,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2143,
+       2299,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2029,
+       2142,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       1928,
+       2028,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1737,
+       1927,
+       null
+      ],
+      [
+       31694215,
+       31694289,
+       10,
+       1663,
+       1736,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1495,
+       1662,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1386,
+       1494,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1204,
+       1385,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1027,
+       1203,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       884,
+       1026,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       748,
+       883,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       586,
+       747,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       541,
+       585,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       457,
+       540,
+       null
+      ],
+      [
+       31731662,
+       31732118,
+       0,
+       1,
+       456,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "19304",
+   "id": "XM_006724035.4",
+   "protein": "XP_006724098.1",
+   "start_codon": 426,
+   "stop_codon": 3858
+  },
+  "XM_006724036.4": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "57466",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31670999,
+       31672354,
+       19,
+       2837,
+       4191,
+       null
+      ],
+      [
+       31685048,
+       31685174,
+       18,
+       2711,
+       2836,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       17,
+       2624,
+       2710,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       16,
+       2458,
+       2623,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       15,
+       2300,
+       2457,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       14,
+       2143,
+       2299,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       13,
+       2029,
+       2142,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       12,
+       1928,
+       2028,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       11,
+       1737,
+       1927,
+       null
+      ],
+      [
+       31694215,
+       31694289,
+       10,
+       1663,
+       1736,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       9,
+       1495,
+       1662,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       8,
+       1386,
+       1494,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       7,
+       1204,
+       1385,
+       null
+      ],
+      [
+       31700994,
+       31701171,
+       6,
+       1027,
+       1203,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       884,
+       1026,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       748,
+       883,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       586,
+       747,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       541,
+       585,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       457,
+       540,
+       null
+      ],
+      [
+       31731662,
+       31732118,
+       0,
+       1,
+       456,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "19304",
+   "id": "XM_006724036.4",
+   "protein": "XP_006724099.1",
+   "start_codon": 426,
+   "stop_codon": 3792
+  },
+  "XM_011529537.3": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "HUNK",
+   "gene_version": "30811",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31999184,
+     "cds_start": 31873674,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31873019,
+       31873935,
+       0,
+       1,
+       916,
+       null
+      ],
+      [
+       31924467,
+       31924760,
+       1,
+       917,
+       1209,
+       null
+      ],
+      [
+       31940164,
+       31940220,
+       2,
+       1210,
+       1265,
+       null
+      ],
+      [
+       31946035,
+       31946171,
+       3,
+       1266,
+       1401,
+       null
+      ],
+      [
+       31958842,
+       31958970,
+       4,
+       1402,
+       1529,
+       null
+      ],
+      [
+       31968249,
+       31968385,
+       5,
+       1530,
+       1665,
+       null
+      ],
+      [
+       31974554,
+       31974717,
+       6,
+       1666,
+       1828,
+       null
+      ],
+      [
+       31983525,
+       31983609,
+       7,
+       1829,
+       1912,
+       null
+      ],
+      [
+       31995767,
+       31995948,
+       8,
+       1913,
+       2093,
+       null
+      ],
+      [
+       31998525,
+       32004064,
+       9,
+       2094,
+       7632,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "13326",
+   "id": "XM_011529537.3",
+   "protein": "XP_011527839.1",
+   "start_codon": 655,
+   "stop_codon": 2752
+  },
+  "XM_017028400.2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "MIS18A",
+   "gene_version": "54069",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32279014,
+     "cds_start": 32245131,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32244215,
+       32245201,
+       4,
+       671,
+       1656,
+       null
+      ],
+      [
+       32247220,
+       32247331,
+       3,
+       560,
+       670,
+       null
+      ],
+      [
+       32270406,
+       32270529,
+       2,
+       437,
+       559,
+       null
+      ],
+      [
+       32274829,
+       32274896,
+       1,
+       370,
+       436,
+       null
+      ],
+      [
+       32278680,
+       32279049,
+       0,
+       1,
+       369,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "1286",
+   "id": "XM_017028400.2",
+   "protein": "XP_016883889.1",
+   "start_codon": 35,
+   "stop_codon": 740
+  },
+  "XM_017028401.2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "MIS18A",
+   "gene_version": "54069",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 32279014,
+     "cds_start": 32245184,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32245169,
+       32245201,
+       4,
+       667,
+       698,
+       null
+      ],
+      [
+       32247224,
+       32247331,
+       3,
+       560,
+       666,
+       null
+      ],
+      [
+       32270406,
+       32270529,
+       2,
+       437,
+       559,
+       null
+      ],
+      [
+       32274829,
+       32274896,
+       1,
+       370,
+       436,
+       null
+      ],
+      [
+       32278680,
+       32279049,
+       0,
+       1,
+       369,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "1286",
+   "id": "XM_017028401.2",
+   "protein": "XP_016883890.1",
+   "start_codon": 35,
+   "stop_codon": 683
+  },
+  "XM_017028417.2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "57466",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31670999,
+       31672354,
+       18,
+       2672,
+       4026,
+       null
+      ],
+      [
+       31685048,
+       31685174,
+       17,
+       2546,
+       2671,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2459,
+       2545,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2293,
+       2458,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2135,
+       2292,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       1978,
+       2134,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       1864,
+       1977,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1763,
+       1863,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1572,
+       1762,
+       null
+      ],
+      [
+       31694203,
+       31694289,
+       9,
+       1486,
+       1571,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1318,
+       1485,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1209,
+       1317,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       6,
+       1027,
+       1208,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       884,
+       1026,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       748,
+       883,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       586,
+       747,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       541,
+       585,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       457,
+       540,
+       null
+      ],
+      [
+       31731662,
+       31732118,
+       0,
+       1,
+       456,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "19304",
+   "id": "XM_017028417.2",
+   "protein": "XP_016883906.1",
+   "start_codon": 426,
+   "stop_codon": 3627
+  },
+  "XM_047440931.1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "57466",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31670999,
+       31672354,
+       18,
+       2726,
+       4080,
+       null
+      ],
+      [
+       31685048,
+       31685240,
+       17,
+       2534,
+       2725,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2447,
+       2533,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2281,
+       2446,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2123,
+       2280,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       1966,
+       2122,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       1852,
+       1965,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1751,
+       1851,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1560,
+       1750,
+       null
+      ],
+      [
+       31694215,
+       31694289,
+       9,
+       1486,
+       1559,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1318,
+       1485,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1209,
+       1317,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       6,
+       1027,
+       1208,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       884,
+       1026,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       748,
+       883,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       586,
+       747,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       541,
+       585,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       457,
+       540,
+       null
+      ],
+      [
+       31731662,
+       31732118,
+       0,
+       1,
+       456,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "19304",
+   "id": "XM_047440931.1",
+   "protein": "XP_047296887.1",
+   "start_codon": 426,
+   "stop_codon": 3681
+  },
+  "XM_047440932.1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "SCAF4",
+   "gene_version": "57466",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 31731692,
+     "cds_start": 31671398,
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31670999,
+       31672354,
+       18,
+       2660,
+       4014,
+       null
+      ],
+      [
+       31685048,
+       31685174,
+       17,
+       2534,
+       2659,
+       null
+      ],
+      [
+       31685397,
+       31685484,
+       16,
+       2447,
+       2533,
+       null
+      ],
+      [
+       31685567,
+       31685733,
+       15,
+       2281,
+       2446,
+       null
+      ],
+      [
+       31688306,
+       31688464,
+       14,
+       2123,
+       2280,
+       null
+      ],
+      [
+       31690796,
+       31690953,
+       13,
+       1966,
+       2122,
+       null
+      ],
+      [
+       31691816,
+       31691930,
+       12,
+       1852,
+       1965,
+       null
+      ],
+      [
+       31692348,
+       31692449,
+       11,
+       1751,
+       1851,
+       null
+      ],
+      [
+       31693293,
+       31693484,
+       10,
+       1560,
+       1750,
+       null
+      ],
+      [
+       31694215,
+       31694289,
+       9,
+       1486,
+       1559,
+       null
+      ],
+      [
+       31694812,
+       31694980,
+       8,
+       1318,
+       1485,
+       null
+      ],
+      [
+       31696112,
+       31696221,
+       7,
+       1209,
+       1317,
+       null
+      ],
+      [
+       31696568,
+       31696750,
+       6,
+       1027,
+       1208,
+       null
+      ],
+      [
+       31701775,
+       31701918,
+       5,
+       884,
+       1026,
+       null
+      ],
+      [
+       31702243,
+       31702379,
+       4,
+       748,
+       883,
+       null
+      ],
+      [
+       31703764,
+       31703926,
+       3,
+       586,
+       747,
+       null
+      ],
+      [
+       31705422,
+       31705467,
+       2,
+       541,
+       585,
+       null
+      ],
+      [
+       31706273,
+       31706357,
+       1,
+       457,
+       540,
+       null
+      ],
+      [
+       31731662,
+       31732118,
+       0,
+       1,
+       456,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "19304",
+   "id": "XM_047440932.1",
+   "protein": "XP_047296888.1",
+   "start_codon": 426,
+   "stop_codon": 3615
+  },
+  "XR_001755005.1": {
+   "biotype": [
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "gene_name": "LOC107985488",
+   "gene_version": "107985488",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31589008,
+       31589047,
+       2,
+       930,
+       968,
+       null
+      ],
+      [
+       31597598,
+       31597918,
+       1,
+       610,
+       929,
+       null
+      ],
+      [
+       31598150,
+       31598759,
+       0,
+       1,
+       609,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "XR_001755005.1"
+  },
+  "XR_002958619.2": {
+   "biotype": [
+    "ncRNA"
+   ],
+   "gene_name": "MIS18A",
+   "gene_version": "54069",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32154681,
+       32156502,
+       4,
+       2770,
+       4590,
+       null
+      ],
+      [
+       32245121,
+       32247331,
+       3,
+       560,
+       2769,
+       null
+      ],
+      [
+       32270406,
+       32270529,
+       2,
+       437,
+       559,
+       null
+      ],
+      [
+       32274829,
+       32274896,
+       1,
+       370,
+       436,
+       null
+      ],
+      [
+       32278680,
+       32279049,
+       0,
+       1,
+       369,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "1286",
+   "id": "XR_002958619.2"
+  },
+  "XR_007067842.1": {
+   "biotype": [
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "gene_name": "LOC124905008",
+   "gene_version": "124905008",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31732270,
+       31733083,
+       0,
+       1,
+       813,
+       null
+      ],
+      [
+       31745476,
+       31745788,
+       1,
+       814,
+       1125,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "XR_007067842.1"
+  },
+  "XR_007067843.1": {
+   "biotype": [
+    "lnc_RNA",
+    "ncRNA"
+   ],
+   "gene_name": "LOC124905009",
+   "gene_version": "124905009",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       32291904,
+       32292050,
+       1,
+       686,
+       831,
+       null
+      ],
+      [
+       32298085,
+       32298770,
+       0,
+       1,
+       685,
+       null
+      ]
+     ],
+     "source": [
+      "Gnomon"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "XR_007067843.1"
+  },
+  "XR_007067939.1": {
+   "biotype": [
+    "ncRNA",
+    "snoRNA"
+   ],
+   "gene_name": "LOC124900469",
+   "gene_version": "124900469",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_000021.9",
+     "exons": [
+      [
+       31664305,
+       31664482,
+       0,
+       1,
+       177,
+       null
+      ]
+     ],
+     "source": [
+      "cmsearch"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "XR_007067939.1"
+  }
+ }
+}

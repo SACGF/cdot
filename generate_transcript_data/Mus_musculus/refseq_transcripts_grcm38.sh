@@ -18,5 +18,5 @@ if [[ ! -e ${filename} ]]; then
   wget ${url}
 fi
 if [[ ! -e ${cdot_file} ]]; then
-  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --no-contig-conversion --url "${url}" --genome-build=GRCm38 --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
+  ${BASE_DIR}/cdot_json.py gff3_to_json "${filename}" --annotation-consortium refseq --no-contig-conversion --url "${url}" --genome-build=GRCm38 --output "${cdot_file}" --gene-info-json="${GENE_INFO_JSON}"
 fi

@@ -1,0 +1,971 @@
+{
+ "genes": {
+  "4508": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "ATP6",
+   "hgnc": "7414",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4509": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "ATP8",
+   "hgnc": "7415",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4511": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNC",
+   "hgnc": "7477",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4512": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "COX1",
+   "hgnc": "7419",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4513": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "COX2",
+   "hgnc": "7421",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4514": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "COX3",
+   "hgnc": "7422",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4519": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "CYTB",
+   "hgnc": "7427",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4535": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "ND1",
+   "hgnc": "7455",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4536": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "ND2",
+   "hgnc": "7456",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4537": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "ND3",
+   "hgnc": "7458",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4538": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "ND4",
+   "hgnc": "7459",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4539": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "ND4L",
+   "hgnc": "7460",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4540": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "ND5",
+   "hgnc": "7461",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4541": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "ND6",
+   "hgnc": "7462",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4549": {
+   "biotype": [
+    "rRNA"
+   ],
+   "description": null,
+   "gene_symbol": "RNR1",
+   "hgnc": "7470",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4550": {
+   "biotype": [
+    "rRNA"
+   ],
+   "description": null,
+   "gene_symbol": "RNR2",
+   "hgnc": "7471",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4553": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNA",
+   "hgnc": "7475",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4555": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRND",
+   "hgnc": "7478",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4556": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNE",
+   "hgnc": "7479",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4558": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNF",
+   "hgnc": "7481",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4563": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNG",
+   "hgnc": "7486",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4564": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNH",
+   "hgnc": "7487",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4565": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNI",
+   "hgnc": "7488",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4566": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNK",
+   "hgnc": "7489",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4567": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNL1",
+   "hgnc": "7490",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4568": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNL2",
+   "hgnc": "7491",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4569": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNM",
+   "hgnc": "7492",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4570": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNN",
+   "hgnc": "7493",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4571": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNP",
+   "hgnc": "7494",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4572": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNQ",
+   "hgnc": "7495",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4573": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNR",
+   "hgnc": "7496",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4574": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNS1",
+   "hgnc": "7497",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4575": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNS2",
+   "hgnc": "7498",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4576": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNT",
+   "hgnc": "7499",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4577": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNV",
+   "hgnc": "7500",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4578": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNW",
+   "hgnc": "7501",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "4579": {
+   "biotype": [
+    "tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "TRNY",
+   "hgnc": "7502",
+   "source": [
+    "RefSeq"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "fake-rna-ATP6": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ATP6",
+   "gene_version": "4508",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 9207,
+     "cds_start": 8526,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       8526,
+       9207,
+       0,
+       1,
+       681,
+       null
+      ]
+     ],
+     "note": "ATP synthase 6%3B ATPase subunit 6",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7414",
+   "id": "fake-rna-ATP6",
+   "start_codon": 0,
+   "stop_codon": 681,
+   "translation": {
+    "transl_table": 2
+   }
+  },
+  "fake-rna-ATP8": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ATP8",
+   "gene_version": "4509",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 8572,
+     "cds_start": 8365,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       8365,
+       8572,
+       0,
+       1,
+       207,
+       null
+      ]
+     ],
+     "note": "ATP synthase 8%3B ATPase subunit 8",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7415",
+   "id": "fake-rna-ATP8",
+   "start_codon": 0,
+   "stop_codon": 207,
+   "translation": {
+    "transl_table": 2
+   }
+  },
+  "fake-rna-COX1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "COX1",
+   "gene_version": "4512",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 7445,
+     "cds_start": 5903,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       5903,
+       7445,
+       0,
+       1,
+       1542,
+       null
+      ]
+     ],
+     "note": "cytochrome c oxidase I",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7419",
+   "id": "fake-rna-COX1",
+   "start_codon": 0,
+   "stop_codon": 1542,
+   "translation": {
+    "transl_table": 2
+   }
+  },
+  "fake-rna-COX2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "COX2",
+   "gene_version": "4513",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 8269,
+     "cds_start": 7585,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       7585,
+       8269,
+       0,
+       1,
+       684,
+       null
+      ]
+     ],
+     "note": "cytochrome c oxidase II",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7421",
+   "id": "fake-rna-COX2",
+   "start_codon": 0,
+   "stop_codon": 684,
+   "translation": {
+    "transl_table": 2
+   }
+  },
+  "fake-rna-COX3": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "COX3",
+   "gene_version": "4514",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 9990,
+     "cds_start": 9206,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       9206,
+       9990,
+       0,
+       1,
+       784,
+       null
+      ]
+     ],
+     "note": "TAA stop codon is completed by the addition of 3' A residues to the mRNA",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7422",
+   "id": "fake-rna-COX3",
+   "start_codon": 0,
+   "stop_codon": 784,
+   "translation": {
+    "transl_except": {
+     "TERM": [
+      262
+     ]
+    },
+    "transl_table": 2
+   }
+  },
+  "fake-rna-CYTB": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "CYTB",
+   "gene_version": "4519",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 15887,
+     "cds_start": 14746,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       14746,
+       15887,
+       0,
+       1,
+       1141,
+       null
+      ]
+     ],
+     "note": "TAA stop codon is completed by the addition of 3' A residues to the mRNA",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7427",
+   "id": "fake-rna-CYTB",
+   "start_codon": 0,
+   "stop_codon": 1141,
+   "translation": {
+    "transl_except": {
+     "TERM": [
+      381
+     ]
+    },
+    "transl_table": 2
+   }
+  },
+  "fake-rna-ND1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ND1",
+   "gene_version": "4535",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 4262,
+     "cds_start": 3306,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       3306,
+       4262,
+       0,
+       1,
+       956,
+       null
+      ]
+     ],
+     "note": "TAA stop codon is completed by the addition of 3' A residues to the mRNA",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7455",
+   "id": "fake-rna-ND1",
+   "start_codon": 0,
+   "stop_codon": 956,
+   "translation": {
+    "transl_except": {
+     "TERM": [
+      319
+     ]
+    },
+    "transl_table": 2
+   }
+  },
+  "fake-rna-ND2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ND2",
+   "gene_version": "4536",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 5511,
+     "cds_start": 4469,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       4469,
+       5511,
+       0,
+       1,
+       1042,
+       null
+      ]
+     ],
+     "note": "TAA stop codon is completed by the addition of 3' A residues to the mRNA",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7456",
+   "id": "fake-rna-ND2",
+   "start_codon": 0,
+   "stop_codon": 1042,
+   "translation": {
+    "transl_except": {
+     "TERM": [
+      348
+     ]
+    },
+    "transl_table": 2
+   }
+  },
+  "fake-rna-ND3": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ND3",
+   "gene_version": "4537",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 10404,
+     "cds_start": 10058,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       10058,
+       10404,
+       0,
+       1,
+       346,
+       null
+      ]
+     ],
+     "note": "TAA stop codon is completed by the addition of 3' A residues to the mRNA",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7458",
+   "id": "fake-rna-ND3",
+   "start_codon": 0,
+   "stop_codon": 346,
+   "translation": {
+    "transl_except": {
+     "TERM": [
+      116
+     ]
+    },
+    "transl_table": 2
+   }
+  },
+  "fake-rna-ND4": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ND4",
+   "gene_version": "4538",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 12137,
+     "cds_start": 10759,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       10759,
+       12137,
+       0,
+       1,
+       1378,
+       null
+      ]
+     ],
+     "note": "TAA stop codon is completed by the addition of 3' A residues to the mRNA",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7459",
+   "id": "fake-rna-ND4",
+   "start_codon": 0,
+   "stop_codon": 1378,
+   "translation": {
+    "transl_except": {
+     "TERM": [
+      460
+     ]
+    },
+    "transl_table": 2
+   }
+  },
+  "fake-rna-ND4L": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ND4L",
+   "gene_version": "4539",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 10766,
+     "cds_start": 10469,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       10469,
+       10766,
+       0,
+       1,
+       297,
+       null
+      ]
+     ],
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7460",
+   "id": "fake-rna-ND4L",
+   "start_codon": 0,
+   "stop_codon": 297,
+   "translation": {
+    "transl_table": 2
+   }
+  },
+  "fake-rna-ND5": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ND5",
+   "gene_version": "4540",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 14148,
+     "cds_start": 12336,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       12336,
+       14148,
+       0,
+       1,
+       1812,
+       null
+      ]
+     ],
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7461",
+   "id": "fake-rna-ND5",
+   "start_codon": 0,
+   "stop_codon": 1812,
+   "translation": {
+    "transl_table": 2
+   }
+  },
+  "fake-rna-ND6": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "ND6",
+   "gene_version": "4541",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 14673,
+     "cds_start": 14148,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       14148,
+       14673,
+       0,
+       1,
+       525,
+       null
+      ]
+     ],
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7462",
+   "id": "fake-rna-ND6",
+   "start_codon": 0,
+   "stop_codon": 525,
+   "translation": {
+    "transl_table": 2
+   }
+  }
+ }
+}

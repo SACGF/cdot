@@ -1,0 +1,67 @@
+{
+ "genes": {
+  "99999": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "TEST",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "NM_000123.1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "TEST",
+   "gene_version": "99999",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 3050,
+     "cds_start": 1010,
+     "contig": "NC_000001.11",
+     "exons": [
+      [
+       1000,
+       1100,
+       0,
+       1,
+       100,
+       null
+      ],
+      [
+       2000,
+       2100,
+       1,
+       101,
+       200,
+       null
+      ],
+      [
+       3000,
+       3100,
+       2,
+       231,
+       330,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "NM_000123.1",
+   "protein": "NP_000123.1",
+   "start_codon": 10,
+   "stop_codon": 280
+  }
+ }
+}

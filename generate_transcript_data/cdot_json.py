@@ -10,9 +10,11 @@ import sys
 from argparse import ArgumentParser
 from collections import defaultdict, Counter
 from csv import DictReader
+from generate_transcript_data.annotation_consortium import CONSORTIA
 from generate_transcript_data.gff_parser import GTFParser, GFF3Parser
 from generate_transcript_data.json_encoders import SortedSetEncoder
 from generate_transcript_data.json_schema_version import JSON_SCHEMA_VERSION
+from generate_transcript_data.transcript_coordinates import transcript_position_to_genomic
 
 
 def _setup_arg_parser():
@@ -32,6 +34,9 @@ def _setup_arg_parser():
                             "Warning: Won't work with biocommons HGVS if set")
         p.add_argument("--keep-contigs-with-underscores", action='store_true', default=False)
         p.add_argument("--skip-missing-parents", action='store_true', default=False)
+        p.add_argument("--annotation-consortium", choices=sorted(CONSORTIA),
+                       help="Whose annotation conventions to use (HGNC/CCDS/protein versions etc are written "
+                            "differently). Default: detected from the file")
         p.add_argument('--url', required=True, help='URL (source of GFF) to store in "reference_gtf.url"')
         p.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
         p.add_argument('--gene-info-json', required=True, help="'JSON of gene info, produced by cdot_gene_info.py")
@@ -186,7 +191,9 @@ def gtf_to_json(args):
     parser = GTFParser(args.gtf_filename, args.genome_build, args.url,
                        discard_contigs_with_underscores=not args.keep_contigs_with_underscores,
                        no_contig_conversion=args.no_contig_conversion,
-                       skip_missing_parents=args.skip_missing_parents)
+                       skip_missing_parents=args.skip_missing_parents,
+                       annotation_consortium=args.annotation_consortium)
+    print(f"Using {parser.consortium.name} annotation conventions")
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
@@ -202,7 +209,9 @@ def gff3_to_json(args):
     parser = GFF3Parser(args.gff3_filename, args.genome_build, args.url,
                         discard_contigs_with_underscores=not args.keep_contigs_with_underscores,
                         no_contig_conversion=args.no_contig_conversion,
-                        skip_missing_parents=args.skip_missing_parents)
+                        skip_missing_parents=args.skip_missing_parents,
+                       annotation_consortium=args.annotation_consortium)
+    print(f"Using {parser.consortium.name} annotation conventions")
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
@@ -211,47 +220,6 @@ def gff3_to_json(args):
     write_cdot_json(args.output, method, [args.gff3_filename],
                     genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
-
-
-def _cdna_offset_to_genomic_offset(gap, cdna_offset):
-    """ Convert an offset within an exon from cDNA to genomic, both 0-based in transcript
-        direction. gap is a GFF3-style gap string (eg 'M185 I3 M250'): M consumes both,
-        I cDNA only, D genomic only """
-    if not gap:
-        return cdna_offset
-    cdna_consumed = 0
-    genomic_consumed = 0
-    for op_str in gap.split():
-        code = op_str[0]
-        length = int(op_str[1:])
-        if code == "M":
-            if cdna_offset < cdna_consumed + length:
-                return genomic_consumed + (cdna_offset - cdna_consumed)
-            cdna_consumed += length
-            genomic_consumed += length
-        elif code == "I":
-            if cdna_offset < cdna_consumed + length:
-                raise ValueError(f"cDNA offset {cdna_offset} is in gap '{op_str}' (unaligned transcript bases)")
-            cdna_consumed += length
-        elif code == "D":
-            genomic_consumed += length
-        else:
-            raise ValueError(f"Unknown gap operation '{op_str}'")
-    return genomic_consumed + (cdna_offset - cdna_consumed)
-
-
-def _transcript_position_to_genomic(strand, exons, transcript_position):
-    """ transcript_position is 0-based along the whole transcript,
-        returns the 0-based genomic coordinate of that base """
-    cdna_position = transcript_position + 1  # exon cdna_start/cdna_end are 1-based inclusive
-    for (alt_start, alt_end, _exon_id, cdna_start, cdna_end, gap) in exons:
-        if cdna_start <= cdna_position <= cdna_end:
-            genomic_offset = _cdna_offset_to_genomic_offset(gap, cdna_position - cdna_start)
-            if strand == '+':
-                return alt_start + genomic_offset
-            else:
-                return alt_end - 1 - genomic_offset
-    raise ValueError(f"Transcript position {transcript_position} is not in any of the exons")
 
 
 def _add_cds_start_end(genome_build, transcript_data):
@@ -263,8 +231,8 @@ def _add_cds_start_end(genome_build, transcript_data):
     strand = build_coordinates["strand"]
     exons = build_coordinates["exons"]
     # First and last CDS bases (0-based transcript positions)
-    first_cds_base = _transcript_position_to_genomic(strand, exons, transcript_data["start_codon"])
-    last_cds_base = _transcript_position_to_genomic(strand, exons, transcript_data["stop_codon"] - 1)
+    first_cds_base = transcript_position_to_genomic(strand, exons, transcript_data["start_codon"])
+    last_cds_base = transcript_position_to_genomic(strand, exons, transcript_data["stop_codon"] - 1)
     if strand == '-':
         (first_cds_base, last_cds_base) = (last_cds_base, first_cds_base)
 
