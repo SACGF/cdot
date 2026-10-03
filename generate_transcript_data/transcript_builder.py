@@ -226,14 +226,14 @@ class TranscriptBuilder:
 
                 try:
                     transcript_data[coding_left] = get_transcript_position(forward_strand, exons_stranded_order,
-                                                                           cds_min)
+                                                                           cds_min, end=coding_left == "stop_codon")
                 except ValueError as e:
                     logging.warning("Couldn't set %s transcript position from %s: %s", coding_left, cds_min, e)
                     self._add_warning(transcript_data, "codons_unplaced", coding_left)
 
                 try:
                     transcript_data[coding_right] = get_transcript_position(forward_strand, exons_stranded_order,
-                                                                            cds_max)
+                                                                            cds_max, end=coding_right == "stop_codon")
                 except ValueError as e:
                     logging.warning("Couldn't set %s transcript positions from %s: %s", coding_right, cds_max, e)
                     self._add_warning(transcript_data, "codons_unplaced", coding_right)

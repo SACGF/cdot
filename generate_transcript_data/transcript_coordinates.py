@@ -29,7 +29,7 @@ def create_cdna_exons(cdna_matches_stranded_order):
     return exons
 
 
-def get_cdna_match_offset(cdna_match_gap, position: int, validate=True):
+def get_cdna_match_offset(cdna_match_gap, position: int, validate=True, end=False):
     """ cdna_match GAP attribute looks like: 'M185 I3 M250' which is code/length
         @see https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md#the-gap-attribute
         codes operation
@@ -37,38 +37,44 @@ def get_cdna_match_offset(cdna_match_gap, position: int, validate=True):
         I 	insert a gap into the reference sequence
         D 	insert a gap into the target (delete from reference)
 
-        If you want the whole exon, then pass the end
+        position is a 0-based genomic offset into the exon, in transcript direction.
+        With end=True, position is the offset after the last base of a range (eg the stop codon),
+        so it may sit right before a D. If you want the whole exon, then pass the exon's genomic length
     """
 
     if not cdna_match_gap:
         return 0
 
-    position_1_based = position + 1
-    cdna_match_index = 1
+    genomic_consumed = 0  # M and D both use up genomic bases
     offset = 0
     for gap_op in cdna_match_gap.split():
         code = gap_op[0]
         length = int(gap_op[1:])
         if code == "M":
-            cdna_match_index += length
+            if position < genomic_consumed + length:
+                break
+            genomic_consumed += length
         elif code == "I":
             offset += length
         elif code == "D":
-            if validate and position < cdna_match_index + length:
+            if end and position == genomic_consumed:
+                break  # the range ends right before the D
+            if validate and position < genomic_consumed + length:
                 raise ValueError(
-                    "Coordinate (%d) inside deletion (%s) - no mapping possible!" % (position_1_based, gap_op))
+                    "Coordinate (%d) inside deletion (%s) - no mapping possible!" % (position + 1, gap_op))
+            genomic_consumed += length
             offset -= length
         else:
             raise ValueError("Unknown code in cDNA GAP: %s" % gap_op)
 
-        if cdna_match_index > position_1_based:
-            break
-
     return offset
 
 
-def get_transcript_position(transcript_strand, ordered_cdna_matches, genomic_coordinate, label=None):
+def get_transcript_position(transcript_strand, ordered_cdna_matches, genomic_coordinate, label=None, end=False):
     """ Returns a 0-based position along the whole transcript (issue #123)
+
+        With end=True, genomic_coordinate is the end of a range in transcript direction (eg the stop
+        codon), see get_cdna_match_offset
 
         The exon's own cdna_start is used as the offset, rather than the running sum of the
         preceding exon lengths. These are the same thing for the vast majority of transcripts,
@@ -84,7 +90,7 @@ def get_transcript_position(transcript_strand, ordered_cdna_matches, genomic_coo
             else:
                 position = exon_end - genomic_coordinate
             # cdna_start is 1-based, so cdna_start - 1 is the exon's 0-based transcript start
-            return (cdna_start - 1) + position + get_cdna_match_offset(cdna_match_gap, position)
+            return (cdna_start - 1) + position + get_cdna_match_offset(cdna_match_gap, position, end=end)
     if label is None:
         label = "Genomic coordinate: %d" % genomic_coordinate
     raise ValueError('%s is not in any of the exons' % label)
