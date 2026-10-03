@@ -91,7 +91,8 @@ class Translation(_DictAccessStruct, forbid_unknown_fields=False):
     """How to translate a transcript's CDS (``Transcript.translation``). Data schema >= 0.2.35."""
     transl_table: Optional[int] = None
     """NCBI genetic code of the CDS (eg ``2`` for vertebrate mitochondria), when the source names one
-    (RefSeq ``transl_table``). Absent means the standard code or unknown."""
+    (RefSeq ``transl_table``). Ensembl GTFs don't name one, so cdot sets ``2`` for Ensembl transcripts on
+    ``NC_012920.1`` (mitochondria). Absent means the standard code or unknown."""
     transl_except: Optional[Dict[str, List[int]]] = None
     """Codons that code for another amino acid than ``transl_table`` says: amino acid (as in the RefSeq
     ``transl_except`` attribute) -> codon numbers, 1-based within the CDS, ie the amino acid positions in

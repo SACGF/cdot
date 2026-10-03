@@ -48,6 +48,8 @@ class Test(unittest.TestCase):
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
     # Ensembl GFF3 (chrMT up to the first CDS) - not supported, CDS rows have no protein version
     ENSEMBL_115_GFF3_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.115.MT.gff3")
+    # MT-ND1 (stop codon completed by the poly(A) tail), MT-TI (tRNA), MT-ATP8 and MT-ND6 (- strand)
+    ENSEMBL_115_GTF_FILENAME_MT = os.path.join(test_data_dir, "ensembl_test.GRCh38.115.MT.gtf")
     FAKE_URL = "http://fake.url"
 
     FAKE_MT_TRANSCRIPTS = [
@@ -243,6 +245,18 @@ class Test(unittest.TestCase):
         self.assertEqual(nd1["translation"]["transl_except"], {"TERM": [319]})
         # ATP8 has a complete stop codon
         self.assertNotIn("transl_except", transcripts["fake-rna-ATP8"]["translation"])
+
+    def test_ensembl_gtf_mito_transl_table(self):
+        """ Ensembl GTFs don't name the genetic code, so coding transcripts on MT get the vertebrate
+            mitochondrial code, as RefSeq writes on its MT CDS rows """
+        genome_build = "GRCh38"
+        parser = GTFParser(self.ENSEMBL_115_GTF_FILENAME_MT, genome_build, self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        for transcript_accession in ["ENST00000361390.2", "ENST00000361851.1", "ENST00000361681.2"]:
+            transcript = transcripts[transcript_accession]
+            self.assertEqual(transcript["genome_builds"][genome_build]["contig"], "NC_012920.1")
+            self.assertEqual(transcript["translation"], {"transl_table": 2}, transcript_accession)
+        self.assertNotIn("translation", transcripts["ENST00000387365.1"])  # MT-TI, a tRNA
 
     def test_refseq_gff3_selenocysteine(self):
         """ RefSeq names the selenocysteine codon in transl_except on every CDS row """

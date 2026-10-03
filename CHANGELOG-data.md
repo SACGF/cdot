@@ -11,6 +11,10 @@ is built and published see [docs/data_release_workflow.md](docs/data_release_wor
 
 ## [unreleased]
 
+### Fixed
+
+- #131 - Ensembl coding transcripts on the mitochondrial genome (`NC_012920.1`, eg MT-ND1 `ENST00000361390.2`) now have `translation` with `transl_table` `2`, as RefSeq ones already did. Ensembl GTFs don't name the genetic code, so these had no `translation` and consumers used the standard code
+
 ## [0.2.35] - 2026-09-27
 
 ### Added
