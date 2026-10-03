@@ -497,7 +497,7 @@
             }
           ],
           "default": null,
-          "description": "NCBI genetic code of the CDS (eg `2` for vertebrate mitochondria), when the source names one (RefSeq `transl_table`). Absent means the standard code or unknown."
+          "description": "NCBI genetic code of the CDS (eg `2` for vertebrate mitochondria), when the source names one (RefSeq `transl_table`). Ensembl GTFs don't name one, so cdot sets `2` for Ensembl transcripts on `NC_012920.1` (mitochondria). Absent means the standard code or unknown."
         },
         "transl_except": {
           "anyOf": [

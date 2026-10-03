@@ -31,6 +31,7 @@ FIXTURES = [
     ("ensembl_test.GRCh38.111.gtf", GTFParser, "GRCh38", {}),
     ("ensembl_test.GRCh38.108.selenoprotein.gtf", GTFParser, "GRCh38", {}),
     ("ensembl_test.GRCh38.115.selenoprotein.gtf", GTFParser, "GRCh38", {}),
+    ("ensembl_test.GRCh38.115.MT.gtf", GTFParser, "GRCh38", {}),
     ("ensembl_test.GRCh38.116.chr21_slice.gtf.gz", GTFParser, "GRCh38", {}),
     # UCSC GTF (no versions on anything)
     ("hg19_chrY_300kb_genes.gtf", GTFParser, "GRCh37", {}),
