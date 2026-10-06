@@ -102,10 +102,10 @@ class GFFParser(abc.ABC):
         """ This can sometimes fail, in which case RefSeq will use dbxRef """
         gene_accession = None
         if gene_id := feature.attr.get("gene_id"):
+            # GFF3 gene rows put it in 'version', GTF gene rows (and everything else) in 'gene_version'
+            gene_version = feature.attr.get("gene_version")
             if feature.type == "gene":
-                gene_version = feature.attr.get("version")
-            else:
-                gene_version = feature.attr.get("gene_version")
+                gene_version = feature.attr.get("version") or gene_version
 
             if gene_version:
                 gene_accession = f"{gene_id}.{gene_version}"

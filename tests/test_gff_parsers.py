@@ -205,7 +205,7 @@ class Test(unittest.TestCase):
         genome_build = "GRCh38"
         parser = GTFParser(self.ENSEMBL_111_GTF_FILENAME, genome_build, self.FAKE_URL)
         genes, transcripts = parser.get_genes_and_transcripts()
-        gene = genes["ENSG00000210156"]
+        gene = genes["ENSG00000210156.1"]
         gene_symbol = gene["gene_symbol"]
         self.assertEqual(gene_symbol, "MT-TK")
 

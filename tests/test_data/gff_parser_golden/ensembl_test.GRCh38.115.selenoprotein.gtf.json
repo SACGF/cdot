@@ -1,16 +1,5 @@
 {
  "genes": {
-  "ENSG00000167468": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "GPX4",
-   "source": [
-    "ensembl_havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000167468.20": {
    "biotype": [
     "mRNA",
@@ -19,18 +8,8 @@
    "description": null,
    "gene_symbol": "GPX4",
    "source": [
+    "ensembl_havana",
     "havana"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000211450": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "SELENOH",
-   "source": [
-    "ensembl_havana"
    ],
    "url": "http://fake.url"
   },
@@ -42,6 +21,7 @@
    "description": null,
    "gene_symbol": "SELENOH",
    "source": [
+    "ensembl_havana",
     "havana"
    ],
    "url": "http://fake.url"
