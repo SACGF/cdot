@@ -13,6 +13,7 @@ is built and published see [docs/data_release_workflow.md](docs/data_release_wor
 
 ### Fixed
 
+- #138 - `start_codon`/`stop_codon` of RefSeq transcripts with a deletion (`D`) in the alignment `Gap`. The generator didn't count the genome bases of a `D`, so codons after one, or ending right before one, were misplaced or left unplaced. In GRCh38 this changes 28 historical records: 9 had a wrong value and 19 had a `codons_unplaced` warning. Eg `NM_005561.2` had `start_codon` 187, where GenBank CDS 191..1441 gives 190. 3 `transl_except` codons are now placed too (eg `NM_013326.1`). In T2T-CHM13v2.0, 2 more stop codons are placed
 - #131 - Ensembl coding transcripts on the mitochondrial genome (`NC_012920.1`, eg MT-ND1 `ENST00000361390.2`) now have `translation` with `transl_table` `2`, as RefSeq ones already did. Ensembl GTFs don't name the genetic code, so these had no `translation` and consumers used the standard code
 
 ## [0.2.35] - 2026-09-27

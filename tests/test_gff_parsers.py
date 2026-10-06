@@ -428,6 +428,32 @@ class Test(unittest.TestCase):
         self.assertEqual(get_transcript_position(False, rev_exons, 1_050), 280)
         self.assertEqual(get_transcript_position(False, rev_exons, 2_050), 150)
 
+    def test_transcript_position_after_gap_deletion(self):
+        """ A Gap 'D' is genomic bases the transcript doesn't have, so they count towards the position
+            in the exon. Otherwise the base after a D can't be placed, and gaps after the coordinate are
+            applied too, eg the start codon of historical NM_005561.2 (CDS 191..1441) came out as 187 """
+        # transcript 1-10 = genomic 1000-1009, genomic 1010-1011 aren't in the transcript,
+        # transcript 11-15 = genomic 1012-1016, transcript 16-18 aren't in the genome, 19-28 = genomic 1017-1026
+        exons = [(1_000, 1_027, 0, 1, 28, "M10 D2 M5 I3 M10")]
+        self.assertEqual(get_transcript_position(True, exons, 1_012), 10)  # 1st base after the D
+        self.assertEqual(get_transcript_position(True, exons, 1_015), 13)  # before the I
+        self.assertEqual(get_transcript_position(True, exons, 1_017), 18)  # after the I
+        # Minus strand: the Gap is in transcript order, the coordinate is the base's end
+        self.assertEqual(get_transcript_position(False, exons, 1_015), 10)  # 1st base after the D
+        self.assertEqual(get_transcript_position(False, exons, 1_012), 13)  # before the I
+        self.assertEqual(get_transcript_position(False, exons, 1_010), 18)  # after the I
+
+    def test_transcript_position_end_before_gap_deletion(self):
+        """ A range (eg the stop codon) can end right before a D. Its end is then at the D's first
+            base, which is only an error for a base. Eg historical NM_014040.1 (CDS 148..504) had
+            stop_codon 503 rather than 504 """
+        # Same exon as above: genomic 1010-1011 aren't in the transcript
+        exons = [(1_000, 1_027, 0, 1, 28, "M10 D2 M5 I3 M10")]
+        self.assertEqual(get_transcript_position(True, exons, 1_010, end=True), 10)
+        self.assertEqual(get_transcript_position(False, exons, 1_017, end=True), 10)  # D is genomic 1015-1016
+        with self.assertRaises(ValueError):
+            get_transcript_position(True, exons, 1_010)
+
     def test_codon_positions_across_coordinate_hole(self):
         """ End to end version of the above: the codon positions the parser writes out must be in
             the same coordinate system as the exon cds_start/cds_end.
