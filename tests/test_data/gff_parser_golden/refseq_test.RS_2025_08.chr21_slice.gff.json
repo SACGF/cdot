@@ -1926,9 +1926,18 @@
       ]
      ],
      "genome_mismatch": {
+      "alignment": {
+       "gap_count": 1,
+       "num_mismatch": 0,
+       "pct_coverage": 99.962,
+       "pct_identity_gap": 99.962
+      },
       "exceptions": [
        "annotated by transcript or proteomic data"
-      ]
+      ],
+      "transcript": {
+       "non_frameshifting_indels": 1
+      }
      },
      "note": "The RefSeq transcript has 1 non-frameshifting indel compared to this genomic sequence",
      "source": [

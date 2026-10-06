@@ -1,6 +1,9 @@
 import abc
 import re
+import warnings
+from enum import Enum
 
+import msgspec
 from pysam.libcfaidx import FastaFile
 from hgvs.dataproviders.interface import Interface
 from hgvs.exceptions import HGVSDataNotAvailableError
@@ -28,12 +31,40 @@ class GenomeFastaSeqFetcher:
         raise HGVSDataNotAvailableError(f"Accession '{ac}' not in fasta contigs")
 
 
+class GenomeMismatchPolicy(str, Enum):
+    """ What to do when building a transcript the data says differs from the genome (#115) """
+    OFF = "off"  # Build it anyway, silently
+    WARN = "warn"  # Build it, and issue a GenomeMismatchWarning (once per transcript)
+    RAISE = "raise"  # Refuse, raising GenomeMismatchError
+
+
+class GenomeMismatchWarning(UserWarning):
+    """ A transcript sequence was built from the genome, but the transcript differs from the genome """
+
+
+class GenomeMismatchError(HGVSDataNotAvailableError):
+    """ Refused to build a transcript from the genome, as it differs from the genome. This is a
+        HGVSDataNotAvailableError so ChainedSeqFetcher moves on to the next seqfetcher """
+
+
+def _describe_genome_mismatch(genome_mismatch) -> str:
+    if isinstance(genome_mismatch, msgspec.Struct):
+        genome_mismatch = msgspec.to_builtins(genome_mismatch)
+    return "; ".join(f"{key}: {value}" for key, value in sorted(genome_mismatch.items()) if value)
+
+
 class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
     """ This produces artificial transcript sequences by pasting together exons from the genome
-        It is possible that this does not exactly match the transcript sequences - USE AT OWN RISK! """
+        It is possible that this does not exactly match the transcript sequences - USE AT OWN RISK!
+
+        genome_mismatch: what to do for a transcript that the data says differs from the genome
+        (its 'genome_mismatch' on that build, RefSeq only): 'warn' (default), 'raise' or 'off'.
+        See GenomeMismatchPolicy """
     _CIGAR_PATTERN = re.compile(r"(\d+)([=DIX])")
 
-    def __init__(self, *args, cache=True):
+    def __init__(self, *args, cache=True, genome_mismatch=GenomeMismatchPolicy.WARN):
+        self.genome_mismatch_policy = GenomeMismatchPolicy(genome_mismatch)
+        self._warned_genome_mismatch = set()
         self.cache = cache
         self.transcript_cache = {}
         self.hdp = None  # Set when passed to data provider (via set_data_provider)
@@ -65,7 +96,29 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
             raise HGVSDataNotAvailableError(f"{msg} No Fasta provided with contigs: {possible_contigs}")
         raise HGVSDataNotAvailableError(f"{msg} Transcript '{ac}' not found.")
 
+    def _get_genome_mismatch(self, ac, alt_ac):
+        """ The transcript's genome_mismatch on the build with contig alt_ac, if the data provider has it """
+        if get_transcript := getattr(self.hdp, "_get_transcript", None):
+            if transcript := get_transcript(ac):
+                for build_data in transcript["genome_builds"].values():
+                    if build_data["contig"] == alt_ac:
+                        return build_data.get("genome_mismatch")
+        return None
+
+    def _check_genome_mismatch(self, ac, alt_ac):
+        if self.genome_mismatch_policy == GenomeMismatchPolicy.OFF:
+            return
+        if genome_mismatch := self._get_genome_mismatch(ac, alt_ac):
+            msg = (f"{ac} differs from the genome ({alt_ac}), so the sequence built from the genome isn't the "
+                   f"real transcript sequence. {_describe_genome_mismatch(genome_mismatch)}")
+            if self.genome_mismatch_policy == GenomeMismatchPolicy.RAISE:
+                raise GenomeMismatchError(msg)
+            if ac not in self._warned_genome_mismatch:
+                self._warned_genome_mismatch.add(ac)
+                warnings.warn(msg, GenomeMismatchWarning)
+
     def _fetch_seq_from_fasta(self, ac, alt_ac, alt_aln_method):
+        self._check_genome_mismatch(ac, alt_ac)
         fasta_file = self.contig_fastas[alt_ac]
 
         exons = self.hdp.get_tx_exons(ac, alt_ac, alt_aln_method)
@@ -144,10 +197,12 @@ def get_ensembl_tark_fasta_seqfetchers(*fasta_files, cache=True):
 
 
 class FastaSeqFetcher(PrefixSeqFetcher):
-    """ Re-implementing using above - deprecated use """
+    """ Genome contigs (NC_) from the FASTA, transcripts built from its exons (ExonsFromGenomeFastaSeqFetcher)
 
-    def __init__(self, *args, cache=True):
-        default_seqfetcher = ExonsFromGenomeFastaSeqFetcher(*args, cache=True)
+        genome_mismatch: 'warn' (default), 'raise' or 'off', see ExonsFromGenomeFastaSeqFetcher """
+
+    def __init__(self, *args, cache=True, genome_mismatch=GenomeMismatchPolicy.WARN):
+        default_seqfetcher = ExonsFromGenomeFastaSeqFetcher(*args, cache=cache, genome_mismatch=genome_mismatch)
         super().__init__(default_seqfetcher=default_seqfetcher)
         self.genome_fasta_seq_fetcher = GenomeFastaSeqFetcher(*args)
         self.prefix_seqfetchers.update({

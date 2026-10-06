@@ -29,6 +29,7 @@ class TranscriptBuilder:
         self.genes = {}
         self.transcripts = {}
         self.transcript_proteins = {}
+        self.transcript_genome_mismatch = defaultdict(dict)  # Extra genome_mismatch keys, eg note counts
         # Store features in separate dict as we don't need to write all as JSON
         self.transcript_features_by_type = defaultdict(lambda: defaultdict(list))
         self._warned_about_htseq_tag_attributes = False
@@ -157,6 +158,10 @@ class TranscriptBuilder:
 
     def add_genome_mismatch_exception(self, transcript_accession, exception):
         self.transcript_features_by_type[transcript_accession]["genome_mismatch_exceptions"].append(exception)
+
+    def set_genome_mismatch(self, transcript_accession, key, value):
+        """ Stored in the transcript's genome_mismatch, eg 'transcript': {'substitutions': 1} """
+        self.transcript_genome_mismatch[transcript_accession][key] = value
 
     # Finishing
 
@@ -314,6 +319,7 @@ class TranscriptBuilder:
             translation["exceptions"] = sorted(set(exceptions))
         if exceptions := features_by_type.get("genome_mismatch_exceptions"):
             genome_mismatch["exceptions"] = sorted(set(exceptions))
+        genome_mismatch.update(self.transcript_genome_mismatch.get(transcript_accession, {}))
 
         if translation:
             transcript_data["translation"] = translation

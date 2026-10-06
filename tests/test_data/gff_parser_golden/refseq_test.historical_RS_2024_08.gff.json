@@ -586,9 +586,22 @@
       ]
      ],
      "genome_mismatch": {
+      "alignment": {
+       "gap_count": 4,
+       "num_mismatch": 5,
+       "pct_coverage": 99.9597,
+       "pct_identity_gap": 99.8523
+      },
       "exceptions": [
        "annotated by transcript or proteomic data"
-      ]
+      ],
+      "protein": {
+       "substitutions": 1
+      },
+      "transcript": {
+       "non_frameshifting_indels": 5,
+       "substitutions": 5
+      }
      },
      "note": "splice variant 4%2C protein isoform 1~isoform 1 is encoded by transcript variant 4%3B The RefSeq protein has 1 substitution compared to this genomic sequence",
      "source": [
@@ -714,9 +727,19 @@
       ]
      ],
      "genome_mismatch": {
+      "alignment": {
+       "gap_count": 1,
+       "num_mismatch": 1,
+       "pct_coverage": 100,
+       "pct_identity_gap": 99.8998
+      },
       "exceptions": [
        "annotated by transcript or proteomic data"
-      ]
+      ],
+      "transcript": {
+       "non_frameshifting_indels": 1,
+       "substitutions": 1
+      }
      },
      "note": "The RefSeq transcript has 1 substitution%2C 1 non-frameshifting indel compared to this genomic sequence",
      "source": [
@@ -770,9 +793,18 @@
       ]
      ],
      "genome_mismatch": {
+      "alignment": {
+       "gap_count": 0,
+       "num_mismatch": 0,
+       "pct_coverage": 99.8555,
+       "pct_identity_gap": 100
+      },
       "exceptions": [
        "annotated by transcript or proteomic data"
-      ]
+      ],
+      "transcript": {
+       "non_frameshifting_indels": 1
+      }
      },
      "note": "The RefSeq transcript has 1 non-frameshifting indel compared to this genomic sequence",
      "source": [

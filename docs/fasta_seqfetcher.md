@@ -74,6 +74,27 @@ The errors that could occur from a genome/transcript mismatch are:
 * Reference base changes.
 * Indels normalised differently (the repeats may be different), leading to a coordinate change.
 
+From data schema 0.2.36, cdot records where RefSeq says a transcript differs from each build's genome
+(the build's [`genome_mismatch`](json_data_format.md#genomemismatch): substitution and indel counts
+from the RefSeq notes, and the alignment statistics). When `FastaSeqFetcher` builds one of these
+transcripts it issues a `GenomeMismatchWarning`, once per transcript. Change this with the
+`genome_mismatch` argument:
+
+```python
+# 'warn' (default), 'raise' or 'off'
+seqfetcher = FastaSeqFetcher(fasta_filename, genome_mismatch="raise")
+```
+
+`'raise'` throws `GenomeMismatchError`, a subclass of `HGVSDataNotAvailableError`, so with
+`ChainedSeqFetcher` it moves on to the next seqfetcher. To use the real transcript sequence for these
+transcripts only, put SeqRepo after it:
+
+```python
+seqfetcher = ChainedSeqFetcher(FastaSeqFetcher(fasta_filename, genome_mismatch="raise"), SeqFetcher())
+```
+
+Older data has no `genome_mismatch` (or only partial), so nothing is reported for it.
+
 When choosing which genome reference to use, cdot takes the first one that has a contig we have a
 mapping for. If you want to ensure a certain build is used, instantiate `FastaSeqFetcher()` with just
 that one genome, then only convert HGVS using that genome.

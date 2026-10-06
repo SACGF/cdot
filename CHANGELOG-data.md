@@ -11,6 +11,10 @@ is built and published see [docs/data_release_workflow.md](docs/data_release_wor
 
 ## [unreleased]
 
+### Added
+
+- #115 - More in the per build `genome_mismatch`, for RefSeq transcripts that differ from that build's genome. `transcript` and `protein` count the differences RefSeq lists in its `Note` (eg 'The RefSeq transcript has 1 substitution, 1 non-frameshifting indel compared to this genomic sequence' is `{"substitutions": 1, "non_frameshifting_indels": 1}`). `alignment` has the `cDNA_match` statistics `num_mismatch`, `gap_count`, `pct_identity_gap` and `pct_coverage`, and is only present when the alignment isn't perfect
+
 ### Fixed
 
 - #138 - `start_codon`/`stop_codon` of RefSeq transcripts with a deletion (`D`) in the alignment `Gap`. The generator didn't count the genome bases of a `D`, so codons after one, or ending right before one, were misplaced or left unplaced. In GRCh38 this changes 28 historical records: 9 had a wrong value and 19 had a `codons_unplaced` warning. Eg `NM_005561.2` had `start_codon` 187, where GenBank CDS 191..1441 gives 190. 3 `transl_except` codons are now placed too (eg `NM_013326.1`). In T2T-CHM13v2.0, 2 more stop codons are placed

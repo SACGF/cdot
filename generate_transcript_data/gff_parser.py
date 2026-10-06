@@ -286,6 +286,7 @@ class GFF3Parser(GFFParser):
                 transcript_data["partial"] = 1
 
             self.builder.add_tags(transcript_data, feature)
+            self.consortium.add_transcript_annotations(transcript_accession, feature, self.builder)
         self.transcript_accession_by_feature_id[feature.attr["ID"]] = transcript_accession
 
     def _gff_handle_transcript_data(self, transcript_accession, transcript, feature):

@@ -1,5 +1,10 @@
 ## [unreleased]
 
+### Added
+
+- #115 - `FastaSeqFetcher` (and `ExonsFromGenomeFastaSeqFetcher`) warn when building a transcript sequence that the data says differs from the genome (the build's `genome_mismatch`, RefSeq only), as that isn't the real transcript sequence. Set with the new `genome_mismatch` constructor argument: `'warn'` (default, a `GenomeMismatchWarning` once per transcript), `'raise'` (`GenomeMismatchError`, a subclass of `HGVSDataNotAvailableError`, so `ChainedSeqFetcher` falls through to the next seqfetcher) or `'off'`. `FastaSeqFetcher` now also passes its `cache` argument on, which it used to ignore
+- #115 - `models.GenomeMismatch`: `transcript`, `protein` and `alignment` (data schema >= 0.2.36)
+
 ## [0.2.32] - 2026-09-27
 
 ### Added
