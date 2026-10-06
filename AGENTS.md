@@ -89,6 +89,8 @@ Schema versioning (`cdot/__init__.py`) uses major.minor; clients validate compat
 
 ### Release Management
 
+**Releases are done manually by the maintainer.** Do not tag, publish to PyPI, publish a GitHub release (including the data-release draft), or start the data-release workflow unless the user explicitly asks for that specific step in that message. Preparing a release (version bumps, changelog headings, building to check) is fine when asked; answering a question about release tooling is not permission to release.
+
 To check for new upstream annotation releases (Ensembl, RefSeq, UTA, GENCODE) and add them, follow `docs/checking_for_new_sources.md`.
 
 `cdot/data_release.py` queries the GitHub API for the latest compatible data release (filtered by schema version), returning download URLs for RefSeq/Ensembl JSON.gz files across GRCh37, GRCh38, and T2T-CHM13v2.0.
