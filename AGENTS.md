@@ -89,6 +89,8 @@ Schema versioning (`cdot/__init__.py`) uses major.minor; clients validate compat
 
 ### Release Management
 
+To check for new upstream annotation releases (Ensembl, RefSeq, UTA, GENCODE) and add them, follow `docs/checking_for_new_sources.md`.
+
 `cdot/data_release.py` queries the GitHub API for the latest compatible data release (filtered by schema version), returning download URLs for RefSeq/Ensembl JSON.gz files across GRCh37, GRCh38, and T2T-CHM13v2.0.
 
 ### REST API

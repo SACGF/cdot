@@ -31,6 +31,8 @@ Reference and how-to docs for [cdot](../README.md). These live in the repo, vers
 - **[Create data from scratch](create_data_from_scratch.md)** - build the JSON files yourself from GTF/GFF3.
 - **[Building a data release](data_release_workflow.md)** - maintainers only: the GitHub Actions
   workflow that builds official data releases as drafts for validation.
+- **[Checking for new sources](checking_for_new_sources.md)** - maintainers only: find new
+  Ensembl/RefSeq/UTA releases upstream and add them to the build.
 
 ## Background
 

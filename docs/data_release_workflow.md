@@ -16,7 +16,9 @@ cannot see the files until you press Publish.
 1. Update [`generate_transcript_data/cdot_transcripts.yaml`](../generate_transcript_data/cdot_transcripts.yaml)
    with any new sources (new Ensembl release, new RefSeq annotation release). Sources are merged in
    YAML order, later entries override earlier ones for the same transcript version, so position
-   matters (see the comments in the file).
+   matters (see the comments in the file). [Checking for new sources](checking_for_new_sources.md)
+   has a script that compares the yaml against the upstream listings, and what to change for each
+   kind of new source.
 2. Bump `JSON_SCHEMA_VERSION` in
    [`generate_transcript_data/json_schema_version.py`](../generate_transcript_data/json_schema_version.py)
    and move the `[unreleased]` entries in [`CHANGELOG-data.md`](../CHANGELOG-data.md) under a heading
