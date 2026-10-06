@@ -1,16 +1,5 @@
 {
  "genes": {
-  "ENSG00000198832": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "SELENOM",
-   "source": [
-    "ensembl_havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000198832.11": {
    "biotype": [
     "mRNA",
@@ -19,6 +8,7 @@
    "description": null,
    "gene_symbol": "SELENOM",
    "source": [
+    "ensembl_havana",
     "havana"
    ],
    "url": "http://fake.url"

@@ -1,16 +1,5 @@
 {
  "genes": {
-  "ENSG00000186092": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "OR4F5",
-   "source": [
-    "ensembl_havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000186092.7": {
    "biotype": [
     "mRNA",
@@ -19,18 +8,8 @@
    "description": null,
    "gene_symbol": "OR4F5",
    "source": [
+    "ensembl_havana",
     "havana"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000210156": {
-   "biotype": [
-    "Mt_tRNA"
-   ],
-   "description": null,
-   "gene_symbol": "MT-TK",
-   "source": [
-    "insdc"
    ],
    "url": "http://fake.url"
   },

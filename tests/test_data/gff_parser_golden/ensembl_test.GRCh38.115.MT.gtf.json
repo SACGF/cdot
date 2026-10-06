@@ -1,16 +1,5 @@
 {
  "genes": {
-  "ENSG00000198695": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "MT-ND6",
-   "source": [
-    "insdc"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000198695.2": {
    "biotype": [
     "mRNA",
@@ -18,17 +7,6 @@
    ],
    "description": null,
    "gene_symbol": "MT-ND6",
-   "source": [
-    "insdc"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000198888": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "MT-ND1",
    "source": [
     "insdc"
    ],
@@ -46,17 +24,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000210100": {
-   "biotype": [
-    "Mt_tRNA"
-   ],
-   "description": null,
-   "gene_symbol": "MT-TI",
-   "source": [
-    "insdc"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000210100.1": {
    "biotype": [
     "Mt_tRNA",
@@ -64,17 +31,6 @@
    ],
    "description": null,
    "gene_symbol": "MT-TI",
-   "source": [
-    "insdc"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000228253": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "MT-ATP8",
    "source": [
     "insdc"
    ],

@@ -1,16 +1,5 @@
 {
  "genes": {
-  "ENSG00000142149": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "HUNK",
-   "source": [
-    "ensembl_havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000142149.11": {
    "biotype": [
     "mRNA",
@@ -23,17 +12,6 @@
     "ensembl_havana",
     "havana",
     "havana_tagene"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000142168": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "SOD1",
-   "source": [
-    "ensembl_havana"
    ],
    "url": "http://fake.url"
   },
@@ -52,17 +30,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000142207": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "URB1",
-   "source": [
-    "ensembl_havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000142207.9": {
    "biotype": [
     "mRNA",
@@ -75,17 +42,6 @@
     "ensembl_havana",
     "havana",
     "havana_tagene"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000156304": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "SCAF4",
-   "source": [
-    "ensembl_havana"
    ],
    "url": "http://fake.url"
   },
@@ -104,17 +60,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000159055": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "MIS18A",
-   "source": [
-    "ensembl_havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000159055.6": {
    "biotype": [
     "mRNA",
@@ -127,17 +72,6 @@
     "ensembl_havana",
     "havana",
     "havana_tagene"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000170262": {
-   "biotype": [
-    "protein_coding"
-   ],
-   "description": null,
-   "gene_symbol": "MRAP",
-   "source": [
-    "ensembl_havana"
    ],
    "url": "http://fake.url"
   },
@@ -156,17 +90,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000200792": {
-   "biotype": [
-    "snoRNA"
-   ],
-   "description": null,
-   "gene_symbol": "SNORA80A",
-   "source": [
-    "ensembl"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000200792.1": {
    "biotype": [
     "ncRNA",
@@ -176,17 +99,6 @@
    "gene_symbol": "SNORA80A",
    "source": [
     "ensembl"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000227256": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": "MIS18A-AS1",
-   "source": [
-    "havana"
    ],
    "url": "http://fake.url"
   },
@@ -203,17 +115,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000229007": {
-   "biotype": [
-    "processed_pseudogene"
-   ],
-   "description": null,
-   "gene_symbol": "EXOSC3P1",
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000229007.1": {
    "biotype": [
     "ncRNA",
@@ -226,17 +127,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000229046": {
-   "biotype": [
-    "processed_pseudogene"
-   ],
-   "description": null,
-   "gene_symbol": "HMGN1P2",
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000229046.1": {
    "biotype": [
     "ncRNA",
@@ -244,17 +134,6 @@
    ],
    "description": null,
    "gene_symbol": "HMGN1P2",
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000230323": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": "LINC00159",
    "source": [
     "havana"
    ],
@@ -273,17 +152,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000230870": {
-   "biotype": [
-    "processed_pseudogene"
-   ],
-   "description": null,
-   "gene_symbol": "FBXW11P1",
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000230870.2": {
    "biotype": [
     "ncRNA",
@@ -291,17 +159,6 @@
    ],
    "description": null,
    "gene_symbol": "FBXW11P1",
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000232623": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": "MRAP-AS1",
    "source": [
     "havana"
    ],
@@ -320,17 +177,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000234107": {
-   "biotype": [
-    "processed_pseudogene"
-   ],
-   "description": null,
-   "gene_symbol": "TPT1P1",
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000234107.1": {
    "biotype": [
     "ncRNA",
@@ -338,17 +184,6 @@
    ],
    "description": null,
    "gene_symbol": "TPT1P1",
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000234509": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": "SOD1-DT",
    "source": [
     "havana"
    ],
@@ -367,17 +202,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000237138": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": "HUNK-AS1",
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000237138.1": {
    "biotype": [
     "lncRNA",
@@ -385,17 +209,6 @@
    ],
    "description": null,
    "gene_symbol": "HUNK-AS1",
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000237594": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": "TIAM1-AS1",
    "source": [
     "havana"
    ],
@@ -413,17 +226,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000238390": {
-   "biotype": [
-    "snoRNA"
-   ],
-   "description": null,
-   "gene_symbol": null,
-   "source": [
-    "ensembl"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000238390.1": {
    "biotype": [
     "ncRNA",
@@ -436,17 +238,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000256073": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": "URB1-AS1",
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000256073.5": {
    "biotype": [
     "lncRNA",
@@ -455,18 +246,8 @@
    "description": null,
    "gene_symbol": "URB1-AS1",
    "source": [
+    "havana",
     "havana_tagene"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000261610": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": null,
-   "source": [
-    "havana"
    ],
    "url": "http://fake.url"
   },
@@ -474,17 +255,6 @@
    "biotype": [
     "lncRNA",
     "ncRNA"
-   ],
-   "description": null,
-   "gene_symbol": null,
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000273091": {
-   "biotype": [
-    "lncRNA"
    ],
    "description": null,
    "gene_symbol": null,
@@ -505,17 +275,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000273271": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": null,
-   "source": [
-    "havana"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000273271.1": {
    "biotype": [
     "lncRNA",
@@ -528,32 +287,10 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000295250": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": null,
-   "source": [
-    "havana_tagene"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000295250.1": {
    "biotype": [
     "lncRNA",
     "ncRNA"
-   ],
-   "description": null,
-   "gene_symbol": null,
-   "source": [
-    "havana_tagene"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000297999": {
-   "biotype": [
-    "lncRNA"
    ],
    "description": null,
    "gene_symbol": null,
@@ -574,32 +311,10 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000298022": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": null,
-   "source": [
-    "havana_tagene"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000298022.1": {
    "biotype": [
     "lncRNA",
     "ncRNA"
-   ],
-   "description": null,
-   "gene_symbol": null,
-   "source": [
-    "havana_tagene"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000298042": {
-   "biotype": [
-    "lncRNA"
    ],
    "description": null,
    "gene_symbol": null,
@@ -620,17 +335,6 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000300283": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": null,
-   "source": [
-    "havana_tagene"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000300283.1": {
    "biotype": [
     "lncRNA",
@@ -643,32 +347,10 @@
    ],
    "url": "http://fake.url"
   },
-  "ENSG00000304272": {
-   "biotype": [
-    "lncRNA"
-   ],
-   "description": null,
-   "gene_symbol": null,
-   "source": [
-    "havana_tagene"
-   ],
-   "url": "http://fake.url"
-  },
   "ENSG00000304272.1": {
    "biotype": [
     "lncRNA",
     "ncRNA"
-   ],
-   "description": null,
-   "gene_symbol": null,
-   "source": [
-    "havana_tagene"
-   ],
-   "url": "http://fake.url"
-  },
-  "ENSG00000308154": {
-   "biotype": [
-    "lncRNA"
    ],
    "description": null,
    "gene_symbol": null,
