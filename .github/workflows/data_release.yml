@@ -187,6 +187,7 @@ jobs:
           path: data
       - name: Merge historical and combine builds
         run: |
+          set -o pipefail  # so a snakemake failure is not hidden by tee
           cd data
           snakemake --snakefile ../generate_transcript_data/Snakefile --cores 4 2>&1 | tee merge_log.txt
       - name: Check merge log for issue 54 warning

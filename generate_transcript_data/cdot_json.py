@@ -412,13 +412,13 @@ def merge_historical(args):
     for filename in args.json_filenames:
         print(f"Loading '{filename}'")
         with gzip.open(filename) as f:
-            for gene_accession, gene_version in ijson.kvitems(f, "genes"):
+            for gene_accession, gene_version in ijson.kvitems(f, "genes", use_float=True):
                 gene_versions[gene_accession] = gene_version
                 if not gene_accession.startswith("_"):
                     gene_accessions_for_symbol[gene_version["gene_symbol"]].add(gene_accession)
 
             f.seek(0)  # Reset for next ijson call
-            for transcript_accession, historical_transcript_version in ijson.kvitems(f, "transcripts"):
+            for transcript_accession, historical_transcript_version in ijson.kvitems(f, "transcripts", use_float=True):
                 gene_accession = historical_transcript_version["gene_version"]
                 gene_version = gene_versions[gene_accession]
 
@@ -460,13 +460,13 @@ def combine_builds(args):
     for genome_build, filename in genome_build_filename.items():
         with gzip.open(filename) as f:
             # TODO: Check cdot versions
-            json_builds = next(ijson.items(f, "genome_builds"))
+            json_builds = next(ijson.items(f, "genome_builds", use_float=True))
             if json_builds != [genome_build]:
                 raise ValueError(f"JSON file provided for {genome_build} needs to have only {genome_build} "
                                  f"data (has {json_builds})")
 
             f.seek(0)  # Reset for next ijson call
-            for transcript_id, build_transcript in ijson.kvitems(f, "transcripts"):
+            for transcript_id, build_transcript in ijson.kvitems(f, "transcripts", use_float=True):
                 genome_builds = {}
                 existing_transcript = transcript_versions.get(transcript_id)
                 if existing_transcript:
@@ -487,7 +487,7 @@ def combine_builds(args):
                 transcript_versions[transcript_id] = build_transcript
 
             f.seek(0)  # Reset for next ijson call
-            for gene_id, gene_data in ijson.kvitems(f, "genes"):
+            for gene_id, gene_data in ijson.kvitems(f, "genes", use_float=True):
                 genes[gene_id] = gene_data
 
     method = "Combine multiple genome builds"
@@ -501,7 +501,7 @@ def combine_builds(args):
 
 def release_notes(args):
     with gzip.open(args.json_filename) as f:
-        metadata = next(ijson.items(f, "metadata"))
+        metadata = next(ijson.items(f, "metadata", use_float=True))
         if metadata is None:
             raise ValueError("No metadata in JSON (requires schema version >=0.2.31)")
         print(f"### {os.path.basename(args.json_filename)}")
