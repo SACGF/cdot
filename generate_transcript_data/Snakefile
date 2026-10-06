@@ -269,8 +269,18 @@ rule fetch_uta_from_db:
     retries: 2  # The public UTA server is sometimes flaky
     params:
         schema=lambda wc: name_uta[wc.name]["schema"],
-        template=lambda wc: name_uta[wc.name]["template"]
+        template=lambda wc: name_uta[wc.name]["template"],
+        csv_url=lambda wc: name_uta[wc.name].get("csv_url")
     run:
+        if params.csv_url:
+            # Our mirror of the query output (schemas are frozen, so it never changes), so the
+            # build doesn't depend on the public UTA server being up. Download to a temp file
+            # first so a failed transfer doesn't leave a truncated protected() CSV
+            tmp_gz = output[0] + ".download.gz"
+            shell(f'curl --fail --show-error -L -o "{tmp_gz}" "{params.csv_url}"')
+            shell(f'gunzip -c "{tmp_gz}" > "{output[0]}" && rm "{tmp_gz}"')
+            return
+
         template_file = os.path.join(workflow.basedir, params.template)
         with open(template_file) as f:
             template = f.read()

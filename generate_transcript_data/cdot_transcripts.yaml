@@ -110,6 +110,8 @@ config:
         uta:
           schema: "uta_20241220"
           template: "uta_grch37.template"
+          # Mirror of the query output, so we don't depend on the public UTA DB being up
+          csv_url: "https://github.com/SACGF/cdot/releases/download/uta_20241220/Homo_sapiens_GRCh37_UTA_20241220.csv.gz"
       Homo_sapiens_GRCh37_RefSeq_105.20190906.gff:
         url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/9606/105.20190906/GCF_000001405.25_GRCh37.p13/GCF_000001405.25_GRCh37.p13_genomic.gff.gz"
       Homo_sapiens_GRCh37_RefSeq_105.20201022.gff:
@@ -125,6 +127,8 @@ config:
         uta:
           schema: "uta_20241220"
           template: "uta_grch38.template"
+          # Mirror of the query output, so we don't depend on the public UTA DB being up
+          csv_url: "https://github.com/SACGF/cdot/releases/download/uta_20241220/Homo_sapiens_GRCh38_UTA_20241220.csv.gz"
       # NCBI historical transcript alignments (#51) - replaced/suppressed RefSeq versions aligned to GRCh38.
       # Annotation and alignments come as separate files, concatenated (annotation first) before parsing.
       # Some alignments are partial (transcript ends that don't align to the genome), and a few alignments
