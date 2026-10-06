@@ -149,6 +149,10 @@ class Ensembl(AnnotationConsortium):
         HGNC only in the gene description (GENCODE metadata is used instead, see cdot_json.py) """
     name = "ensembl"
 
+    MITO_CONTIG = "MT"
+    # Ensembl keeps the genetic code in its database (seq_region attribute 'codon_table'), not in the GTF/GFF3
+    MITO_TRANSL_TABLE = 2  # Vertebrate mitochondrial
+
     # Can be either "[Source:HGNC Symbol%3BAcc:HGNC:8907]" or "[Source:HGNC Symbol%3BAcc:37102]"
     HGNC_PATTERN = re.compile(r".*\[Source:HGNC.*Acc:(HGNC:)?(\d+)]")
 
@@ -176,6 +180,10 @@ class Ensembl(AnnotationConsortium):
                                      f"(https://ftp.ensembl.org/pub/release-<N>/gtf/)")
                 return f"{protein_id}.{protein_version}"
         return None
+
+    def add_feature_annotations(self, transcript_accession, feature, builder):
+        if feature.type == "CDS" and feature.iv.chrom == self.MITO_CONTIG:
+            builder.set_transl_table(transcript_accession, self.MITO_TRANSL_TABLE)
 
     def handle_transcript_feature(self, transcript_accession, feature, builder) -> bool:
         if feature.type == "Selenocysteine":

@@ -1,0 +1,246 @@
+{
+ "genes": {
+  "ENSG00000198695": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "MT-ND6",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000198695.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "MT-ND6",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000198888": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "MT-ND1",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000198888.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "MT-ND1",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000210100": {
+   "biotype": [
+    "Mt_tRNA"
+   ],
+   "description": null,
+   "gene_symbol": "MT-TI",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000210100.1": {
+   "biotype": [
+    "Mt_tRNA",
+    "ncRNA"
+   ],
+   "description": null,
+   "gene_symbol": "MT-TI",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000228253": {
+   "biotype": [
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "MT-ATP8",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000228253.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "MT-ATP8",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "ENST00000361390.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MT-ND1",
+   "gene_version": "ENSG00000198888.2",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 4262,
+     "cds_start": 3306,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       3306,
+       4262,
+       0,
+       1,
+       956,
+       null
+      ]
+     ],
+     "source": [
+      "insdc"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000361390.2",
+   "protein": "ENSP00000354687.2",
+   "start_codon": 0,
+   "stop_codon": 956,
+   "translation": {
+    "transl_table": 2
+   }
+  },
+  "ENST00000361681.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MT-ND6",
+   "gene_version": "ENSG00000198695.2",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 14673,
+     "cds_start": 14148,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       14148,
+       14673,
+       0,
+       1,
+       525,
+       null
+      ]
+     ],
+     "source": [
+      "insdc"
+     ],
+     "strand": "-",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000361681.2",
+   "protein": "ENSP00000354665.2",
+   "start_codon": 0,
+   "stop_codon": 525,
+   "translation": {
+    "transl_table": 2
+   }
+  },
+  "ENST00000361851.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "MT-ATP8",
+   "gene_version": "ENSG00000228253.1",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 8572,
+     "cds_start": 8365,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       8365,
+       8572,
+       0,
+       1,
+       207,
+       null
+      ]
+     ],
+     "source": [
+      "insdc"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000361851.1",
+   "protein": "ENSP00000355265.1",
+   "start_codon": 0,
+   "stop_codon": 207,
+   "translation": {
+    "transl_table": 2
+   }
+  },
+  "ENST00000387365.1": {
+   "biotype": [
+    "Mt_tRNA",
+    "ncRNA"
+   ],
+   "gene_name": "MT-TI",
+   "gene_version": "ENSG00000210100.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       4262,
+       4331,
+       0,
+       1,
+       69,
+       null
+      ]
+     ],
+     "source": [
+      "insdc"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "transcript_support_level": "NA",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000387365.1"
+  }
+ }
+}
