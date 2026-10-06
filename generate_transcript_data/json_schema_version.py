@@ -3,4 +3,4 @@
 
 # Changes to the data are recorded in CHANGELOG-data.md (in the repo root)
 
-JSON_SCHEMA_VERSION = "0.2.35"
+JSON_SCHEMA_VERSION = "0.2.36"

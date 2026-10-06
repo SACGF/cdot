@@ -11,6 +11,8 @@ is built and published see [docs/data_release_workflow.md](docs/data_release_wor
 
 ## [unreleased]
 
+## [0.2.36] - 2026-10-06
+
 ### Added
 
 - #115 - More in the per build `genome_mismatch`, for RefSeq transcripts that differ from that build's genome. `transcript` and `protein` count the differences RefSeq lists in its `Note` (eg 'The RefSeq transcript has 1 substitution, 1 non-frameshifting indel compared to this genomic sequence' is `{"substitutions": 1, "non_frameshifting_indels": 1}`). `alignment` has the `cDNA_match` statistics `num_mismatch`, `gap_count`, `pct_identity_gap` and `pct_coverage`, and is only present when the alignment isn't perfect
@@ -77,7 +79,8 @@ is built and published see [docs/data_release_workflow.md](docs/data_release_wor
 <!-- Data releases before 0.2.29 were not separately recorded; see the git history of
      generate_transcript_data/ for those. -->
 
-[unreleased]: https://github.com/SACGF/cdot/compare/data_v0.2.35...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/data_v0.2.36...HEAD
+[0.2.36]: https://github.com/SACGF/cdot/compare/data_v0.2.35...data_v0.2.36
 [0.2.35]: https://github.com/SACGF/cdot/compare/data_v0.2.34...data_v0.2.35
 [0.2.34]: https://github.com/SACGF/cdot/compare/data_v0.2.33...data_v0.2.34
 [0.2.33]: https://github.com/SACGF/cdot/compare/data_v0.2.32...data_v0.2.33

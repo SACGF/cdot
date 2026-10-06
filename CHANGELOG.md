@@ -1,5 +1,7 @@
 ## [unreleased]
 
+## [0.2.33] - 2026-10-06
+
 ### Added
 
 - #115 - `FastaSeqFetcher` (and `ExonsFromGenomeFastaSeqFetcher`) warn when building a transcript sequence that the data says differs from the genome (the build's `genome_mismatch`, RefSeq only), as that isn't the real transcript sequence. Set with the new `genome_mismatch` constructor argument: `'warn'` (default, a `GenomeMismatchWarning` once per transcript), `'raise'` (`GenomeMismatchError`, a subclass of `HGVSDataNotAvailableError`, so `ChainedSeqFetcher` falls through to the next seqfetcher) or `'off'`. `FastaSeqFetcher` now also passes its `cache` argument on, which it used to ignore
@@ -331,7 +333,8 @@ All other changes in this release were for data (and contained in data_v0.2.26)
 
 - Initial commit
 
-[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.32...HEAD
+[unreleased]: https://github.com/SACGF/cdot/compare/v0.2.33...HEAD
+[0.2.33]: https://github.com/SACGF/cdot/compare/v0.2.32...v0.2.33
 [0.2.32]: https://github.com/SACGF/cdot/compare/v0.2.31...v0.2.32
 [0.2.31]: https://github.com/SACGF/cdot/compare/v0.2.30...v0.2.31
 [0.2.30]: https://github.com/SACGF/cdot/compare/v0.2.28...v0.2.30

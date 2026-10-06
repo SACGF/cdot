@@ -2,7 +2,7 @@
 
 > Auto-generated from the typed models in [`cdot/models.py`](../cdot/models.py) by `generate_transcript_data/generate_json_docs.py`. Do not edit by hand.
 
-Generated from cdot **0.2.32**. A machine-readable [JSON Schema](cdot-json-schema.json) is generated alongside this file.
+Generated from cdot **0.2.33**. A machine-readable [JSON Schema](cdot-json-schema.json) is generated alongside this file.
 
 See [Coordinates & exon alignments](coordinates_and_exons.md) for a conceptual walk-through of exon coordinates, exon ordering and the alignment gap strings.
 
