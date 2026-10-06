@@ -1,5 +1,10 @@
 ## [unreleased]
 
+### Changed
+
+- #113 - The biocommons HGVS data providers now use the `GRCh38.p14` assembly map for `GRCh38` (as `GRCh37` already used `GRCh37.p13`), so patch scaffold contigs (`NW_`) are recognised
+- #113 - `FastaSeqFetcher` fetches `NW_` and `NT_` contigs from the genome FASTA (previously only `NC_`), so variants on patch scaffolds can be validated against a local FASTA
+
 ## [0.2.32] - 2026-09-27
 
 ### Added

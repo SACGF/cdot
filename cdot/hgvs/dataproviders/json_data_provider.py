@@ -15,15 +15,18 @@ from bioutils.assemblies import make_ac_name_map, make_name_ac_map
 from cdot import get_data_schema_int, __version__
 from cdot import models
 
-def get_ac_name_map(assembly_name):
+def _get_patch_assembly_name(assembly_name):
     if assembly_name == "GRCh37":
         assembly_name = 'GRCh37.p13'  # Original build didn't have MT
-    return make_ac_name_map(assembly_name)
+    elif assembly_name == "GRCh38":
+        assembly_name = 'GRCh38.p14'  # Has the patch scaffolds (NW_), some Ensembl transcripts are only on them
+    return assembly_name
+
+def get_ac_name_map(assembly_name):
+    return make_ac_name_map(_get_patch_assembly_name(assembly_name))
 
 def get_name_ac_map(assembly_name):
-    if assembly_name == "GRCh37":
-        assembly_name = 'GRCh37.p13'  # Original build didn't have MT
-    return make_name_ac_map(assembly_name)
+    return make_name_ac_map(_get_patch_assembly_name(assembly_name))
 
 
 
