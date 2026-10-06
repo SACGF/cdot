@@ -46,7 +46,7 @@ class Test(unittest.TestCase):
     REFSEQ_GFF3_FILENAME_GRCH37_ACTN3 = os.path.join(test_data_dir, "refseq_test.GRCh37.105.20220307.ACTN3.gff")
     REFSEQ_GFF3_FILENAME_GRCH38_ACTN3 = os.path.join(test_data_dir, "refseq_test.RS_2025_08.ACTN3.gff")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
-    # Ensembl GFF3 (chrMT up to the first CDS) - not supported, CDS rows have no protein version
+    # Ensembl GFF3 (chrMT up to the first CDS). CDS rows have the protein version from release 114
     ENSEMBL_115_GFF3_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.115.MT.gff3")
     # MT-ND1 (stop codon completed by the poly(A) tail), MT-TI (tRNA), MT-ATP8 and MT-ND6 (- strand)
     ENSEMBL_115_GTF_FILENAME_MT = os.path.join(test_data_dir, "ensembl_test.GRCh38.115.MT.gtf")
@@ -87,12 +87,27 @@ class Test(unittest.TestCase):
         protein = transcript.get("protein")
         self.assertEqual(protein, "ENSP00000350283.3")
 
-    def test_ensembl_gff3_not_supported(self):
-        """ Ensembl GFF3 CDS rows carry protein_id but no version, so only the Ensembl GTF is supported.
-            The error must say so rather than just 'missing version' @see https://github.com/SACGF/cdot/issues/101 """
+    def test_ensembl_gff3(self):
+        """ Ensembl GFF3 CDS rows have the protein version in 'version' from release 114
+            @see https://github.com/SACGF/cdot/issues/135 """
         parser = GFF3Parser(self.ENSEMBL_115_GFF3_FILENAME, "GRCh38", self.FAKE_URL)
-        with self.assertRaisesRegex(ValueError, "Ensembl GFF3 files do not carry protein versions"):
-            parser.get_genes_and_transcripts()
+        genes, transcripts = parser.get_genes_and_transcripts()
+        self.assertEqual(transcripts["ENST00000361390.2"].get("protein"), "ENSP00000354687.2")
+        # Gene version is read off ncRNA_gene rows too, not just 'gene'
+        self.assertEqual(transcripts["ENST00000387365.1"]["gene_version"], "ENSG00000210100.1")
+        self.assertIn("ENSG00000210100.1", genes)
+
+    def test_ensembl_gff3_before_114_not_supported(self):
+        """ Ensembl GFF3 CDS rows before release 114 have protein_id but no version.
+            The error must say so rather than just 'missing version' @see https://github.com/SACGF/cdot/issues/101 """
+        with open(self.ENSEMBL_115_GFF3_FILENAME) as f:
+            gff3 = f.read().replace("protein_id=ENSP00000354687;version=2", "protein_id=ENSP00000354687")
+        with tempfile.NamedTemporaryFile("w", suffix=".gff3") as f:
+            f.write(gff3)
+            f.flush()
+            parser = GFF3Parser(f.name, "GRCh38", self.FAKE_URL)
+            with self.assertRaisesRegex(ValueError, "Ensembl GFF3 files before release 114"):
+                parser.get_genes_and_transcripts()
 
     def test_refseq_gff3_2021(self):
         genome_build = "GRCh38"

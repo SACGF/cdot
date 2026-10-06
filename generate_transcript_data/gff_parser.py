@@ -98,13 +98,14 @@ class GFFParser(abc.ABC):
         return transcript_accession
 
     @staticmethod
-    def _get_gene_accession(feature) -> Optional[str]:
+    def _get_gene_accession(feature, gene_row: bool) -> Optional[str]:
         """ This can sometimes fail, in which case RefSeq will use dbxRef """
         gene_accession = None
         if gene_id := feature.attr.get("gene_id"):
-            # GFF3 gene rows put it in 'version', GTF gene rows (and everything else) in 'gene_version'
+            # GFF3 gene rows (gene, ncRNA_gene, pseudogene etc) put it in 'version',
+            # GTF gene rows (and everything else) in 'gene_version'
             gene_version = feature.attr.get("gene_version")
-            if feature.type == "gene":
+            if gene_row:
                 gene_version = feature.attr.get("version") or gene_version
 
             if gene_version:
@@ -128,14 +129,14 @@ class GTFParser(GFFParser):
 
         GFF2 only has 2 levels of feature hierarchy, so we have to build or 3 levels of gene/transcript/exons ourselves
 
-        We *have* to use GTF as Ensembl GFF3s don't include the protein version (just the ID)
+        Ensembl GFF3s only include the protein version from release 114, so the GTF is used for Ensembl
 
     """
     GTF_TRANSCRIPTS_DATA = CODING_FEATURES | {"exon"}
     FEATURE_ALLOW_LIST = GTF_TRANSCRIPTS_DATA | {"gene", "transcript", "Selenocysteine"}
 
     def handle_feature(self, feature):
-        gene_accession = self._get_gene_accession(feature)
+        gene_accession = self._get_gene_accession(feature, gene_row=feature.type == "gene")
         if gene_accession is None:
             gene_data = {}  # Empty
             # logging.warning("Read gene accession = None for %s", feature)  # Think this may not happen now with GTFs
@@ -200,7 +201,7 @@ class GFF3Parser(GFFParser):
         # Ensembl treats pseudogene as a transcript (has parent)
         if parent_id is None and (feature.type in self.GFF3_GENES or "gene_id" in feature.attr):
             # Gene
-            gene_accession = self._get_gene_accession(feature)
+            gene_accession = self._get_gene_accession(feature, gene_row=True)
             if not gene_accession:
                 gene_accession = self.consortium.get_gene_accession_fallback(feature)
                 if not gene_accession:

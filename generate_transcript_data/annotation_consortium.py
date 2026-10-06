@@ -170,13 +170,14 @@ class Ensembl(AnnotationConsortium):
 
     def get_protein_accession(self, feature) -> Optional[str]:
         # Ensembl GTF: CDS protein_id = ENSP00000477624 protein_version = 1
-        # Ensembl GFF3: CDS protein_id = ENSP00000477624  <----- can't use this one as no version
+        # Ensembl GFF3 (release 114+): CDS protein_id = ENSP00000477624 version = 1
+        # Ensembl GFF3 (release 113 and earlier): CDS protein_id = ENSP00000477624  <----- no version, can't use
         if feature.type == "CDS":
             if protein_id := feature.attr.get("protein_id"):
-                protein_version = feature.attr.get("protein_version")
+                protein_version = feature.attr.get("protein_version") or feature.attr.get("version")
                 if not protein_version:
-                    raise ValueError(f"Protein '{protein_id}' missing version. Ensembl GFF3 files do not carry "
-                                     f"protein versions, so cdot only supports Ensembl GTF "
+                    raise ValueError(f"Protein '{protein_id}' missing version. Ensembl GFF3 files before release "
+                                     f"114 do not carry protein versions, use the Ensembl GTF instead "
                                      f"(https://ftp.ensembl.org/pub/release-<N>/gtf/)")
                 return f"{protein_id}.{protein_version}"
         return None
