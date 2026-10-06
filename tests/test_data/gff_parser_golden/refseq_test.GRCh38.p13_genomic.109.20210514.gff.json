@@ -440,9 +440,21 @@
       ]
      ],
      "genome_mismatch": {
+      "alignment": {
+       "gap_count": 1,
+       "num_mismatch": 0,
+       "pct_coverage": 99.9768,
+       "pct_identity_gap": 99.9768
+      },
       "exceptions": [
        "annotated by transcript or proteomic data"
-      ]
+      ],
+      "protein": {
+       "non_frameshifting_indels": 1
+      },
+      "transcript": {
+       "non_frameshifting_indels": 1
+      }
      },
      "note": "isoform 1 is encoded by transcript variant 1%3B The RefSeq protein has 1 non-frameshifting indel compared to this genomic sequence",
      "source": [

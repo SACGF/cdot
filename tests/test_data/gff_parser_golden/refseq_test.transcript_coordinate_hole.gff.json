@@ -51,6 +51,13 @@
        null
       ]
      ],
+     "genome_mismatch": {
+      "alignment": {
+       "gap_count": 0,
+       "pct_coverage": 90.9,
+       "pct_identity_gap": 100
+      }
+     },
      "source": [
       "BestRefSeq"
      ],

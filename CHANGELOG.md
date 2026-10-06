@@ -1,5 +1,10 @@
 ## [unreleased]
 
+### Added
+
+- #115 - `FastaSeqFetcher` (and `ExonsFromGenomeFastaSeqFetcher`) warn when building a transcript sequence that the data says differs from the genome (the build's `genome_mismatch`, RefSeq only), as that isn't the real transcript sequence. Set with the new `genome_mismatch` constructor argument: `'warn'` (default, a `GenomeMismatchWarning` once per transcript), `'raise'` (`GenomeMismatchError`, a subclass of `HGVSDataNotAvailableError`, so `ChainedSeqFetcher` falls through to the next seqfetcher) or `'off'`. `FastaSeqFetcher` now also passes its `cache` argument on, which it used to ignore
+- #115 - `models.GenomeMismatch`: `transcript`, `protein` and `alignment` (data schema >= 0.2.36)
+
 ### Changed
 
 - #113 - The biocommons HGVS data providers now use the `GRCh38.p14` assembly map for `GRCh38` (as `GRCh37` already used `GRCh37.p13`), so patch scaffold contigs (`NW_`) are recognised

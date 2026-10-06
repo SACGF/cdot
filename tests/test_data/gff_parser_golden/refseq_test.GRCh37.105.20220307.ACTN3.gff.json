@@ -201,6 +201,12 @@
       "exceptions": [
        "annotated by transcript or proteomic data"
       ],
+      "protein": {
+       "substitutions": 1
+      },
+      "transcript": {
+       "substitutions": 1
+      },
       "transl_except": {
        "Arg": [
         577

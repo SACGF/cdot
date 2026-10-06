@@ -123,6 +123,19 @@ class GenomeMismatch(_DictAccessStruct, forbid_unknown_fields=False):
     exceptions: Optional[List[str]] = None
     """RefSeq ``exception`` values on the exon/CDS rows, verbatim, eg
     ``'annotated by transcript or proteomic data'``."""
+    transcript: Optional[Dict[str, Union[int, float]]] = None
+    """How the RefSeq transcript differs from this genome, counted from the RefSeq ``Note`` ('The RefSeq
+    transcript has 1 substitution, 1 non-frameshifting indel compared to this genomic sequence'): kind ->
+    count, eg ``{'substitutions': 1, 'non_frameshifting_indels': 1}``. Kinds are as RefSeq words them, in
+    snake_case plural. ``'pct_coverage'`` is set when the note says the transcript only partly aligns.
+    Data schema >= 0.2.36."""
+    protein: Optional[Dict[str, Union[int, float]]] = None
+    """As ``transcript``, for the protein ('The RefSeq protein has 1 substitution compared to this genomic
+    sequence'), ie how the protein differs from a translation of the genome. Data schema >= 0.2.36."""
+    alignment: Optional[Dict[str, Union[int, float]]] = None
+    """Statistics of the transcript's alignment to this genome (RefSeq ``cDNA_match`` rows), only present when
+    it isn't perfect: ``num_mismatch`` (substituted bases), ``gap_count`` (indels), ``pct_identity_gap`` and
+    ``pct_coverage``. Data schema >= 0.2.36."""
 
 
 class GenomeBuild(_DictAccessStruct, forbid_unknown_fields=False):
@@ -160,7 +173,8 @@ class GenomeBuild(_DictAccessStruct, forbid_unknown_fields=False):
     transcript_support_level: Optional[str] = None
     """Ensembl transcript support level (TSL); data schema >= 0.2.33."""
     genome_mismatch: Optional[GenomeMismatch] = None
-    """Where the source says the transcript differs from this genome; data schema >= 0.2.35."""
+    """Where the source says the transcript differs from this genome; data schema >= 0.2.35. A transcript
+    sequence built from the genome (eg ``FastaSeqFetcher``) won't match the real one."""
     warnings: Optional[Dict[str, Any]] = None
     """Problems cdot hit converting this transcript from the source annotation on this build, keyed by
     warning type. Absent when there were none; data schema >= 0.2.35. Types:

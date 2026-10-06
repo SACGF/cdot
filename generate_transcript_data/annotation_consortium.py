@@ -10,6 +10,7 @@ import gzip
 import logging
 import re
 from typing import Optional
+from urllib.parse import unquote
 
 from generate_transcript_data.transcript_builder import TranscriptBuilder
 
@@ -46,6 +47,10 @@ class AnnotationConsortium:
         """ Called for each exon/CDS etc row of a transcript (on the transcript's contig) """
         pass
 
+    def add_transcript_annotations(self, transcript_accession: str, feature, builder: TranscriptBuilder):
+        """ Called for the row that creates a GFF3 transcript (eg mRNA) """
+        pass
+
     def handle_transcript_feature(self, transcript_accession: str, feature, builder: TranscriptBuilder) -> bool:
         """ A row of a transcript that isn't a standard exon/CDS/codon. Returns whether it was handled """
         return False
@@ -64,6 +69,11 @@ class RefSeq(AnnotationConsortium):
     EXCEPTION_GENOME_MISMATCH = "annotated by transcript or proteomic data"
     EXCEPTION_RIBOSOMAL_SLIPPAGE = "ribosomal slippage"
     MITO_CONTIG = "NC_012920.1"
+    # Note=The RefSeq transcript has 1 substitution%2C 1 non-frameshifting indel compared to this genomic sequence
+    GENOME_MISMATCH_NOTE = re.compile(r"The RefSeq (transcript|protein) has (.+?) compared to this genomic sequence")
+    GENOME_MISMATCH_COVERAGE = re.compile(r"aligns at (\d+(?:\.\d+)?)% coverage")
+    # cDNA_match attributes describing how well the transcript aligns to the genome
+    ALIGNMENT_STATS = ["num_mismatch", "gap_count", "pct_identity_gap", "pct_coverage"]
 
     @staticmethod
     def _get_dbxref(feature):
@@ -102,7 +112,57 @@ class RefSeq(AnnotationConsortium):
             coordinates = [int(c) for c in re.findall(r"\d+", pos)]
             yield min(coordinates) - 1, max(coordinates), amino_acid
 
+    @staticmethod
+    def _number(value: str):
+        """ '100' -> 100, '99.962' -> 99.962 """
+        number = float(value)
+        return int(number) if number.is_integer() else number
+
+    @classmethod
+    def _parse_genome_mismatch_note(cls, note) -> dict[str, dict]:
+        """ RefSeq Note, eg 'The RefSeq transcript has 5 substitutions%2C 5 non-frameshifting indels compared to
+            this genomic sequence' -> {"transcript": {"substitutions": 5, "non_frameshifting_indels": 5}}
+            A Note can have other sentences, and one for the protein as well """
+        mismatches = {}
+        for sequence_type, differences in cls.GENOME_MISMATCH_NOTE.findall(unquote(note)):
+            counts = {}
+            for item in re.split(r",\s*|\s+and\s+", differences):
+                if m := re.fullmatch(r"(\d+) (.+)", item.strip()):
+                    kind = re.sub(r"[^a-z0-9]+", "_", m.group(2).lower()).strip("_")
+                    if not kind.endswith("s"):
+                        kind += "s"
+                    counts[kind] = int(m.group(1))
+                elif m := cls.GENOME_MISMATCH_COVERAGE.fullmatch(item.strip()):
+                    counts["pct_coverage"] = cls._number(m.group(1))
+                else:
+                    logging.warning("Unknown genome mismatch '%s' in Note: %s", item, note)
+            if counts:
+                mismatches[sequence_type] = counts
+        return mismatches
+
+    def _add_genome_mismatch_note(self, transcript_accession, feature, builder):
+        if note := feature.attr.get("Note"):
+            for sequence_type, counts in self._parse_genome_mismatch_note(note).items():
+                builder.set_genome_mismatch(transcript_accession, sequence_type, counts)
+
+    def _add_alignment_stats(self, transcript_accession, feature, builder):
+        """ cDNA_match rows repeat the stats for the whole alignment. Only kept if it isn't perfect """
+        stats = {}
+        for key in self.ALIGNMENT_STATS:
+            if (value := feature.attr.get(key)) is not None:
+                stats[key] = self._number(value)
+        imperfect = stats.get("num_mismatch", 0) > 0 or stats.get("gap_count", 0) > 0 \
+            or stats.get("pct_identity_gap", 100) < 100 or stats.get("pct_coverage", 100) < 100
+        if imperfect:
+            builder.set_genome_mismatch(transcript_accession, "alignment", stats)
+
+    def add_transcript_annotations(self, transcript_accession, feature, builder):
+        self._add_genome_mismatch_note(transcript_accession, feature, builder)
+
     def add_feature_annotations(self, transcript_accession, feature, builder):
+        self._add_genome_mismatch_note(transcript_accession, feature, builder)
+        if feature.type == "cDNA_match":
+            self._add_alignment_stats(transcript_accession, feature, builder)
         exceptions = self._parse_exception(feature.attr.get("exception"))
         if feature.type == "CDS":
             # RefSeq repeats these on every CDS row

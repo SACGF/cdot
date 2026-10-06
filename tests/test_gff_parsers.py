@@ -7,7 +7,9 @@ import tempfile
 from inspect import getsourcefile
 import unittest
 from generate_transcript_data.cdot_json import add_gencode_hgnc, combine_builds, write_cdot_json
+from generate_transcript_data.annotation_consortium import RefSeq
 from generate_transcript_data.gff_parser import GTFParser, GFF3Parser
+from generate_transcript_data.transcript_builder import TranscriptBuilder
 from generate_transcript_data.transcript_coordinates import get_transcript_position
 
 
@@ -403,7 +405,9 @@ class Test(unittest.TestCase):
                 if genome_build == "GRCh37":
                     self.assertEqual(build_data["genome_mismatch"],
                                      {"transl_except": {"Arg": [577]},
-                                      "exceptions": ["annotated by transcript or proteomic data"]})
+                                      "exceptions": ["annotated by transcript or proteomic data"],
+                                      "transcript": {"substitutions": 1},
+                                      "protein": {"substitutions": 1}})
                 else:
                     self.assertNotIn("genome_mismatch", build_data)
                 args[genome_build.lower()] = os.path.join(temp_dir, f"{genome_build}.json.gz")
@@ -416,6 +420,53 @@ class Test(unittest.TestCase):
                 combined = json.load(f)["transcripts"][transcript_accession]["genome_builds"]
         self.assertEqual(combined["GRCh37"]["genome_mismatch"]["transl_except"], {"Arg": [577]})
         self.assertNotIn("genome_mismatch", combined["GRCh38"])
+
+    def test_refseq_genome_mismatch_note(self):
+        """ #115 - RefSeq Note counts of how the transcript/protein differ from the genome """
+        parse = RefSeq._parse_genome_mismatch_note
+        self.assertEqual(parse("The RefSeq transcript has 1 substitution%2C 1 non-frameshifting indel "
+                               "compared to this genomic sequence"),
+                         {"transcript": {"substitutions": 1, "non_frameshifting_indels": 1}})
+        self.assertEqual(parse("The RefSeq transcript has 5 substitutions, 5 non-frameshifting indels "
+                               "compared to this genomic sequence"),
+                         {"transcript": {"substitutions": 5, "non_frameshifting_indels": 5}})
+        self.assertEqual(parse("The RefSeq transcript has 2 substitutions, 1 frameshift and aligns at 99% "
+                               "coverage compared to this genomic sequence"),
+                         {"transcript": {"substitutions": 2, "frameshifts": 1, "pct_coverage": 99}})
+        # Other sentences around it, and the protein
+        self.assertEqual(parse("isoform 1 is encoded by transcript variant 1%3B The RefSeq protein has "
+                               "1 non-frameshifting indel compared to this genomic sequence"),
+                         {"protein": {"non_frameshifting_indels": 1}})
+        self.assertEqual(parse("isoform 1 is encoded by transcript variant 1"), {})
+        with self.assertLogs(level="WARNING"):
+            self.assertEqual(parse("The RefSeq transcript has 1 substitution, something odd compared to "
+                                   "this genomic sequence"),
+                             {"transcript": {"substitutions": 1}})
+
+    def test_refseq_genome_mismatch_note_and_alignment(self):
+        """ #115 - Note counts and the cDNA_match alignment stats go in the build's genome_mismatch """
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_HISTORICAL, "GRCh38", self.FAKE_URL, skip_missing_parents=True)
+        _, transcripts = parser.get_genes_and_transcripts()
+        genome_mismatch = transcripts["NM_000066.1"]["genome_builds"]["GRCh38"]["genome_mismatch"]
+        self.assertEqual(genome_mismatch["transcript"], {"substitutions": 1, "non_frameshifting_indels": 1})
+        self.assertEqual(genome_mismatch["alignment"], {"num_mismatch": 1, "gap_count": 1,
+                                                        "pct_identity_gap": 99.8998, "pct_coverage": 100})
+
+    def test_refseq_genome_mismatch_alignment_only_when_imperfect(self):
+        """ #115 - cDNA_match rows of a perfect alignment don't add genome_mismatch """
+        class Feature:
+            def __init__(self, **attr):
+                self.attr = attr
+
+        builder = TranscriptBuilder("GRCh38", self.FAKE_URL, {})
+        perfect = {"num_mismatch": "0", "gap_count": "0", "pct_identity_gap": "100", "pct_coverage": "100"}
+        RefSeq()._add_alignment_stats("NM_000059.4", Feature(**perfect), builder)
+        self.assertNotIn("NM_000059.4", builder.transcript_genome_mismatch)
+
+        substitution = {**perfect, "num_mismatch": "1", "pct_identity_gap": "99.9"}
+        RefSeq()._add_alignment_stats("NM_001754.5", Feature(**substitution), builder)
+        self.assertEqual(builder.transcript_genome_mismatch["NM_001754.5"]["alignment"],
+                         {"num_mismatch": 1, "gap_count": 0, "pct_identity_gap": 99.9, "pct_coverage": 100})
 
     def test_transcript_position_across_coordinate_hole(self):
         """ A few RefSeq alignments leave a run of transcript bases unaligned between two exons, so
