@@ -86,6 +86,12 @@ class JsonDataProviderTestCase(AbstractEnsemblTestCase):
         seqfetcher = ChainedSeqFetcher(mock_seqfetcher, SeqFetcher())
         cls.json_data_provider = JSONDataProvider([test_json_file], seqfetcher=seqfetcher)
 
+    def test_assembly_map_has_patches(self):
+        """ GRCh38 uses GRCh38.p14, so patch scaffolds (NW_) are recognised (#113) """
+        assembly_map = self.json_data_provider.get_assembly_map("GRCh38")
+        self.assertEqual(assembly_map["NW_009646203.1"], "HG2217_PATCH")
+        self.assertEqual(assembly_map["NC_000011.10"], "11")
+
 
 class EnsemblTarkDataProviderTestCase(AbstractEnsemblTestCase):
     @classmethod

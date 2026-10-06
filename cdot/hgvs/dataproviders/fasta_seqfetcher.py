@@ -205,8 +205,11 @@ class FastaSeqFetcher(PrefixSeqFetcher):
         default_seqfetcher = ExonsFromGenomeFastaSeqFetcher(*args, cache=cache, genome_mismatch=genome_mismatch)
         super().__init__(default_seqfetcher=default_seqfetcher)
         self.genome_fasta_seq_fetcher = GenomeFastaSeqFetcher(*args)
+        # Genomic contigs: chromosomes, and patch/alt scaffolds (some Ensembl transcripts are only on patches)
         self.prefix_seqfetchers.update({
             "NC_": self.genome_fasta_seq_fetcher,
+            "NT_": self.genome_fasta_seq_fetcher,
+            "NW_": self.genome_fasta_seq_fetcher,
         })
 
     @property
