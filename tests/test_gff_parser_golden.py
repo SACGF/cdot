@@ -33,6 +33,8 @@ FIXTURES = [
     ("ensembl_test.GRCh38.115.selenoprotein.gtf", GTFParser, "GRCh38", {}),
     ("ensembl_test.GRCh38.115.MT.gtf", GTFParser, "GRCh38", {}),
     ("ensembl_test.GRCh38.116.chr21_slice.gtf.gz", GTFParser, "GRCh38", {}),
+    # Ensembl GFF3 (protein versions on CDS rows from release 114)
+    ("ensembl_test.GRCh38.115.MT.gff3", GFF3Parser, "GRCh38", {}),
     # UCSC GTF (no versions on anything)
     ("hg19_chrY_300kb_genes.gtf", GTFParser, "GRCh37", {}),
     # RefSeq GFF3
@@ -71,9 +73,7 @@ class TestGFFParserGolden(unittest.TestCase):
         fixtures = {f for f in os.listdir(TEST_DATA_DIR)
                     if f.endswith((".gtf", ".gtf.gz", ".gff", ".gff.gz", ".gff3", ".gff3.gz"))}
         covered = {f for f, _, _, _ in FIXTURES}
-        # The Ensembl GFF3 is only used to check it is rejected, see test_gff_parsers.py
-        not_supported = {"ensembl_test.GRCh38.115.MT.gff3"}
-        self.assertEqual(fixtures - covered - not_supported, set(), "GTF/GFF fixtures without a golden file")
+        self.assertEqual(fixtures - covered, set(), "GTF/GFF fixtures without a golden file")
 
 
 def _make_test(fixture, parser_class, genome_build, kwargs):

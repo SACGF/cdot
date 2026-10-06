@@ -1,0 +1,321 @@
+{
+ "genes": {
+  "ENSG00000198888.2": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "mitochondrially encoded NADH:ubiquinone oxidoreductase core subunit 1 [Source:HGNC Symbol%3BAcc:HGNC:7455]",
+   "gene_symbol": "MT-ND1",
+   "hgnc": "7455",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000209082.1": {
+   "biotype": [
+    "Mt_tRNA",
+    "ncRNA",
+    "tRNA"
+   ],
+   "description": "mitochondrially encoded tRNA-Leu (UUA/G) 1 [Source:HGNC Symbol%3BAcc:HGNC:7490]",
+   "gene_symbol": "MT-TL1",
+   "hgnc": "7490",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000210049.1": {
+   "biotype": [
+    "Mt_tRNA",
+    "ncRNA",
+    "tRNA"
+   ],
+   "description": "mitochondrially encoded tRNA-Phe (UUU/C) [Source:HGNC Symbol%3BAcc:HGNC:7481]",
+   "gene_symbol": "MT-TF",
+   "hgnc": "7481",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000210077.1": {
+   "biotype": [
+    "Mt_tRNA",
+    "ncRNA",
+    "tRNA"
+   ],
+   "description": "mitochondrially encoded tRNA-Val (GUN) [Source:HGNC Symbol%3BAcc:HGNC:7500]",
+   "gene_symbol": "MT-TV",
+   "hgnc": "7500",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000210082.2": {
+   "biotype": [
+    "Mt_rRNA",
+    "ncRNA",
+    "rRNA"
+   ],
+   "description": "mitochondrially encoded 16S rRNA [Source:HGNC Symbol%3BAcc:HGNC:7471]",
+   "gene_symbol": "MT-RNR2",
+   "hgnc": "7471",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000210100.1": {
+   "biotype": [
+    "Mt_tRNA",
+    "ncRNA",
+    "tRNA"
+   ],
+   "description": "mitochondrially encoded tRNA-Ile (AUU/C) [Source:HGNC Symbol%3BAcc:HGNC:7488]",
+   "gene_symbol": "MT-TI",
+   "hgnc": "7488",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  },
+  "ENSG00000211459.2": {
+   "biotype": [
+    "Mt_rRNA",
+    "ncRNA",
+    "rRNA"
+   ],
+   "description": "mitochondrially encoded 12S rRNA [Source:HGNC Symbol%3BAcc:HGNC:7470]",
+   "gene_symbol": "MT-RNR1",
+   "hgnc": "7470",
+   "source": [
+    "insdc"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "ENST00000361390.2": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "MT-ND1",
+   "gene_version": "ENSG00000198888.2",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 4262,
+     "cds_start": 3306,
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       3306,
+       4262,
+       0,
+       1,
+       956,
+       null
+      ]
+     ],
+     "source": [
+      "insdc"
+     ],
+     "strand": "+",
+     "tag": "gencode_basic,gencode_primary,Ensembl_canonical",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7455",
+   "id": "ENST00000361390.2",
+   "protein": "ENSP00000354687.2",
+   "start_codon": 0,
+   "stop_codon": 956,
+   "translation": {
+    "transl_table": 2
+   }
+  },
+  "ENST00000386347.1": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "gene_name": "MT-TL1",
+   "gene_version": "ENSG00000209082.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       3229,
+       3304,
+       0,
+       1,
+       75,
+       null
+      ]
+     ],
+     "source": [
+      "insdc"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7490",
+   "id": "ENST00000386347.1"
+  },
+  "ENST00000387314.1": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "gene_name": "MT-TF",
+   "gene_version": "ENSG00000210049.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       576,
+       647,
+       0,
+       1,
+       71,
+       null
+      ]
+     ],
+     "source": [
+      "insdc"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7481",
+   "id": "ENST00000387314.1"
+  },
+  "ENST00000387342.1": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "gene_name": "MT-TV",
+   "gene_version": "ENSG00000210077.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       1601,
+       1670,
+       0,
+       1,
+       69,
+       null
+      ]
+     ],
+     "source": [
+      "insdc"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7500",
+   "id": "ENST00000387342.1"
+  },
+  "ENST00000387347.2": {
+   "biotype": [
+    "ncRNA",
+    "rRNA"
+   ],
+   "gene_name": "MT-RNR2",
+   "gene_version": "ENSG00000210082.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       1670,
+       3229,
+       0,
+       1,
+       1559,
+       null
+      ]
+     ],
+     "source": [
+      "insdc"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7471",
+   "id": "ENST00000387347.2"
+  },
+  "ENST00000387365.1": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "gene_name": "MT-TI",
+   "gene_version": "ENSG00000210100.1",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       4262,
+       4331,
+       0,
+       1,
+       69,
+       null
+      ]
+     ],
+     "source": [
+      "insdc"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7488",
+   "id": "ENST00000387365.1"
+  },
+  "ENST00000389680.2": {
+   "biotype": [
+    "ncRNA",
+    "rRNA"
+   ],
+   "gene_name": "MT-RNR1",
+   "gene_version": "ENSG00000211459.2",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       647,
+       1601,
+       0,
+       1,
+       954,
+       null
+      ]
+     ],
+     "source": [
+      "insdc"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7470",
+   "id": "ENST00000389680.2"
+  }
+ }
+}
