@@ -187,6 +187,18 @@
           "default": null,
           "description": "Non-zero if the transcript is annotated as partial/incomplete."
         },
+        "fake": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`True` for a transcript cdot made up because the annotation has none: the RefSeq mitochondrial genes (`fake-rna-ND1`, `fake-rna-TRNF` etc on `NC_012920.1`), which have no NM_/NR_ accession. It has coordinates (and a protein for the 13 coding genes) but there is no transcript sequence record, so don't write `c.`/`n.` HGVS against it, use `NC_012920.1:m.` instead. The ID has no version. Absent (not `False`) for real transcripts. Data schema >= 0.2.37."
+        },
         "translation": {
           "anyOf": [
             {

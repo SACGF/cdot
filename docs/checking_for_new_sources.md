@@ -136,8 +136,9 @@ generic conventions fail on RefSeq. Each download streams the whole compressed f
 few hundred lines, and takes a few seconds.
 
 What to expect (Ensembl 116 and RefSeq RS_2025_08 gave these): Ensembl has 37 transcripts, 13 with a
-protein (eg `ENST00000361390.2` with `ENSP00000354687.2`), and RefSeq has 13 transcripts, all with a
-protein (`fake-rna-ATP6` etc, the RefSeq mito fakes). Every coding transcript should have
+protein (eg `ENST00000361390.2` with `ENSP00000354687.2`), and RefSeq has 37 transcripts, 13 with a
+protein (`fake-rna-ATP6` etc, the RefSeq mito fakes, all with `"fake": true`; the 22 tRNA and 2 rRNA
+genes are `fake-rna-TRNF`, `fake-rna-RNR1` etc). Every coding transcript should have
 `translation` `{"transl_table": 2}`. Fewer transcripts, missing proteins or a traceback means the
 format changed. Then run the tests (`python -m pytest tests/`). The real build happens in the
 [data-release workflow](data_release_workflow.md).

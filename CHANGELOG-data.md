@@ -11,6 +11,11 @@ is built and published see [docs/data_release_workflow.md](docs/data_release_wor
 
 ## [unreleased]
 
+### Added
+
+- #145 - Fake transcripts for the 22 mitochondrial tRNA and 2 rRNA genes in RefSeq (`fake-rna-TRNF`, `fake-rna-RNR1` etc, from the GFF `tRNA`/`rRNA` rows), so all 37 MT genes have a RefSeq transcript as they do in Ensembl, not just the 13 coding ones. They are non-coding: `biotype` has `tRNA` or `rRNA`, and there is no `protein`, `start_codon`/`stop_codon` or `cds_start`/`cds_end`. Like the coding fakes, the IDs have no version
+- #145 - `"fake": true` on the RefSeq mitochondrial fake transcripts (the 13 existing `fake-rna-ND1` etc and the 24 new ones), at the top level of the transcript next to `id`. These have coordinates but no transcript sequence record, so consumers should refuse to write `c.`/`n.` HGVS against them and use `NC_012920.1:m.` instead. Real transcripts omit the field, so consumers no longer need to match on the `fake-rna-` prefix
+
 ## [0.2.36] - 2026-10-06
 
 ### Added

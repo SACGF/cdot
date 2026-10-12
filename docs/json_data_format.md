@@ -47,6 +47,7 @@ A single transcript and its per-build coordinates.
 | `cdot` | string or null | no | cdot version that generated/last touched this transcript record. |
 | `source` | array of string or null | no | Annotation source(s) this transcript came from (e.g. `['NCBI']`). |
 | `partial` | integer or null | no | Non-zero if the transcript is annotated as partial/incomplete. |
+| `fake` | boolean or null | no | `True` for a transcript cdot made up because the annotation has none: the RefSeq mitochondrial genes (`fake-rna-ND1`, `fake-rna-TRNF` etc on `NC_012920.1`), which have no NM_/NR_ accession. It has coordinates (and a protein for the 13 coding genes) but there is no transcript sequence record, so don't write `c.`/`n.` HGVS against it, use `NC_012920.1:m.` instead. The ID has no version. Absent (not `False`) for real transcripts. Data schema >= 0.2.37. |
 | `translation` | [Translation](#translation) or null | no | How to translate the CDS where the standard genetic code isn't enough (coding only). The same on every genome build. Absent when the source has nothing to add. Data schema >= 0.2.35. |
 
 ## Translation

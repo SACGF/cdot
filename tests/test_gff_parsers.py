@@ -54,9 +54,17 @@ class Test(unittest.TestCase):
     ENSEMBL_115_GTF_FILENAME_MT = os.path.join(test_data_dir, "ensembl_test.GRCh38.115.MT.gtf")
     FAKE_URL = "http://fake.url"
 
+    # RefSeq has no transcript accessions on MT so cdot makes fake ones for all 37 genes (issues #72, #145)
     FAKE_MT_TRANSCRIPTS = [
         "fake-rna-ATP6", "fake-rna-ATP8", "fake-rna-COX1", "fake-rna-COX2", "fake-rna-COX3", "fake-rna-CYTB",
         "fake-rna-ND1", "fake-rna-ND2", "fake-rna-ND3", "fake-rna-ND4", "fake-rna-ND4L", "fake-rna-ND5", "fake-rna-ND6"
+    ]
+    FAKE_MT_RRNA_TRANSCRIPTS = ["fake-rna-RNR1", "fake-rna-RNR2"]
+    FAKE_MT_TRNA_TRANSCRIPTS = [
+        "fake-rna-TRNA", "fake-rna-TRNC", "fake-rna-TRND", "fake-rna-TRNE", "fake-rna-TRNF", "fake-rna-TRNG",
+        "fake-rna-TRNH", "fake-rna-TRNI", "fake-rna-TRNK", "fake-rna-TRNL1", "fake-rna-TRNL2", "fake-rna-TRNM",
+        "fake-rna-TRNN", "fake-rna-TRNP", "fake-rna-TRNQ", "fake-rna-TRNR", "fake-rna-TRNS1", "fake-rna-TRNS2",
+        "fake-rna-TRNT", "fake-rna-TRNV", "fake-rna-TRNW", "fake-rna-TRNY",
     ]
 
     def _test_exon_length(self, transcripts, genome_build, transcript_id, expected_length):
@@ -230,8 +238,12 @@ class Test(unittest.TestCase):
         parser = GFF3Parser(filename, genome_build, self.FAKE_URL)
         genes, transcripts = parser.get_genes_and_transcripts()
 
-        for transcript_accession in self.FAKE_MT_TRANSCRIPTS:
-            self.assertIn(transcript_accession, transcripts)
+        all_fakes = self.FAKE_MT_TRANSCRIPTS + self.FAKE_MT_RRNA_TRANSCRIPTS + self.FAKE_MT_TRNA_TRANSCRIPTS
+        self.assertEqual(sorted(transcripts), sorted(all_fakes))  # All 37 MT genes, nothing else
+        for transcript_accession in all_fakes:
+            transcript = transcripts[transcript_accession]
+            self.assertIs(transcript["fake"], True, transcript_accession)
+            self.assertEqual(transcript["genome_builds"][genome_build]["contig"], "NC_012920.1")
 
         transcript = transcripts["fake-rna-ATP6"]
         exons = transcript["genome_builds"][genome_build]["exons"]
@@ -239,9 +251,33 @@ class Test(unittest.TestCase):
         self.assertEqual(first_exon[0], 8526)
         self.assertEqual(first_exon[1], 9207)
 
+        # tRNA/rRNA: coordinates from the tRNA/rRNA + exon rows, not coding (issue #145)
+        for transcript_accession, biotype in [("fake-rna-TRNF", "tRNA"), ("fake-rna-RNR1", "rRNA")]:
+            transcript = transcripts[transcript_accession]
+            self.assertEqual(transcript["biotype"], {"ncRNA", biotype})
+            for key in ["protein", "start_codon", "stop_codon", "translation"]:
+                self.assertNotIn(key, transcript, transcript_accession)
+            self.assertNotIn("cds_start", transcript["genome_builds"][genome_build], transcript_accession)
+        trnf_exons = transcripts["fake-rna-TRNF"]["genome_builds"][genome_build]["exons"]
+        self.assertEqual(trnf_exons, [(576, 647, 0, 1, 71, None)])  # GFF tRNA 577..647
+        rnr1_exons = transcripts["fake-rna-RNR1"]["genome_builds"][genome_build]["exons"]
+        self.assertEqual(rnr1_exons, [(647, 1601, 0, 1, 954, None)])  # GFF rRNA 648..1601
+        self.assertEqual(transcripts["fake-rna-TRNF"]["gene_version"], "4558")
+        self.assertEqual(genes["4558"]["gene_symbol"], "TRNF")
+        return transcripts
+
+    def test_real_transcripts_not_fake(self):
+        """ Only the RefSeq mito fakes get "fake", real transcripts omit it (issue #145) """
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_GRCH38_ACTN3, "GRCh38", self.FAKE_URL)
+        _, transcripts = parser.get_genes_and_transcripts()
+        self.assertTrue(transcripts)
+        for transcript_accession, transcript in transcripts.items():
+            self.assertNotIn("fake", transcript, transcript_accession)
+
     def test_mito_mrna(self):
         """ Need to make fake MT transcripts for RefSeq @see https://github.com/SACGF/cdot/issues/72 """
-        self._test_mito(self.REFSEQ_GFF3_FILENAME_GRCH38_MT, "GRCh38")
+        transcripts = self._test_mito(self.REFSEQ_GFF3_FILENAME_GRCH38_MT, "GRCh38")
+        self.assertEqual(transcripts["fake-rna-ATP6"]["protein"], "YP_003024031.1")
 
     def test_mito_no_mrna(self):
         """ Need to make fake MT transcripts for RefSeq @see https://github.com/SACGF/cdot/issues/72 """

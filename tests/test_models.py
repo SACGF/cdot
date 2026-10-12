@@ -227,6 +227,16 @@ class TestModels(unittest.TestCase):
         self.assertEqual(tx.gene_name, "AOAH")
         self.assertEqual(tx.genome_builds["GRCh37"].exons[0].exon_id, 20)
 
+    def test_transcript_fake(self):
+        """RefSeq mito fakes carry "fake": true, real transcripts leave it out (issue #145)."""
+        tx = models.transcript_from_dict({"id": "fake-rna-TRNF", "gene_name": "TRNF", "fake": True,
+                                          "genome_builds": {"GRCh38": {"contig": "NC_012920.1", "strand": "+",
+                                                                       "exons": [[576, 647, 0, 1, 71, None]]}}})
+        self.assertIs(tx.fake, True)
+        with open(REFSEQ_JSON) as f:
+            raw = json.load(f)
+        self.assertIsNone(models.transcript_from_dict(raw["transcripts"]["NM_001637.3"]).fake)
+
     def test_typed_matches_raw_for_all_transcripts(self):
         """Data-driven: the typed view faithfully represents the raw JSON."""
         for path in (REFSEQ_JSON, ENSEMBL_JSON):

@@ -1,5 +1,9 @@
 ## [unreleased]
 
+### Added
+
+- #145 - `models.Transcript.fake`: `True` for the RefSeq mitochondrial fake transcripts (data schema >= 0.2.37), `None` for real ones
+
 ## [0.2.33] - 2026-10-06
 
 ### Added
