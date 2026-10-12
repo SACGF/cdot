@@ -28,6 +28,7 @@
   },
   "4511": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -183,6 +184,7 @@
   },
   "4549": {
    "biotype": [
+    "ncRNA",
     "rRNA"
    ],
    "description": null,
@@ -195,6 +197,7 @@
   },
   "4550": {
    "biotype": [
+    "ncRNA",
     "rRNA"
    ],
    "description": null,
@@ -207,6 +210,7 @@
   },
   "4553": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -219,6 +223,7 @@
   },
   "4555": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -231,6 +236,7 @@
   },
   "4556": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -243,6 +249,7 @@
   },
   "4558": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -255,6 +262,7 @@
   },
   "4563": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -267,6 +275,7 @@
   },
   "4564": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -279,6 +288,7 @@
   },
   "4565": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -291,6 +301,7 @@
   },
   "4566": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -303,6 +314,7 @@
   },
   "4567": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -315,6 +327,7 @@
   },
   "4568": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -327,6 +340,7 @@
   },
   "4569": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -339,6 +353,7 @@
   },
   "4570": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -351,6 +366,7 @@
   },
   "4571": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -363,6 +379,7 @@
   },
   "4572": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -375,6 +392,7 @@
   },
   "4573": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -387,6 +405,7 @@
   },
   "4574": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -399,6 +418,7 @@
   },
   "4575": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -411,6 +431,7 @@
   },
   "4576": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -423,6 +444,7 @@
   },
   "4577": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -435,6 +457,7 @@
   },
   "4578": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -447,6 +470,7 @@
   },
   "4579": {
    "biotype": [
+    "ncRNA",
     "tRNA"
    ],
    "description": null,
@@ -463,6 +487,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "ATP6",
    "gene_version": "4508",
    "genome_builds": {
@@ -501,6 +526,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "ATP8",
    "gene_version": "4509",
    "genome_builds": {
@@ -539,6 +565,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "COX1",
    "gene_version": "4512",
    "genome_builds": {
@@ -577,6 +604,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "COX2",
    "gene_version": "4513",
    "genome_builds": {
@@ -615,6 +643,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "COX3",
    "gene_version": "4514",
    "genome_builds": {
@@ -658,6 +687,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "CYTB",
    "gene_version": "4519",
    "genome_builds": {
@@ -701,6 +731,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "ND1",
    "gene_version": "4535",
    "genome_builds": {
@@ -744,6 +775,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "ND2",
    "gene_version": "4536",
    "genome_builds": {
@@ -787,6 +819,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "ND3",
    "gene_version": "4537",
    "genome_builds": {
@@ -830,6 +863,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "ND4",
    "gene_version": "4538",
    "genome_builds": {
@@ -873,6 +907,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "ND4L",
    "gene_version": "4539",
    "genome_builds": {
@@ -910,6 +945,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "ND5",
    "gene_version": "4540",
    "genome_builds": {
@@ -947,6 +983,7 @@
    "biotype": [
     "mRNA"
    ],
+   "fake": true,
    "gene_name": "ND6",
    "gene_version": "4541",
    "genome_builds": {
@@ -979,6 +1016,774 @@
    "translation": {
     "transl_table": 2
    }
+  },
+  "fake-rna-RNR1": {
+   "biotype": [
+    "ncRNA",
+    "rRNA"
+   ],
+   "fake": true,
+   "gene_name": "RNR1",
+   "gene_version": "4549",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       647,
+       1601,
+       0,
+       1,
+       954,
+       null
+      ]
+     ],
+     "note": "12S rRNA%3B 12S ribosomal RNA",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7470",
+   "id": "fake-rna-RNR1"
+  },
+  "fake-rna-RNR2": {
+   "biotype": [
+    "ncRNA",
+    "rRNA"
+   ],
+   "fake": true,
+   "gene_name": "RNR2",
+   "gene_version": "4550",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       1670,
+       3229,
+       0,
+       1,
+       1559,
+       null
+      ]
+     ],
+     "note": "16S ribosomal RNA%3B 16S rRNA",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7471",
+   "id": "fake-rna-RNR2"
+  },
+  "fake-rna-TRNA": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNA",
+   "gene_version": "4553",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       5586,
+       5655,
+       0,
+       1,
+       69,
+       null
+      ]
+     ],
+     "note": "NAR: 0097",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7475",
+   "id": "fake-rna-TRNA"
+  },
+  "fake-rna-TRNC": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNC",
+   "gene_version": "4511",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       5760,
+       5826,
+       0,
+       1,
+       66,
+       null
+      ]
+     ],
+     "note": "NAR: 0497",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7477",
+   "id": "fake-rna-TRNC"
+  },
+  "fake-rna-TRND": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRND",
+   "gene_version": "4555",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       7517,
+       7585,
+       0,
+       1,
+       68,
+       null
+      ]
+     ],
+     "note": "NAR: 0397",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7478",
+   "id": "fake-rna-TRND"
+  },
+  "fake-rna-TRNE": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNE",
+   "gene_version": "4556",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       14673,
+       14742,
+       0,
+       1,
+       69,
+       null
+      ]
+     ],
+     "note": "NAR: 0697",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7479",
+   "id": "fake-rna-TRNE"
+  },
+  "fake-rna-TRNF": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNF",
+   "gene_version": "4558",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       576,
+       647,
+       0,
+       1,
+       71,
+       null
+      ]
+     ],
+     "note": "NAR: 1455",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7481",
+   "id": "fake-rna-TRNF"
+  },
+  "fake-rna-TRNG": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNG",
+   "gene_version": "4563",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       9990,
+       10058,
+       0,
+       1,
+       68,
+       null
+      ]
+     ],
+     "note": "NAR: 0797",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7486",
+   "id": "fake-rna-TRNG"
+  },
+  "fake-rna-TRNH": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNH",
+   "gene_version": "4564",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       12137,
+       12206,
+       0,
+       1,
+       69,
+       null
+      ]
+     ],
+     "note": "NAR: 0897",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7487",
+   "id": "fake-rna-TRNH"
+  },
+  "fake-rna-TRNI": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNI",
+   "gene_version": "4565",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       4262,
+       4331,
+       0,
+       1,
+       69,
+       null
+      ]
+     ],
+     "note": "NAR: 0997",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7488",
+   "id": "fake-rna-TRNI"
+  },
+  "fake-rna-TRNK": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNK",
+   "gene_version": "4566",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       8294,
+       8364,
+       0,
+       1,
+       70,
+       null
+      ]
+     ],
+     "note": "NAR: 1197",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7489",
+   "id": "fake-rna-TRNK"
+  },
+  "fake-rna-TRNL1": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNL1",
+   "gene_version": "4567",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       3229,
+       3304,
+       0,
+       1,
+       75,
+       null
+      ]
+     ],
+     "note": "NAR: 1054",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7490",
+   "id": "fake-rna-TRNL1"
+  },
+  "fake-rna-TRNL2": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNL2",
+   "gene_version": "4568",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       12265,
+       12336,
+       0,
+       1,
+       71,
+       null
+      ]
+     ],
+     "note": "NAR: 1097",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7491",
+   "id": "fake-rna-TRNL2"
+  },
+  "fake-rna-TRNM": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNM",
+   "gene_version": "4569",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       4401,
+       4469,
+       0,
+       1,
+       68,
+       null
+      ]
+     ],
+     "note": "NAR: 1297",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7492",
+   "id": "fake-rna-TRNM"
+  },
+  "fake-rna-TRNN": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNN",
+   "gene_version": "4570",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       5656,
+       5729,
+       0,
+       1,
+       73,
+       null
+      ]
+     ],
+     "note": "NAR: 0297",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7493",
+   "id": "fake-rna-TRNN"
+  },
+  "fake-rna-TRNP": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNP",
+   "gene_version": "4571",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       15955,
+       16023,
+       0,
+       1,
+       68,
+       null
+      ]
+     ],
+     "note": "NAR: 1597",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7494",
+   "id": "fake-rna-TRNP"
+  },
+  "fake-rna-TRNQ": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNQ",
+   "gene_version": "4572",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       4328,
+       4400,
+       0,
+       1,
+       72,
+       null
+      ]
+     ],
+     "note": "NAR: 0597",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7495",
+   "id": "fake-rna-TRNQ"
+  },
+  "fake-rna-TRNR": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNR",
+   "gene_version": "4573",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       10404,
+       10469,
+       0,
+       1,
+       65,
+       null
+      ]
+     ],
+     "note": "NAR: 0197",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7496",
+   "id": "fake-rna-TRNR"
+  },
+  "fake-rna-TRNS1": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNS1",
+   "gene_version": "4574",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       7445,
+       7514,
+       0,
+       1,
+       69,
+       null
+      ]
+     ],
+     "note": "NAR: 1697",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7497",
+   "id": "fake-rna-TRNS1"
+  },
+  "fake-rna-TRNS2": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNS2",
+   "gene_version": "4575",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       12206,
+       12265,
+       0,
+       1,
+       59,
+       null
+      ]
+     ],
+     "note": "NAR: 1656",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7498",
+   "id": "fake-rna-TRNS2"
+  },
+  "fake-rna-TRNT": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNT",
+   "gene_version": "4576",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       15887,
+       15953,
+       0,
+       1,
+       66,
+       null
+      ]
+     ],
+     "note": "NAR: 1797",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7499",
+   "id": "fake-rna-TRNT"
+  },
+  "fake-rna-TRNV": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNV",
+   "gene_version": "4577",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       1601,
+       1670,
+       0,
+       1,
+       69,
+       null
+      ]
+     ],
+     "note": "NAR: 2053",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7500",
+   "id": "fake-rna-TRNV"
+  },
+  "fake-rna-TRNW": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNW",
+   "gene_version": "4578",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       5511,
+       5579,
+       0,
+       1,
+       68,
+       null
+      ]
+     ],
+     "note": "NAR: 1897",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7501",
+   "id": "fake-rna-TRNW"
+  },
+  "fake-rna-TRNY": {
+   "biotype": [
+    "ncRNA",
+    "tRNA"
+   ],
+   "fake": true,
+   "gene_name": "TRNY",
+   "gene_version": "4579",
+   "genome_builds": {
+    "GRCh38": {
+     "contig": "NC_012920.1",
+     "exons": [
+      [
+       5825,
+       5891,
+       0,
+       1,
+       66,
+       null
+      ]
+     ],
+     "note": "NAR: 1997",
+     "source": [
+      "RefSeq"
+     ],
+     "strand": "-",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "7502",
+   "id": "fake-rna-TRNY"
   }
  }
 }

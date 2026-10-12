@@ -29,6 +29,7 @@ class TranscriptBuilder:
         self.genes = {}
         self.transcripts = {}
         self.transcript_proteins = {}
+        self.fake_transcripts = set()  # No sequence record behind these, eg RefSeq mitochondrial genes
         self.transcript_genome_mismatch = defaultdict(dict)  # Extra genome_mismatch keys, eg note counts
         # Store features in separate dict as we don't need to write all as JSON
         self.transcript_features_by_type = defaultdict(lambda: defaultdict(list))
@@ -85,6 +86,11 @@ class TranscriptBuilder:
 
     def set_protein(self, transcript_accession, protein_accession):
         self.transcript_proteins[transcript_accession] = protein_accession
+
+    def set_fake(self, transcript_accession):
+        """ A transcript cdot made up because the annotation has none (RefSeq mitochondrial genes). It has
+            coordinates but no transcript sequence record, so consumers mustn't write HGVS against it """
+        self.fake_transcripts.add(transcript_accession)
 
     def add_tags(self, transcript_data, feature):
         # Ideally we only want to get this once per transcript
@@ -178,6 +184,8 @@ class TranscriptBuilder:
         for transcript_accession, transcript_data in self.transcripts.items():
             if protein := self.transcript_proteins.get(transcript_accession):
                 transcript_data["protein"] = protein
+            if transcript_accession in self.fake_transcripts:
+                transcript_data["fake"] = True
 
             genome_build_coordinates = {
                 "url": self.url,

@@ -63,12 +63,13 @@ class AnnotationConsortium:
 
 class RefSeq(AnnotationConsortium):
     """ RefSeq GFF3: IDs in Dbxref, exceptions and transl_except on CDS rows, and the mitochondrial
-        proteins (YP_) have no NM_ transcript so we make fake ones """
+        genes have no NM_/NR_ transcripts so we make fake ones """
     name = "refseq"
 
     EXCEPTION_GENOME_MISMATCH = "annotated by transcript or proteomic data"
     EXCEPTION_RIBOSOMAL_SLIPPAGE = "ribosomal slippage"
     MITO_CONTIG = "NC_012920.1"
+    MITO_FAKE_TRANSCRIPT_FEATURES = {"mRNA", "tRNA", "rRNA"}  # Transcript rows of the 37 MT genes
     # Note=The RefSeq transcript has 1 substitution%2C 1 non-frameshifting indel compared to this genomic sequence
     GENOME_MISMATCH_NOTE = re.compile(r"The RefSeq (transcript|protein) has (.+?) compared to this genomic sequence")
     GENOME_MISMATCH_COVERAGE = re.compile(r"aligns at (\d+(?:\.\d+)?)% coverage")
@@ -184,12 +185,14 @@ class RefSeq(AnnotationConsortium):
                 builder.add_genome_mismatch_exception(transcript_accession, exception)
 
     def get_fake_transcript_accession_and_parent(self, feature, builder):
-        # In RefSeq there are no transcript_ids for MT genes/mRNAs
-        # The proteins have "YP_" prefix (no corresp. NM_ transcript, so we will create fake ones
-        # Some GFFs have 'mRNA' features, however some only have gene and CDS
+        """ RefSeq has no transcript accessions for the mitochondrial genes (the proteins are YP_ with no NM_,
+            and the tRNA/rRNA genes have no NR_), so we make fake ones from the feature IDs, marked "fake" so
+            consumers know there is no transcript sequence (issues #72, #145).
+            Some GFFs have 'mRNA' features for the coding genes, however some (eg GRCh37) only have gene and CDS """
         if feature.iv.chrom == self.MITO_CONTIG:
-            if feature.type == "mRNA":
+            if feature.type in self.MITO_FAKE_TRANSCRIPT_FEATURES:
                 transcript_accession = "fake-" + feature.attr.get("ID")
+                builder.set_fake(transcript_accession)
                 return transcript_accession, None
             elif feature.type == "CDS":
                 GENE_PREFIX = "gene-"
@@ -198,6 +201,7 @@ class RefSeq(AnnotationConsortium):
                     if parent.startswith(GENE_PREFIX):
                         rna_parent = parent.replace(GENE_PREFIX, RNA_PREFIX)
                         transcript_accession = "fake-" + rna_parent
+                        builder.set_fake(transcript_accession)
                         # Chuck a fake exon in there
                         builder.add_exon_coordinates(transcript_accession, feature)
                         return transcript_accession, parent
