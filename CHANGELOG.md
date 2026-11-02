@@ -25,7 +25,7 @@
 - #171 - `fix_hgvs` warns `SKIPPED_GENE_RESOLUTION` for gene-only input with no `genome_build`
 - #168 - `JSONDataProvider.get_tx_versions()` uses an index instead of scanning every transcript
 - #179 - Python 3.10-3.14 classifiers
-- #180 - Removed the no-op `hgvs` extra (`hgvs` is a core dependency)
+- #180 - Removed the no-op `cdot[hgvs]` install target (`hgvs` is a core dependency)
 
 ### Deprecated
 
