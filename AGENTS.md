@@ -10,7 +10,7 @@ Performance comparison: UTA public DB ~1s/transcript vs cdot JSON.gz ~500-1000 t
 
 ## Important Constraints
 
-**Never run code against full datasets.** Processing full GTF/GFF3 files or complete JSON.gz data releases takes a very long time. Always use test data (in `tests/`) when verifying changes. The test suite itself is not covered by this rule: it runs in a few seconds, fully offline, so run it as often as you like (see [Test Suite](#test-suite)).
+**Never run code against full datasets.** Processing full GTF/GFF3 files or complete JSON.gz data releases takes a very long time. Always use test data (in `tests/`) when verifying changes. The test suite itself is not covered by this rule: it runs in a few seconds, so run it as often as you like (see [Test Suite](#test-suite)).
 
 **PyHGVS is abandoned — prefer biocommons HGVS.** The `cdot/pyhgvs/` integration exists for legacy compatibility but PyHGVS is no longer maintained. Do not write new features that require significant PyHGVS-specific work. Focus new development on the biocommons HGVS path (`cdot/hgvs/dataproviders/`). If a feature is straightforward to support in both libraries, fine; if it requires real effort for PyHGVS, skip it and biocommons-only is acceptable.
 
@@ -57,13 +57,15 @@ python generate_transcript_data/generate_json_docs.py
 
 ## Test Suite
 
-`python -m pytest tests/` runs about 1300 tests in about 3 seconds and needs no network, so run it freely and after every change. It needs the `test` extra (`pip install -e '.[test]'`: pytest, msgspec, pysam) and `pyhgvs` (in the `build` extra) for `tests/test_pyhgvs.py`. The handful of skips reported are the abstract base class `AbstractEnsemblTestCase` in `tests/test_json_data_provider_ensembl.py` skipping itself; its subclasses run the same tests against the JSON provider and the mocked TARK provider.
+`python -m pytest tests/` runs about 1300 tests in about 3 seconds, so run it freely and after every change. It needs the `test` extra (`pip install -e '.[test]'`: pytest, msgspec, pysam) and `pyhgvs` (in the `build` extra) for `tests/test_pyhgvs.py`. The handful of skips reported are the abstract base class `AbstractEnsemblTestCase` in `tests/test_json_data_provider_ensembl.py` skipping itself; its subclasses run the same tests against the JSON provider and the mocked TARK provider.
 
-Nothing in the suite talks to a server:
+Almost everything in the suite runs offline:
 
 - REST provider tests build `RESTDataProvider(url="https://example.org")` and either monkeypatch its `_get_from_url` / `_post_to_url` seams or hand it a `mock.Mock(spec=requests.Session)`; `tests/test_data_release.py` patches `requests.get`.
 - Ensembl TARK tests run the real `EnsemblTarkDataProvider` code against recorded responses on disk (see `mock_ensembl_tark.py` below).
 - Sequence fetching uses the mocks below, or a tiny FASTA written to a temp dir (`tests/test_fasta_seqfetcher.py`).
+
+The exception is the `test_transcript` methods in `tests/test_json_data_provider_refseq.py` and `tests/test_json_data_provider_ensembl.py` (and any test built the same way). Their seqfetcher is `ChainedSeqFetcher(MockSeqFetcher, SeqFetcher())` and `c_to_g` with `replace_reference=True` fetches one genomic base, which the mock does not hold, so it falls through to biocommons `SeqFetcher`: a local SeqRepo when `HGVS_SEQREPO_DIR` is set, otherwise NCBI over the network. Everything else passes with `SeqFetcher.fetch_seq` patched to raise.
 
 Helper modules in `tests/` (no `test_` prefix, not collected by pytest):
 
