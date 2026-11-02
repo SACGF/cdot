@@ -161,14 +161,11 @@ class GTFParser(GFFParser):
             else:
                 self.consortium.handle_transcript_feature(transcript_accession, feature, self.builder)
 
-            biotype = feature.attr.get("gene_biotype")
-            if biotype is None:
-                # Ensembl GTFs store biotype info under gene_type or transcript_type
-                biotype = feature.attr.get("gene_type")
-
-            if biotype:
-                gene_data["biotype"].add(biotype)
-                transcript["biotype"].add(biotype)
+            # Ensembl GTFs use gene_biotype/transcript_biotype, GENCODE/UCSC use gene_type/transcript_type
+            if gene_biotype := feature.attr.get("gene_biotype") or feature.attr.get("gene_type"):
+                gene_data["biotype"].add(gene_biotype)
+            if transcript_biotype := feature.attr.get("transcript_biotype") or feature.attr.get("transcript_type"):
+                transcript["biotype"].add(transcript_biotype)
 
             if feature.source:
                 gene_data["source"].add(feature.source)
@@ -265,8 +262,12 @@ class GFF3Parser(GFFParser):
                     if feature.type == 'CDS':
                         # We should only be here if transcript_id wasn't on it (chrM)
                         self._gff_handle_transcript_data(transcript_accession, transcript, feature)
-                    elif feature.type not in EXCLUDE_BIOTYPES:
-                        transcript["biotype"].add(feature.type)
+                    else:
+                        if feature.type not in EXCLUDE_BIOTYPES:
+                            transcript["biotype"].add(feature.type)
+                        # Ensembl GFF3 transcript rows also carry the transcript biotype (RefSeq's don't)
+                        if transcript_biotype := feature.attr.get("biotype"):
+                            transcript["biotype"].add(transcript_biotype)
 
                     if feature.source:
                         transcript["source"].add(feature.source)

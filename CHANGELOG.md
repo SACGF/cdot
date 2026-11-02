@@ -8,7 +8,11 @@
 
 ### Fixed
 
-- #156 - `cdot.data_release.get_latest_combo_file_urls` now finds the all-builds files (`cdot-<version>.all-builds-refseq-grch37_grch38_t2t-chm13v2.0.json.gz`), which it previously never returned. Ask for them with the genome build `"all-builds"` (`cdot.data_release.ALL_BUILDS`), the full `"grch37_grch38_t2t-chm13v2.0"`, or an old style combination such as `"grch37_grch38"`. Per-build requests (eg `"GRCh38"`) and older release names still work. The GitHub API request now has a 30 second timeout
+- #156 - `cdot.data_release.get_latest_combo_file_urls` now finds the all-builds files (`cdot-<version>.all-builds-refseq-grch37_grch38_t2t-chm13v2.0.json.gz`), which it previously never returned. Ask for them with the genome build `"all-builds"` (`cdot.data_release.ALL_BUILDS`), the full `"grch37_grch38_t2t-chm13v2.0"`, or an old style combination such as `"grch37_grch38"`. Per-build requests (eg `"GRCh38"`) and older release names still work
+- #154 - `RESTDataProvider` only caches a 404 as a missing transcript/gene. Other HTTP errors (eg 429 or 503) now raise `requests.HTTPError` instead of returning `None`, and are not cached, so a transient server error no longer makes a transcript permanently missing for the provider's lifetime. `prefetch()`'s concurrent fallback leaves failed accessions uncached so a later lookup retries them
+- #154 - `RESTDataProvider` uses a `requests.Session` (connection reuse) and has a `timeout` argument (default 30 seconds) so a hung connection no longer blocks forever. The `session` argument lets you pass your own. `EnsemblTarkDataProvider`, `RESTPyHGVSTranscriptFactory` and the data release lookup also set a 30 second timeout
+- #154 - A response with no `Content-Type` header raised `TypeError` in `RESTDataProvider`, `EnsemblTarkDataProvider` and `RESTPyHGVSTranscriptFactory`. It now gives the usual "Non-json response" `ValueError`
+- #155 - `RESTDataProvider` rejected T2T-CHM13v2.0 contigs with `ValueError("Contig ... not supported")`. It now supports GRCh37, GRCh38 and T2T-CHM13v2.0 by default, set with the new `assemblies` argument
 
 ### Removed
 
