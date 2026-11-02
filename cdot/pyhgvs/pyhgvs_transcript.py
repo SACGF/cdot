@@ -1,7 +1,7 @@
 import abc
 import json
 from importlib import metadata
-from typing import Dict, Tuple
+from typing import Dict
 
 import requests
 

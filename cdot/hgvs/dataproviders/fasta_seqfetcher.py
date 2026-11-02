@@ -1,11 +1,9 @@
-import abc
 import re
 import warnings
 from enum import Enum
 
 import msgspec
 from pysam.libcfaidx import FastaFile
-from hgvs.dataproviders.interface import Interface
 from hgvs.exceptions import HGVSDataNotAvailableError
 from bioutils.sequences import reverse_complement
 

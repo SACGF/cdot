@@ -9,6 +9,7 @@
 ### Changed
 
 - #168 - `JSONDataProvider.get_tx_versions()` looks the versions up in a per-accession index built lazily on first use, instead of scanning every loaded transcript on each call. The version fallback in `resolve_transcript_version()` (and `fix_hgvs()` with it) no longer pays a full scan for every versionless or unavailable transcript version. Results are unchanged
+- #179 - Package metadata lists the supported Python versions (3.10 to 3.14) in its classifiers
 
 ### Deprecated
 

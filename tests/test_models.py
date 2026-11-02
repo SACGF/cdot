@@ -4,12 +4,7 @@ import unittest
 from inspect import getsourcefile
 from os.path import abspath
 
-# Optional typed layer (issue #37) - skip the whole module if msgspec isn't installed
-try:
-    from cdot import models
-    HAVE_MSGSPEC = True
-except ImportError:
-    HAVE_MSGSPEC = False
+from cdot import models
 
 THIS_DIR = os.path.dirname(abspath(getsourcefile(lambda: 0)))
 REFSEQ_JSON = os.path.join(THIS_DIR, "test_data/cdot.refseq.grch37.json")
@@ -20,7 +15,6 @@ GENE_BIOTYPE_STR_JSON = os.path.join(THIS_DIR, "test_data/biotype/cdot.gene_biot
 GENE_BIOTYPE_LIST_JSON = os.path.join(THIS_DIR, "test_data/biotype/cdot.gene_biotype_list.json")
 
 
-@unittest.skipUnless(HAVE_MSGSPEC, "msgspec not installed")
 class TestModels(unittest.TestCase):
     def test_load_refseq(self):
         data = models.load(REFSEQ_JSON)
