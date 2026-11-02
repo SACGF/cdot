@@ -15,11 +15,14 @@ from tests.mock_seqfetcher import MockSeqFetcher
 from tests.mock_ensembl_tark import MockEnsemblTarkDataProvider
 
 
-class AbstractEnsemblTestCase(unittest.TestCase, ABC):
+class AbstractEnsemblTestCase(ABC):
+    """ Shared Ensembl tests. Not a TestCase itself, so pytest doesn't collect it:
+        concrete subclasses mix in unittest.TestCase and set cls.json_data_provider in setUpClass """
+
     @classmethod
+    @abstractmethod
     def setUpClass(cls):
-        """ Subclasses need to override this """
-        raise unittest.SkipTest
+        pass
 
     def test_transcript(self):
         am = AssemblyMapper(self.json_data_provider,
@@ -75,7 +78,7 @@ class AbstractEnsemblTestCase(unittest.TestCase, ABC):
         print(tx_info)
 
 
-class JsonDataProviderTestCase(AbstractEnsemblTestCase):
+class JsonDataProviderTestCase(AbstractEnsemblTestCase, unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         this_file_dir = os.path.dirname(abspath(getsourcefile(lambda: 0)))
@@ -93,7 +96,7 @@ class JsonDataProviderTestCase(AbstractEnsemblTestCase):
         self.assertEqual(assembly_map["NC_000011.10"], "11")
 
 
-class EnsemblTarkDataProviderTestCase(AbstractEnsemblTestCase):
+class EnsemblTarkDataProviderTestCase(AbstractEnsemblTestCase, unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.json_data_provider = MockEnsemblTarkDataProvider()
