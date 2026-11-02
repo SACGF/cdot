@@ -24,8 +24,8 @@ canonical annotated form.
 **Regression** = a baseline string that parsed before cleaning but no longer
 parses (or is altered) after ``clean_hgvs()``. Expected to be 0.
 
-Privacy / two-tier fact model (see ``claude/paper_plan.md`` §3)
---------------------------------------------------------------
+Privacy / two-tier fact model (see ``paper/README.md``, "Public and private facts")
+-----------------------------------------------------------------------------------
 This benchmark is Tier 1 — fully reproducible from public ClinVar data committed
 to this repo. The per-category injection *weights* are frozen CONSTANTS derived
 from the aggregate rescue-op distribution measured on a private production corpus

@@ -21,6 +21,7 @@
 - #171 - `fix_hgvs` with a `data_provider` but no `genome_build` records a WARNING with the new fix code `SKIPPED_GENE_RESOLUTION` when the input is gene-only (eg `BRCA2:c.36del`), as gene resolution needs a build, instead of leaving the string alone with no fix. An input that already names a transcript gets no such fix, and nothing is recorded without a data provider
 - #171 - `tag_priority` on `resolve_gene_hgvs`, `rank_transcripts_for_gene` and `fix_hgvs` defaults to `None`, meaning a copy of `DEFAULT_TAG_PRIORITY`, rather than the shared list itself
 - #171 - The `USED_ADJACENT_VERSION_COORD_UNVERIFIED` message reads `...; coordinate may have moved (...)` (a semicolon in place of a dash)
+- #180 - Removed the `hgvs` extra. `hgvs` is a core dependency, so the extra did nothing; `pip install cdot[hgvs]` still installs cdot (pip only warns about the unknown extra)
 
 ### Changed
 
