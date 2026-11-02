@@ -265,7 +265,7 @@ CLEAN_CASES = [
     ("NM_000059.4:c.68del\\",                   "NM_000059.4:c.68del",                        {C.STRIPPED_SURROUNDING_PUNCTUATION}),
     # #227: typographic dash in place of '-'
     ("NM_000059.4:c.67\u20102A>G",               "NM_000059.4:c.67-2A>G",                      {C.REPLACED_UNICODE_DASH}),
-    ("NM_000059.4:c.\u221240G>A",                "NM_000059.4:c.-40G>A",                       {C.REPLACED_UNICODE_DASH}),
+    ("NM_000059.4:c.\u201340G>A",                "NM_000059.4:c.-40G>A",                       {C.REPLACED_UNICODE_DASH}),
     # #227: kind repeated on the second position of a range
     ("NM_000059.4:c.67+3_c.67+6del",             "NM_000059.4:c.67+3_67+6del",                 {C.FIXED_MULTIPLE_KIND}),
     # #227: gene symbol repeated after its parens

@@ -826,9 +826,9 @@ def _op_fix_multiple_kind(s: str) -> tuple[str, list[HGVSFix]]:
 
 
 def _op_replace_unicode_dash(s: str) -> tuple[str, list[HGVSFix]]:
-    # A typographic dash (Unicode dash punctuation, eg a hyphen or en dash, or the
-    # minus sign) from a word processor in place of "-", eg "c.67–2A>G" -> "c.67-2A>G"
-    s2 = "".join("-" if c == "\u2212" or unicodedata.category(c) == "Pd" else c for c in s)
+    # A typographic dash (Unicode dash punctuation, eg a hyphen or en dash) from a
+    # word processor in place of "-", eg "c.67–2A>G" -> "c.67-2A>G"
+    s2 = "".join("-" if unicodedata.category(c) == "Pd" else c for c in s)
     if s2 != s:
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
