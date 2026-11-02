@@ -205,10 +205,10 @@ class TranscriptBuilder:
             genome_build_coordinates = {
                 "url": self.url,
             }
-            for field in GENOME_BUILD_FIELDS:
-                value = transcript_data.pop(field, None)
+            for field_name in GENOME_BUILD_FIELDS:
+                value = transcript_data.pop(field_name, None)
                 if value is not None:
-                    genome_build_coordinates[field] = value
+                    genome_build_coordinates[field_name] = value
 
             # Make sure contig uses accession not chromosome names
             contig = genome_build_coordinates["contig"]
