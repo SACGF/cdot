@@ -468,6 +468,64 @@ def _parse_versioned_transcript(hgvs_string: str) -> Optional[tuple[str, int]]:
     return base, int(version)
 
 
+def check_version_substitution(data_provider, accession: str, requested_version: int,
+                               substitute_version: int, genome_build: Optional[str] = None,
+                               cited_position: Optional[str] = None) -> tuple[bool, str]:
+    """Is substituting ``substitute_version`` for ``requested_version`` coordinate-safe?
+
+    Returns ``(safe, reason)``.  This fetches the two versions' records from
+    ``data_provider`` and runs the pure
+    :func:`cdot.hgvs.version_safety.is_version_substitution_safe` on them.  Only
+    when the requested version exists in no build the provider can see (so there
+    is no structure to compare) does it fall back to the probabilistic
+    :func:`cdot.hgvs.version_safety.genomic_bracket_safe` on the nearest held
+    versions either side, which needs ``genome_build`` and the provider's
+    ``get_tx_versions``; without them the verdict is an honest "cannot verify".
+
+    The provider needs ``_get_transcript(tx_ac)`` (returning a record or ``None``)
+    and, for the fallback, ``get_tx_versions(accession)`` (JSONDataProvider and
+    RESTDataProvider have both).  ``cited_position`` is the text after ``c.``/``n.``
+    and makes the check UTR-aware; see the pure function.
+
+    Used by :func:`resolve_transcript_version`; a not-safe verdict is surfaced
+    (never silently applied) per its ``on_unsafe_version`` policy.
+    """
+    if version_safety.is_known_replacement(accession, requested_version, substitute_version):
+        # Checked here as well as in the pure function so the blocklist still
+        # applies when the requested version is absent from the loaded data.
+        return False, "known genomic re-placement (blocklisted)"
+
+    sub = data_provider._get_transcript(f"{accession}.{substitute_version}")
+    if sub is None:
+        return False, f"substitute version .{substitute_version} not found"
+
+    req = data_provider._get_transcript(f"{accession}.{requested_version}")
+    if req is not None:
+        return version_safety.is_version_substitution_safe(
+            req, sub, genome_build, cited_position=cited_position)
+
+    # Requested version absent from every build the provider can see.
+    if genome_build is None:
+        return False, ("requested version absent from all builds; "
+                       "cannot verify (no genome build for bracket fallback)")
+    try:
+        versions = data_provider.get_tx_versions(accession)
+    except NotImplementedError:
+        return False, "requested version absent from all builds; cannot verify structure"
+
+    def _nearest(candidates):
+        # Nearest held version (in candidate order) that is placed in genome_build.
+        for v in candidates:
+            t = data_provider._get_transcript(f"{accession}.{v}")
+            if t is not None and t["genome_builds"].get(genome_build) is not None:
+                return t
+        return None
+
+    below = _nearest(sorted((v for v in versions if v < requested_version), reverse=True))
+    above = _nearest(sorted(v for v in versions if v > requested_version))
+    return version_safety.genomic_bracket_safe(below, above, genome_build)
+
+
 def _cited_position(hgvs_string: str) -> Optional[str]:
     """Return the text after ``c.``/``n.`` (position plus edit) of a c./n. HGVS, else None.
 
@@ -529,8 +587,8 @@ def resolve_transcript_version(
 
     Coordinate-safety (#28): if the provider can return transcript records
     (``_get_transcript``, as JSONDataProvider / RESTDataProvider do), the substitution
-    is checked by :func:`cdot.hgvs.version_safety.is_version_substitution_safe` (via
-    the build-independent intrinsic CDS structure) before it is applied:
+    is checked by :func:`check_version_substitution` (via the build-independent
+    intrinsic CDS structure) before it is applied:
 
       * structure-verified safe → substitute, WARNING USED_ADJACENT_VERSION_COORD_SAFE;
       * not safe and on_unsafe_version=SUBSTITUTE → substitute anyway, WARNING
@@ -587,7 +645,7 @@ def resolve_transcript_version(
         # assessed; keep the plain substitution fix.
         return resolved, [fix]
 
-    safe, reason = version_safety.is_version_substitution_safe(
+    safe, reason = check_version_substitution(
         data_provider, versionless, requested_version, best, genome_build,
         cited_position=_cited_position(hgvs_string))
     moved = (f"Transcript version {versionless}.{requested_version} not found; "

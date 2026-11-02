@@ -14,7 +14,8 @@ Reference and how-to docs for [cdot](../README.md). These live in the repo, vers
 - **[Advanced usage](advanced_usage.md)** - fixing messy HGVS input (`fix_hgvs` / `clean_hgvs`) and
   read-ahead batch retrieval for bulk processing (`RESTDataProvider.prefetch`).
 - **[Transcript-version safety](transcript_version_safety.md)** - the opt-in safe version fallback:
-  how cdot decides a version substitution is coordinate-preserving (`is_version_substitution_safe`),
+  how cdot decides a version substitution is coordinate-preserving (`is_version_substitution_safe`
+  on two transcript records, `check_version_substitution` via a data provider),
   and the study behind it.
 
 ## Data format reference

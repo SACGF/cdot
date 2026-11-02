@@ -72,7 +72,7 @@ def classify_alts(base, v):
     for w in versions_by_base.get(base, []):
         if w == v:
             continue
-        safe, _ = is_version_substitution_safe(p, base, v, w, BUILD)
+        safe, _ = is_version_substitution_safe(txs[f"{base}.{v}"], txs[f"{base}.{w}"], BUILD)
         if not safe:
             continue
         gap_safe += 1

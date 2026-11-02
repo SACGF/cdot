@@ -15,7 +15,7 @@ from bioutils.assemblies import make_ac_name_map, make_name_ac_map
 
 from cdot import get_data_schema_int, __version__
 from cdot import models
-from cdot.hgvs import version_safety
+from cdot.hgvs import gene_hgvs
 
 def _get_patch_assembly_name(assembly_name):
     if assembly_name == "GRCh37":
@@ -105,7 +105,7 @@ class AbstractJSONDataProvider(Interface):
             passing the target build keeps it from substituting a version that can't be
             mapped there - and lets the coordinate-safety check read the absent requested
             version's structure from another build (see
-            cdot.hgvs.version_safety.is_version_substitution_safe).
+            cdot.hgvs.gene_hgvs.check_version_substitution).
 
             Used by cdot.hgvs.gene_hgvs.resolve_transcript_version() to substitute an
             adjacent version when the requested one isn't available. Subclasses that can
@@ -119,18 +119,20 @@ class AbstractJSONDataProvider(Interface):
                                      substitute_version: int,
                                      genome_build: str = None,
                                      cited_position: str = None) -> tuple[bool, str]:
-        """Deprecated: call :func:`cdot.hgvs.version_safety.is_version_substitution_safe`
-        with this provider as its first argument instead.
+        """Deprecated: use :func:`cdot.hgvs.version_safety.is_version_substitution_safe`
+        on the two transcript records, or
+        :func:`cdot.hgvs.gene_hgvs.check_version_substitution` with this provider.
 
-        The check only needs :meth:`_get_transcript` and :meth:`get_tx_versions` from a
-        provider, so it lives in :mod:`cdot.hgvs.version_safety`. This method delegates
-        there and will be removed in a future release.
+        The check only needs the two versions' records, so it lives in
+        :mod:`cdot.hgvs.version_safety` as a pure function. This method delegates to
+        the provider-aware wrapper and will be removed in a future release.
         """
         warnings.warn(
-            "AbstractJSONDataProvider.is_version_substitution_safe() is deprecated; call "
-            "cdot.hgvs.version_safety.is_version_substitution_safe(data_provider, ...) instead",
+            "AbstractJSONDataProvider.is_version_substitution_safe() is deprecated; use "
+            "cdot.hgvs.version_safety.is_version_substitution_safe(requested, substitute, ...) "
+            "on the two records, or cdot.hgvs.gene_hgvs.check_version_substitution(provider, ...)",
             DeprecationWarning, stacklevel=2)
-        return version_safety.is_version_substitution_safe(
+        return gene_hgvs.check_version_substitution(
             self, accession, requested_version, substitute_version,
             genome_build=genome_build, cited_position=cited_position)
 

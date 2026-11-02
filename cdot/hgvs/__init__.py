@@ -14,6 +14,7 @@ from cdot.hgvs.clean import (
     warning_messages,
 )
 from cdot.hgvs.gene_hgvs import (
+    check_version_substitution,
     Consortium,
     consortium_of,
     DEFAULT_CONSORTIUM,

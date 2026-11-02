@@ -1,6 +1,8 @@
 """
-Tests for cdot.hgvs.version_safety, including the
-``is_version_substitution_safe`` coordinate-safety check (issue #28).
+Tests for cdot.hgvs.version_safety (the pure ``is_version_substitution_safe``
+coordinate-safety check on two transcript records, issue #28) and for
+``cdot.hgvs.gene_hgvs.check_version_substitution``, which fetches those records
+from a data provider.
 
 All transcript records here are *synthesised* from public accessions (BRCA2
 NM_000059, RUNX1 NM_001754) with toy coordinates — no real release data is read,
@@ -15,9 +17,11 @@ import json
 import pytest
 
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
+from cdot.hgvs.gene_hgvs import check_version_substitution
 from cdot.hgvs.version_safety import (
     cds_alignment_gaps,
     describe_structure_change,
+    genomic_bracket_safe,
     intrinsic_cds_structure,
     is_version_substitution_safe,
     utr_lengths,
@@ -165,7 +169,7 @@ def test_describe_structure_change_same_length():
 
 
 # ---------------------------------------------------------------------------
-# is_version_substitution_safe (takes the provider)
+# is_version_substitution_safe: pure, on the two versions' records
 # ---------------------------------------------------------------------------
 
 def _provider(transcripts, builds=("GRCh37", "GRCh38")):
@@ -176,11 +180,9 @@ def _provider(transcripts, builds=("GRCh37", "GRCh38")):
 
 def test_substitution_safe_identical_structure():
     # Same structure AND same genomic placement → safe.
-    dp = _provider({
-        "NM_000059.3": _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS}),
-        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS}),
-    })
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 3, 4, "GRCh38")
+    requested = _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS})
+    substitute = _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})
+    safe, reason = is_version_substitution_safe(requested, substitute, "GRCh38")
     assert safe
     assert "identical CDS structure" in reason
 
@@ -190,11 +192,9 @@ def test_substitution_unsafe_genomic_replacement_same_build():
     # locus in the same build (mode-2 re-placement, eg NM_018263). Recomputed from the
     # loaded annotation: both versions are present, so the placement difference is seen
     # directly and the substitution is refused.
-    dp = _provider({
-        "NM_000059.3": _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS}),
-        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS_MOVED}),
-    })
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 3, 4, "GRCh38")
+    requested = _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS})
+    substitute = _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS_MOVED})
+    safe, reason = is_version_substitution_safe(requested, substitute, "GRCh38")
     assert not safe
     assert "placement" in reason
 
@@ -202,45 +202,48 @@ def test_substitution_unsafe_genomic_replacement_same_build():
 def test_substitution_unsafe_gap_differs_same_structure():
     # Identical intrinsic CDS structure, but one version has an alignment gap the
     # other lacks: the coding coordinate would shift, so it must not be called safe.
-    dp = _provider({
-        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS}),
-        "NM_000059.5": _tx("NM_000059.5", 0, 30, {"GRCh38": EXONS_GAP}),
-    })
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 4, 5, "GRCh38")
+    requested = _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})
+    substitute = _tx("NM_000059.5", 0, 30, {"GRCh38": EXONS_GAP})
+    safe, reason = is_version_substitution_safe(requested, substitute, "GRCh38")
     assert not safe
     assert "gap" in reason
 
 
 def test_substitution_safe_when_gaps_match():
     # Both versions carry the same alignment gap → coding coordinates agree → safe.
-    dp = _provider({
-        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS_GAP}),
-        "NM_000059.5": _tx("NM_000059.5", 0, 30, {"GRCh38": EXONS_GAP}),
-    })
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 4, 5, "GRCh38")
+    requested = _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS_GAP})
+    substitute = _tx("NM_000059.5", 0, 30, {"GRCh38": EXONS_GAP})
+    safe, reason = is_version_substitution_safe(requested, substitute, "GRCh38")
     assert safe
     assert "identical CDS structure" in reason
 
 
-def test_blocklist_refuses_known_replacement_even_when_requested_absent(monkeypatch):
-    # The shipped blocklist exists for the case the provider cannot recompute: the
-    # requested version is absent from the loaded data. Here only .4 is present; the
-    # blocklist still refuses substituting it for the absent .2.
+def test_blocklist_refuses_known_replacement_from_record_ids(monkeypatch):
+    # The pure check reads accession and versions from the records' ids, so a
+    # blocklisted pair is refused even though the structures are identical.
     import cdot.hgvs._version_replacement_blocklist as bl
     monkeypatch.setattr(bl, "KNOWN_REPLACEMENT_SUBSTITUTIONS",
                         frozenset({("NM_000059", 2, 4)}))
-    dp = _provider({"NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})})
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 2, 4, "GRCh38")
+    requested = _tx("NM_000059.2", 0, 30, {"GRCh38": EXONS})
+    substitute = _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})
+    safe, reason = is_version_substitution_safe(requested, substitute, "GRCh38")
     assert not safe
     assert "blocklist" in reason
 
 
+def test_noncoding_record_is_unverified():
+    # No CDS structure on one side: nothing to compare, so not safe (never a guess).
+    requested = _tx("NM_000059.3", None, None, {"GRCh38": EXONS})
+    substitute = _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})
+    safe, reason = is_version_substitution_safe(requested, substitute, "GRCh38")
+    assert not safe
+    assert "no CDS structure" in reason
+
+
 def test_substitution_unsafe_cds_length_change():
-    dp = _provider({
-        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS}),
-        "NM_000059.5": _tx("NM_000059.5", 0, 33, {"GRCh38": EXONS_LONGER}),
-    })
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 5, 4, "GRCh38")
+    requested = _tx("NM_000059.5", 0, 33, {"GRCh38": EXONS_LONGER})
+    substitute = _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})
+    safe, reason = is_version_substitution_safe(requested, substitute, "GRCh38")
     assert not safe
     assert "CDS length changed" in reason
 
@@ -248,76 +251,110 @@ def test_substitution_unsafe_cds_length_change():
 def test_substitution_decidable_from_other_build():
     # Requested .2 lives ONLY in GRCh37; we want to map in GRCh38 (where .3/.4
     # live). Its structure is read from GRCh37 and matches → safe.
-    dp = _provider({
-        "NM_000059.2": _tx("NM_000059.2", 0, 30, {"GRCh37": EXONS}),
-        "NM_000059.3": _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS_MOVED}),
-        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS_MOVED}),
-    })
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 2, 3, "GRCh38")
+    requested = _tx("NM_000059.2", 0, 30, {"GRCh37": EXONS})
+    substitute = _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS_MOVED})
+    safe, reason = is_version_substitution_safe(requested, substitute, "GRCh38")
     assert safe
     assert "identical CDS structure" in reason
 
 
 def test_substitution_other_build_structure_differs():
-    dp = _provider({
-        "NM_000059.2": _tx("NM_000059.2", 0, 33, {"GRCh37": EXONS_LONGER}),
-        "NM_000059.3": _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS_MOVED}),
-    })
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 2, 3, "GRCh38")
+    requested = _tx("NM_000059.2", 0, 33, {"GRCh37": EXONS_LONGER})
+    substitute = _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS_MOVED})
+    safe, reason = is_version_substitution_safe(requested, substitute, "GRCh38")
     assert not safe
     assert "CDS length changed" in reason
 
 
-# ---- genomic-bracket fallback (requested version exists in no build) --------
+# ---- genomic_bracket_safe: pure, on the two flanking records ----------------
 
 def test_genomic_bracket_safe_when_flanks_agree():
-    # Requested .3 absent everywhere. Flanking .2 and .4 share the same genomic
-    # CDS map in GRCh38 → bracket agrees → safe (probabilistic).
-    dp = _provider({
-        "NM_000059.2": _tx("NM_000059.2", 0, 30, {"GRCh38": EXONS}),
-        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS}),
-    })
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 3, 4, "GRCh38")
+    # Flanking .2 and .4 share the same genomic CDS map in GRCh38 → bracket
+    # agrees → safe (probabilistic).
+    below = _tx("NM_000059.2", 0, 30, {"GRCh38": EXONS})
+    above = _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})
+    safe, reason = genomic_bracket_safe(below, above, "GRCh38")
     assert safe
     assert "bracket" in reason
 
 
 def test_genomic_bracket_unsafe_when_flanks_disagree():
     # Flanking .2 and .4 sit on different genomic coordinates → bracket disagrees.
-    dp = _provider({
-        "NM_000059.2": _tx("NM_000059.2", 0, 30, {"GRCh38": EXONS}),
-        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS_MOVED}),
-    })
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 3, 4, "GRCh38")
+    below = _tx("NM_000059.2", 0, 30, {"GRCh38": EXONS})
+    above = _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS_MOVED})
+    safe, reason = genomic_bracket_safe(below, above, "GRCh38")
     assert not safe
     assert "may have moved" in reason
 
 
 def test_genomic_bracket_unverified_without_bracket():
+    # Nothing on one side → cannot bracket.
+    below = _tx("NM_000059.2", 0, 30, {"GRCh38": EXONS})
+    safe, reason = genomic_bracket_safe(below, None, "GRCh38")
+    assert not safe
+    assert "cannot bracket" in reason
+
+
+# ---------------------------------------------------------------------------
+# check_version_substitution: fetches the records from a provider and picks
+# the structural check or, for a version held in no build, the bracket
+# ---------------------------------------------------------------------------
+
+def test_check_substitution_both_present_uses_structural_check():
+    dp = _provider({
+        "NM_000059.3": _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS}),
+        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS_MOVED}),
+    })
+    safe, reason = check_version_substitution(dp, "NM_000059", 3, 4, "GRCh38")
+    assert not safe
+    assert "placement" in reason
+
+
+def test_check_substitution_substitute_missing():
+    dp = _provider({"NM_000059.3": _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS})})
+    safe, reason = check_version_substitution(dp, "NM_000059", 3, 4, "GRCh38")
+    assert not safe
+    assert ".4 not found" in reason
+
+
+def test_check_substitution_blocklist_applies_when_requested_absent(monkeypatch):
+    # The shipped blocklist exists for the case the provider cannot recompute: the
+    # requested version is absent from the loaded data. Here only .4 is present; the
+    # blocklist still refuses substituting it for the absent .2.
+    import cdot.hgvs._version_replacement_blocklist as bl
+    monkeypatch.setattr(bl, "KNOWN_REPLACEMENT_SUBSTITUTIONS",
+                        frozenset({("NM_000059", 2, 4)}))
+    dp = _provider({"NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})})
+    safe, reason = check_version_substitution(dp, "NM_000059", 2, 4, "GRCh38")
+    assert not safe
+    assert "blocklist" in reason
+
+
+def test_check_substitution_absent_version_brackets_nearest_placed_neighbours():
+    # Requested .3 absent everywhere. Nearest held versions placed in GRCh38 are
+    # .2 and .5 (.4 is GRCh37-only and is skipped); they agree → safe (probabilistic).
+    dp = _provider({
+        "NM_000059.2": _tx("NM_000059.2", 0, 30, {"GRCh38": EXONS}),
+        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh37": EXONS_MOVED}),
+        "NM_000059.5": _tx("NM_000059.5", 0, 30, {"GRCh38": EXONS}),
+    })
+    safe, reason = check_version_substitution(dp, "NM_000059", 3, 5, "GRCh38")
+    assert safe
+    assert "bracket" in reason
+
+
+def test_check_substitution_absent_version_cannot_bracket():
     # Requested .9 absent and nothing above it → cannot bracket.
     dp = _provider({
         "NM_000059.2": _tx("NM_000059.2", 0, 30, {"GRCh38": EXONS}),
         "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS}),
     })
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 9, 4, "GRCh38")
+    safe, reason = check_version_substitution(dp, "NM_000059", 9, 4, "GRCh38")
     assert not safe
     assert "cannot bracket" in reason
 
 
-def test_provider_method_delegates_and_is_deprecated():
-    # The provider method shipped in 0.2.30 (#120); it now delegates to the module
-    # function and warns so callers migrate (#186).
-    dp = _provider({
-        "NM_000059.3": _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS}),
-        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS}),
-    })
-    with pytest.warns(DeprecationWarning, match="version_safety.is_version_substitution_safe"):
-        safe, reason = dp.is_version_substitution_safe("NM_000059", 3, 4, "GRCh38")
-    assert (safe, reason) == is_version_substitution_safe(dp, "NM_000059", 3, 4, "GRCh38")
-    assert safe
-
-
-def test_unverified_without_genome_build():
+def test_check_substitution_unverified_without_genome_build():
     # No genome_build → the structural check can still run when the record is
     # present, but the bracket fallback can't; an absent requested version is
     # therefore unverified.
@@ -325,9 +362,35 @@ def test_unverified_without_genome_build():
         "NM_000059.2": _tx("NM_000059.2", 0, 30, {"GRCh38": EXONS}),
         "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS}),
     })
-    safe, reason = is_version_substitution_safe(dp, "NM_000059", 3, 4)
+    safe, reason = check_version_substitution(dp, "NM_000059", 3, 4)
     assert not safe
     assert "cannot verify" in reason
+
+
+def test_check_substitution_provider_cannot_enumerate_versions():
+    class _NoVersions(JSONDataProvider):
+        def get_tx_versions(self, accession, genome_build=None):
+            raise NotImplementedError("nope")
+
+    data = {"cdot_version": "0.2.33", "genome_builds": ["GRCh38"],
+            "transcripts": {"NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS})}}
+    dp = _NoVersions([io.StringIO(json.dumps(data))])
+    safe, reason = check_version_substitution(dp, "NM_000059", 3, 4, "GRCh38")
+    assert not safe
+    assert "cannot verify" in reason
+
+
+def test_provider_method_delegates_and_is_deprecated():
+    # The provider method shipped in 0.2.30 (#120); it now delegates to
+    # check_version_substitution and warns so callers migrate (#186).
+    dp = _provider({
+        "NM_000059.3": _tx("NM_000059.3", 0, 30, {"GRCh38": EXONS}),
+        "NM_000059.4": _tx("NM_000059.4", 0, 30, {"GRCh38": EXONS}),
+    })
+    with pytest.warns(DeprecationWarning, match="check_version_substitution"):
+        safe, reason = dp.is_version_substitution_safe("NM_000059", 3, 4, "GRCh38")
+    assert (safe, reason) == check_version_substitution(dp, "NM_000059", 3, 4, "GRCh38")
+    assert safe
 
 
 # ---------------------------------------------------------------------------

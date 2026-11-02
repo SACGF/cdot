@@ -59,7 +59,7 @@ for base, vs in versions.items():
         for w in vs:
             if v == w:
                 continue
-            safe, _ = is_version_substitution_safe(p, base, v, w, BUILD)
+            safe, _ = is_version_substitution_safe(txs[f"{base}.{v}"], txs[f"{base}.{w}"], BUILD)
             if not safe:
                 continue
             safe_checked += 1
