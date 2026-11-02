@@ -4,7 +4,8 @@
    "biotype": [
     "mRNA",
     "ncRNA",
-    "protein_coding"
+    "protein_coding",
+    "protein_coding_CDS_not_defined"
    ],
    "description": null,
    "gene_symbol": "HUNK",
@@ -19,7 +20,9 @@
    "biotype": [
     "mRNA",
     "ncRNA",
-    "protein_coding"
+    "nonsense_mediated_decay",
+    "protein_coding",
+    "protein_coding_CDS_not_defined"
    ],
    "description": null,
    "gene_symbol": "SOD1",
@@ -34,7 +37,9 @@
    "biotype": [
     "mRNA",
     "ncRNA",
-    "protein_coding"
+    "protein_coding",
+    "protein_coding_CDS_not_defined",
+    "retained_intron"
    ],
    "description": null,
    "gene_symbol": "URB1",
@@ -49,7 +54,8 @@
    "biotype": [
     "mRNA",
     "ncRNA",
-    "protein_coding"
+    "protein_coding",
+    "retained_intron"
    ],
    "description": null,
    "gene_symbol": "SCAF4",
@@ -64,7 +70,9 @@
    "biotype": [
     "mRNA",
     "ncRNA",
-    "protein_coding"
+    "nonsense_mediated_decay",
+    "protein_coding",
+    "protein_coding_CDS_not_defined"
    ],
    "description": null,
    "gene_symbol": "MIS18A",
@@ -79,7 +87,8 @@
    "biotype": [
     "mRNA",
     "ncRNA",
-    "protein_coding"
+    "protein_coding",
+    "protein_coding_CDS_not_defined"
    ],
    "description": null,
    "gene_symbol": "MRAP",
@@ -2416,7 +2425,7 @@
   "ENST00000465574.1": {
    "biotype": [
     "ncRNA",
-    "protein_coding"
+    "protein_coding_CDS_not_defined"
    ],
    "gene_name": "HUNK",
    "gene_version": "ENSG00000142149.11",
@@ -2470,7 +2479,7 @@
   "ENST00000467731.1": {
    "biotype": [
     "ncRNA",
-    "protein_coding"
+    "retained_intron"
    ],
    "gene_name": "SCAF4",
    "gene_version": "ENSG00000156304.17",
@@ -2604,7 +2613,7 @@
   "ENST00000470944.1": {
    "biotype": [
     "ncRNA",
-    "protein_coding"
+    "protein_coding_CDS_not_defined"
    ],
    "gene_name": "SOD1",
    "gene_version": "ENSG00000142168.17",
@@ -2666,7 +2675,7 @@
   "ENST00000472318.1": {
    "biotype": [
     "ncRNA",
-    "protein_coding"
+    "retained_intron"
    ],
    "gene_name": "SCAF4",
    "gene_version": "ENSG00000156304.17",
@@ -2712,7 +2721,7 @@
   "ENST00000476106.5": {
    "biotype": [
     "ncRNA",
-    "protein_coding"
+    "protein_coding_CDS_not_defined"
    ],
    "gene_name": "SOD1",
    "gene_version": "ENSG00000142168.17",
@@ -2774,7 +2783,7 @@
   "ENST00000480196.2": {
    "biotype": [
     "ncRNA",
-    "protein_coding"
+    "retained_intron"
    ],
    "gene_name": "URB1",
    "gene_version": "ENSG00000142207.9",
@@ -2812,7 +2821,7 @@
   "ENST00000485790.1": {
    "biotype": [
     "ncRNA",
-    "protein_coding"
+    "retained_intron"
    ],
    "gene_name": "SCAF4",
    "gene_version": "ENSG00000156304.17",
@@ -2890,7 +2899,7 @@
   "ENST00000486363.1": {
    "biotype": [
     "ncRNA",
-    "protein_coding"
+    "protein_coding_CDS_not_defined"
    ],
    "gene_name": "MIS18A",
    "gene_version": "ENSG00000159055.6",
@@ -2928,7 +2937,7 @@
   "ENST00000492603.1": {
    "biotype": [
     "ncRNA",
-    "protein_coding"
+    "protein_coding_CDS_not_defined"
    ],
    "gene_name": "URB1",
    "gene_version": "ENSG00000142207.9",
@@ -2966,7 +2975,7 @@
   "ENST00000497833.1": {
    "biotype": [
     "ncRNA",
-    "protein_coding"
+    "protein_coding_CDS_not_defined"
    ],
    "gene_name": "MRAP",
    "gene_version": "ENSG00000170262.15",
@@ -8750,7 +8759,7 @@
   "ENST00000989286.1": {
    "biotype": [
     "mRNA",
-    "protein_coding"
+    "nonsense_mediated_decay"
    ],
    "gene_name": "SOD1",
    "gene_version": "ENSG00000142168.17",
@@ -8808,7 +8817,7 @@
   "ENST00000989287.1": {
    "biotype": [
     "mRNA",
-    "protein_coding"
+    "nonsense_mediated_decay"
    ],
    "gene_name": "SOD1",
    "gene_version": "ENSG00000142168.17",
@@ -8874,7 +8883,7 @@
   "ENST00000989288.1": {
    "biotype": [
     "mRNA",
-    "protein_coding"
+    "nonsense_mediated_decay"
    ],
    "gene_name": "SOD1",
    "gene_version": "ENSG00000142168.17",
@@ -8991,7 +9000,7 @@
   "ENST00001055593.1": {
    "biotype": [
     "mRNA",
-    "protein_coding"
+    "nonsense_mediated_decay"
    ],
    "gene_name": "SOD1",
    "gene_version": "ENSG00000142168.17",
@@ -9057,7 +9066,7 @@
   "ENST00001074764.1": {
    "biotype": [
     "mRNA",
-    "protein_coding"
+    "nonsense_mediated_decay"
    ],
    "gene_name": "MIS18A",
    "gene_version": "ENSG00000159055.6",
@@ -9123,7 +9132,7 @@
   "ENST00001077173.1": {
    "biotype": [
     "mRNA",
-    "protein_coding"
+    "nonsense_mediated_decay"
    ],
    "gene_name": "SOD1",
    "gene_version": "ENSG00000142168.17",
@@ -9189,7 +9198,7 @@
   "ENST00001077174.1": {
    "biotype": [
     "mRNA",
-    "protein_coding"
+    "nonsense_mediated_decay"
    ],
    "gene_name": "SOD1",
    "gene_version": "ENSG00000142168.17",
@@ -9255,7 +9264,7 @@
   "ENST00001077178.1": {
    "biotype": [
     "mRNA",
-    "protein_coding"
+    "nonsense_mediated_decay"
    ],
    "gene_name": "SOD1",
    "gene_version": "ENSG00000142168.17",
@@ -9364,7 +9373,7 @@
   "ENST00001077189.1": {
    "biotype": [
     "mRNA",
-    "protein_coding"
+    "nonsense_mediated_decay"
    ],
    "gene_name": "SOD1",
    "gene_version": "ENSG00000142168.17",

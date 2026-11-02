@@ -22,7 +22,7 @@ resolution, returning the cleaned string plus a list of `HGVSFix` records descri
 from cdot.hgvs import fix_hgvs
 from cdot.hgvs.dataproviders import JSONDataProvider
 
-hdp = JSONDataProvider(["./cdot-0.2.32.refseq.GRCh38.json.gz"])
+hdp = JSONDataProvider(["./cdot-0.2.36.refseq.GRCh38.json.gz"])
 
 # Gene-only input → resolved to the MANE/canonical transcript
 result, fixes = fix_hgvs("BRCA2:c.36DEL", hdp, "GRCh38")

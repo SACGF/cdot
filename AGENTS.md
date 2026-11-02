@@ -31,6 +31,8 @@ Do **NOT** add changelog entries for things a client-code user never sees: docum
 
 **Avoid AI writing tells in documentation and paper edits.** When writing or editing prose (docs, `README`, `paper/`, comments, commit/PR text), do not use em-dashes. Prefer plain punctuation: commas, periods, parentheses, or a rephrase. Also avoid other common LLM tells: "It's not just X, it's Y" constructions, hedging filler ("it's worth noting", "importantly", "delve"), over-use of bold for emphasis, and formulaic tricolon lists. Write plainly and directly, matching the voice of the surrounding text.
 
+**Docstrings, schema descriptions and comments describe the current state only.** Do not record how something used to behave, which version fixed it, or which issue changed it (eg "data before 0.2.37 had the gene biotype here", "previously this returned X"). That history belongs in the changelogs and the issue tracker. Notes about obsolete behaviour accumulate and quickly stop matching the code. The same goes when you change existing code: remove notes that are no longer true rather than adding a correction next to them.
+
 ## Commands
 
 ```bash
