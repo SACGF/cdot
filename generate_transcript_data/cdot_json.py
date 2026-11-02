@@ -16,6 +16,13 @@ from generate_transcript_data.json_encoders import SortedSetEncoder
 from generate_transcript_data.json_schema_version import JSON_SCHEMA_VERSION
 from generate_transcript_data.transcript_coordinates import transcript_position_to_genomic
 
+# genome build -> combine_builds command line argument (the Snakefile uses this mapping too)
+COMBINE_BUILDS_ARGS = {
+    "GRCh37": "grch37",
+    "GRCh38": "grch38",
+    "T2T-CHM13v2.0": "t2t_chm13v2",
+}
+
 
 def _setup_arg_parser():
     parser = ArgumentParser(description='cdot JSON manipulation tools')
@@ -56,11 +63,9 @@ def _setup_arg_parser():
     parser_historical.add_argument('--genome-build', required=True, help="'GRCh37' or 'GRCh38'")
 
     parser_builds = subparsers.add_parser("combine_builds",
-                                          help="Merge multiple JSON files from different genome builds")
-
-    parser_builds.add_argument('--grch37', required=True, help='cdot JSON.gz for GRCh37')
-    parser_builds.add_argument('--grch38', required=True, help='cdot JSON.gz for GRCh38')
-    parser_builds.add_argument('--t2t_chm13v2', required=True, help='cdot JSON.gz for t2t_chm13v2')
+                                          help="Merge JSON files from different genome builds (any one or more)")
+    for genome_build, arg in COMBINE_BUILDS_ARGS.items():
+        parser_builds.add_argument(f'--{arg}', help=f'cdot JSON.gz for {genome_build}')
 
     parser_release_notes = subparsers.add_parser("release_notes", help="JSON file to retrieve release notes")
     parser_release_notes.add_argument("json_filename", help="cdot JSON file")
@@ -461,11 +466,13 @@ def merge_historical(args):
 
 def combine_builds(args):
     print("combine_builds")
-    genome_build_filename = {
-        "GRCh37": args.grch37,
-        "GRCh38": args.grch38,
-        "T2T-CHM13v2.0": args.t2t_chm13v2,
-    }
+    genome_build_filename = {}
+    for genome_build, arg in COMBINE_BUILDS_ARGS.items():
+        if filename := getattr(args, arg):
+            genome_build_filename[genome_build] = filename
+    if not genome_build_filename:
+        build_args = ", ".join(f"--{arg}" for arg in COMBINE_BUILDS_ARGS.values())
+        raise ValueError(f"combine_builds needs at least one genome build JSON file ({build_args})")
     urls_different_coding = defaultdict(list)
     genes = {}
     transcript_versions = {}

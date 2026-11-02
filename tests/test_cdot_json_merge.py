@@ -114,6 +114,41 @@ class TestCdotJsonMerge(unittest.TestCase):
                                  "--grch37", filename, "--grch38", filename, "--t2t_chm13v2", filename)
         self.assertIn("JSON file provided for GRCh37 needs to have only GRCh37 data (has None)", stderr)
 
+    def _build_input(self, genome_build):
+        """ A single transcript file for one genome build """
+        url = "http://example.com/refseq.gff3"
+        transcript = self._transcript("NM_007294.3", "BRCA1", "672", url)
+        transcript["genome_builds"] = {genome_build: transcript["genome_builds"]["GRCh38"]}
+        return self._write(f"{genome_build}.json.gz", {
+            "genome_builds": [genome_build],
+            "genes": {"672": {"gene_symbol": "BRCA1", "url": url}},
+            "transcripts": {"NM_007294.3": transcript},
+        })
+
+    def test_combine_builds_subset_of_builds(self):
+        """ #174 - any one or more builds can be combined (the Snakefile passes the builds in its YAML) """
+        grch38_filename = self._build_input("GRCh38")
+        t2t_filename = self._build_input("T2T-CHM13v2.0")
+
+        combined_filename = self._path("combined.json.gz")
+        self._run("combine_builds", "--grch38", grch38_filename, "--t2t_chm13v2", t2t_filename,
+                  "--output", combined_filename)
+        combined = self._load(combined_filename)
+        self.assertEqual(["GRCh38", "T2T-CHM13v2.0"], combined["genome_builds"])
+        self.assertEqual({"GRCh38", "T2T-CHM13v2.0"}, set(combined["transcripts"]["NM_007294.3"]["genome_builds"]))
+
+        single_filename = self._path("single.json.gz")
+        self._run("combine_builds", "--grch38", grch38_filename, "--output", single_filename)
+        single = self._load(single_filename)
+        self.assertEqual(["GRCh38"], single["genome_builds"])
+        self.assertEqual(["GRCh38"], list(single["transcripts"]["NM_007294.3"]["genome_builds"]))
+
+    def test_combine_builds_no_builds(self):
+        """ #174 - at least one build argument is needed """
+        stderr = self._run_error("combine_builds", "--output", self._path("combined.json.gz"))
+        self.assertIn("combine_builds needs at least one genome build JSON file (--grch37, --grch38, --t2t_chm13v2)",
+                      stderr)
+
     @staticmethod
     def _transcript(transcript_accession, gene_symbol, gene_version, url):
         return {
