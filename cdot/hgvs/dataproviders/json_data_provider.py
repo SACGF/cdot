@@ -19,6 +19,7 @@ from intervaltree import IntervalTree
 from typing import IO, Iterable, Optional, Union
 
 from bioutils.assemblies import make_ac_name_map, make_name_ac_map
+from bioutils.digests import seq_md5
 
 from cdot import get_data_schema_int, __version__
 from cdot import models
@@ -292,10 +293,11 @@ class AbstractJSONDataProvider(Interface):
         return tx_exons
 
     def get_tx_identity_info(self, tx_ac):
+        """ Raises HGVSDataNotAvailableError for an unknown transcript, as biocommons' UTA provider does """
         # Get any transcript as it's assembly independent
         transcript = self._get_transcript(tx_ac)
         if not transcript:
-            return None
+            raise HGVSDataNotAvailableError(f"No transcript definition for (tx_ac={tx_ac})")
 
         tx_info = self._get_transcript_info(transcript)
 
@@ -351,11 +353,19 @@ class AbstractJSONDataProvider(Interface):
         return mapping_options
 
     def get_acs_for_protein_seq(self, seq):
-        """
-            This is not implemented. The only caller has comment: 'TODO: drop get_acs_for_protein_seq'
-            And is only ever called as a backup when get_pro_ac_for_tx_ac fails
-        """
-        return []
+        """ Deprecated: do not call this. Returns only the MD5-based accession (``MD5_<md5 of seq>``),
+            as cdot has no protein sequence index.
+
+            This copies biocommons' UTA provider, which returns any protein accessions with that
+            sequence followed by ``"MD5_" + seq_md5(seq)``, so the list is never empty. The only
+            caller is biocommons ``RefTranscriptData`` (used by ``c_to_p``), which takes ``[0]``
+            when ``get_pro_ac_for_tx_ac`` gives no protein accession, so returning ``[]`` would
+            raise ``IndexError``. biocommons marks that call "TODO: drop get_acs_for_protein_seq".
+
+            There's no DeprecationWarning, because biocommons calls this and the user can't do
+            anything about it. Remove this method once biocommons no longer calls it and cdot
+            requires that hgvs version. """
+        return ["MD5_" + seq_md5(seq)]
 
     def get_gene_info(self, gene):
         gene_info = None
@@ -540,7 +550,8 @@ class LocalDataProvider(AbstractJSONDataProvider):
             :meth:`get_tx_ac_tags_for_gene`, falling back to the id from the interval tree (which
             may be versionless on some providers) when a record has no ``"id"``. """
 
-        self._check_alt_aln_method(alt_aln_method)
+        if alt_aln_method != self.NCBI_ALN_METHOD:
+            return []  # no alignments by that method, as UTA returns
 
         tx_list = []
         contig_iv_tree = self._get_contig_interval_tree(alt_ac)
@@ -987,7 +998,8 @@ class RESTDataProvider(AbstractJSONDataProvider):
         return tx_list
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
-        self._check_alt_aln_method(alt_aln_method)
+        if alt_aln_method != self.NCBI_ALN_METHOD:
+            return []  # no alignments by that method, as UTA returns
 
         tx_list = []
         url = f"{self.url}/transcripts/region/{alt_ac}/{alt_aln_method}/{start_i}/{end_i}"

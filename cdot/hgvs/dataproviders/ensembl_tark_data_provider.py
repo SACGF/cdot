@@ -5,6 +5,7 @@ from collections import defaultdict
 
 import requests
 from hgvs.dataproviders.seqfetcher import SeqFetcher
+from bioutils.digests import seq_md5
 from hgvs.exceptions import HGVSDataNotAvailableError
 
 from cdot.hgvs.dataproviders.json_data_provider import get_ac_name_map, get_name_ac_map
@@ -306,7 +307,7 @@ class EnsemblTarkDataProvider(Interface):
         # Get any transcript as it's assembly independent
         transcript_results = self._get_transcript_results(tx_ac)
         if not transcript_results:
-            return None
+            raise HGVSDataNotAvailableError(f"No transcript definition for (tx_ac={tx_ac})")
 
         transcript = transcript_results[0]  # Any will do
         tx_info = self._get_transcript_info(transcript)
@@ -370,11 +371,11 @@ class EnsemblTarkDataProvider(Interface):
         return mapping_options
 
     def get_acs_for_protein_seq(self, seq):
-        """
-            This is not implemented. The only caller has comment: 'TODO: drop get_acs_for_protein_seq'
-            And is only ever called as a backup when get_pro_ac_for_tx_ac fails
-        """
-        return []
+        """ Deprecated: do not call this. Returns only the MD5-based accession, as biocommons'
+            UTA provider ends its list with, because biocommons c_to_p takes ``[0]`` when a
+            transcript has no protein accession. Remove once biocommons no longer calls it
+            (see AbstractJSONDataProvider.get_acs_for_protein_seq). """
+        return ["MD5_" + seq_md5(seq)]
 
     def get_gene_info(self, gene):
         """
@@ -456,6 +457,8 @@ class EnsemblTarkDataProvider(Interface):
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
         assert end_i >= start_i, f"{end_i=} must be greater or equal than {start_i=}"
+        if alt_aln_method != self.NCBI_ALN_METHOD or alt_ac not in self.assembly_by_contig:
+            return []  # no alignments, as UTA returns
 
         url = posixpath.join(self.base_url, "transcript/?")
         assembly = self.assembly_by_contig[alt_ac]

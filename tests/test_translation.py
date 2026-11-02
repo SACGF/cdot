@@ -5,6 +5,7 @@ Transcript data is from the translation test GFFs (see test_gff_parsers). The tr
 sequences are spliced from the genome, as FastaSeqFetcher would, so ACTN3 on GRCh37 has the
 reference R577X stop allele.
 """
+import io
 import json
 import os
 
@@ -416,3 +417,14 @@ class TestFixSelenoproteinP:
         var_p, fixes = self._fix(hgvs_p)
         assert str(var_p) == hgvs_p
         assert fixes == []
+
+
+def test_c_to_p_without_protein_accession_uses_md5():
+    # biocommons c_to_p takes get_acs_for_protein_seq(seq)[0] when there's no protein accession
+    with open(os.path.join(TEST_DATA_DIR, "cdot.refseq.translation.grch38.json")) as f:
+        data = json.load(f)
+    del data["transcripts"]["NM_002085.5"]["protein"]
+    hdp = JSONDataProvider([io.StringIO(json.dumps(data))], seqfetcher=MockSeqFetcher(SEQUENCES_JSON))
+    am = AssemblyMapper(hdp, assembly_name="GRCh38", alt_aln_method="splign", replace_reference=True)
+    var_p = am.c_to_p(hp.parse("NM_002085.5:c.100del"))
+    assert var_p.ac.startswith("MD5_")
