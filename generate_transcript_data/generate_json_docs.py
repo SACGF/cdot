@@ -136,8 +136,25 @@ def clean_doc(doc):
     return doc
 
 
+def _null_last(node):
+    """Put ``{"type": "null"}`` last in every ``anyOf`` of an Optional field, in place.
+
+    msgspec versions differ on whether the null alternative of an Optional struct field
+    comes first or last, so the order is fixed here to keep the output stable.
+    """
+    if isinstance(node, dict):
+        if isinstance(any_of := node.get("anyOf"), list):
+            any_of.sort(key=lambda alt: alt == {"type": "null"})
+        for value in node.values():
+            _null_last(value)
+    elif isinstance(node, list):
+        for value in node:
+            _null_last(value)
+
+
 def build_schema(field_docs):
     schema = msgspec.json.schema(models.CdotData)
+    _null_last(schema)
     defs = schema.get("$defs", {})
     for cls in STRUCTS:
         name = cls.__name__
