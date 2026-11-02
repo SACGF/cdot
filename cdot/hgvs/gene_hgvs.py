@@ -22,6 +22,7 @@ from cdot.hgvs.clean import (
     HGVSInputError,
     VersionStrategy,
     _looks_like_transcript,
+    _refseq_prefixes,
     clean_hgvs,
     get_best_transcript_version,
 )
@@ -357,8 +358,8 @@ _BARE_NUMBER_ACCESSION = re.compile(r"^_?(\d{6,9})((?:\.\d+)?):([cn])\.", re.IGN
 # The kind letter constrains which RefSeq prefixes could have been dropped:
 # a coding "c." implies an mRNA accession, a non-coding "n." an RNA accession.
 _PREFIXES_FOR_KIND = {
-    "c": ("NM_", "XM_"),
-    "n": ("NR_", "XR_"),
+    "c": tuple(_refseq_prefixes("mRNA")),
+    "n": tuple(_refseq_prefixes("RNA")),
 }
 
 
