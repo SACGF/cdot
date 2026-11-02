@@ -92,8 +92,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
+          cache-dependency-path: pyproject.toml
       - name: Install dependencies
-        run: pip install -r generate_transcript_data/requirements.txt "snakemake>=8,<9"
+        run: pip install -e ".[build]" "snakemake>=8,<9"
       - name: Reuse gene info from previous run
         if: inputs.reuse_run_id != ''
         run: |
@@ -142,8 +143,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
+          cache-dependency-path: pyproject.toml
       - name: Install dependencies
-        run: pip install -r generate_transcript_data/requirements.txt "snakemake>=8,<9"
+        run: pip install -e ".[build]" "snakemake>=8,<9"
       - uses: actions/download-artifact@v4
         with:
           name: gene-info
@@ -178,8 +180,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
+          cache-dependency-path: pyproject.toml
       - name: Install dependencies
-        run: pip install -r generate_transcript_data/requirements.txt "snakemake>=8,<9"
+        run: pip install -e ".[build]" "snakemake>=8,<9"
       - uses: actions/download-artifact@v4
         with:
           pattern: source-*

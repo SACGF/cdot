@@ -1,8 +1,7 @@
 # cdot Paper — Working Directory
 
 Target journal: **Bioinformatics (Oxford)** — DECIDED 2026-06-17
-Article type: **Original Paper** (full article; not an Application Note). See
-`claude/paper_plan.md`.
+Article type: **Original Paper** (full article; not an Application Note).
 Structure: Abstract · Introduction · Methods · Results · Discussion · Figures.
 
 ## Files
@@ -117,7 +116,7 @@ copies them into the facts dir. To change one, edit the CSV and update its entry
 `clinvar_vcf_residual.csv`, `clinvar_residual_positions.csv`, `genomic_mismatch.csv`,
 `historical.csv`, `version_safety_validation.csv`.
 
-The full-scale ClinVar throughput runs take ~1.5 h each — see `claude/benchmark_plan.md`.
+The full-scale ClinVar throughput runs take ~1.5 h each.
 
 ### Public and private facts
 
@@ -139,6 +138,6 @@ CSV in `paper/empirical_results/` directly, and record the new measurement in
 
 ## Key resources
 
-- `claude/paper_thoughts.md` — framing, scope decisions, pre-submission checklist
+- `AGENTS.md`: conventions for agents and the pre-submission checklist
 - `literature/literature_review.md` — literature synthesis with all references
-- `claude/research.md` — deep technical notes on the codebase
+- `notes/`: analysis write-ups cited from `empirical_results/PROVENANCE.md`

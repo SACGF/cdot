@@ -32,7 +32,7 @@ Static constants transcribed from published papers, not measured here.
   Checker.
 * `clinvar_variants`, `lof_agreement_pct`, `brca2_accuracy_pct`, `uta_count`,
   `uta_remote_tps`, `mane_coverage_pct`, `seqrepo_speedup_fold`: see the citations
-  in `paper/references.bib` and `literature/literature_review.md`.
+  in `paper/references.bib` and `paper/literature/literature_review.md`.
 
 ## clinvar.csv (frozen)
 
@@ -244,7 +244,7 @@ notation the HGVS parser cannot read.
 
 4,382,308 pairs: 99.41% resolved, and of those 99.959% match the ClinVar VCF
 coordinate exactly. `clinvar_vcf_residual.csv` breaks the 1,766 incorrect rows down by
-cause. Analysis writeup: `claude/clinvar_diff_coordinates.md`.
+cause. Analysis writeup: `paper/notes/clinvar_diff_coordinates.md`.
 
 ## clinvar_residual_positions.csv (frozen)
 

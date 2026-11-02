@@ -8,7 +8,7 @@ projection errors concentrated toward the 3' end, the incorrect rows' relative
 CDS positions would skew high against the correct rows' baseline distribution.
 
 Consumes the per-variant table from resolve_clinvar_pass.py (VCF mode; the run
-documented in claude/clinvar_diff_coordinates.md) plus the same cdot release
+documented in paper/notes/clinvar_diff_coordinates.md) plus the same cdot release
 JSON.gz the pass used (only start/stop codons are kept, then the JSON is freed).
 Every `correct` and `incorrect` row's cited c. position is anchored to a relative
 CDS position (intronic offsets anchor to their exon boundary; ranges to their

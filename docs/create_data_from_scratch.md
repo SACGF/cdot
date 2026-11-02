@@ -10,7 +10,7 @@ you need a checkout of the repo.
 ```bash
 git clone https://github.com/SACGF/cdot
 cd cdot
-python3 -m pip install -r generate_transcript_data/requirements.txt "snakemake>=8,<9"
+python3 -m pip install -e ".[build]" "snakemake>=8,<9"
 sudo apt -y install postgresql-client   # psql, only needed for the UTA sources
 ```
 

@@ -1,6 +1,0 @@
-biopython
-bioutils
-htseq
-ijson
-intervaltree
-requests

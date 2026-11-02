@@ -36,10 +36,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# 'hgvs' is now a core dependency - kept as a no-op alias so 'pip install cdot[hgvs]' keeps working
-hgvs = [
-    "hgvs",
-]
 # Local genome FASTA sequence fetching (GenomeFastaSeqFetcher / FastaSeqFetcher) - needs pysam
 fasta = [
     "pysam",
