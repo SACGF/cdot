@@ -8,7 +8,7 @@ from hgvs.dataproviders.interface import Interface
 from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError
 from intervaltree import IntervalTree
-from typing import List
+from typing import Optional
 
 from bioutils.assemblies import make_ac_name_map, make_name_ac_map
 
@@ -42,7 +42,7 @@ class AbstractJSONDataProvider(Interface):
     # bound on distinct (tx_ac, alt_ac) entries; each entry is just the exon dict list.
     TX_EXONS_CACHE_SIZE = 10_000
 
-    def __init__(self, assemblies: List[str] = None, mode=None, cache=None, seqfetcher=None):
+    def __init__(self, assemblies: Optional[list[str]] = None, mode=None, cache=None, seqfetcher=None):
         """ assemblies: defaults to ["GRCh37", "GRCh38"]
             seqfetcher defaults to biocommons SeqFetcher()
         """
@@ -148,10 +148,17 @@ class AbstractJSONDataProvider(Interface):
             genome_build=genome_build, cited_position=cited_position)
 
     def _get_transcript_coordinates_for_contig(self, transcript, alt_ac):
+        """ The transcript's coordinates (its ``genome_builds`` entry) on the build that contig
+            ``alt_ac`` belongs to, or None if the transcript has no coordinates on that build.
+
+            Raises HGVSDataNotAvailableError if ``alt_ac`` is not a contig of any assembly this
+            provider was constructed with: the same error biocommons hgvs handles for any other
+            missing data (and that get_tx_info raises for a contig the transcript isn't on). """
         assembly = self.assembly_by_contig.get(alt_ac)
         if assembly is None:
             supported_assemblies = ", ".join(self.assembly_maps.keys())
-            raise ValueError(f"Contig '{alt_ac}' not supported. Supported assemblies: {supported_assemblies}")
+            raise HGVSDataNotAvailableError(
+                f"Contig '{alt_ac}' not supported. Supported assemblies: {supported_assemblies}")
 
         return transcript["genome_builds"].get(assembly)
 
@@ -186,9 +193,10 @@ class AbstractJSONDataProvider(Interface):
 
     @staticmethod
     def _convert_gap_to_cigar(gap):
-        """
+        """ Convert a cdot exon gap string to the (transcript-relative) CIGAR biocommons hgvs expects
+
                 gap = 'M196 I1 M61 I1 M181'
-                CIGAR = '194=1D60=1D184='
+                CIGAR = '196=1D61=1D181='
         """
 
         # This has to/from sequences inverted, so insertion is a deletion
@@ -208,6 +216,10 @@ class AbstractJSONDataProvider(Interface):
         return "".join(cigar_ops)
 
     def get_tx_exons(self, tx_ac, alt_ac, alt_aln_method):
+        """ Exon alignments of ``tx_ac`` on contig ``alt_ac`` in biocommons hgvs form (one dict per
+            exon, with a CIGAR), or None if the transcript is unknown or has no coordinates on that
+            contig's build. Raises HGVSDataNotAvailableError for an alt_aln_method other than
+            splign, or a contig outside the provider's assemblies. """
         self._check_alt_aln_method(alt_aln_method)  # raises unless alt_aln_method == splign
         # alt_aln_method is validated above (always splign) so it is not part of the key.
         # Only successful builds are cached: a None result can become available later on
@@ -268,11 +280,10 @@ class AbstractJSONDataProvider(Interface):
 
         tx_info = self._get_transcript_info(transcript)
 
-        # Only using lengths (same in each build) not coordinates so grab anything
-        exons = []
-        for build_coordinates in transcript["genome_builds"].values():
-            exons = build_coordinates["exons"]
-            break
+        # Only the exon lengths are used, and those are the same in every build the transcript is
+        # on, so take the exons of whichever build comes first (an empty list if it is on none).
+        build_coordinates = next(iter(transcript["genome_builds"].values()), None)
+        exons = build_coordinates["exons"] if build_coordinates else []
 
         stranded_order_exons = sorted(exons, key=lambda e: e[2])  # sort by exon_id
         tx_info["lengths"] = [ex[4] + 1 - ex[3] for ex in stranded_order_exons]
@@ -503,7 +514,12 @@ class LocalDataProvider(AbstractJSONDataProvider):
         return [(tx_ac, tags_by_ac.get(tx_ac, [])) for _, tx_ac in lengths]
 
     def get_tx_for_region(self, alt_ac, alt_aln_method, start_i, end_i):
-        """ return transcripts that overlap given region """
+        """ return transcripts that overlap given region
+
+            ``tx_ac`` is the canonical versioned accession from the record
+            (``transcript_data["id"]``, eg ``"NM_000059.4"``), as in :meth:`get_tx_for_gene` and
+            :meth:`get_tx_ac_tags_for_gene`, falling back to the id from the interval tree (which
+            may be versionless on some providers) when a record has no ``"id"``. """
 
         self._check_alt_aln_method(alt_aln_method)
 
@@ -520,7 +536,7 @@ class LocalDataProvider(AbstractJSONDataProvider):
                     "alt_strand": strand,
                     "start_i": tx_start,
                     "end_i": tx_end,
-                    "tx_ac": transcript_id,
+                    "tx_ac": transcript_data.get("id") or transcript_id,
                 })
         return tx_list
 
@@ -634,7 +650,7 @@ class RESTDataProvider(AbstractJSONDataProvider):
     DEFAULT_TIMEOUT = 30
 
     def __init__(self, url=None, secure=True, mode=None, cache=None, seqfetcher=None,
-                 assemblies: List[str] = None, timeout=DEFAULT_TIMEOUT, session=None):
+                 assemblies: Optional[list[str]] = None, timeout=DEFAULT_TIMEOUT, session=None):
         """ assemblies: genome builds to recognise contigs for, defaults to DEFAULT_ASSEMBLIES
             timeout: seconds to wait on the server (connect and read) before raising, None waits forever
             session: requests.Session to use (eg to set headers/proxies/retries), default creates one
