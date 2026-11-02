@@ -120,6 +120,8 @@ def add_gencode_hgnc(gencode_hgnc_filename: str, genes, transcripts):
             # Line looks like: ENST00000624431.2	DDX11L17	HGNC:55080
             for line in gi_f.readlines():
                 line = line.strip()
+                if not line:
+                    continue  # eg trailing blank line
                 columns = line.split("\t")
                 num_columns = len(columns)
                 if num_columns == 3:
