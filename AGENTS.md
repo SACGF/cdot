@@ -57,7 +57,7 @@ python generate_transcript_data/generate_json_docs.py
 
 ## Test Suite
 
-`python -m pytest tests/` runs about 1300 tests in about 3 seconds, so run it freely and after every change. It needs the `test` extra (`pip install -e '.[test]'`: pytest, msgspec, pysam) and `pyhgvs` (in the `build` extra) for `tests/test_pyhgvs.py`. The handful of skips reported are the abstract base class `AbstractEnsemblTestCase` in `tests/test_json_data_provider_ensembl.py` skipping itself; its subclasses run the same tests against the JSON provider and the mocked TARK provider.
+`python -m pytest tests/` runs about 1300 tests in about 3 seconds, so run it freely and after every change. It needs the `test` extra (`pip install -e '.[test]'`: pytest, msgspec, pysam) and `pyhgvs` (in the `build` extra) for `tests/test_pyhgvs.py`. Nothing is skipped: `AbstractEnsemblTestCase` in `tests/test_json_data_provider_ensembl.py` is a mixin rather than a `TestCase`, so pytest does not collect it, and its subclasses run the same tests against the JSON provider and the mocked TARK provider.
 
 Almost everything in the suite runs offline:
 
