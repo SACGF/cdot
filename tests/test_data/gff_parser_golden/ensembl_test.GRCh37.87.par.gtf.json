@@ -1,0 +1,64 @@
+{
+ "genes": {
+  "ENSG00000900001.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "PARX",
+   "source": [
+    "ensembl_havana"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "ENST00000900001.1": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "gene_name": "PARX",
+   "gene_version": "ENSG00000900001.1",
+   "genome_builds": {
+    "GRCh37": {
+     "cds_end": 61500,
+     "cds_start": 60050,
+     "contig": "NC_000023.10",
+     "exons": [
+      [
+       60000,
+       60100,
+       0,
+       1,
+       100,
+       null
+      ],
+      [
+       61000,
+       62000,
+       1,
+       101,
+       1100,
+       null
+      ]
+     ],
+     "other_chroms": [
+      "Y"
+     ],
+     "source": [
+      "ensembl_havana"
+     ],
+     "strand": "+",
+     "tag": "basic",
+     "url": "http://fake.url"
+    }
+   },
+   "id": "ENST00000900001.1",
+   "protein": "ENSP00000900001.1",
+   "start_codon": 50,
+   "stop_codon": 600
+  }
+ }
+}

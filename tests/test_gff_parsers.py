@@ -7,7 +7,7 @@ import tempfile
 from inspect import getsourcefile
 import unittest
 from generate_transcript_data.cdot_json import add_gencode_hgnc, combine_builds, write_cdot_json
-from generate_transcript_data.annotation_consortium import RefSeq
+from generate_transcript_data.annotation_consortium import RefSeq, detect_annotation_consortium
 from generate_transcript_data.gff_parser import GTFParser, GFF3Parser
 from generate_transcript_data.transcript_builder import TranscriptBuilder
 from generate_transcript_data.transcript_coordinates import get_transcript_range_start, get_transcript_range_end, \
@@ -49,6 +49,10 @@ class Test(unittest.TestCase):
     REFSEQ_GFF3_FILENAME_GRCH37_ACTN3 = os.path.join(test_data_dir, "refseq_test.GRCh37.105.20220307.ACTN3.gff")
     REFSEQ_GFF3_FILENAME_GRCH38_ACTN3 = os.path.join(test_data_dir, "refseq_test.RS_2025_08.ACTN3.gff")
     UCSC_GTF_FILENAME = os.path.join(test_data_dir, "hg19_chrY_300kb_genes.gtf")
+    # Synthetic: PAR gene on X and Y, CDS starting before the first exon, gene on an NT_ scaffold
+    REFSEQ_GFF3_FILENAME_PAR = os.path.join(test_data_dir, "refseq_test.par_and_unplaced_codon.gff")
+    # Synthetic: Ensembl GRCh37 GTF with a PAR gene repeated on Y under the same IDs
+    ENSEMBL_87_GTF_FILENAME_PAR = os.path.join(test_data_dir, "ensembl_test.GRCh37.87.par.gtf")
     # Ensembl GFF3 (chrMT up to the first CDS). CDS rows have the protein version from release 114
     ENSEMBL_115_GFF3_FILENAME = os.path.join(test_data_dir, "ensembl_test.GRCh38.115.MT.gff3")
     # MT-ND1 (stop codon completed by the poly(A) tail), MT-TI (tRNA), MT-ATP8 and MT-ND6 (- strand)
@@ -685,3 +689,120 @@ class Test(unittest.TestCase):
         gene_version_mttk = transcripts["ENST00000387421.1"]["gene_version"]
         self.assertEqual(genes[gene_version_or4f5]["hgnc"], "14825")
         self.assertEqual(genes[gene_version_mttk]["hgnc"], "7489")
+
+    def test_refseq_gff3_other_chroms(self):
+        """ RefSeq annotates the Y copy of a PAR transcript under the same accession. The transcript keeps
+            the first (X) coordinates and records the other chromosome """
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_PAR, genome_build, self.FAKE_URL)
+        with self.assertLogs(level="WARNING"):  # The UNPL start codon
+            genes, transcripts = parser.get_genes_and_transcripts()
+        build_data = transcripts["NM_900001.1"]["genome_builds"][genome_build]
+        self.assertEqual(build_data["contig"], "NC_000023.11")
+        self.assertEqual(build_data["other_chroms"], {"Y"})
+        self.assertEqual([(e[0], e[1]) for e in build_data["exons"]], [(1000, 1100), (2000, 2100), (3000, 3100)])
+        self.assertEqual(transcripts["NM_900001.1"]["protein"], "NP_900001.1")
+        self.assertEqual(list(genes), ["90001", "90002"])  # One gene for both copies, scaffold gene discarded
+
+    def test_gtf_other_chroms(self):
+        """ Ensembl GRCh37 GTFs repeat PAR genes on Y with the same gene/transcript IDs """
+        genome_build = "GRCh37"
+        parser = GTFParser(self.ENSEMBL_87_GTF_FILENAME_PAR, genome_build, self.FAKE_URL)
+        genes, transcripts = parser.get_genes_and_transcripts()
+        self.assertEqual(list(genes), ["ENSG00000900001.1"])
+        transcript = transcripts["ENST00000900001.1"]
+        build_data = transcript["genome_builds"][genome_build]
+        self.assertEqual(build_data["contig"], "NC_000023.10")
+        self.assertEqual(build_data["other_chroms"], {"Y"})
+        self.assertEqual([(e[0], e[1]) for e in build_data["exons"]], [(60000, 60100), (61000, 62000)])
+        self.assertEqual(transcript["start_codon"], 50)
+        self.assertEqual(transcript["stop_codon"], 600)
+
+    def test_codons_unplaced_warning(self):
+        """ A CDS that starts before the first exon has no start codon transcript position """
+        genome_build = "GRCh38"
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_PAR, genome_build, self.FAKE_URL)
+        with self.assertLogs(level="WARNING") as logs:
+            _, transcripts = parser.get_genes_and_transcripts()
+        self.assertTrue(any("Couldn't set start_codon transcript position" in msg for msg in logs.output))
+        transcript = transcripts["NM_900002.1"]
+        build_data = transcript["genome_builds"][genome_build]
+        self.assertNotIn("start_codon", transcript)
+        self.assertEqual(transcript["stop_codon"], 150)
+        self.assertEqual(build_data["warnings"], {"codons_unplaced": ["start_codon"]})
+        # The genomic CDS range is still known
+        self.assertEqual((build_data["cds_start"], build_data["cds_end"]), (9950, 11050))
+        self.assertIn("mRNA", transcript["biotype"])
+
+    def test_discard_contigs_with_underscores(self):
+        """ Rows on contigs with an underscore (unplaced scaffolds, eg NT_187361.1) are dropped by default """
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_PAR, "GRCh38", self.FAKE_URL)
+        with self.assertLogs(level="WARNING"):
+            genes, transcripts = parser.get_genes_and_transcripts()
+        self.assertEqual(dict(parser.discarded_contigs), {"NT_187361.1": 4})  # gene, lnc_RNA, 2 exons
+        self.assertNotIn("90003", genes)
+        self.assertNotIn("NR_900003.1", transcripts)
+
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_PAR, "GRCh38", self.FAKE_URL,
+                            discard_contigs_with_underscores=False)
+        with self.assertLogs(level="WARNING"):
+            genes, transcripts = parser.get_genes_and_transcripts()
+        self.assertEqual(dict(parser.discarded_contigs), {})
+        self.assertEqual(genes["90003"]["gene_symbol"], "SCAF")
+        build_data = transcripts["NR_900003.1"]["genome_builds"]["GRCh38"]
+        self.assertEqual(build_data["contig"], "NT_187361.1")  # Not a chromosome name, so left as is
+        self.assertEqual(build_data["strand"], "-")
+        self.assertEqual([(e[0], e[1]) for e in build_data["exons"]], [(500, 600), (800, 1000)])
+
+    def test_no_contig_conversion(self):
+        """ Genome builds without a bioutils assembly can only be used with no_contig_conversion, which
+            leaves contig names as they are in the file """
+        genome_build = "CustomBuild"
+        with self.assertRaisesRegex(FileNotFoundError, "doesn't have an assembly in biocommons bioutils"):
+            GFF3Parser(self.REFSEQ_GFF3_FILENAME_PAR, genome_build, self.FAKE_URL)
+
+        parser = GFF3Parser(self.REFSEQ_GFF3_FILENAME_PAR, genome_build, self.FAKE_URL, no_contig_conversion=True)
+        with self.assertLogs(level="WARNING"):
+            _, transcripts = parser.get_genes_and_transcripts()
+        build_data = transcripts["NM_900001.1"]["genome_builds"][genome_build]
+        self.assertEqual(build_data["contig"], "X")
+        self.assertEqual(build_data["other_chroms"], {"Y"})
+
+
+class TestDetectAnnotationConsortium(unittest.TestCase):
+    def _detect(self, lines) -> str:
+        with tempfile.NamedTemporaryFile("w", suffix=".gff") as f:
+            f.write("\n".join(lines) + "\n")
+            f.flush()
+            return detect_annotation_consortium(f.name)
+
+    def test_refseq(self):
+        self.assertEqual(self._detect([
+            "##gff-version 3",
+            "NC_000017.11\tBestRefSeq\tgene\t43044295\t43170245\t.\t-\t.\tID=gene-BRCA1;Dbxref=GeneID:672;Name=BRCA1",
+        ]), "refseq")
+
+    def test_ensembl(self):
+        self.assertEqual(self._detect([
+            "#!genome-build GRCh38",
+            '17\tensembl_havana\tgene\t43044295\t43170245\t.\t-\t.\tgene_id "ENSG00000012048"; gene_version "23";',
+        ]), "ensembl")
+
+    def test_generic(self):
+        self.assertEqual(self._detect([
+            'chrY\thg19_refGene\texon\t150855\t150981\t.\t-\t.\tgene_id "NM_013239"; transcript_id "NM_013239";',
+        ]), "generic")
+
+    def test_ensembl_and_geneid_on_one_line(self):
+        """ Ensembl GTFs can carry RefSeq cross references (db_xref "GeneID:672"), the ENS accession wins """
+        self.assertEqual(self._detect([
+            '17\tensembl_havana\tgene\t43044295\t43170245\t.\t-\t.\t'
+            'gene_id "ENSG00000012048"; gene_version "23"; db_xref "GeneID:672";',
+        ]), "ensembl")
+
+    def test_comments_skipped(self):
+        """ Header comments mentioning the other consortium don't count """
+        self.assertEqual(self._detect([
+            "# converted from Ensembl ENSG00000012048",
+            "NC_000017.11\tBestRefSeq\tgene\t43044295\t43170245\t.\t-\t.\tID=gene-BRCA1;Dbxref=GeneID:672",
+        ]), "refseq")

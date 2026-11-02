@@ -1,0 +1,36 @@
+##gff-version 3
+# Synthetic RefSeq-style GFF3 (accessions and coordinates are made up) for parser paths the real fixtures
+# don't reach. Chromosome names rather than NC_ accessions are used so the contig conversion is visible.
+#
+# PARX: a pseudoautosomal gene. RefSeq annotates the Y copy with the same GeneID and transcript accession
+# under its own feature IDs (-2 suffix), so the transcript keeps the X coordinates and records Y in other_chroms.
+X	BestRefSeq	gene	1001	3100	.	+	.	ID=gene-PARX;Dbxref=GeneID:90001,HGNC:HGNC:90001;Name=PARX;description=pseudoautosomal test gene;gbkey=Gene;gene=PARX;gene_biotype=protein_coding
+X	BestRefSeq	mRNA	1001	3100	.	+	.	ID=rna-NM_900001.1;Parent=gene-PARX;Dbxref=GeneID:90001,GenBank:NM_900001.1,HGNC:HGNC:90001;Name=NM_900001.1;gbkey=mRNA;gene=PARX;product=pseudoautosomal test protein;tag=RefSeq Select;transcript_id=NM_900001.1
+X	BestRefSeq	exon	1001	1100	.	+	.	ID=exon-NM_900001.1-1;Parent=rna-NM_900001.1;Dbxref=GeneID:90001,GenBank:NM_900001.1;gbkey=mRNA;gene=PARX;transcript_id=NM_900001.1
+X	BestRefSeq	exon	2001	2100	.	+	.	ID=exon-NM_900001.1-2;Parent=rna-NM_900001.1;Dbxref=GeneID:90001,GenBank:NM_900001.1;gbkey=mRNA;gene=PARX;transcript_id=NM_900001.1
+X	BestRefSeq	exon	3001	3100	.	+	.	ID=exon-NM_900001.1-3;Parent=rna-NM_900001.1;Dbxref=GeneID:90001,GenBank:NM_900001.1;gbkey=mRNA;gene=PARX;transcript_id=NM_900001.1
+X	BestRefSeq	CDS	1051	1100	.	+	0	ID=cds-NP_900001.1;Parent=rna-NM_900001.1;Dbxref=GeneID:90001,GenBank:NP_900001.1;Name=NP_900001.1;gbkey=CDS;gene=PARX;protein_id=NP_900001.1
+X	BestRefSeq	CDS	2001	2100	.	+	1	ID=cds-NP_900001.1;Parent=rna-NM_900001.1;Dbxref=GeneID:90001,GenBank:NP_900001.1;Name=NP_900001.1;gbkey=CDS;gene=PARX;protein_id=NP_900001.1
+X	BestRefSeq	CDS	3001	3030	.	+	0	ID=cds-NP_900001.1;Parent=rna-NM_900001.1;Dbxref=GeneID:90001,GenBank:NP_900001.1;Name=NP_900001.1;gbkey=CDS;gene=PARX;protein_id=NP_900001.1
+Y	BestRefSeq	gene	5001	7100	.	+	.	ID=gene-PARX-2;Dbxref=GeneID:90001,HGNC:HGNC:90001;Name=PARX;description=pseudoautosomal test gene;gbkey=Gene;gene=PARX;gene_biotype=protein_coding
+Y	BestRefSeq	mRNA	5001	7100	.	+	.	ID=rna-NM_900001.1-2;Parent=gene-PARX-2;Dbxref=GeneID:90001,GenBank:NM_900001.1,HGNC:HGNC:90001;Name=NM_900001.1;gbkey=mRNA;gene=PARX;product=pseudoautosomal test protein;tag=RefSeq Select;transcript_id=NM_900001.1
+Y	BestRefSeq	exon	5001	5100	.	+	.	ID=exon-NM_900001.1-4;Parent=rna-NM_900001.1-2;Dbxref=GeneID:90001,GenBank:NM_900001.1;gbkey=mRNA;gene=PARX;transcript_id=NM_900001.1
+Y	BestRefSeq	exon	6001	6100	.	+	.	ID=exon-NM_900001.1-5;Parent=rna-NM_900001.1-2;Dbxref=GeneID:90001,GenBank:NM_900001.1;gbkey=mRNA;gene=PARX;transcript_id=NM_900001.1
+Y	BestRefSeq	exon	7001	7100	.	+	.	ID=exon-NM_900001.1-6;Parent=rna-NM_900001.1-2;Dbxref=GeneID:90001,GenBank:NM_900001.1;gbkey=mRNA;gene=PARX;transcript_id=NM_900001.1
+Y	BestRefSeq	CDS	5051	5100	.	+	0	ID=cds-NP_900001.1-2;Parent=rna-NM_900001.1-2;Dbxref=GeneID:90001,GenBank:NP_900001.1;Name=NP_900001.1;gbkey=CDS;gene=PARX;protein_id=NP_900001.1
+Y	BestRefSeq	CDS	6001	6100	.	+	1	ID=cds-NP_900001.1-2;Parent=rna-NM_900001.1-2;Dbxref=GeneID:90001,GenBank:NP_900001.1;Name=NP_900001.1;gbkey=CDS;gene=PARX;protein_id=NP_900001.1
+Y	BestRefSeq	CDS	7001	7030	.	+	0	ID=cds-NP_900001.1-2;Parent=rna-NM_900001.1-2;Dbxref=GeneID:90001,GenBank:NP_900001.1;Name=NP_900001.1;gbkey=CDS;gene=PARX;protein_id=NP_900001.1
+# UNPL: the CDS starts 50 bases before the first exon, so the start codon has no transcript position
+# (warnings.codons_unplaced) while the stop codon does.
+X	BestRefSeq	gene	10001	11100	.	+	.	ID=gene-UNPL;Dbxref=GeneID:90002;Name=UNPL;gbkey=Gene;gene=UNPL;gene_biotype=protein_coding
+X	BestRefSeq	mRNA	10001	11100	.	+	.	ID=rna-NM_900002.1;Parent=gene-UNPL;Dbxref=GeneID:90002,GenBank:NM_900002.1;Name=NM_900002.1;gbkey=mRNA;gene=UNPL;product=unplaced start codon test protein;transcript_id=NM_900002.1
+X	BestRefSeq	exon	10001	10100	.	+	.	ID=exon-NM_900002.1-1;Parent=rna-NM_900002.1;Dbxref=GeneID:90002,GenBank:NM_900002.1;gbkey=mRNA;gene=UNPL;transcript_id=NM_900002.1
+X	BestRefSeq	exon	11001	11100	.	+	.	ID=exon-NM_900002.1-2;Parent=rna-NM_900002.1;Dbxref=GeneID:90002,GenBank:NM_900002.1;gbkey=mRNA;gene=UNPL;transcript_id=NM_900002.1
+X	BestRefSeq	CDS	9951	10100	.	+	0	ID=cds-NP_900002.1;Parent=rna-NM_900002.1;Dbxref=GeneID:90002,GenBank:NP_900002.1;Name=NP_900002.1;gbkey=CDS;gene=UNPL;protein_id=NP_900002.1
+X	BestRefSeq	CDS	11001	11050	.	+	0	ID=cds-NP_900002.1;Parent=rna-NM_900002.1;Dbxref=GeneID:90002,GenBank:NP_900002.1;Name=NP_900002.1;gbkey=CDS;gene=UNPL;protein_id=NP_900002.1
+# SCAF: on an unplaced scaffold (NT_ accession, which has an underscore), discarded unless contigs with
+# underscores are kept.
+NT_187361.1	BestRefSeq	gene	501	1000	.	-	.	ID=gene-SCAF;Dbxref=GeneID:90003;Name=SCAF;gbkey=Gene;gene=SCAF;gene_biotype=lncRNA
+NT_187361.1	BestRefSeq	lnc_RNA	501	1000	.	-	.	ID=rna-NR_900003.1;Parent=gene-SCAF;Dbxref=GeneID:90003,GenBank:NR_900003.1;Name=NR_900003.1;gbkey=ncRNA;gene=SCAF;product=scaffold test RNA;transcript_id=NR_900003.1
+NT_187361.1	BestRefSeq	exon	801	1000	.	-	.	ID=exon-NR_900003.1-1;Parent=rna-NR_900003.1;Dbxref=GeneID:90003,GenBank:NR_900003.1;gbkey=ncRNA;gene=SCAF;transcript_id=NR_900003.1
+NT_187361.1	BestRefSeq	exon	501	600	.	-	.	ID=exon-NR_900003.1-2;Parent=rna-NR_900003.1;Dbxref=GeneID:90003,GenBank:NR_900003.1;gbkey=ncRNA;gene=SCAF;transcript_id=NR_900003.1

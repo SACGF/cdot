@@ -24,7 +24,8 @@ TEST_DATA_DIR = os.path.join(THIS_FILE_DIR, "test_data")
 GOLDEN_DIR = os.path.join(TEST_DATA_DIR, "gff_parser_golden")
 FAKE_URL = "http://fake.url"
 
-# (fixture filename, parser class, genome build, parser kwargs)
+# (fixture filename, parser class, genome build, parser kwargs[, golden suffix])
+# The golden suffix lets the same fixture be parsed again with different options and compared to its own golden
 FIXTURES = [
     # Ensembl GTF
     ("ensembl_test.GRCh38.104.gtf", GTFParser, "GRCh38", {}),
@@ -50,11 +51,21 @@ FIXTURES = [
     ("refseq_test.RS_2025_08.ribosomal_slippage.gff", GFF3Parser, "GRCh38", {}),
     ("refseq_test.GRCh37.105.20220307.ACTN3.gff", GFF3Parser, "GRCh37", {}),
     ("refseq_test.RS_2025_08.ACTN3.gff", GFF3Parser, "GRCh38", {}),
+    # Synthetic: PAR gene on X and Y (other_chroms), CDS starting outside the exons (codons_unplaced),
+    # gene on an NT_ scaffold (discarded by default). Parsed again keeping that scaffold and without
+    # contig conversion, for a genome build that has no bioutils assembly
+    ("refseq_test.par_and_unplaced_codon.gff", GFF3Parser, "GRCh38", {}),
+    ("refseq_test.par_and_unplaced_codon.gff", GFF3Parser, "CustomBuild",
+     {"no_contig_conversion": True, "discard_contigs_with_underscores": False}, "no_contig_conversion"),
+    # Synthetic: Ensembl GRCh37 GTFs repeat PAR genes on Y with the same IDs (other_chroms)
+    ("ensembl_test.GRCh37.87.par.gtf", GTFParser, "GRCh37", {}),
 ]
 
 
-def _golden_filename(fixture):
-    return os.path.join(GOLDEN_DIR, fixture.removesuffix(".gz") + ".json")
+def _golden_filename(fixture, golden_suffix=""):
+    if golden_suffix:
+        golden_suffix = "." + golden_suffix
+    return os.path.join(GOLDEN_DIR, fixture.removesuffix(".gz") + golden_suffix + ".json")
 
 
 def _parse(fixture, parser_class, genome_build, kwargs) -> str:
@@ -72,14 +83,14 @@ class TestGFFParserGolden(unittest.TestCase):
     def test_all_fixtures_have_golden(self):
         fixtures = {f for f in os.listdir(TEST_DATA_DIR)
                     if f.endswith((".gtf", ".gtf.gz", ".gff", ".gff.gz", ".gff3", ".gff3.gz"))}
-        covered = {f for f, _, _, _ in FIXTURES}
+        covered = {f[0] for f in FIXTURES}
         self.assertEqual(fixtures - covered, set(), "GTF/GFF fixtures without a golden file")
 
 
-def _make_test(fixture, parser_class, genome_build, kwargs):
+def _make_test(fixture, parser_class, genome_build, kwargs, golden_suffix=""):
     def test(self):
         actual = _parse(fixture, parser_class, genome_build, kwargs)
-        golden_filename = _golden_filename(fixture)
+        golden_filename = _golden_filename(fixture, golden_suffix)
         if os.environ.get("CDOT_UPDATE_GOLDEN"):
             os.makedirs(GOLDEN_DIR, exist_ok=True)
             with open(golden_filename, "w") as f:
@@ -90,6 +101,6 @@ def _make_test(fixture, parser_class, genome_build, kwargs):
     return test
 
 
-for _fixture, _parser_class, _genome_build, _kwargs in FIXTURES:
-    _name = "test_" + _fixture.replace(".", "_")
-    setattr(TestGFFParserGolden, _name, _make_test(_fixture, _parser_class, _genome_build, _kwargs))
+for _fixture, _parser_class, _genome_build, _kwargs, *_golden_suffix in FIXTURES:
+    _name = "test_" + "_".join([_fixture] + _golden_suffix).replace(".", "_")
+    setattr(TestGFFParserGolden, _name, _make_test(_fixture, _parser_class, _genome_build, _kwargs, *_golden_suffix))

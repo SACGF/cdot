@@ -242,3 +242,105 @@ class TestCdotJsonMerge(unittest.TestCase):
         stderr = self._run_error("merge_historical", *input_filenames, "--genome-build=GRCh37",
                                  "--output", self._path("merged.json.gz"))
         self.assertIn("needs to have only GRCh37 data (has ['GRCh38'])", stderr)
+
+    def test_merge_historical_later_file_overrides(self):
+        """ Transcripts in several files take the data from the latest, and only genes still used are kept """
+        old_url = "http://example.com/old.gff3"
+        new_url = "http://example.com/new.gff3"
+        old = {
+            "genome_builds": ["GRCh38"],
+            "genes": {
+                "672": {"gene_symbol": "BRCA1", "url": old_url, "summary": "old summary"},
+                "861": {"gene_symbol": "RUNX1", "url": old_url},
+            },
+            "transcripts": {
+                "NM_007294.3": self._transcript("NM_007294.3", "BRCA1", "672", old_url),
+                "NM_001754.4": self._transcript("NM_001754.4", "RUNX1", "861", old_url),
+            },
+        }
+        new = {
+            "genome_builds": ["GRCh38"],
+            "genes": {
+                "672": {"gene_symbol": "BRCA1", "url": new_url, "summary": "new summary"},
+                "999": {"gene_symbol": "UNUSED", "url": new_url},
+            },
+            "transcripts": {
+                "NM_007294.3": self._transcript("NM_007294.3", "BRCA1", "672", new_url),
+                "NM_007294.4": self._transcript("NM_007294.4", "BRCA1", "672", new_url),
+            },
+        }
+        new["transcripts"]["NM_007294.3"]["genome_builds"]["GRCh38"]["exons"] = [[100, 300, 1, 0, 200, None]]
+        input_filenames = [self._write("old.json.gz", old), self._write("new.json.gz", new)]
+        output_filename = self._path("merged.json.gz")
+        self._run("merge_historical", *input_filenames, "--genome-build=GRCh38", "--output", output_filename)
+        merged = self._load(output_filename)
+
+        self.assertEqual(sorted(merged["transcripts"]), ["NM_001754.4", "NM_007294.3", "NM_007294.4"])
+        brca1_old_version = merged["transcripts"]["NM_007294.3"]["genome_builds"]["GRCh38"]
+        self.assertEqual(brca1_old_version["url"], new_url)
+        self.assertEqual(brca1_old_version["exons"], [[100, 300, 1, 0, 200, None]])
+        self.assertEqual(merged["transcripts"]["NM_001754.4"]["genome_builds"]["GRCh38"]["url"], old_url)
+        # Gene data from the latest file, genes without transcripts dropped
+        self.assertEqual(sorted(merged["genes"]), ["672", "861"])
+        self.assertEqual(merged["genes"]["672"]["summary"], "new summary")
+        self.assertEqual(merged["genome_builds"], ["GRCh38"])
+        self.assertEqual(merged["metadata"]["method"], "Merge historical")
+        self.assertEqual(merged["metadata"]["input_files"], input_filenames)
+        self.assertEqual(merged["metadata"]["url_counts"], {new_url: 2, old_url: 1})
+
+    def test_merge_historical_no_genes(self):
+        input_filenames = self._merge_inputs()
+        output_filename = self._path("merged.json.gz")
+        self._run("merge_historical", *input_filenames, "--genome-build=GRCh38", "--no-genes",
+                  "--output", output_filename)
+        merged = self._load(output_filename)
+        self.assertNotIn("genes", merged)
+        self.assertEqual(len(merged["transcripts"]), 4)
+        # Transcripts still point at (real, where possible) gene accessions
+        self.assertEqual(merged["transcripts"]["NM_007300.4"]["gene_version"], "672")
+
+    def test_combine_builds_codon_mismatch(self):
+        """ When a transcript's codons differ between builds, the earlier build's coordinates were against
+            a different version of the data so are dropped and only the latest build kept """
+        grch37_url = "http://example.com/grch37.gff3"
+        grch38_url = "http://example.com/grch38.gff3"
+        inputs = {}
+        for genome_build, arg, url, mismatch_start_codon in [("GRCh37", "--grch37", grch37_url, 10),
+                                                              ("GRCh38", "--grch38", grch38_url, 13)]:
+            transcripts = {}
+            for accession, start_codon in [("NM_007294.3", mismatch_start_codon), ("NM_001754.4", 20)]:
+                transcript = self._transcript(accession, "GENE", "1", url)
+                transcript["genome_builds"] = {genome_build: transcript["genome_builds"]["GRCh38"]}
+                transcript["start_codon"] = start_codon
+                transcript["stop_codon"] = 90
+                transcripts[accession] = transcript
+            inputs[arg] = self._write(f"{genome_build}.json.gz", {
+                "genome_builds": [genome_build],
+                "genes": {"1": {"gene_symbol": "GENE", "url": url}},
+                "transcripts": transcripts,
+            })
+
+        combined_filename = self._path("combined.json.gz")
+        stdout = self._run("combine_builds", "--grch37", inputs["--grch37"], "--grch38", inputs["--grch38"],
+                           "--output", combined_filename)
+        combined = self._load(combined_filename)
+        mismatch = combined["transcripts"]["NM_007294.3"]
+        self.assertEqual(mismatch["start_codon"], 13)
+        self.assertEqual(list(mismatch["genome_builds"]), ["GRCh38"])
+        same = combined["transcripts"]["NM_001754.4"]
+        self.assertEqual(sorted(same["genome_builds"]), ["GRCh37", "GRCh38"])
+        self.assertEqual(combined["metadata"]["url_counts"], {grch38_url: 2, grch37_url: 1})
+        self.assertIn("Some transcripts were removed as they had different coding coordinates from latest", stdout)
+        self.assertIn(f"{grch37_url}: NM_007294.3", stdout)
+
+    def test_release_notes_input_files(self):
+        grch38_filename = self._build_input("GRCh38")
+        combined_filename = self._path("combined.json.gz")
+        self._run("combine_builds", "--grch38", grch38_filename, "--output", combined_filename)
+        stdout = self._run("release_notes", combined_filename)
+        self.assertEqual(stdout.splitlines(), [
+            "### combined.json.gz",
+            "Method: Combine multiple genome builds",
+            "Input files:",
+            f"- {grch38_filename}",
+        ])
