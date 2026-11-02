@@ -1,0 +1,130 @@
+{
+ "genes": {
+  "90001": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": "pseudoautosomal test gene",
+   "gene_symbol": "PARX",
+   "hgnc": "90001",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  },
+  "90002": {
+   "biotype": [
+    "mRNA",
+    "protein_coding"
+   ],
+   "description": null,
+   "gene_symbol": "UNPL",
+   "source": [
+    "BestRefSeq"
+   ],
+   "url": "http://fake.url"
+  }
+ },
+ "transcripts": {
+  "NM_900001.1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "PARX",
+   "gene_version": "90001",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 3030,
+     "cds_start": 1050,
+     "contig": "NC_000023.11",
+     "exons": [
+      [
+       1000,
+       1100,
+       0,
+       1,
+       100,
+       null
+      ],
+      [
+       2000,
+       2100,
+       1,
+       101,
+       200,
+       null
+      ],
+      [
+       3000,
+       3100,
+       2,
+       201,
+       300,
+       null
+      ]
+     ],
+     "other_chroms": [
+      "Y"
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "tag": "RefSeq Select",
+     "url": "http://fake.url"
+    }
+   },
+   "hgnc": "90001",
+   "id": "NM_900001.1",
+   "protein": "NP_900001.1",
+   "start_codon": 50,
+   "stop_codon": 230
+  },
+  "NM_900002.1": {
+   "biotype": [
+    "mRNA"
+   ],
+   "gene_name": "UNPL",
+   "gene_version": "90002",
+   "genome_builds": {
+    "GRCh38": {
+     "cds_end": 11050,
+     "cds_start": 9950,
+     "contig": "NC_000023.11",
+     "exons": [
+      [
+       10000,
+       10100,
+       0,
+       1,
+       100,
+       null
+      ],
+      [
+       11000,
+       11100,
+       1,
+       101,
+       200,
+       null
+      ]
+     ],
+     "source": [
+      "BestRefSeq"
+     ],
+     "strand": "+",
+     "url": "http://fake.url",
+     "warnings": {
+      "codons_unplaced": [
+       "start_codon"
+      ]
+     }
+    }
+   },
+   "id": "NM_900002.1",
+   "protein": "NP_900002.1",
+   "stop_codon": 150
+  }
+ }
+}
