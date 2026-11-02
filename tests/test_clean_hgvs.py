@@ -241,6 +241,15 @@ CLEAN_CASES = [
     # gene symbol (was "NM_000059.4(hg19):c.68del" / "GRCh38BRCA2NM_000059.4:c.68del")
     ("hg19 NM_000059.4:c.68del",                 "NM_000059.4:c.68del",                        {C.STRIPPED_BUILD_NAME}),
     ("GRCh38 BRCA2 NM_000059.4:c.68del",         "NM_000059.4(BRCA2):c.68del",                 {C.STRIPPED_BUILD_NAME, C.WRAPPED_GENE_SYMBOL}),
+    # #225: the accession already has the symbol, so the matching one before it is dropped
+    ("BRCA2 NM_000059.4(BRCA2):c.68del",         "NM_000059.4(BRCA2):c.68del",                 {C.WRAPPED_GENE_SYMBOL}),
+    # #225: protein annotation after a comma/semicolon goes with its separator
+    ("NM_000059.4:c.68del, p.(Glu23fs)",         "NM_000059.4:c.68del",                        {C.STRIPPED_PROTEIN_SUFFIX}),
+    ("NM_001754.5(RUNX1):c.1415T>C; p.?",        "NM_001754.5(RUNX1):c.1415T>C",               {C.STRIPPED_PROTEIN_SUFFIX}),
+    # #225: bracket typed for the accession underscore
+    ("NM)000059.4:c.68del",                      "NM_000059.4:c.68del",                        {C.ADDED_TRANSCRIPT_UNDERSCORE}),
+    # #225: trailing stray "(" opens nothing
+    ("NM_000059.4:c.68del (",                    "NM_000059.4:c.68del",                        {C.STRIPPED_UNBALANCED_BRACKETS}),
 ]
 
 

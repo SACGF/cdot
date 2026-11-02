@@ -1,5 +1,9 @@
 ## [unreleased]
 
+### Fixed
+
+- #225 - HGVS cleaning regressions from 0.2.34: protein suffix after `,`/`;` left the separator, gene symbol doubled when the accession already had one, `NM)` typo, trailing `(`
+
 ## [0.2.34] - 2026-11-02
 
 ### Added

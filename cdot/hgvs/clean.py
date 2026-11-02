@@ -285,8 +285,9 @@ def _reference_type(s: str) -> Optional[str]:
 
 # A trailing protein annotation after a nucleotide allele, eg
 # "NM_000059.4:c.68del p.(Glu23fs)". Any whitespace separates them (a tab is as
-# common as a space in pasted text).
-_P_HGVS_REMOVAL = re.compile(r"^(?P<main>.*?)\s+(p\.|[(]p\.).*$")
+# common as a space in pasted text), or a comma/semicolon, which is removed with
+# the annotation ("NM_000059.4:c.68del, p.(Glu23fs)").
+_P_HGVS_REMOVAL = re.compile(r"^(?P<main>.*?)(?:\s*[,;]\s*|\s+)(p\.|[(]p\.).*$")
 # The part before the protein annotation must hold a nucleotide allele (a
 # non-protein kind, or something other than "p." after the colon). Otherwise the
 # "p." is the allele itself, eg "NP_000050.2 p.Arg1Gly", and must be kept.
@@ -296,10 +297,11 @@ _HAS_NUCLEOTIDE_ALLELE = re.compile(r":\s*(?!p\.)\S|[cgmnr]\.", re.IGNORECASE)
 # the type table, used to repair an accession missing its underscore. Requires
 # 6+ digits (every RefSeq accession has at least six) so a real gene symbol that
 # starts with these letters plus a stray digit (eg NR3C1, NS1, ZP3) is never
-# mistaken for an accession and mangled.
+# mistaken for an accession and mangled. A stray bracket typed in place of the
+# underscore ("NM)000059.4") is replaced by it.
 _TWO_LETTER_PREFIXES = sorted({p[:2] for p in _REFSEQ_PREFIX_TYPE})
 _TRANSCRIPT_NO_UNDERSCORE = re.compile(
-    rf"^({'|'.join(_TWO_LETTER_PREFIXES)})(\d{{6,}})", re.IGNORECASE)
+    rf"^({'|'.join(_TWO_LETTER_PREFIXES)})[()]?(\d{{6,}})", re.IGNORECASE)
 
 # Second letters for which prepending "N" yields a real genomic/transcript prefix
 # (NM, NC, NR, NG, NT, NW, NS, NZ, NP) — used to restore a dropped leading "N".
@@ -829,15 +831,15 @@ def _op_strip_unbalanced_brackets(s: str) -> tuple[str, list[HGVSFix]]:
     # reconstruction). In the allele a bracket marks an uncertain position
     # ("c.(100_200)del") or a predicted consequence ("p.(Glu23fs)"), and
     # stripping it would make an uncertain variant look certain. The only
-    # unambiguous repair there is a wrapping bracket that closes/opens nothing:
-    # a trailing ")" or a "(" before the kind letter. Anything else is left
+    # unambiguous repair there is a bracket that closes/opens nothing: a
+    # trailing ")" or "(", or a "(" before the kind letter. Anything else is left
     # alone and reported as an ERROR.
     reference, sep, allele = _split_reference_allele(s)
     fixes = []
     if not _brackets_balanced(reference):
         reference = reference.replace("(", "").replace(")", "")
     if not _brackets_balanced(allele):
-        if allele.endswith(")") and _brackets_balanced(allele[:-1]):
+        if allele.endswith((")", "(")) and _brackets_balanced(allele[:-1]):
             allele = allele[:-1]
         elif allele.startswith("(") and _brackets_balanced(allele[1:]):
             allele = allele[1:]
@@ -1001,7 +1003,19 @@ def _op_fix_symbol_before_accession(s: str) -> tuple[str, list[HGVSFix]]:
     #   "APC NM_001407446.1:c.-40G>A"  -> "NM_001407446.1(APC):c.-40G>A"
     #   "BRCA2 NM_000059.4 c.68del"    -> "NM_000059.4(BRCA2) c.68del"
     # (the remaining space is stripped and the colon restored by later steps).
-    s2 = _SYMBOL_BEFORE_ACCESSION.sub(r"\2(\1)", s)
+    # An accession that already has its gene symbol keeps it: a matching symbol
+    # before it is dropped ("BRCA2 NM_000059.4(BRCA2):c.68del"), a different one
+    # is left alone rather than guessing which is right.
+    def _move_symbol(m: re.Match) -> str:
+        symbol, accession = m.groups()
+        rest = s[m.end():]
+        if not rest.startswith("("):
+            return f"{accession}({symbol})"
+        if rest[1:].upper().startswith(symbol.upper() + ")"):
+            return accession
+        return m.group(0)
+
+    s2 = _SYMBOL_BEFORE_ACCESSION.sub(_move_symbol, s)
     if s2 != s:
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
