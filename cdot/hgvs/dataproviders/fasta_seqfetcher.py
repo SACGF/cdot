@@ -46,7 +46,7 @@ class GenomeFastaSeqFetcher:
 class GenomeMismatchPolicy(str, Enum):
     """ What to do when building a transcript the data says differs from the genome (#115) """
     OFF = "off"  # Build it anyway, silently
-    WARN = "warn"  # Build it, and issue a GenomeMismatchWarning (once per transcript)
+    WARN = "warn"  # Build it, and issue a GenomeMismatchWarning
     RAISE = "raise"  # Refuse, raising GenomeMismatchError
 
 
@@ -77,7 +77,6 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
     def __init__(self, *args, cache=True, genome_mismatch=GenomeMismatchPolicy.WARN):
         super().__init__(*args, cache=cache)
         self.genome_mismatch_policy = GenomeMismatchPolicy(genome_mismatch)
-        self._warned_genome_mismatch = set()
         self.source = "Transcript Exons using Genome Fasta file reference"
         self.genome_fasta_seq_fetcher = GenomeFastaSeqFetcher(*args)
 
@@ -119,9 +118,21 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
                    f"real transcript sequence. {_describe_genome_mismatch(genome_mismatch)}")
             if self.genome_mismatch_policy == GenomeMismatchPolicy.RAISE:
                 raise GenomeMismatchError(msg)
-            if ac not in self._warned_genome_mismatch:
-                self._warned_genome_mismatch.add(ac)
-                warnings.warn(msg, GenomeMismatchWarning)
+            warnings.warn(msg, GenomeMismatchWarning)
+
+    def fetch_seq(self, ac, start_i=None, end_i=None):
+        """ Unknown bases (N) raise for a slice, as they break normalization, and warn for the whole transcript """
+        seq = super().fetch_seq(ac, start_i, end_i)
+        if "N" not in seq:
+            return seq
+        start = start_i or 0
+        positions = ", ".join(f"n.{start + s + 1}" if e - s == 1 else f"n.{start + s + 1}_{start + e}"
+                              for s, e in (m.span() for m in re.finditer("N+", seq)))
+        msg = f"{ac} {positions} unknown (N) in genome sequence, chain SeqRepo to get them"
+        if start_i is not None or end_i is not None:
+            raise GenomeMismatchError(msg)
+        warnings.warn(msg, GenomeMismatchWarning)
+        return seq
 
     def _fetch_seq_from_fasta(self, ac, alt_ac, alt_aln_method):
         self._check_genome_mismatch(ac, alt_ac)
