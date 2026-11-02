@@ -82,3 +82,35 @@ Output:
 ```
 NC_060931.1:g.36662409C>T
 ```
+
+## Ensembl Tark (no cdot data)
+
+`EnsemblTarkDataProvider` implements the same biocommons interface from Ensembl's
+[Tark](https://tark.ensembl.org/) transcript archive REST API, so nothing has to be downloaded.
+Each transcript is fetched from Tark the first time it is used. Tark holds Ensembl and RefSeq
+transcripts, but no RefSeq-to-genome alignments, so RefSeq transcripts that align with gaps are
+not supported. Sequences come from `EnsemblTarkSeqFetcher` by default (Tark for transcripts,
+biocommons `SeqFetcher` for genomic contigs); `get_ensembl_tark_fasta_seqfetchers` in
+`cdot.hgvs.dataproviders.fasta_seqfetcher` builds fetchers that use a local genome FASTA instead.
+
+```python
+import hgvs
+from hgvs.assemblymapper import AssemblyMapper
+from cdot.hgvs.dataproviders import EnsemblTarkDataProvider
+
+hdp = EnsemblTarkDataProvider()  # GRCh37 and GRCh38
+
+am = AssemblyMapper(hdp,
+                    assembly_name='GRCh38',
+                    alt_aln_method='splign', replace_reference=True)
+
+hp = hgvs.parser.Parser()
+var_c = hp.parse_hgvs_variant('ENST00000617537.5:c.1582G>A')
+print(am.c_to_g(var_c))
+```
+
+Output:
+
+```
+NC_000007.14:g.36522056C>T
+```

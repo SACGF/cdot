@@ -1,3 +1,11 @@
+""" Biocommons hgvs data providers that answer from cdot transcript data.
+
+    :class:`JSONDataProvider` loads cdot JSON(.gz) release files into memory, and
+    :class:`RESTDataProvider` queries a cdot REST server (cdotlib.org by default). Both implement
+    :class:`hgvs.dataproviders.interface.Interface`, so they drop in wherever biocommons hgvs takes
+    a data provider (eg :class:`hgvs.assemblymapper.AssemblyMapper`). :class:`LocalDataProvider` is
+    the base for providers holding the data themselves (JSON, or the Redis store in cdot_rest).
+"""
 import abc
 import requests
 import warnings
@@ -8,13 +16,23 @@ from hgvs.dataproviders.interface import Interface
 from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError
 from intervaltree import IntervalTree
-from typing import Optional
+from typing import IO, Iterable, Optional, Union
 
 from bioutils.assemblies import make_ac_name_map, make_name_ac_map
 
 from cdot import get_data_schema_int, __version__
 from cdot import models
 from cdot.hgvs import version_safety
+
+__all__ = [
+    "AbstractJSONDataProvider",
+    "LocalDataProvider",
+    "JSONDataProvider",
+    "RESTDataProvider",
+    "get_ac_name_map",
+    "get_name_ac_map",
+]
+
 
 def _get_patch_assembly_name(assembly_name):
     if assembly_name == "GRCh37":
@@ -574,8 +592,44 @@ class LocalDataProvider(AbstractJSONDataProvider):
 
 
 class JSONDataProvider(LocalDataProvider):
-    """ Local JSON file """
-    def __init__(self, file_or_filename_list, mode=None, cache=None, seqfetcher=None):
+    """ Biocommons hgvs data provider that loads cdot JSON(.gz) files into memory.
+
+        Loads every file in ``file_or_filename_list`` up front and answers all queries from memory
+        (gene and region lookups build an interval tree lazily on first use), so it is fast and
+        offline but holds the whole data set in memory. Files for several builds, or RefSeq and
+        Ensembl together, can be loaded at once; a later file's transcripts replace an earlier
+        file's on the same accession.
+
+        Example::
+
+            from hgvs.assemblymapper import AssemblyMapper
+            from cdot.hgvs.dataproviders import JSONDataProvider
+
+            hdp = JSONDataProvider(["cdot-0.2.36.refseq.GRCh38.json.gz"])
+            am = AssemblyMapper(hdp, assembly_name="GRCh38", alt_aln_method="splign")
+
+        :param file_or_filename_list: cdot JSON files to load, each a filename (``.json`` or
+            ``.json.gz``) or an open binary file object (see :func:`cdot.models.load`)
+        :param mode: biocommons :class:`hgvs.dataproviders.interface.Interface` cache mode, passed
+            straight through. ``None`` (default) memoises each query method in an in-memory LRU
+            cache for the life of the provider. The other modes use a persistent cache file named
+            by ``cache``: ``"learn"`` serves hits from the file and writes every miss to it,
+            ``"run"`` serves only from the file and raises on a miss, ``"verify"`` runs every
+            query and raises if the result differs from the file. Of little use with a local JSON
+            provider, which is already fast and offline; they exist for recording fixtures
+        :param cache: filename of the persistent cache for the ``"learn"``, ``"run"`` and
+            ``"verify"`` modes (a :class:`hgvs.utils.PersistentDict.PersistentDict`). Ignored
+            when ``mode`` is ``None``
+        :param seqfetcher: where transcript and genomic sequences come from, anything with a
+            ``fetch_seq(ac, start_i, end_i)`` method such as biocommons
+            :class:`hgvs.dataproviders.seqfetcher.SeqFetcher` (the default: SeqRepo if
+            ``HGVS_SEQREPO_DIR`` is set, otherwise NCBI over the network), cdot's
+            :class:`FastaSeqFetcher` (a local genome FASTA) or :class:`ChainedSeqFetcher`. If it
+            has ``set_data_provider`` that is called with this provider, which cdot's
+            transcript-building fetchers need
+    """
+    def __init__(self, file_or_filename_list: Iterable[Union[str, IO[bytes]]], mode: Optional[str] = None,
+                 cache: Optional[str] = None, seqfetcher=None):
         assemblies = set()
         self.transcripts = {}
         self.genes = {}
@@ -644,17 +698,59 @@ class JSONDataProvider(LocalDataProvider):
 
 
 class RESTDataProvider(AbstractJSONDataProvider):
+    """ Biocommons hgvs data provider that queries a cdot REST server (https://cdotlib.org by default).
+
+        Nothing to download: each transcript or gene is fetched from the server the first time it is
+        needed (one ``/transcript/<ac>`` request, then every query about that transcript is answered
+        from the record kept in memory) so the first variant on a transcript costs a round trip and
+        later ones don't. For bulk work, :meth:`prefetch` or :meth:`prefetch_from_hgvs` warm the
+        cache for a whole list of accessions in a few batch requests. A 404 is remembered as
+        "not held"; any other HTTP error raises :class:`requests.HTTPError` and is not cached. The
+        REST API is documented at https://cdotlib.org/static/api-docs.html
+
+        Example::
+
+            from hgvs.assemblymapper import AssemblyMapper
+            from cdot.hgvs.dataproviders import RESTDataProvider
+
+            hdp = RESTDataProvider()
+            am = AssemblyMapper(hdp, assembly_name="GRCh38", alt_aln_method="splign")
+
+        :param url: base URL of the cdot REST server, no trailing slash. Default cdotlib.org
+        :param secure: when ``url`` is not given, use ``https://`` (default) or ``http://`` for
+            cdotlib.org
+        :param mode: biocommons :class:`hgvs.dataproviders.interface.Interface` cache mode, passed
+            straight through. ``None`` (default) memoises each query method in an in-memory LRU
+            cache for the life of the provider. The other modes use a persistent cache file named
+            by ``cache``: ``"learn"`` serves hits from the file and writes every miss to it,
+            ``"run"`` serves only from the file and raises on a miss, ``"verify"`` runs every
+            query and raises if the result differs from the file. ``"learn"`` then ``"run"`` lets
+            a fixed set of variants be re-processed without the server
+        :param cache: filename of the persistent cache for the ``"learn"``, ``"run"`` and
+            ``"verify"`` modes (a :class:`hgvs.utils.PersistentDict.PersistentDict`). Ignored
+            when ``mode`` is ``None``
+        :param seqfetcher: where transcript and genomic sequences come from, anything with a
+            ``fetch_seq(ac, start_i, end_i)`` method such as biocommons
+            :class:`hgvs.dataproviders.seqfetcher.SeqFetcher` (the default: SeqRepo if
+            ``HGVS_SEQREPO_DIR`` is set, otherwise NCBI over the network), cdot's
+            :class:`FastaSeqFetcher` (a local genome FASTA) or :class:`ChainedSeqFetcher`. If it
+            has ``set_data_provider`` that is called with this provider, which cdot's
+            transcript-building fetchers need
+        :param assemblies: genome builds whose contigs are recognised, default
+            :attr:`DEFAULT_ASSEMBLIES` (the builds cdotlib.org serves)
+        :param timeout: seconds to wait on the server (connect and read) before raising
+            :class:`requests.Timeout`; ``None`` waits forever. Default :attr:`DEFAULT_TIMEOUT`
+        :param session: :class:`requests.Session` to use (eg to set headers, proxies or retries);
+            default creates one
+    """
     # Genome builds served by cdotlib.org
     DEFAULT_ASSEMBLIES = ["GRCh37", "GRCh38", "T2T-CHM13v2.0"]
     # Seconds - passed to requests as both the connect and read timeout
     DEFAULT_TIMEOUT = 30
 
-    def __init__(self, url=None, secure=True, mode=None, cache=None, seqfetcher=None,
-                 assemblies: Optional[list[str]] = None, timeout=DEFAULT_TIMEOUT, session=None):
-        """ assemblies: genome builds to recognise contigs for, defaults to DEFAULT_ASSEMBLIES
-            timeout: seconds to wait on the server (connect and read) before raising, None waits forever
-            session: requests.Session to use (eg to set headers/proxies/retries), default creates one
-        """
+    def __init__(self, url: Optional[str] = None, secure: bool = True, mode: Optional[str] = None,
+                 cache: Optional[str] = None, seqfetcher=None, assemblies: Optional[list[str]] = None,
+                 timeout: Optional[float] = DEFAULT_TIMEOUT, session: Optional[requests.Session] = None):
         if assemblies is None:
             assemblies = self.DEFAULT_ASSEMBLIES
         super().__init__(assemblies=assemblies, mode=mode, cache=cache, seqfetcher=seqfetcher)
