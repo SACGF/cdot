@@ -44,6 +44,11 @@ build-specific, so that gap check is exact when both versions are placed in the
 same build and conservative across builds.  Note the structure validates only
 coding (c.) positions; a UTR/intronic position can still move if the surrounding
 non-coding exon structure changes between versions.
+
+Non-coding transcripts (``NR_``, n. positions) have no CDS, so they are compared on
+their whole exon structure instead (:func:`intrinsic_exon_structure`: strand plus
+per-exon transcript lengths), with the same alignment-gap and same-build placement
+checks (:func:`exon_alignment_gaps`, :func:`exon_genomic_spans`).
 """
 
 import re
@@ -77,8 +82,8 @@ def intrinsic_cds_structure(transcript, genome_build: Optional[str] = None):
     coordinates are build-independent.  This is what lets a substitution be judged
     even when the requested version is absent from the target build but present in
     another (the whole point of the cross-build result).  Returns ``None`` for
-    non-coding transcripts, a missing/zero-length CDS, or a record with no usable
-    build.  The transcript coordinates this reads are exact regardless of alignment
+    non-coding transcripts, a missing/zero-length CDS, a record with no usable
+    build, or a malformed record (an exon missing its transcript coordinates).  The transcript coordinates this reads are exact regardless of alignment
     gaps, but gaps still move the genomic mapping, so an equal structure must be
     paired with :func:`cds_alignment_gaps` equality before a substitution is called
     coordinate-safe.
@@ -101,9 +106,11 @@ def intrinsic_cds_structure(transcript, genome_build: Optional[str] = None):
     # CDS-offset of the start of each coding-exon segment (0-based from the CDS
     # start). Derived only from the exons' transcript coordinates, so it is the
     # same in every build.
+    exons = _exon_tx_coords(gb)
+    if exons is None:
+        return None
     seg_starts = []
-    for exon in gb["exons"]:
-        tx_start, tx_end = exon[3], exon[4]
+    for tx_start, tx_end, _gap in exons:
         a = max(tx_start, cds_lo)
         b = min(tx_end, cds_hi)
         if a > b:
@@ -140,7 +147,7 @@ def cds_alignment_gaps(transcript, genome_build: Optional[str] = None):
     build. Two versions both placed in ``genome_build`` are therefore compared
     exactly; a cross-build comparison (one side read from another build) is best
     effort and conservative. Returns ``None`` for the same non-coding / missing-CDS
-    / no-build cases as :func:`intrinsic_cds_structure`.
+    / no-build / malformed cases as :func:`intrinsic_cds_structure`.
     """
     sc = transcript.get("start_codon")
     ec = transcript.get("stop_codon")
@@ -157,11 +164,12 @@ def cds_alignment_gaps(transcript, genome_build: Optional[str] = None):
     cds_lo = sc + 1
     cds_hi = sc + cds_len
 
+    exons = _exon_tx_coords(gb)
+    if exons is None:
+        return None
     gaps = []
     seg_idx = 0
-    for exon in gb["exons"]:
-        tx_start, tx_end = exon[3], exon[4]
-        gap = exon[5] if len(exon) > 5 else None
+    for tx_start, tx_end, gap in sorted(exons, key=lambda e: e[0]):
         if tx_start > cds_hi or tx_end < cds_lo:
             continue  # non-coding exon: its gap cannot move a coding coordinate
         if gap:
@@ -181,7 +189,7 @@ def utr_lengths(transcript, genome_build: Optional[str] = None):
     :func:`intrinsic_cds_structure`) they are build-independent and gap-independent;
     a build only changes a version's genomic placement, not these lengths.
 
-    Returns ``None`` for non-coding / missing-CDS / no-build records.
+    Returns ``None`` for non-coding / missing-CDS / no-build / malformed records.
     """
     sc = transcript.get("start_codon")
     ec = transcript.get("stop_codon")
@@ -190,12 +198,12 @@ def utr_lengths(transcript, genome_build: Optional[str] = None):
     gb = _pick_build(transcript, genome_build)
     if gb is None:
         return None
-    exons = gb["exons"]
+    exons = _exon_tx_coords(gb)
     if not exons:
         return None
     # cds_start/cds_end are cumulative 1-based spliced transcript coordinates, so
     # the largest cds_end is the total spliced cDNA length.
-    total_cdna = max(exon[4] for exon in exons)
+    total_cdna = max(tx_end for _tx_start, tx_end, _gap in exons)
     return (sc, total_cdna - ec)
 
 
@@ -203,8 +211,10 @@ def utr_lengths(transcript, genome_build: Optional[str] = None):
 # whose endpoint is negative) and in the 3'UTR when it carries a "*". Coding and
 # CDS-intronic positions touch neither, so the CDS-structure check already covers
 # them. We return the set of UTRs a position/range touches so a range spanning a
-# UTR boundary is handled conservatively.
-_FIVE_PRIME = re.compile(r"(?:^|_)-\d")   # "-49", "-49+10", "-3_5", "10_-2"...
+# UTR boundary is handled conservatively. A position can also start after "(" in an
+# uncertain range ("(-30_-20)del", "(?_-30)_(5_?)del"), so "(" counts as a position
+# start too. A CDS-intronic offset ("2604-1") follows a digit, so never matches.
+_FIVE_PRIME = re.compile(r"(?:^|[_(])-\d")   # "-49", "-49+10", "-3_5", "(-30_-20)"...
 _THREE_PRIME = re.compile(r"\*")          # any 3'UTR component
 
 
@@ -233,11 +243,85 @@ def describe_structure_change(req_struct, sub_struct) -> str:
     Assumes ``req_struct != sub_struct``.  Used to explain a not-coordinate-safe
     verdict to the caller (and ultimately in the HGVSFix message).
     """
-    _req_strand, req_len, _req_segs = req_struct
-    _sub_strand, sub_len, _sub_segs = sub_struct
+    req_strand, req_len, _req_segs = req_struct
+    sub_strand, sub_len, _sub_segs = sub_struct
+    if req_strand != sub_strand:
+        return f"strand changed {req_strand}→{sub_strand}"
     if req_len != sub_len:
         return f"CDS length changed {req_len}→{sub_len} bp"
     return "coding-exon structure changed (same CDS length)"
+
+
+# ---------------------------------------------------------------------------
+# Non-coding (n.) transcripts
+# ---------------------------------------------------------------------------
+
+def has_cds(transcript) -> bool:
+    """True if the record carries a start and stop codon (a coding transcript)."""
+    return transcript.get("start_codon") is not None and transcript.get("stop_codon") is not None
+
+
+def intrinsic_exon_structure(transcript, genome_build: Optional[str] = None):
+    """Return a version's build-independent exon structure, or ``None``.
+
+    The n. analogue of :func:`intrinsic_cds_structure`, for non-coding transcripts.
+    The structure is ``(strand, exon_lengths)`` where ``exon_lengths`` is the tuple
+    of per-exon lengths *in transcript coordinates*, in transcript order. An n.
+    position (exonic, intronic as an offset from an exon boundary, or ``n.-N`` /
+    ``n.*N`` outside the transcript) is counted from the transcript start and the
+    exon boundaries, so it depends only on these lengths plus the genomic placement
+    and alignment gaps of the exons. Equal structure is therefore necessary for an
+    n. substitution to be coordinate-safe, and is paired with
+    :func:`exon_alignment_gaps` (and, when both versions are placed in the target
+    build, :func:`exon_genomic_spans`) exactly like the coding check.
+
+    Read from ``genome_build`` if present, else any build. Returns ``None`` for a
+    record with no usable build or a malformed record.
+    """
+    gb = _pick_build(transcript, genome_build)
+    if gb is None:
+        return None
+    exons = _exon_tx_coords(gb)
+    if not exons:
+        return None
+    exons = sorted(exons, key=lambda e: e[0])
+    return (gb["strand"], tuple(tx_end - tx_start + 1 for tx_start, tx_end, _gap in exons))
+
+
+def exon_alignment_gaps(transcript, genome_build: Optional[str] = None):
+    """Return ``(exon_index, gap_string)`` for every gapped exon, in transcript order.
+
+    The n. analogue of :func:`cds_alignment_gaps`: every exon counts, since an n.
+    position can sit in any exon. Build-specific, read from ``genome_build`` when
+    held, else any build. Returns ``None`` for a no-build / malformed record.
+    """
+    gb = _pick_build(transcript, genome_build)
+    if gb is None:
+        return None
+    exons = _exon_tx_coords(gb)
+    if exons is None:
+        return None
+    exons = sorted(exons, key=lambda e: e[0])
+    return tuple((i, gap) for i, (_s, _e, gap) in enumerate(exons) if gap)
+
+
+def exon_genomic_spans(transcript, genome_build: str):
+    """Return ``(contig, strand, spans)`` for a version placed in ``genome_build``.
+
+    ``spans`` is the sorted tuple of ``(alt_start, alt_end)`` genomic exon spans.
+    With equal :func:`intrinsic_exon_structure` and equal alignment gaps, equal
+    spans mean every n. position maps to the same genomic coordinate. Returns
+    ``None`` if the record is not placed in that build or is malformed.
+    """
+    gb = transcript["genome_builds"].get(genome_build)
+    if gb is None or _exon_tx_coords(gb) is None:
+        return None
+    spans = []
+    for exon in gb["exons"]:
+        if exon[0] is None or exon[1] is None:
+            return None
+        spans.append((exon[0], exon[1]))
+    return gb["contig"], gb["strand"], tuple(sorted(spans))
 
 
 # ---------------------------------------------------------------------------
@@ -252,6 +336,7 @@ def cds_genomic_map(transcript, genome_build: str):
     coding-exon segment).  ``has_gap`` flags an alignment gap, which makes the
     unit-slope assumption inexact; callers treat a gapped map as non-comparable.
     Used only by the genomic-bracket fallback — the primary path is structural.
+    Returns ``None`` for a non-coding or malformed record.
     """
     sc = transcript.get("start_codon")
     ec = transcript.get("stop_codon")
@@ -269,11 +354,15 @@ def cds_genomic_map(transcript, genome_build: str):
     cds_lo = sc + 1
     cds_hi = sc + cds_len
 
+    if _exon_tx_coords(gb) is None:
+        return None
     segs = []
     has_gap = False
     for exon in gb["exons"]:
-        g_start, g_end, _eid, tx_start, tx_end, gap = (
-            exon[0], exon[1], exon[2], exon[3], exon[4], exon[5])
+        g_start, g_end, tx_start, tx_end = exon[0], exon[1], exon[3], exon[4]
+        gap = exon[5] if len(exon) > 5 else None
+        if g_start is None or g_end is None:
+            return None
         if gap:
             has_gap = True
         a = max(tx_start, cds_lo)
@@ -387,6 +476,14 @@ def is_version_substitution_safe(requested, substitute, genome_build: Optional[s
     Coding / CDS-intronic positions (and the default ``cited_position=None``) are
     covered by the CDS-structure check alone.
 
+    Non-coding transcripts (both versions without a CDS, eg ``NR_``) are compared
+    on their whole exon structure instead: the same strand and per-exon transcript
+    lengths, matching alignment gaps, and (when both are placed in
+    ``genome_build``) the same genomic exon spans.  An n. coordinate depends only
+    on those, so this is exact.  A version pair where one is coding and the other
+    is not is never safe.  A malformed record (an exon missing its transcript
+    coordinates) is "cannot verify", never a crash.
+
     A not-safe verdict is surfaced by
     :func:`cdot.hgvs.gene_hgvs.resolve_transcript_version` (never silently
     applied) per its ``on_unsafe_version`` policy.
@@ -396,11 +493,45 @@ def is_version_substitution_safe(requested, substitute, genome_build: Optional[s
     if req_id and sub_id and req_id.group(1) == sub_id.group(1):
         if is_known_replacement(req_id.group(1), int(req_id.group(2)), int(sub_id.group(2))):
             return False, "known genomic re-placement (blocklisted)"
+    # Version labels for the reasons: ".3" from the record id, else the role.
+    req_label = f".{req_id.group(2)}" if req_id else "the requested version"
+    sub_label = f".{sub_id.group(2)}" if sub_id else "the substitute"
+
+    req_coding, sub_coding = has_cds(requested), has_cds(substitute)
+    if req_coding != sub_coding:
+        coding = req_label if req_coding else sub_label
+        return False, f"only {coding} is coding (c. and n. coordinates differ)"
+    if not req_coding:
+        # Non-coding (n.): an n. coordinate depends only on the exon lengths in
+        # transcript order, the alignment gaps and the genomic exon placement.
+        req_exons = intrinsic_exon_structure(requested, genome_build)
+        sub_exons = intrinsic_exon_structure(substitute, genome_build)
+        if req_exons is None or sub_exons is None:
+            bad = req_label if req_exons is None else sub_label
+            return False, f"version {bad} has a malformed exon record; cannot verify"
+        if req_exons[0] != sub_exons[0]:
+            return False, f"strand changed {req_exons[0]}→{sub_exons[0]}"
+        if req_exons != sub_exons:
+            return False, "exon structure changed (n. coordinate would shift)"
+        if exon_alignment_gaps(requested, genome_build) != exon_alignment_gaps(substitute, genome_build):
+            return False, "exon alignment gap differs (n. coordinate would shift)"
+        if genome_build:
+            req_spans = exon_genomic_spans(requested, genome_build)
+            sub_spans = exon_genomic_spans(substitute, genome_build)
+            if req_spans is not None and sub_spans is not None and req_spans != sub_spans:
+                return False, "exon genomic placement differs (coordinate would shift)"
+        return True, "identical exon structure (non-coding)"
 
     req_struct = intrinsic_cds_structure(requested, genome_build)
     sub_struct = intrinsic_cds_structure(substitute, genome_build)
-    if req_struct is None or sub_struct is None:
-        return False, "no CDS structure to compare (non-coding or malformed record); coordinate unverified"
+    if sub_struct is None:
+        # The substitute claims a CDS but it is unusable (malformed exons /
+        # zero-length CDS): nothing to compare against.
+        return False, f"substitute version {sub_label} has no usable CDS structure; cannot verify"
+    if req_struct is None:
+        # The requested version is present but its CDS is unusable. There is no
+        # structure to compare; check_version_substitution brackets it instead.
+        return False, f"requested version {req_label} has no usable CDS structure; cannot verify"
     if req_struct != sub_struct:
         return False, describe_structure_change(req_struct, sub_struct)
     # Identical transcript structure is necessary but not sufficient: an
@@ -440,21 +571,26 @@ def is_version_substitution_safe(requested, substitute, genome_build: Optional[s
     return True, "identical CDS structure"
 
 
-def genomic_bracket_safe(below, above, genome_build: str) -> tuple[bool, str]:
-    """Genomic-bracket fallback for a requested version present in no build.
+def genomic_bracket_safe(below, above, genome_build: str, *,
+                         what: str = "requested version absent from all builds") -> tuple[bool, str]:
+    """Genomic-bracket fallback when the requested version's structure is unknown.
 
     ``below`` and ``above`` are the records of the nearest held versions either
-    side of the absent one (``None`` if there is none on that side).  If their
+    side of the requested one (``None`` if there is none on that side).  If their
     genomic CDS maps in ``genome_build`` agree at every coding base, the gap
     between them is treated as coordinate-safe (probabilistic: a version can
     change and change back between its neighbours); otherwise not safe.  Either
     side missing, non-coding or not placed in ``genome_build`` is "cannot verify".
+
+    ``what`` says why the structural check could not run, for the reason text:
+    normally the requested version is present in no build; it is also used when
+    the requested version is present but has no usable CDS structure (a malformed
+    record).
     """
     lo_map = cds_genomic_map(below, genome_build) if below is not None else None
     hi_map = cds_genomic_map(above, genome_build) if above is not None else None
     if lo_map is None or hi_map is None:
-        return False, ("requested version absent and cannot bracket it in "
-                       f"{genome_build}; coordinate unverified")
+        return False, f"{what} and cannot bracket it in {genome_build}; coordinate unverified"
     if genomic_maps_fully_agree(lo_map, hi_map):
         return True, "flanking versions agree (genomic bracket; probabilistic)"
     return False, "flanking versions disagree; coordinate may have moved"
@@ -463,6 +599,27 @@ def genomic_bracket_safe(below, above, genome_build: str) -> tuple[bool, str]:
 # ---------------------------------------------------------------------------
 # Internal
 # ---------------------------------------------------------------------------
+
+def _exon_tx_coords(gb):
+    """Return ``[(tx_start, tx_end, gap), ...]`` for a build's exons, or ``None``.
+
+    The single place exon records are unpacked, so every helper treats a malformed
+    record the same way. An exon is ``[alt_start, alt_end, exon_id, cds_start,
+    cds_end, gap]``; the trailing gap may be absent (treated as no gap). A record
+    with an exon that is too short or whose transcript coordinates are ``None`` is
+    malformed and yields ``None``, so callers report "cannot verify" rather than
+    raise.
+    """
+    out = []
+    for exon in gb.get("exons") or []:
+        if len(exon) < 5:
+            return None
+        tx_start, tx_end = exon[3], exon[4]
+        if tx_start is None or tx_end is None:
+            return None
+        out.append((tx_start, tx_end, exon[5] if len(exon) > 5 else None))
+    return out
+
 
 def _pick_build(transcript, genome_build: Optional[str]):
     """Return the requested build's coordinates, else any build's (tx coords are

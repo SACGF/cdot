@@ -9,7 +9,7 @@ See [Coordinates & exon alignments](coordinates_and_exons.md) for a conceptual w
 ```python
 from cdot import models
 
-data = models.load("cdot-0.2.32.refseq.GRCh38.json.gz")
+data = models.load("cdot-0.2.36.refseq.GRCh38.json.gz")
 tx = data.transcripts["NM_001637.3"]
 print(tx.gene_name, tx.protein)
 for build_name, build in tx.genome_builds.items():

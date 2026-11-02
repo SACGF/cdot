@@ -23,6 +23,7 @@ from cdot.hgvs.clean import (
     HGVSInputError,
     VersionStrategy,
     _looks_like_transcript,
+    _refseq_prefixes,
     clean_hgvs,
     get_best_transcript_version,
 )
@@ -358,8 +359,8 @@ _BARE_NUMBER_ACCESSION = re.compile(r"^_?(\d{6,9})((?:\.\d+)?):([cn])\.", re.IGN
 # The kind letter constrains which RefSeq prefixes could have been dropped:
 # a coding "c." implies an mRNA accession, a non-coding "n." an RNA accession.
 _PREFIXES_FOR_KIND = {
-    "c": ("NM_", "XM_"),
-    "n": ("NR_", "XR_"),
+    "c": tuple(_refseq_prefixes("mRNA")),
+    "n": tuple(_refseq_prefixes("RNA")),
 }
 
 
@@ -476,8 +477,9 @@ def check_version_substitution(data_provider, accession: str, requested_version:
     Returns ``(safe, reason)``.  This fetches the two versions' records from
     ``data_provider`` and runs the pure
     :func:`cdot.hgvs.version_safety.is_version_substitution_safe` on them.  Only
-    when the requested version exists in no build the provider can see (so there
-    is no structure to compare) does it fall back to the probabilistic
+    when there is no structure to compare (the requested version exists in no
+    build the provider can see, or is present but its CDS is unusable) does it
+    fall back to the probabilistic
     :func:`cdot.hgvs.version_safety.genomic_bracket_safe` on the nearest held
     versions either side, which needs ``genome_build`` and the provider's
     ``get_tx_versions``; without them the verdict is an honest "cannot verify".
@@ -500,18 +502,26 @@ def check_version_substitution(data_provider, accession: str, requested_version:
         return False, f"substitute version .{substitute_version} not found"
 
     req = data_provider._get_transcript(f"{accession}.{requested_version}")
-    if req is not None:
+    if req is None:
+        # Requested version absent from every build the provider can see.
+        what = "requested version absent from all builds"
+    elif (version_safety.has_cds(req) and version_safety.has_cds(sub)
+          and version_safety.intrinsic_cds_structure(req, genome_build) is None
+          and version_safety.intrinsic_cds_structure(sub, genome_build) is not None):
+        # Requested version present but its CDS is unusable (a malformed record):
+        # nothing to compare, so bracket it rather than guess. The reason says the
+        # version is present rather than absent.
+        what = "requested version has no usable CDS structure"
+    else:
         return version_safety.is_version_substitution_safe(
             req, sub, genome_build, cited_position=cited_position)
 
-    # Requested version absent from every build the provider can see.
     if genome_build is None:
-        return False, ("requested version absent from all builds; "
-                       "cannot verify (no genome build for bracket fallback)")
+        return False, f"{what}; cannot verify (no genome build for bracket fallback)"
     try:
         versions = data_provider.get_tx_versions(accession)
     except NotImplementedError:
-        return False, "requested version absent from all builds; cannot verify structure"
+        return False, f"{what}; cannot verify structure"
 
     def _nearest(candidates):
         # Nearest held version (in candidate order) that is placed in genome_build.
@@ -523,7 +533,7 @@ def check_version_substitution(data_provider, accession: str, requested_version:
 
     below = _nearest(sorted((v for v in versions if v < requested_version), reverse=True))
     above = _nearest(sorted(v for v in versions if v > requested_version))
-    return version_safety.genomic_bracket_safe(below, above, genome_build)
+    return version_safety.genomic_bracket_safe(below, above, genome_build, what=what)
 
 
 def _cited_position(hgvs_string: str) -> Optional[str]:

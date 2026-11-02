@@ -12,7 +12,7 @@ from hgvs.assemblymapper import AssemblyMapper
 from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider
 
 hdp = RESTDataProvider()  # Uses API server at cdotlib.org
-# hdp = JSONDataProvider(["./cdot-0.2.32.refseq.grch37.json.gz"])  # Uses local JSON file
+# hdp = JSONDataProvider(["./cdot-0.2.36.refseq.GRCh37.json.gz"])  # Uses local JSON file
 
 am = AssemblyMapper(hdp,
                     assembly_name='GRCh37',
@@ -53,7 +53,7 @@ wget --quiet -O - https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammali
 samtools faidx GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz
 
 # Get cdot data
-wget https://github.com/SACGF/cdot/releases/download/v0.2.14/cdot-0.2.15.GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.json.gz
+wget https://github.com/SACGF/cdot/releases/download/data_v0.2.36/cdot-0.2.36.refseq.T2T-CHM13v2.0.json.gz
 ```
 
 ### Python code
@@ -65,7 +65,7 @@ from cdot.hgvs.dataproviders import JSONDataProvider
 from cdot.hgvs.dataproviders.fasta_seqfetcher import FastaSeqFetcher
 
 seqfetcher = FastaSeqFetcher("./GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz")
-hdp = JSONDataProvider(["./cdot-0.2.15.GCF_009914755.1_T2T-CHM13v2.0_genomic.gff.json.gz"],
+hdp = JSONDataProvider(["./cdot-0.2.36.refseq.T2T-CHM13v2.0.json.gz"],
                        seqfetcher=seqfetcher)
 
 am = AssemblyMapper(hdp,

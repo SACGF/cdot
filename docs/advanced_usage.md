@@ -22,7 +22,7 @@ resolution, returning the cleaned string plus a list of `HGVSFix` records descri
 from cdot.hgvs import fix_hgvs
 from cdot.hgvs.dataproviders import JSONDataProvider
 
-hdp = JSONDataProvider(["./cdot-0.2.32.refseq.GRCh38.json.gz"])
+hdp = JSONDataProvider(["./cdot-0.2.36.refseq.GRCh38.json.gz"])
 
 # Gene-only input → resolved to the MANE/canonical transcript
 result, fixes = fix_hgvs("BRCA2:c.36DEL", hdp, "GRCh38")
@@ -57,24 +57,52 @@ Useful options:
 | `tag_priority` | MANE_Select > MANE_Plus_Clinical > RefSeq_Select > Ensembl_canonical | Order used when resolving a gene to a transcript. |
 | `ops` | `None` (all) | Restrict which cleaning operations run (see below). |
 | `version_fallback` | `None` (off) | Opt in to adjacent transcript-version fallback (see below). |
+| `on_unsafe_version` | `UnsafeVersionPolicy.REFUSE` | What to do when a version substitution isn't verified coordinate-safe (see below). |
 
 ### Transcript version fallback
 
 Real-world HGVS often names a transcript version your data release doesn't have (e.g. a report cites
 `NM_000059.2` but you only ship `.3`/`.4`). This is **off by default** - pass a `VersionStrategy` to
-opt in. When set, `fix_hgvs` substitutes the best available version and reports a WARNING:
+opt in. When set, `fix_hgvs` picks the best available version and then checks that substituting it
+is coordinate-safe (the variant still maps to the same genomic position) before using it. See
+[transcript_version_safety.md](transcript_version_safety.md) for how the check works.
 
 ```python
-from cdot.hgvs import fix_hgvs
-from cdot.hgvs.clean import VersionStrategy
+from cdot.hgvs import fix_hgvs, VersionStrategy, UnsafeVersionPolicy
 
-result, fixes = fix_hgvs("NM_000059.2:c.36del", hdp,
+result, fixes = fix_hgvs("NM_000059.2:c.36del", hdp, "GRCh38",
                          version_fallback=VersionStrategy.UP_THEN_DOWN)
-# result = "NM_000059.4:c.36del"  (if .2 absent but .4 present)
-# fixes[-1].code == HGVSFixCode.USED_ADJACENT_VERSION
+# .2 absent, only .3/.4 loaded: the substitution can't be verified, so by default
+# result = "NM_000059.2:c.36del"   (unchanged)
+# fixes[-1].code == HGVSFixCode.REFUSED_UNSAFE_VERSION   (ERROR)
+
+result, fixes = fix_hgvs("NM_000059.2:c.36del", hdp, "GRCh38",
+                         version_fallback=VersionStrategy.UP_THEN_DOWN,
+                         on_unsafe_version=UnsafeVersionPolicy.SUBSTITUTE)
+# result = "NM_000059.3:c.36del"
+# fixes[-1].code == HGVSFixCode.USED_ADJACENT_VERSION_COORD_UNVERIFIED   (WARNING)
 ```
 
-`version_fallback` only needs a `data_provider` (not a `genome_build`). The strategies are:
+Every cdot data provider (`JSONDataProvider`, `RESTDataProvider` and other `LocalDataProvider`
+subclasses) implements the safety check, so one of these codes is reported:
+
+| Situation | `result` | `HGVSFix` code | Severity |
+|---|---|---|---|
+| Substitute verified coordinate-safe | rewritten | `USED_ADJACENT_VERSION_COORD_SAFE` | WARNING |
+| Not verified, `on_unsafe_version=REFUSE` (default) | unchanged | `REFUSED_UNSAFE_VERSION` | ERROR |
+| Not verified, `on_unsafe_version=SUBSTITUTE` | rewritten | `USED_ADJACENT_VERSION_COORD_UNVERIFIED` | WARNING |
+
+The plain `USED_ADJACENT_VERSION` WARNING only appears with a third-party provider that implements
+`get_tx_versions` but cannot return transcript records (no `_get_transcript`), so the safety check
+(`check_version_substitution`) has nothing to compare.
+
+Pass a `genome_build` as well as the `data_provider`. The safety check can only be verified when
+the requested version's structure is known (it is loaded in some build, eg from an all-builds JSON
+file or the REST server), or, when it is absent from all loaded data, by checking that the held
+versions on either side of it agree in `genome_build`. A single-build JSON file doesn't hold the
+requested version, so without a `genome_build` every substitution is reported as unverified and,
+under the default policy, refused. Even with a build, a requested version older than everything
+loaded (as above) has nothing below it to compare and is refused. The strategies are:
 
 | `VersionStrategy` | Behaviour |
 |-------------------|-----------|

@@ -170,6 +170,13 @@ requested version is in no build at all.
   change between versions far more often than the CDS. A residual edge case remains: two
   versions with the same total UTR length but a different UTR exon *split* could still move a
   UTR-intronic position; covering that needs full non-coding exon structure, not just length.
+  Uncertain ranges are handled too (`c.(-30_5)del` touches the 5'UTR).
+- Non-coding transcripts (`NR_`, `n.` positions) have no CDS, so they are compared on their
+  whole exon structure instead (`intrinsic_exon_structure`: strand plus per-exon lengths in
+  transcript coordinates), with matching alignment gaps across all exons and, when both
+  versions are placed in the target build, the same genomic exon spans. A pair where one
+  version is coding and the other is not is never safe. This path has not been measured
+  against real releases the way the coding check has.
 - The intrinsic structure is build-independent and so is blind to genomic *placement*: a rare
   version re-aligns the same CDS structure to a different locus (eg NM_018263, a ~9.75 kb
   jump). When both versions are loaded this is caught by comparing their genomic CDS maps; for
@@ -190,7 +197,7 @@ python analysis/transcript_version_drift.py \
 
 # Cross-build structure portability + structure<=>drift equivalence
 python analysis/transcript_version_crossbuild.py \
-    --json /path/to/cdot-0.2.33.all-builds-refseq-...json.gz \
+    --json /path/to/cdot-0.2.33.all-builds-refseq-grch37_grch38_t2t-chm13v2.0.json.gz \
     --target GRCh38 --other GRCh37 --sample 12000 --seed 1
 
 # The paper's one-row facts CSV (reuses cdot.hgvs.version_safety)

@@ -128,7 +128,8 @@ def test_prefetch_batch_false_uses_concurrent(dp, monkeypatch):
     assert dp.transcripts["NM_000059.3"] == {"id": "NM_000059.3"}
 
 
-def test_prefetch_concurrent_failure_stores_none(dp, monkeypatch):
+def test_prefetch_concurrent_failure_not_cached(dp, monkeypatch):
+    # #154 - a failed request (not a 404) must not be cached as missing
     monkeypatch.setattr(dp, "_post_to_url", lambda url, json_body: None)
 
     def fake_get(url):
@@ -136,8 +137,11 @@ def test_prefetch_concurrent_failure_stores_none(dp, monkeypatch):
 
     monkeypatch.setattr(dp, "_get_from_url", fake_get)
     n = dp.prefetch(["NM_000059.3"])  # must not raise
-    assert n == 1
-    assert dp.transcripts["NM_000059.3"] is None
+    assert n == 0
+    assert "NM_000059.3" not in dp.transcripts
+    # A later lookup retries
+    monkeypatch.setattr(dp, "_get_from_url", lambda url: {"id": "NM_000059.3"})
+    assert dp._get_transcript("NM_000059.3") == {"id": "NM_000059.3"}
 
 
 # ---------------------------------------------------------------------------

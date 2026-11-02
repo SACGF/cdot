@@ -58,7 +58,7 @@ from hgvs.assemblymapper import AssemblyMapper
 from cdot.hgvs.dataproviders import JSONDataProvider, RESTDataProvider
 
 hdp = RESTDataProvider()  # Uses API server at cdotlib.org
-# hdp = JSONDataProvider(["./cdot-0.2.32.refseq.grch37.json.gz"])  # Uses local JSON file
+# hdp = JSONDataProvider(["./cdot-0.2.36.refseq.GRCh37.json.gz"])  # Uses local JSON file
 
 am = AssemblyMapper(hdp,
                     assembly_name='GRCh37',
@@ -87,7 +87,7 @@ from cdot.pyhgvs.pyhgvs_transcript import JSONPyHGVSTranscriptFactory, RESTPyHGV
 
 genome = FastaFile("/data/annotation/fasta/GCF_000001405.25_GRCh37.p13_genomic.fna.gz")
 factory = RESTPyHGVSTranscriptFactory()
-# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.32.refseq.grch37.json.gz"])  # Uses local JSON file
+# factory = JSONPyHGVSTranscriptFactory(["./cdot-0.2.36.refseq.GRCh37.json.gz"])  # Uses local JSON file
 pyhgvs.parse_hgvs_name('NM_001637.3:c.1582G>A', genome, get_transcript=factory.get_transcript_grch37)
 ```
 
@@ -158,9 +158,24 @@ on 500 variants). Reproduce with `paper/scripts/benchmark_resolution.py`.
 
 ## Q. Where can I download the JSON.gz files?
 
-[Download from GitHub releases](https://github.com/SACGF/cdot/releases) - RefSeq (37/38) - 72M, Ensembl (37/38) 61M
+[Download from GitHub releases](https://github.com/SACGF/cdot/releases) - RefSeq (all builds) 96M, Ensembl (all builds) 132M, or one file per genome build (eg `cdot-0.2.36.refseq.GRCh38.json.gz`, 61M)
 
 Details on what the files contain [here](https://github.com/SACGF/cdot/blob/main/docs/release_files.md)
+
+### Finding the latest data programmatically
+
+`cdot.data_release` asks the GitHub API for the newest data release compatible with your installed cdot,
+and returns download URLs:
+
+```python
+from cdot.data_release import get_latest_release_version, get_latest_combo_file_urls
+
+get_latest_release_version()  # eg '0.2.36'
+get_latest_combo_file_urls(["refseq"], ["GRCh38"])  # [".../cdot-0.2.36.refseq.GRCh38.json.gz"]
+get_latest_combo_file_urls(["refseq", "ensembl"], ["all-builds"])  # the two all-builds files
+```
+
+Builds are matched case insensitively. Use `"all-builds"` for the file containing every genome build.
 
 ## Q. How does this compare to Universal Transcript Archive?
 
@@ -180,7 +195,7 @@ You can also read the data with typed Python objects (no extra install required)
 ```python
 from cdot import models
 
-data = models.load("cdot-0.2.32.refseq.GRCh38.json.gz")
+data = models.load("cdot-0.2.36.refseq.GRCh38.json.gz")
 tx = data.transcripts["NM_001637.3"]
 print(tx.gene_name, tx.protein)
 ```

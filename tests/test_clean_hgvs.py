@@ -655,6 +655,17 @@ ALREADY_VALID = [
     "ZP3:c.100A>G",
     "XRCC1:c.100A>G",
     "NM_001145661.2(NR3C1):c.1121G>A",
+    # #152: every kind letter and the genomic/protein accession types
+    "NC_012920.1:m.3243A>G",
+    "NM_000059.4:r.68a>g",
+    "NM_000059.4:r.68del",
+    "NG_012337.3:g.5000A>G",
+    "NP_000050.2:p.Arg1Gly",
+    "NP_000050.2:p.(Glu23fs)",
+    "NM_000059.4:n.68del",
+    # Gene symbols that start with a two-letter RefSeq prefix (AC, NS, ...)
+    "ACTB:c.100A>G",
+    "NSD1:c.100A>G",
 ]
 
 
@@ -667,6 +678,177 @@ def test_already_valid_unchanged(hgvs_string):
         f"Unexpected warnings for valid HGVS {hgvs_string!r}: "
         f"{[f.code.value for f in warning_fixes]}"
     )
+    assert not fixes, f"Unexpected errors for valid HGVS {hgvs_string!r}: {[f.code.value for f in fixes]}"
+
+
+@pytest.mark.parametrize("op", list(HGVSCleanOp))
+@pytest.mark.parametrize("hgvs_string", ALREADY_VALID)
+def test_already_valid_is_fixed_point_of_every_op(hgvs_string, op):
+    # #150: every valid string must be left alone by each op on its own, not only
+    # by the whole pipeline (where a later op could undo an earlier one).
+    cleaned, fixes = clean_hgvs(hgvs_string, ops={op}, validate=False)
+    assert cleaned == hgvs_string, f"{op.name} modified valid HGVS {hgvs_string!r} → {cleaned!r}"
+    assert not fixes
+
+
+def test_clean_op_enum_matches_pipeline_order():
+    # HGVSCleanOp documents that its members are listed in pipeline order
+    from cdot.hgvs.clean import _PIPELINE
+    assert [op for op, _fn in _PIPELINE] == list(HGVSCleanOp)
+
+
+# ---------------------------------------------------------------------------
+# #150: reconstruction must not build garbage when the colon is missing
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bad", [
+    # Missing colon and kind: the version digits ran into the coordinate.
+    "NM_000059.4 123A>G",
+    # Missing colon and kind after a gene symbol in parens
+    "NM_000059.4(BRCA2) 100G>A",
+    # Last letter of a gene symbol (FANCG) followed by a coordinate is not a kind
+    "NM_000059.4 FANCG 100A>G",
+])
+def test_reconstruct_refuses_ambiguous_missing_colon(bad):
+    # These can't be repaired unambiguously: must be reported as an ERROR, never
+    # rewritten into a "valid looking" string.
+    cleaned, fixes = clean_hgvs(bad)
+    assert C.RECONSTRUCTED_STRUCTURE not in codes(fixes)
+    assert C.NO_COLON in codes(fixes)
+    assert E in severities(fixes)
+    assert ":" not in cleaned
+    assert cleaned == bad.replace(" ", "")
+
+
+@pytest.mark.parametrize("bad,expected", [
+    # Kind letter glued to the version with no colon and no dot
+    ("NM_005629.3c1403A>C",          "NM_005629.3:c.1403A>C"),
+    ("NM_000059.4c100G>A",           "NM_000059.4:c.100G>A"),
+    # Gene symbol glued between accession and kind
+    ("NM_000059.4 PALB2 c.100A>G",   "NM_000059.4(PALB2):c.100A>G"),
+    # Gene symbols starting with RefSeq prefix letters reconstruct as symbols
+    ("ACTBc.100A>G",                 "ACTB:c.100A>G"),
+    # Uppercase kind letter with its dot
+    ("NM_000059.4:C.100A>G",         "NM_000059.4:c.100A>G"),
+])
+def test_reconstruct_unambiguous_missing_colon(bad, expected):
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == expected
+    assert C.RECONSTRUCTED_STRUCTURE in codes(fixes)
+    assert E not in severities(fixes)
+
+
+# ---------------------------------------------------------------------------
+# #151: ops that need input a later op used to create
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bad,expected,required_codes", [
+    # Mutation type lowercased after reconstruction has inserted the colon
+    ("NM_000059.4 c.68_69DELINSAT",       "NM_000059.4:c.68_69delinsAT",
+     {C.RECONSTRUCTED_STRUCTURE, C.LOWERCASED_MUTATION_TYPE}),
+    # Quotes stripped before the start-anchored symbol-before-accession op
+    ('"BRCA2 NM_000059.4:c.68del"',       "NM_000059.4(BRCA2):c.68del",
+     {C.STRIPPED_SURROUNDING_PUNCTUATION, C.WRAPPED_GENE_SYMBOL}),
+    ("'#NM_000059.4:c.68del'",            "NM_000059.4:c.68del",
+     {C.STRIPPED_SURROUNDING_PUNCTUATION, C.STRIPPED_LEADING_JUNK}),
+    # Underscore restored before the separator-typo op looks for "NM_"
+    ("NM000059.4;c.68del",                "NM_000059.4:c.68del",
+     {C.ADDED_TRANSCRIPT_UNDERSCORE, C.FIXED_SEPARATOR_TYPO}),
+    # Leading "N" restored before the empty-version op looks for "NM_"
+    ("M_001754.:c.749G>A",                "NM_001754:c.749G>A",
+     {C.ADDED_N_PREFIX, C.DROPPED_EMPTY_VERSION}),
+    # A tab (or any whitespace) before the protein annotation
+    ("NM_000059.4:c.68del\tp.(Glu23fs)",  "NM_000059.4:c.68del",
+     {C.STRIPPED_PROTEIN_SUFFIX}),
+])
+def test_pipeline_ordering(bad, expected, required_codes):
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == expected
+    assert required_codes <= codes(fixes), codes(fixes)
+    assert E not in severities(fixes)
+
+
+def test_protein_allele_not_stripped_as_suffix():
+    # "p." is the allele itself here, not a trailing annotation to drop
+    cleaned, fixes = clean_hgvs("NP_000050.2 p.Arg1Gly")
+    assert cleaned == "NP_000050.2:p.Arg1Gly"
+    assert C.STRIPPED_PROTEIN_SUFFIX not in codes(fixes)
+
+
+def test_surrounding_whitespace_reported_as_whitespace():
+    # The punctuation op runs first but leaves plain whitespace to its own step
+    cleaned, fixes = clean_hgvs("NM_000059.4:c.68del ")
+    assert cleaned == "NM_000059.4:c.68del"
+    assert codes(fixes) == {C.STRIPPED_WHITESPACE}
+
+
+# ---------------------------------------------------------------------------
+# #152: lowercase genomic/protein accessions and m./r. kinds
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bad,expected", [
+    ("ng_012337.3:g.5000A>G",   "NG_012337.3:g.5000A>G"),
+    ("np_000050.2:p.Arg1Gly",   "NP_000050.2:p.Arg1Gly"),
+    ("nc_012920.1:m.3243A>G",   "NC_012920.1:m.3243A>G"),
+    # Not matched by reconstruction (dots in the allele), so the gene/transcript
+    # step has to uppercase the genomic prefix itself
+    ("nc_000023.11:g.(31180435_31200854)_(33274278_33357726)del",
+     "NC_000023.11:g.(31180435_31200854)_(33274278_33357726)del"),
+    # Only the LRG prefix is uppercased, the "t1" suffix stays lowercase
+    ("lrg_199t1:c.1415T>C",     "LRG_199t1:c.1415T>C"),
+])
+def test_lowercase_accession_any_type(bad, expected):
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == expected
+    assert C.MISSING_REFERENCE_SEQUENCE not in codes(fixes)
+    assert E not in severities(fixes)
+
+
+def test_fix_gene_transcript_uppercases_genomic_prefix():
+    # The op on its own (reconstruction not run) uppercases a genomic prefix
+    cleaned, fixes = clean_hgvs("nc_000023.11:g.(1_2)_(3_4)del",
+                                ops={HGVSCleanOp.FIX_GENE_TRANSCRIPT}, validate=False)
+    assert cleaned == "NC_000023.11:g.(1_2)_(3_4)del"
+    assert C.UPPERCASED_HGVS_PREFIX in codes(fixes)
+
+
+@pytest.mark.parametrize("bad,expected", [
+    ("NC_012920.1 m.3243A>G",   "NC_012920.1:m.3243A>G"),
+    ("NC_012920.1m.3243A>G",    "NC_012920.1:m.3243A>G"),
+    ("NM_000059.4 r.68del",     "NM_000059.4:r.68del"),
+    # r. bases are lowercase in HGVS and must stay lowercase
+    ("nm_000059.4 r.68a>g",     "NM_000059.4:r.68a>g"),
+    ("NP_000050.2 p.Arg1Gly",   "NP_000050.2:p.Arg1Gly"),
+    ("NM_000059.4:r,68del",     "NM_000059.4:r.68del"),
+    ("NM_000059.4:r.r.68del",   "NM_000059.4:r.68del"),
+])
+def test_m_r_p_kinds(bad, expected):
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == expected
+    assert E not in severities(fixes)
+
+
+@pytest.mark.parametrize("not_missing", [
+    "ng_012337.3:g.5000A>G",
+    "np_000050.2:p.Arg1Gly",
+    "nc_012920.1:m.3243A>G",
+    "gata2:c.1A>G",
+])
+def test_validate_lowercase_reference_is_not_missing(not_missing):
+    # Validation alone: starting with a kind letter is not the same as having no
+    # reference sequence
+    _cleaned, fixes = clean_hgvs(not_missing, ops=set())
+    assert C.MISSING_REFERENCE_SEQUENCE not in codes(fixes)
+
+
+def test_prefix_and_kind_tables_drive_patterns():
+    # Every RefSeq prefix in the table is handled by the derived patterns
+    from cdot.hgvs.clean import _REFSEQ_PREFIX_TYPE
+    for prefix in _REFSEQ_PREFIX_TYPE:
+        lower = prefix.lower() + "000123.1"
+        cleaned, _fixes = clean_hgvs(f"{lower}:g.1A>G", ops={HGVSCleanOp.FIX_GENE_TRANSCRIPT},
+                                     validate=False)
+        assert cleaned.startswith(prefix), prefix
 
 
 # ---------------------------------------------------------------------------

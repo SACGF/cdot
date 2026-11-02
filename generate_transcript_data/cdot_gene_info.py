@@ -9,9 +9,9 @@ from argparse import ArgumentParser
 from datetime import datetime
 from typing import Iterable, Iterator, List, TypeVar
 
-import cdot
 from Bio import Entrez
-from json_encoders import SortedSetEncoder
+from generate_transcript_data.json_encoders import SortedSetEncoder
+from generate_transcript_data.json_schema_version import JSON_SCHEMA_VERSION
 
 T = TypeVar("T")
 
@@ -37,8 +37,9 @@ def batch_iterator(iterable: Iterable[T], batch_size: int = 10) -> Iterator[List
         yield batch
 
 
-def _get_entrez_gene_summary(id_list):
-    for _ in range(3):
+def _get_entrez_gene_summary(id_list, attempts: int = 3):
+    last_exception = None
+    for _ in range(attempts):
         try:
             request = Entrez.epost("gene", id=",".join(id_list))
             result = Entrez.read(request)
@@ -48,8 +49,14 @@ def _get_entrez_gene_summary(id_list):
             document = Entrez.read(data, ignore_errors=True, validate=False)  # Need recent BioPython
             return document["DocumentSummarySet"]["DocumentSummary"]
         except Exception as e:
+            last_exception = e
             logging.warning(e)
             logging.warning("Trying again...")
+
+    id_range = f" ({id_list[0]}..{id_list[-1]})" if id_list else ""
+    raise RuntimeError(f"Entrez gene summary failed after {attempts} attempts for batch of "
+                       f"{len(id_list)} gene IDs{id_range}") from last_exception
+
 
 def iter_entrez_ids(reader):
     for gi in reader:
@@ -91,10 +98,10 @@ def main():
 
     if gene_info:
         with gzip.open(args.output, 'wt') as outfile:
-            gene_info_file_dt = datetime.fromtimestamp(os.stat(args.gene_info).st_ctime)
+            gene_info_file_dt = datetime.fromtimestamp(os.stat(args.gene_info).st_mtime)
 
             data = {
-                "cdot_version": cdot.__version__,
+                "cdot_version": JSON_SCHEMA_VERSION,
                 "api_retrieval_date": start_date,
                 "gene_info_date": gene_info_file_dt.isoformat(),
                 "gene_info": gene_info,

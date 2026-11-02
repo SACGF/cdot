@@ -92,6 +92,8 @@ class JSONPyHGVSTranscriptFactory(PyHGVSTranscriptFactory):
 
 
 class RESTPyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):
+    # Seconds - passed to requests as both the connect and read timeout
+    REQUESTS_TIMEOUT = 30
 
     def _get_transcript(self, transcript_id):
         # We store None for 404 on REST
@@ -99,9 +101,9 @@ class RESTPyHGVSTranscriptFactory(AbstractPyHGVSTranscriptFactory):
             return self.transcripts[transcript_id]
 
         transcript_url = self.url + "/transcript/" + transcript_id
-        response = requests.get(transcript_url)
+        response = requests.get(transcript_url, timeout=self.REQUESTS_TIMEOUT)
         if response.ok:
-            if 'application/json' in response.headers.get('Content-Type'):
+            if 'application/json' in response.headers.get('Content-Type', ''):
                 transcript = response.json()
             else:
                 raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % transcript_url)

@@ -51,7 +51,7 @@ from cdot.hgvs.dataproviders import JSONDataProvider
 from cdot.hgvs.dataproviders.fasta_seqfetcher import FastaSeqFetcher
 
 seqfetcher = FastaSeqFetcher("/data/fasta/GCF_000001405.39_GRCh38.p13_genomic.fna.gz")
-hdp = JSONDataProvider(["./cdot-0.2.32.refseq.grch38.json.gz"], seqfetcher=seqfetcher)
+hdp = JSONDataProvider(["./cdot-0.2.36.refseq.GRCh38.json.gz"], seqfetcher=seqfetcher)
 ```
 
 `ChainedSeqFetcher` is a helper that lets you use the default `SeqFetcher` first and only fall back to
