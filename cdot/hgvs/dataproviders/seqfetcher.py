@@ -1,8 +1,19 @@
+""" Sequence fetchers that combine other fetchers: by accession prefix, in a fallback chain, or
+    cross-checked against each other. The FASTA-backed fetchers are in fasta_seqfetcher. """
 import abc
 
 from more_itertools import all_equal
 from hgvs.dataproviders.interface import Interface
 from hgvs.exceptions import HGVSDataNotAvailableError
+
+__all__ = [
+    "PrefixSeqFetcher",
+    "MultiSeqFetcher",
+    "ChainedSeqFetcher",
+    "VerifyMultipleSeqFetcher",
+    "AlwaysFailSeqFetcher",
+    "AbstractTranscriptSeqFetcher",
+]
 
 
 class PrefixSeqFetcher:
