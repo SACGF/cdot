@@ -10,6 +10,12 @@
 
 - #103 - The mouse (Mus musculus GRCm38/GRCm39) RefSeq bash scripts under `generate_transcript_data/Mus_musculus/`. They have been dead since the move to Snakemake (#92) removed the wrapper and gene_info download they depended on, and mouse data was never part of a data release. cdot does not currently support non-human species: `bioutils` has no mouse assemblies for contig name mapping, so the data provider can't load a mouse file. #103 tracks what adding it would take
 
+### Fixed
+
+- #150 - HGVS cleaning: structure reconstruction no longer turns an input with a missing colon into a wrong but valid-looking string with only a WARNING (eg `NM_000059.4 123A>G` became `NM_000059.4123(A>):g.` and `NM_000059.4(BRCA2) 100G>A` became `NM_000059.4(BR):c.A2)100G>A`). Inputs that can't be repaired unambiguously are now left alone and reported as a `NO_COLON` ERROR, and a kind letter glued to the version is repaired correctly (`NM_005629.3c1403A>C` → `NM_005629.3:c.1403A>C`)
+- #151 - HGVS cleaning: fixed ops that ran before the input they needed existed. Wrapping quotes are stripped first (`"BRCA2 NM_000059.4:c.68del"` → `NM_000059.4(BRCA2):c.68del`), a dropped `N` or underscore in the accession prefix is restored before the separator and empty-version fixes (`NM000059.4;c.68del` → `NM_000059.4:c.68del`, `M_001754.:c.749G>A` → `NM_001754:c.749G>A`), an uppercase mutation type is lowercased after the colon is inserted (`NM_000059.4 c.68_69DELINSAT` → `NM_000059.4:c.68_69delinsAT`), and a protein annotation after a tab is stripped (`NM_000059.4:c.68del\tp.(Glu23fs)`). `HGVSCleanOp` members are reordered to match the new pipeline order
+- #152 - HGVS cleaning handles every accession prefix and kind letter. Lowercase genomic and protein accessions are uppercased (`ng_012337.3:g.5000A>G` → `NG_012337.3:g.5000A>G`, likewise `np_`/`nc_`) instead of being reported as `MISSING_REFERENCE_SEQUENCE`, `m.` and `r.` kinds are repaired like the others (`NC_012920.1 m.3243A>G` → `NC_012920.1:m.3243A>G`), `r.` bases are no longer uppercased (they are lowercase in HGVS), and a protein allele after a space is no longer dropped as a trailing protein annotation (`NP_000050.2 p.Arg1Gly` → `NP_000050.2:p.Arg1Gly`, was `NP_000050.2`)
+
 ## [0.2.33] - 2026-10-06
 
 ### Added
