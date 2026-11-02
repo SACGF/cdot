@@ -2,7 +2,6 @@ import csv
 import os
 import re
 import sys
-import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -11,8 +10,11 @@ configfile: os.path.join(workflow.basedir, "cdot_transcripts.yaml")
 
 cdot_json = os.path.join(workflow.basedir, "cdot_json.py")
 cdot_dir = os.path.dirname(workflow.basedir)
-cdot_output_raw = subprocess.check_output(f"{sys.executable} {cdot_json} --version", shell=True, env={**os.environ, "PYTHONPATH": cdot_dir})
-cdot_data_version = cdot_output_raw.decode().strip()
+sys.path.insert(0, cdot_dir)
+from generate_transcript_data.cdot_json import COMBINE_BUILDS_ARGS
+from generate_transcript_data.json_schema_version import JSON_SCHEMA_VERSION
+
+cdot_data_version = JSON_SCHEMA_VERSION
 
 # Load Ensembl -> GENCODE mapping CSV
 gencode_csv = os.path.join(workflow.basedir, "ensembl_gencode.csv")
@@ -32,29 +34,20 @@ def _ensembl_release_from_url(url: str):
     m = _re_ensembl_rel.search(url)
     return m.group(1) if m else None
 
-def _gencode_release_from_url(url: str):
+# GENCODE (used for Ensembl HGNC IDs) only covers these builds
+gencode_genome_builds = {"GRCh37", "GRCh38"}
+
+def _gencode_metadata_path(name: str, url: str) -> str:
+    """ GENCODE HGNC metadata file for an Ensembl GRCh37/GRCh38 source. Every such source needs a row in
+        ensembl_gencode.csv, otherwise its HGNC IDs would be left out """
     erel = _ensembl_release_from_url(url)
     if erel is None:
-        return None
-    return _gencode_map.get(erel)
-
-def _gencode_metadata_path(wc):
-    # Return path (string) if Ensembl; else [] so Snakemake ignores
-    if wc.annotation_consortium.lower() != "ensembl":
-        return []
-    grel = _gencode_release_from_url(all_urls[wc.name])
+        raise ValueError(f"{name}: could not find the Ensembl release number in URL {url}")
+    grel = _gencode_map.get(erel)
     if grel is None:
-        print(f"[WARN] No Ensembl -> GENCODE mapping for {wc.name}; skipping GENCODE metadata", file=sys.stderr)
-        return []
+        raise ValueError(f"{name}: Ensembl release {erel} has no GENCODE release in {gencode_csv}, "
+                         f"add a row for it (check_new_sources.py reports the GENCODE releases)")
     return f"downloads/gencode_metadata/gencode.v{grel}.metadata.HGNC.gz"
-
-def _gencode_metadata_url(wc):
-    if wc.annotation_consortium.lower() != "ensembl":
-        return ""
-    grel = _gencode_release_from_url(all_urls[wc.name])
-    if grel is None:
-        return ""  # Skip download
-    return f"https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_{grel}/gencode.v{grel}.metadata.HGNC.gz"
 
 
 # Name it based on date as it may vary. CI sets CDOT_GENE_INFO_DATE so that parallel jobs
@@ -67,6 +60,7 @@ all_urls = {}
 name_uta = {}
 multi_urls = {}  # name -> list of URLs, downloaded then concatenated in list order (eg historical #51)
 extra_cdot_args = {}  # name -> extra command line args for cdot_json.py
+gencode_metadata_paths = {}  # name -> GENCODE HGNC metadata file (Ensembl GRCh37/GRCh38 only)
 
 annotation_consortium_list = []
 genome_builds = set()
@@ -91,6 +85,13 @@ for annotation_consortium, builds in config["config"].items():
 
             if cdot_args := data.get("cdot_args"):
                 extra_cdot_args[name] = cdot_args
+
+            if annotation_consortium.lower() == "ensembl" and gb in gencode_genome_builds and name not in name_uta:
+                gencode_metadata_paths[name] = _gencode_metadata_path(name, url)
+
+if unknown_builds := genome_builds - set(COMBINE_BUILDS_ARGS):
+    raise ValueError(f"Genome builds {sorted(unknown_builds)} in the config are not supported by "
+                     f"cdot_json.py combine_builds (supported: {sorted(COMBINE_BUILDS_ARGS)})")
 
 genome_builds = list(sorted(genome_builds))
 merged_genome_build_label = "_".join(genome_builds).lower()
@@ -141,25 +142,21 @@ rule all:
 
 rule cdot_merge_annotation_consortium:
     input:
-        lambda wc: expand("{annotation_consortium}/cdot-" + cdot_data_version + ".{annotation_consortium}.{genome_build}.json.gz",
-                          annotation_consortium=[wc.annotation_consortium],
-                          genome_build=genome_builds)  # only this consortium
+        # The per-build file of this consortium for each configured build, named by its combine_builds argument
+        unpack(lambda wc: {COMBINE_BUILDS_ARGS[gb]: f"{wc.annotation_consortium}/cdot-{cdot_data_version}.{wc.annotation_consortium}.{gb}.json.gz"
+                           for gb in genome_builds})
     output:
         "{annotation_consortium}/cdot-" + cdot_data_version + ".all-builds-{annotation_consortium}" + f"-{merged_genome_build_label}.json.gz"
-    run:
-        build_params_and_match = {
-            "grch37": "GRCh37",
-            "grch38": "GRCh38",
-            "t2t_chm13v2": "T2T-CHM13v2.0",
-        }
-        build_files = {}
-        for input_file in input:
-            for build_param, build_match in build_params_and_match.items():
-                if build_match in input_file:
-                    build_files[build_param] = input_file
-        build_params = [f'--{build_param}="{input_file}"' for build_param, input_file in build_files.items()]
-        combine_build_cmd = f'PYTHONPATH={cdot_dir} {cdot_json} combine_builds --output "{output}" ' + ' '.join(build_params)
-        shell(combine_build_cmd)
+    params:
+        build_args=lambda wc, input: " ".join(f'--{build_arg}="{input_file}"' for build_arg, input_file in input.items())
+    shell:
+        """
+            PYTHONPATH={cdot_dir} \
+            {cdot_json} \
+                combine_builds \
+                {params.build_args} \
+                --output "{output}"
+        """
 
 
 rule cdot_merge_historical_json:
@@ -184,17 +181,15 @@ rule cdot_gff_json:
     input:
         gene_info_json=gene_info_json_filename,
         gff_file=get_gff_download_path,
-        gencode_metadata=_gencode_metadata_path  # Optional, only used for Ensembl
+        gencode_metadata=lambda wc: gencode_metadata_paths.get(wc.name, [])  # Ensembl GRCh37/GRCh38 only
     output:
         "{annotation_consortium}/{genome_build}/cdot-" + cdot_data_version + ".{name}.json.gz"
     params:
         url=get_url_from_name,
         cdot_command=get_cdot_command,
         extra_cdot_args=lambda wc: extra_cdot_args.get(wc.name, ""),
-        gencode_param=lambda wc: (
-            (f'--gencode-hgnc-metadata "{_gencode_metadata_path(wc)}"')
-            if (wc.annotation_consortium.lower() == "ensembl" and _gencode_release_from_url(all_urls[wc.name]) is not None)
-            else ""
+        gencode_param=lambda wc, input: (
+            f'--gencode-hgnc-metadata "{input.gencode_metadata}"' if input.gencode_metadata else ""
         ),
         gene_canonical_transcripts_params=lambda wc: (
             (f'--gene-canonical-transcripts-csv "{ensembl_grch37_canonical_transcripts_csv}"')
