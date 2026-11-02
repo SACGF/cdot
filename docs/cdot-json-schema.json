@@ -203,10 +203,10 @@
         "translation": {
           "anyOf": [
             {
-              "type": "null"
+              "$ref": "#/$defs/Translation"
             },
             {
-              "$ref": "#/$defs/Translation"
+              "type": "null"
             }
           ],
           "default": null,
@@ -380,10 +380,10 @@
         "genome_mismatch": {
           "anyOf": [
             {
-              "type": "null"
+              "$ref": "#/$defs/GenomeMismatch"
             },
             {
-              "$ref": "#/$defs/GenomeMismatch"
+              "type": "null"
             }
           ],
           "default": null,
