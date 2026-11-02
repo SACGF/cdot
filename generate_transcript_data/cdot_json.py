@@ -237,14 +237,17 @@ def _add_cds_start_end(genome_build, transcript_data):
 def uta_to_json(args):
     genes_by_id = {}
     transcripts_by_id = {}
+    skipped_rows = Counter()  # reason -> count, written to the metadata
 
     for data in DictReader(open(args.uta_csv_filename)):
         contig = data["contig"]
         if "," in contig:
-            continue  # query returned both chrX/Y - only 8 of these so skip
+            skipped_rows["multiple_contigs"] += 1  # query returned both chrX/Y (PAR genes)
+            continue
         transcript_accession = data["ac"]
         if "/" in transcript_accession:
-            continue  # transcript accession looks strange eg "NM_001202404.1/111..1620"
+            skipped_rows["accession_with_range"] += 1  # eg "NM_001202404.1/111..1620"
+            continue
         gene_symbol = data["hgnc"]
 
         # PyReference expects a gene versions etc - we don't know these so will make a fake one.
@@ -281,11 +284,12 @@ def uta_to_json(args):
 
         transcript_data["genome_builds"] = {args.genome_build: genome_build_coordinates}
 
-        if "start_codon" in transcript_data and "cds_start" not in genome_build_coordinates:
+        if "start_codon" in transcript_data:
             try:
                 _add_cds_start_end(args.genome_build, transcript_data)
             except ValueError as ve:
                 print(f"Warning: Skipped {transcript_accession} due to exception: {ve}")
+                skipped_rows["cds_outside_exons"] += 1
                 continue
 
         transcripts_by_id[transcript_accession] = transcript_data
@@ -293,7 +297,8 @@ def uta_to_json(args):
     print("Writing UTA to cdot JSON.gz")
     method = "Conversion of Universal Transcript Archive dump"
     write_cdot_json(args.output, method, [args.uta_csv_filename],
-                    genes_by_id, transcripts_by_id, [args.genome_build])
+                    genes_by_id, transcripts_by_id, [args.genome_build],
+                    extra_metadata={"skipped_rows": dict(skipped_rows)})
 
 
 def _convert_uta_exons(exon_starts, exon_ends, cigars):
@@ -366,7 +371,8 @@ def _cigar_to_gap_and_length(cigar):
 
 
 def write_cdot_json(filename: str, method: str, input_files, genes, transcript_versions, genome_builds,
-                    refseq_gene_summary_api_retrieval_date=None):
+                    refseq_gene_summary_api_retrieval_date=None, extra_metadata=None):
+    """ extra_metadata: anything else the conversion wants to record in "metadata" """
     print(f"Writing cdot file: '{filename}'")
     data = {
         # We also write these in metadata now, but keep for legacy compatability
@@ -392,6 +398,8 @@ def write_cdot_json(filename: str, method: str, input_files, genes, transcript_v
         "cdot_version": JSON_SCHEMA_VERSION,
         "genome_builds": genome_builds
     }
+    if extra_metadata:
+        data["metadata"].update(extra_metadata)
 
     with gzip.open(filename, 'wt') as outfile:
         json.dump(data, outfile, cls=SortedSetEncoder, sort_keys=True)  # Sort so diffs work
