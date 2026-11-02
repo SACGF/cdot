@@ -9,7 +9,7 @@ import operator
 from collections import defaultdict
 
 from generate_transcript_data.transcript_coordinates import create_perfect_exons, create_cdna_exons, \
-    get_transcript_position
+    get_transcript_range_start, get_transcript_range_end
 
 CONTIG = "contig"
 STRAND = "strand"
@@ -233,23 +233,14 @@ class TranscriptBuilder:
                 transcript_data["cds_start"] = cds_min
                 transcript_data["cds_end"] = cds_max
 
-                (coding_left, coding_right) = ("start_codon", "stop_codon")
-                if not forward_strand:  # Switch
-                    (coding_left, coding_right) = (coding_right, coding_left)
-
-                try:
-                    transcript_data[coding_left] = get_transcript_position(forward_strand, exons_stranded_order,
-                                                                           cds_min, end=coding_left == "stop_codon")
-                except ValueError as e:
-                    logging.warning("Couldn't set %s transcript position from %s: %s", coding_left, cds_min, e)
-                    self._add_warning(transcript_data, "codons_unplaced", coding_left)
-
-                try:
-                    transcript_data[coding_right] = get_transcript_position(forward_strand, exons_stranded_order,
-                                                                            cds_max, end=coding_right == "stop_codon")
-                except ValueError as e:
-                    logging.warning("Couldn't set %s transcript positions from %s: %s", coding_right, cds_max, e)
-                    self._add_warning(transcript_data, "codons_unplaced", coding_right)
+                # The transcript positions where the CDS range starts and ends
+                for codon, get_position in (("start_codon", get_transcript_range_start),
+                                            ("stop_codon", get_transcript_range_end)):
+                    try:
+                        transcript_data[codon] = get_position(forward_strand, exons_stranded_order, cds_min, cds_max)
+                    except ValueError as e:
+                        logging.warning("Couldn't set %s transcript position: %s", codon, e)
+                        self._add_warning(transcript_data, "codons_unplaced", codon)
 
             self._add_translation(transcript_accession, transcript_data, features_by_type, forward_strand,
                                   exons_stranded_order)
@@ -343,11 +334,8 @@ class TranscriptBuilder:
         cds_length = transcript_data["stop_codon"] - transcript_data["start_codon"]
         not_codon_starts = []  # (amino_acid, cds_position or None, start, end)
         for start, end, amino_acid in transl_except:
-            # First base of the codon, in transcript direction
-            genomic_coordinate = start if forward_strand else end
             try:
-                transcript_position = get_transcript_position(forward_strand, exons_stranded_order,
-                                                              genomic_coordinate)
+                transcript_position = get_transcript_range_start(forward_strand, exons_stranded_order, start, end)
             except ValueError as e:
                 logging.warning("%s: couldn't place transl_except %s at %d-%d: %s",
                                 transcript_accession, amino_acid, start + 1, end, e)
@@ -389,9 +377,7 @@ class TranscriptBuilder:
             else:
                 continue  # an intron
             try:
-                genomic_coordinate = base if forward_strand else base + 1
-                transcript_position = get_transcript_position(forward_strand, exons_stranded_order,
-                                                              genomic_coordinate)
+                transcript_position = get_transcript_range_start(forward_strand, exons_stranded_order, base, base + 1)
             except ValueError as e:
                 logging.warning("%s: couldn't place ribosomal slippage at %d: %s", transcript_accession, base + 1, e)
                 unplaced = True
