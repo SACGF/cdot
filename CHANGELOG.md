@@ -6,6 +6,10 @@
 - #148 - HGVS cleaning: a chromosome name before its own chromosomal accession is dropped (`chr13 NC_000013.11:g.32316528del` → `NC_000013.11:g.32316528del`), for GRCh37, GRCh38 and T2T-CHM13v2.0 accessions. Only exact `chr1`-`chr22`/`chrX`/`chrY`/`chrM`/`chrMT` names are recognised (gene symbols such as `CHRNA7` are not affected), and the name is only dropped when it matches the accession's chromosome, so `chr7 NC_000013.11:…` is left alone. New op `HGVSCleanOp.STRIP_CONTIG_NAME`, reported as a WARNING with the new fix code `STRIPPED_CONTIG_NAME`
 - #145 - `models.Transcript.fake`: `True` for the RefSeq mitochondrial fake transcripts (data schema >= 0.2.37), `None` for real ones
 
+### Changed
+
+- #179 - Package metadata lists the supported Python versions (3.10 to 3.14) in its classifiers
+
 ### Deprecated
 
 - #186 - `AbstractJSONDataProvider.is_version_substitution_safe()` is deprecated and emits a `DeprecationWarning`. The check is now the pure `cdot.hgvs.version_safety.is_version_substitution_safe(transcript, substitute_transcript, genome_build=None, cited_position=None)` on the two versions' transcript records, with `genomic_bracket_safe(transcript_below, transcript_above, genome_build)` as the fallback for a version held in no build. `is_version_substitution_safe_by_accession(data_provider, transcript_accession, substitute_transcript_accession, genome_build=None, cited_position=None)` is the same check on two versioned accessions, fetching the records from a data provider; the deprecated provider method delegates to it and will be removed in a future release
