@@ -20,7 +20,6 @@ Problems are returned as HGVSFix, as with fix_hgvs().
 """
 
 import copy
-from typing import Optional
 
 from bioutils.sequences import TranslationTable, aa1_to_aa3, aa3_to_aa1, translate_cds
 from hgvs.edit import AAExt, AAFs, AASub

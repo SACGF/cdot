@@ -40,11 +40,6 @@ class TestPyHGVS(unittest.TestCase):
         test_json_file = os.path.join(this_file_dir, "test_data/cdot.refseq.grch37.json")
         factory = JSONPyHGVSTranscriptFactory([test_json_file])
 
-        genome = MockGenomeTestFile(
-            db_filename='grch37.fa',
-            filename=os.path.join(this_file_dir, 'test_data/grch37.genome'),
-            create_data=False)
-
         transcript_id = "NR_023343.1"
         sacgf_pyhgvs_fork = is_sacgf_pyhgvs_fork()
         pyhgvs_transcript = factory.get_transcript_grch37(transcript_id, sacgf_pyhgvs_fork=sacgf_pyhgvs_fork)

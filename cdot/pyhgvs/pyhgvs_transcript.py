@@ -2,7 +2,7 @@ import abc
 import gzip
 import json
 from importlib import metadata
-from typing import Dict, Tuple
+from typing import Dict
 
 import requests
 
