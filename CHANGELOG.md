@@ -9,7 +9,7 @@
 
 ### Changed
 
-- #171 - `resolve_gene_hgvs`, `rank_transcripts_for_gene` and `fix_hgvs`: the consortium argument is now `consortium` (the old name `prefer_consortium` said preference but it has always been a hard filter, and still is). Same position in the signature and same values (`Consortium.REFSEQ` default, `ENSEMBL`, or `None` for either), so positional callers are unaffected; the "no transcript in this consortium" ERROR message now says to pass `consortium=...`
+- #171 - `resolve_gene_hgvs`, `rank_transcripts_for_gene` and `fix_hgvs`: the consortium argument is now `annotation_consortium`, the name the data pipeline and REST API already use (the old name `prefer_consortium` said preference but it has always been a hard filter, and still is). Same position in the signature and same values (`Consortium.REFSEQ` default, `ENSEMBL`, or `None` for either), so positional callers are unaffected; the "no transcript in this consortium" ERROR message now says to pass `annotation_consortium=...`
 - #171 - `fallback_to_longest` now compares the candidates' lengths explicitly (spliced transcript length, the sum of the exon lengths from the provider's `get_tx_identity_info`) instead of trusting the data provider to return transcripts longest-first. With cdot's providers the result is the same transcript; a provider that can't give a length (no `get_tx_identity_info`) gets the first transcript it returned and the `RESOLVED_GENE_TO_TRANSCRIPT` WARNING now says "first transcript returned by the data provider" rather than "longest transcript" in that case
 - #171 - `fix_c_to_p` returns the input `var_c` unchanged (not `None`) as the first element when there is an ERROR-level fix, matching `clean_hgvs`/`fix_hgvs` which return their input string on an error; check `fixes` for the ERROR. The return type is annotated `tuple[SequenceVariant, list[HGVSFix]]`
 - #171 - `fix_hgvs` with a `data_provider` but no `genome_build` records a WARNING with the new fix code `SKIPPED_GENE_RESOLUTION` when the input is gene-only (eg `BRCA2:c.36del`), as gene resolution needs a build, instead of leaving the string alone with no fix. An input that already names a transcript gets no such fix, and nothing is recorded without a data provider
@@ -18,7 +18,7 @@
 
 ### Deprecated
 
-- #171 - `prefer_consortium` on `resolve_gene_hgvs`, `rank_transcripts_for_gene` and `fix_hgvs` is a deprecated alias of `consortium` and emits a `DeprecationWarning`; passing both is a `TypeError`. It will be removed in a future release
+- #171 - `prefer_consortium` on `resolve_gene_hgvs`, `rank_transcripts_for_gene` and `fix_hgvs` is a deprecated alias of `annotation_consortium` and emits a `DeprecationWarning`; passing both is a `TypeError`. It will be removed in a future release
 - #186 - `AbstractJSONDataProvider.is_version_substitution_safe()` is deprecated and emits a `DeprecationWarning`. The check is now the pure `cdot.hgvs.version_safety.is_version_substitution_safe(transcript, substitute_transcript, genome_build=None, cited_position=None)` on the two versions' transcript records, with `genomic_bracket_safe(transcript_below, transcript_above, genome_build)` as the fallback for a version held in no build. `is_version_substitution_safe_by_accession(data_provider, transcript_accession, substitute_transcript_accession, genome_build=None, cited_position=None)` is the same check on two versioned accessions, fetching the records from a data provider; the deprecated provider method delegates to it and will be removed in a future release
 
 ### Fixed

@@ -148,20 +148,21 @@ def _filter_by_consortium(
     return [t for t in tx_and_tags if consortium_of(t[0]) == consortium]
 
 
-def _consortium_arg(consortium, prefer_consortium, stacklevel: int = 3) -> Optional[Consortium]:
+def _annotation_consortium_arg(annotation_consortium, prefer_consortium,
+                               stacklevel: int = 3) -> Optional[Consortium]:
     """
-    The effective ``consortium`` once the deprecated ``prefer_consortium`` alias is
-    folded in: ``prefer_consortium`` maps onto ``consortium`` with a
+    The effective ``annotation_consortium`` once the deprecated ``prefer_consortium``
+    alias is folded in: ``prefer_consortium`` maps onto ``annotation_consortium`` with a
     DeprecationWarning, and it is a TypeError to give both (detected when
-    ``consortium`` is not its default).
+    ``annotation_consortium`` is not its default).
     """
     if prefer_consortium is _UNSET:
-        return consortium
-    if consortium is not DEFAULT_CONSORTIUM:
-        raise TypeError("consortium and prefer_consortium (its deprecated alias) were both given; "
-                        "pass only consortium")
+        return annotation_consortium
+    if annotation_consortium is not DEFAULT_CONSORTIUM:
+        raise TypeError("annotation_consortium and prefer_consortium (its deprecated alias) were "
+                        "both given; pass only annotation_consortium")
     warnings.warn("prefer_consortium is deprecated and will be removed in a future release; "
-                  "use consortium (same values, it has always been a hard filter)",
+                  "use annotation_consortium (same values, it has always been a hard filter)",
                   DeprecationWarning, stacklevel=stacklevel)
     return prefer_consortium
 
@@ -246,7 +247,7 @@ def rank_transcripts_for_gene(
     data_provider,
     genome_build: str,
     tag_priority: Optional[list[str]] = None,
-    consortium: Optional[Consortium] = DEFAULT_CONSORTIUM,
+    annotation_consortium: Optional[Consortium] = DEFAULT_CONSORTIUM,
     prefer_consortium=_UNSET,
 ) -> tuple[list[tuple[str, list[str], Optional[str]]], list[HGVSFix]]:
     """
@@ -270,10 +271,11 @@ def rank_transcripts_for_gene(
     running a multi-transcript search uses the whole ordered list. Either way it
     avoids re-implementing the lookup/uppercase/consortium/tag logic.
 
-    tag_priority and consortium behave as documented on :func:`resolve_gene_hgvs`.
-    prefer_consortium is a deprecated alias of consortium.
+    tag_priority and annotation_consortium behave as documented on
+    :func:`resolve_gene_hgvs`. prefer_consortium is a deprecated alias of
+    annotation_consortium.
     """
-    consortium = _consortium_arg(consortium, prefer_consortium)
+    annotation_consortium = _annotation_consortium_arg(annotation_consortium, prefer_consortium)
     tag_priority = _tag_priority_arg(tag_priority)
     fixes: list[HGVSFix] = []
 
@@ -306,19 +308,19 @@ def rank_transcripts_for_gene(
     # Consortium is a hard filter: with one set we never return a transcript
     # from the other consortium. If the chosen consortium has none (but the
     # other does), error with an actionable message rather than crossing over.
-    if consortium is not None:
-        filtered = _filter_by_consortium(tx_and_tags, consortium)
+    if annotation_consortium is not None:
+        filtered = _filter_by_consortium(tx_and_tags, annotation_consortium)
         if not filtered:
-            other = (Consortium.ENSEMBL if consortium == Consortium.REFSEQ
+            other = (Consortium.ENSEMBL if annotation_consortium == Consortium.REFSEQ
                      else Consortium.REFSEQ)
             fixes.append(HGVSFix(
                 severity=HGVSFixSeverity.ERROR,
                 code=HGVSFixCode.NO_TRANSCRIPT_FOR_GENE,
                 message=(
-                    f"No {consortium.value} transcript found for gene "
+                    f"No {annotation_consortium.value} transcript found for gene "
                     f"'{gene_symbol}' in {genome_build} ({len(tx_and_tags)} "
                     f"{other.value} transcript(s) available). Pass "
-                    f"consortium=Consortium.{other.name} or None to use them."
+                    f"annotation_consortium=Consortium.{other.name} or None to use them."
                 ),
             ))
             return [], fixes
@@ -338,7 +340,7 @@ def resolve_gene_hgvs(
     genome_build: str,
     tag_priority: Optional[list[str]] = None,
     fallback_to_longest: bool = False,
-    consortium: Optional[Consortium] = DEFAULT_CONSORTIUM,
+    annotation_consortium: Optional[Consortium] = DEFAULT_CONSORTIUM,
     prefer_consortium=_UNSET,
 ) -> tuple[str, list[HGVSFix]]:
     """
@@ -370,13 +372,13 @@ def resolve_gene_hgvs(
     provider can't give a length (eg it has no ``get_tx_identity_info``), the first
     transcript the provider returned is used and the WARNING says so.
 
-    consortium is a HARD filter on the returned transcript's consortium: with
-    Consortium.REFSEQ (the default) you never get an Ensembl transcript back, and
-    vice versa. If the chosen consortium has no transcript for the gene (but the
+    annotation_consortium is a HARD filter on the returned transcript's consortium:
+    with Consortium.REFSEQ (the default) you never get an Ensembl transcript back,
+    and vice versa. If the chosen consortium has no transcript for the gene (but the
     other does), an ERROR fix is returned rather than crossing over. Pass None to
     consider both consortiums (ranked by tag, then input order).
-    prefer_consortium is a deprecated alias of consortium (DeprecationWarning;
-    giving both is a TypeError).
+    prefer_consortium is a deprecated alias of annotation_consortium
+    (DeprecationWarning; giving both is a TypeError).
 
     Example::
 
@@ -384,7 +386,7 @@ def resolve_gene_hgvs(
         # resolved = "NM_000059.4:c.36del"
         # fixes[0].message = "Resolved gene symbol 'BRCA2' to NM_000059.4 (MANE Select)"
     """
-    consortium = _consortium_arg(consortium, prefer_consortium)
+    annotation_consortium = _annotation_consortium_arg(annotation_consortium, prefer_consortium)
     gene_symbol, allele = _parse_gene_only_hgvs(hgvs_string)
     if gene_symbol is None:
         return hgvs_string, []  # already has transcript, nothing to do
@@ -392,7 +394,7 @@ def resolve_gene_hgvs(
     ranked, fixes = rank_transcripts_for_gene(
         gene_symbol, data_provider, genome_build,
         tag_priority=tag_priority,
-        consortium=consortium,
+        annotation_consortium=annotation_consortium,
     )
     if not ranked:
         return hgvs_string, fixes  # lookup failed, fixes carries the ERROR
@@ -727,7 +729,7 @@ def fix_hgvs(
     fallback_to_longest: bool = False,
     raise_on_errors: bool = False,
     ops: Optional[set] = None,
-    consortium: Optional[Consortium] = DEFAULT_CONSORTIUM,
+    annotation_consortium: Optional[Consortium] = DEFAULT_CONSORTIUM,
     version_fallback: Optional[VersionStrategy] = None,
     on_unsafe_version: UnsafeVersionPolicy = DEFAULT_UNSAFE_VERSION_POLICY,
     prefer_consortium=_UNSET,
@@ -752,9 +754,9 @@ def fix_hgvs(
     ops selects the subset of clean_hgvs cleaning operations to apply (see
     clean_hgvs); None (default) runs them all.
 
-    consortium hard-filters the resolved transcript to RefSeq (default) or
-    Ensembl; pass None to allow both (see resolve_gene_hgvs). prefer_consortium
-    is a deprecated alias of consortium.
+    annotation_consortium hard-filters the resolved transcript to RefSeq (default)
+    or Ensembl; pass None to allow both (see resolve_gene_hgvs). prefer_consortium
+    is a deprecated alias of annotation_consortium.
 
     version_fallback (default None = off) opts in to adjacent transcript-version
     fallback: if set to a VersionStrategy and a data_provider is supplied, an
@@ -784,7 +786,7 @@ def fix_hgvs(
                                  version_fallback=VersionStrategy.UP_THEN_DOWN)
         # result = "NM_000059.4:c.36del"  (if .2 absent but .4 present)
     """
-    consortium = _consortium_arg(consortium, prefer_consortium)
+    annotation_consortium = _annotation_consortium_arg(annotation_consortium, prefer_consortium)
     result, fixes = clean_hgvs(hgvs_string, ops=ops)
 
     if data_provider is not None:
@@ -800,7 +802,7 @@ def fix_hgvs(
             result, data_provider, genome_build,
             tag_priority=tag_priority,
             fallback_to_longest=fallback_to_longest,
-            consortium=consortium,
+            annotation_consortium=annotation_consortium,
         )
         fixes.extend(resolution_fixes)
     elif data_provider is not None:
