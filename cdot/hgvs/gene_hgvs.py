@@ -1,13 +1,21 @@
 """
-Gene-symbol HGVS resolution via MANE/canonical transcript tags.
+HGVS fixes that need a data provider.
 
-resolve_gene_hgvs() handles the common case of HGVS strings that name a gene
-instead of a transcript (e.g. "BRCA2:c.36del").  It looks up the best available
-transcript from the data provider's tag data (MANE_Select > MANE_Plus_Clinical >
-RefSeq_Select > Ensembl_canonical > longest) and substitutes it.
+clean_hgvs() (cdot.hgvs.clean) works on the string alone; the fixes here look
+things up in a data provider:
+
+- resolve_gene_hgvs() handles HGVS strings that name a gene instead of a
+  transcript (e.g. "BRCA2:c.36del"), substituting the best available transcript
+  from the provider's tag data (MANE_Select > MANE_Plus_Clinical > RefSeq_Select >
+  Ensembl_canonical > longest).
+- resolve_missing_accession_prefix() restores a dropped RefSeq prefix when the
+  bare number matches exactly one transcript.
+- resolve_transcript_version() substitutes an adjacent transcript version when
+  the cited one is not held, after cdot.hgvs.version_safety has judged the
+  substitution coordinate-safe.
 
 fix_hgvs() is the single combined entry point that chains clean_hgvs() and
-resolve_gene_hgvs() in one call — the recommended function for most callers.
+these in one call, the recommended function for most callers.
 """
 
 import inspect
@@ -15,6 +23,7 @@ import re
 from enum import Enum
 from typing import Optional
 
+from cdot.hgvs import version_safety
 from cdot.hgvs.clean import (
     HGVSFix,
     HGVSFixCode,
@@ -474,7 +483,7 @@ def _cited_position(hgvs_string: str) -> Optional[str]:
     Used to make the version-substitution safety check position-aware: a 5'UTR
     (``c.-N``) or 3'UTR (``c.*N``) cited position needs the matching UTR length
     preserved, not just the CDS structure (see
-    ``is_version_substitution_safe``).
+    :func:`cdot.hgvs.version_safety.is_version_substitution_safe`).
     """
     if ":" not in hgvs_string:
         return None
@@ -527,10 +536,10 @@ def resolve_transcript_version(
     and RESTDataProvider do). Providers that can't enumerate versions raise
     NotImplementedError, which is surfaced as an ERROR fix.
 
-    Coordinate-safety (#28): if the provider implements
-    ``is_version_substitution_safe`` (JSONDataProvider / RESTDataProvider do, via the
-    build-independent intrinsic CDS structure), the substitution is checked before it
-    is applied:
+    Coordinate-safety (#28): if the provider can return transcript records
+    (``_get_transcript``, as JSONDataProvider / RESTDataProvider do), the substitution
+    is checked by :func:`cdot.hgvs.version_safety.is_version_substitution_safe_by_accession`
+    (via the build-independent intrinsic CDS structure) before it is applied:
 
       * structure-verified safe → substitute, WARNING USED_ADJACENT_VERSION_COORD_SAFE;
       * not safe and on_unsafe_version=SUBSTITUTE → substitute anyway, WARNING
@@ -582,13 +591,14 @@ def resolve_transcript_version(
         f"{versionless}.{requested_version}", f"{versionless}.{best}", 1
     )
 
-    safety = getattr(data_provider, "is_version_substitution_safe", None)
-    if safety is None:
-        # Provider can't assess coordinate-safety — keep the plain substitution fix.
+    if not hasattr(data_provider, "_get_transcript"):
+        # Provider can't supply transcript records, so coordinate-safety can't be
+        # assessed; keep the plain substitution fix.
         return resolved, [fix]
 
-    safe, reason = safety(versionless, requested_version, best, genome_build,
-                          cited_position=_cited_position(hgvs_string))
+    safe, reason = version_safety.is_version_substitution_safe_by_accession(
+        data_provider, f"{versionless}.{requested_version}", f"{versionless}.{best}",
+        genome_build, cited_position=_cited_position(hgvs_string))
     moved = (f"Transcript version {versionless}.{requested_version} not found; "
              f"using .{best} instead")
     if safe:

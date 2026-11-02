@@ -24,6 +24,7 @@ from pathlib import Path
 import pytest
 
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
+from cdot.hgvs.version_safety import is_version_substitution_safe
 
 RECORDS = Path(__file__).parent / "test_data" / "version_safety" / "clinvar_real_records.json"
 BUILD = "GRCh38"
@@ -53,9 +54,15 @@ CASES = [
 ]
 
 
+def _rec(dp, acc, version):
+    rec = dp._get_transcript(f"{acc}.{version}")
+    assert rec is not None, f"{acc}.{version} missing from the fixture"
+    return rec
+
+
 @pytest.mark.parametrize("acc, req, sub, pos, expected_safe, reason_substr", CASES)
 def test_substitution_safety_real(dp, acc, req, sub, pos, expected_safe, reason_substr):
-    safe, reason = dp.is_version_substitution_safe(acc, req, sub, BUILD, cited_position=pos)
+    safe, reason = is_version_substitution_safe(_rec(dp, acc, req), _rec(dp, acc, sub), BUILD, cited_position=pos)
     assert safe is expected_safe, f"{acc} .{req}->.{sub} c.{pos}: {reason}"
     assert reason_substr in reason
 
@@ -63,7 +70,7 @@ def test_substitution_safety_real(dp, acc, req, sub, pos, expected_safe, reason_
 def test_coding_default_position_ignores_utr_difference(dp):
     # Without a cited position (the backward-compatible default) the check gives the
     # coding guarantee: a UTR-only difference does not make a pair unsafe.
-    safe, reason = dp.is_version_substitution_safe("NM_000059", 3, 4, BUILD)
+    safe, reason = is_version_substitution_safe(_rec(dp, "NM_000059", 3), _rec(dp, "NM_000059", 4), BUILD)
     assert safe
     assert "identical CDS structure" in reason
 
@@ -75,7 +82,7 @@ def test_genomic_replacement_is_refused(dp):
     # The build-independent structure is blind to placement, but with both versions
     # present the check recomputes the genomic CDS map from the loaded annotation and
     # refuses the substitution.
-    safe, reason = dp.is_version_substitution_safe("NM_018263", 6, 4, BUILD,
+    safe, reason = is_version_substitution_safe(_rec(dp, "NM_018263", 6), _rec(dp, "NM_018263", 4), BUILD,
                                                    cited_position="141-2A>G")
     assert not safe, reason
     assert "placement" in reason
@@ -84,6 +91,6 @@ def test_genomic_replacement_is_refused(dp):
 def test_genomic_replacement_refused_even_for_plain_coding(dp):
     # The re-placement moves the whole CDS, so it is refused regardless of position
     # (no cited_position needed): a plain coding variant would move too.
-    safe, reason = dp.is_version_substitution_safe("NM_018263", 6, 4, BUILD)
+    safe, reason = is_version_substitution_safe(_rec(dp, "NM_018263", 6), _rec(dp, "NM_018263", 4), BUILD)
     assert not safe
     assert "placement" in reason

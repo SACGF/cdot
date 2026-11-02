@@ -17,7 +17,7 @@ import re
 from collections import defaultdict
 
 from cdot.hgvs.dataproviders import JSONDataProvider
-from cdot.hgvs.version_safety import cds_genomic_map
+from cdot.hgvs.version_safety import cds_genomic_map, is_version_substitution_safe
 
 RELEASE = "/data/cdot_data/refseq/cdot-0.2.33.refseq.GRCh38.json.gz"
 BUILD = "GRCh38"
@@ -59,7 +59,7 @@ for base, vs in versions.items():
         for w in vs:
             if v == w:
                 continue
-            safe, _ = p.is_version_substitution_safe(base, v, w, BUILD)
+            safe, _ = is_version_substitution_safe(txs[f"{base}.{v}"], txs[f"{base}.{w}"], BUILD)
             if not safe:
                 continue
             safe_checked += 1

@@ -1,6 +1,7 @@
 import abc
 import gzip
 import requests
+import warnings
 
 from collections import defaultdict, OrderedDict
 from lazy import lazy
@@ -14,6 +15,7 @@ from bioutils.assemblies import make_ac_name_map, make_name_ac_map
 
 from cdot import get_data_schema_int, __version__
 from cdot import models
+from cdot.hgvs import version_safety
 
 def _get_patch_assembly_name(assembly_name):
     if assembly_name == "GRCh37":
@@ -102,7 +104,8 @@ class AbstractJSONDataProvider(Interface):
             build). This is the candidate pool the version fallback substitutes among, so
             passing the target build keeps it from substituting a version that can't be
             mapped there - and lets the coordinate-safety check read the absent requested
-            version's structure from another build (see is_version_substitution_safe).
+            version's structure from another build (see
+            cdot.hgvs.version_safety.is_version_substitution_safe_by_accession).
 
             Used by cdot.hgvs.gene_hgvs.resolve_transcript_version() to substitute an
             adjacent version when the requested one isn't available. Subclasses that can
@@ -116,188 +119,24 @@ class AbstractJSONDataProvider(Interface):
                                      substitute_version: int,
                                      genome_build: str = None,
                                      cited_position: str = None) -> tuple[bool, str]:
-        """Is substituting ``substitute_version`` for ``requested_version`` coordinate-safe?
+        """Deprecated: use :func:`cdot.hgvs.version_safety.is_version_substitution_safe`
+        on the two transcript records, or
+        :func:`cdot.hgvs.version_safety.is_version_substitution_safe_by_accession` with
+        this provider and the two versioned accessions.
 
-        Returns ``(safe, reason)``.  "Safe" means the variant's position maps to the
-        *same* genomic coordinate under the substitute, so the substitution does not
-        silently change what the variant means.
-
-        Primary check (structural, near-deterministic — see
-        :mod:`cdot.hgvs.version_safety`): compare the two versions' build-independent
-        intrinsic CDS structure.  The requested version's structure is read from
-        *any* build that holds it (via :meth:`_get_transcript`), so the check still
-        decides when the requested version is absent from ``genome_build`` but present
-        in another — JSON all-builds files and the REST ``/transcript/<ac>`` view both
-        supply this.  Identical structure (plus matching CDS alignment gaps) → safe
-        for coding positions; a CDS-length or coding-exon-structure or gap change → not
-        safe.
-
-        ``cited_position`` is the text after ``c.``/``n.`` (eg ``"-49="``,
-        ``"*100A>G"``).  The intrinsic structure normalises the UTRs away, so for a
-        *non-coding* cited position it is not enough: a 5'UTR (``c.-N``) or 3'UTR
-        (``c.*N``) coordinate can still move if the relevant UTR length changes
-        between versions (very common — UTR annotations churn nearly every version),
-        so when the position is in a UTR the matching UTR length must also be equal.
-        Coding / CDS-intronic positions (and the default ``cited_position=None``) are
-        covered by the CDS-structure check alone.
-
-        Non-coding transcripts (both versions without a CDS, eg ``NR_``) are compared
-        on their whole exon structure instead: the same strand and per-exon transcript
-        lengths, matching alignment gaps, and (when both are placed in
-        ``genome_build``) the same genomic exon spans. An n. coordinate depends only on
-        those, so this is exact. A version pair where one is coding and the other is
-        not is never safe.
-
-        Fallback (only when the requested version exists in no build the provider can
-        see, so there is no structure to compare): a position-specific *genomic
-        bracket* — if the held versions immediately below and above the gap agree at
-        every coding base in ``genome_build``, the missing version is treated as safe
-        (probabilistic); otherwise not safe.  Needs ``get_tx_versions`` and a
-        ``genome_build``; without them the verdict is an honest "cannot verify".
-
-        Used by :func:`cdot.hgvs.gene_hgvs.resolve_transcript_version`; a not-safe
-        verdict is surfaced (never silently applied) per its ``on_unsafe_version``
-        policy.
+        The check only needs the two versions' records, so it lives in
+        :mod:`cdot.hgvs.version_safety`. This method delegates there and will be
+        removed in a future release.
         """
-        from cdot.hgvs.version_safety import (
-            intrinsic_cds_structure, describe_structure_change, cds_alignment_gaps,
-            cds_genomic_map, utr_lengths, utr_regions_touched, has_cds,
-            intrinsic_exon_structure, exon_alignment_gaps, exon_genomic_spans,
-        )
-
-        from cdot.hgvs._version_replacement_blocklist import KNOWN_REPLACEMENT_SUBSTITUTIONS
-        if (accession, requested_version, substitute_version) in KNOWN_REPLACEMENT_SUBSTITUTIONS:
-            # Precomputed genomic re-placement (same CDS structure, different locus).
-            # Shipped so it is caught even when the requested version is absent from the
-            # loaded data and the provider cannot recompute the placement difference.
-            return False, "known genomic re-placement (blocklisted)"
-
-        sub = self._get_transcript(f"{accession}.{substitute_version}")
-        if sub is None:
-            return False, f"substitute version .{substitute_version} not found"
-
-        req = self._get_transcript(f"{accession}.{requested_version}")
-        if req is not None:
-            req_coding, sub_coding = has_cds(req), has_cds(sub)
-            if req_coding != sub_coding:
-                coding = (f".{requested_version}" if req_coding else f".{substitute_version}")
-                return False, f"only {coding} is coding (c. and n. coordinates differ)"
-            if not req_coding:
-                # Non-coding (n.): an n. coordinate depends only on the exon lengths in
-                # transcript order, the alignment gaps and the genomic exon placement.
-                req_exons = intrinsic_exon_structure(req, genome_build)
-                sub_exons = intrinsic_exon_structure(sub, genome_build)
-                if req_exons is None or sub_exons is None:
-                    bad = requested_version if req_exons is None else substitute_version
-                    return False, f"version .{bad} has a malformed exon record; cannot verify"
-                if req_exons[0] != sub_exons[0]:
-                    return False, f"strand changed {req_exons[0]}→{sub_exons[0]}"
-                if req_exons != sub_exons:
-                    return False, "exon structure changed (n. coordinate would shift)"
-                if exon_alignment_gaps(req, genome_build) != exon_alignment_gaps(sub, genome_build):
-                    return False, "exon alignment gap differs (n. coordinate would shift)"
-                if genome_build:
-                    req_spans = exon_genomic_spans(req, genome_build)
-                    sub_spans = exon_genomic_spans(sub, genome_build)
-                    if req_spans is not None and sub_spans is not None and req_spans != sub_spans:
-                        return False, "exon genomic placement differs (coordinate would shift)"
-                return True, "identical exon structure (non-coding)"
-
-            req_struct = intrinsic_cds_structure(req, genome_build)
-            sub_struct = intrinsic_cds_structure(sub, genome_build)
-            if sub_struct is None:
-                # The substitute claims a CDS but it is unusable (malformed exons /
-                # zero-length CDS): nothing to compare against.
-                return False, (f"substitute version .{substitute_version} has no usable "
-                               "CDS structure; cannot verify")
-            if req_struct is None:
-                # The requested version is present but its CDS is unusable. Fall
-                # through to the genomic bracket rather than guess; its message says
-                # the version is present rather than absent.
-                return self._genomic_bracket_safe(accession, requested_version, genome_build,
-                                                  requested_present=True)
-            if req_struct != sub_struct:
-                return False, describe_structure_change(req_struct, sub_struct)
-            # Identical transcript structure is necessary but not sufficient: an
-            # alignment gap (a transcript-vs-genome indel) present in one version
-            # and not the other shifts every coding base downstream of it, so the
-            # CDS alignment gaps must match too (gaps are build-specific, so this
-            # is exact when both versions are placed in genome_build, conservative
-            # across builds).
-            if cds_alignment_gaps(req, genome_build) != cds_alignment_gaps(sub, genome_build):
-                return False, "CDS alignment gap differs (coding coordinate would shift)"
-            # Intrinsic structure is build-independent and so is blind to genomic
-            # *placement*: a version can re-align the same CDS to a different locus
-            # (a rare re-placement, eg NM_018263). When both versions are placed in
-            # genome_build we can see this directly by comparing their genomic CDS
-            # maps - recomputed from the loaded annotation, so no precomputed list and
-            # never stale. (Cross-build, where the requested version is absent from
-            # genome_build, this cannot be checked and falls back to the build-
-            # independent structure; the genomic-bracket fallback covers the case
-            # where it is absent from every build.)
-            req_map = cds_genomic_map(req, genome_build) if genome_build else None
-            sub_map = cds_genomic_map(sub, genome_build) if genome_build else None
-            if req_map is not None and sub_map is not None:
-                if (req_map["contig"] != sub_map["contig"]
-                        or req_map["segs"] != sub_map["segs"]):
-                    return False, "CDS genomic placement differs (coordinate would shift)"
-            # The CDS is coordinate-safe. A non-coding cited position additionally
-            # needs the relevant UTR length unchanged, since the CDS check says
-            # nothing about where a c.-N / c.*N position falls.
-            regions = utr_regions_touched(cited_position)
-            if regions:
-                req_utr = utr_lengths(req, genome_build)
-                sub_utr = utr_lengths(sub, genome_build)
-                if req_utr is not None and sub_utr is not None:
-                    if "five_prime" in regions and req_utr[0] != sub_utr[0]:
-                        return False, "5'UTR length differs (UTR coordinate would shift)"
-                    if "three_prime" in regions and req_utr[1] != sub_utr[1]:
-                        return False, "3'UTR length differs (UTR coordinate would shift)"
-            return True, "identical CDS structure"
-
-        # Requested version absent from every build the provider can see.
-        return self._genomic_bracket_safe(accession, requested_version, genome_build)
-
-    def _genomic_bracket_safe(self, accession: str, requested_version: int,
-                              genome_build: str,
-                              requested_present: bool = False) -> tuple[bool, str]:
-        """Genomic-bracket fallback when the requested version's structure is unknown.
-
-        Normally the requested version is present in no build. It is also used when
-        the requested version is present but has no usable CDS structure (a
-        malformed record), with ``requested_present=True`` so the reason says so.
-
-        Brackets the requested version with the nearest held versions below and above
-        it (that are placeable in ``genome_build``); if their genomic CDS maps agree
-        everywhere, the gap is treated as coordinate-safe (probabilistic).
-        """
-        from cdot.hgvs.version_safety import cds_genomic_map, genomic_maps_fully_agree
-
-        if requested_present:
-            what = "requested version has no usable CDS structure"
-        else:
-            what = "requested version absent from all builds"
-
-        if genome_build is None:
-            return False, f"{what}; cannot verify (no genome build for bracket fallback)"
-        try:
-            versions = self.get_tx_versions(accession)
-        except NotImplementedError:
-            return False, f"{what}; cannot verify structure"
-
-        def _map(v):
-            t = self._get_transcript(f"{accession}.{v}")
-            return cds_genomic_map(t, genome_build) if t is not None else None
-
-        below = [v for v in versions if v < requested_version]
-        above = [v for v in versions if v > requested_version]
-        lo_map = next((m for v in sorted(below, reverse=True) if (m := _map(v))), None)
-        hi_map = next((m for v in sorted(above) if (m := _map(v))), None)
-        if lo_map is None or hi_map is None:
-            return False, f"{what} and cannot bracket it in {genome_build}; coordinate unverified"
-        if genomic_maps_fully_agree(lo_map, hi_map):
-            return True, "flanking versions agree (genomic bracket; probabilistic)"
-        return False, "flanking versions disagree; coordinate may have moved"
+        warnings.warn(
+            "AbstractJSONDataProvider.is_version_substitution_safe() is deprecated; use "
+            "cdot.hgvs.version_safety.is_version_substitution_safe(transcript, substitute_transcript, ...) "
+            "on the two records, or is_version_substitution_safe_by_accession(provider, "
+            "transcript_accession, substitute_transcript_accession, ...)",
+            DeprecationWarning, stacklevel=2)
+        return version_safety.is_version_substitution_safe_by_accession(
+            self, f"{accession}.{requested_version}", f"{accession}.{substitute_version}",
+            genome_build=genome_build, cited_position=cited_position)
 
     def _get_transcript_coordinates_for_contig(self, transcript, alt_ac):
         assembly = self.assembly_by_contig.get(alt_ac)

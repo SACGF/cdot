@@ -93,7 +93,8 @@ subclasses) implements the safety check, so one of these codes is reported:
 | Not verified, `on_unsafe_version=SUBSTITUTE` | rewritten | `USED_ADJACENT_VERSION_COORD_UNVERIFIED` | WARNING |
 
 The plain `USED_ADJACENT_VERSION` WARNING only appears with a third-party provider that implements
-`get_tx_versions` but not `is_version_substitution_safe`.
+`get_tx_versions` but cannot return transcript records (no `_get_transcript`), so the safety check
+(`is_version_substitution_safe_by_accession`) has nothing to compare.
 
 Pass a `genome_build` as well as the `data_provider`. The safety check can only be verified when
 the requested version's structure is known (it is loaded in some build, eg from an all-builds JSON
