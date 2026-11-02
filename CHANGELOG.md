@@ -43,6 +43,7 @@
 - #154 - `RESTDataProvider`: only cache 404s as missing (other HTTP errors raise), use a session, 30s default timeout
 - #155 - `RESTDataProvider` supports T2T-CHM13v2.0 (new `assemblies` argument)
 - #169 - Close JSON file handles (`ResourceWarning`)
+- #219 - Data providers match biocommons' UTA provider: `get_acs_for_protein_seq` returns the `MD5_` accession (fixes `IndexError` in `c_to_p` for a transcript with no protein ID), `get_tx_identity_info` raises `HGVSDataNotAvailableError` for an unknown transcript, region queries return `[]` for a non-splign method
 - #209 - `fix_hgvs` no longer gives a `NO_TRANSCRIPT_FOR_GENE` ERROR for genomic or protein HGVS (`NC_000013.11:g.32316528del`)
 
 ## [0.2.33] - 2026-10-06

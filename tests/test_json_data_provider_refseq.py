@@ -111,6 +111,19 @@ class TestJSONDataProvider(unittest.TestCase):
             self.json_data_provider.get_tx_exons("NM_001637.3", "chr7", "splign")
 
 
+    # Behaviour matching biocommons' UTA provider
+    def test_get_tx_identity_info_unknown_transcript(self):
+        with self.assertRaisesRegex(HGVSDataNotAvailableError, "No transcript definition"):
+            self.json_data_provider.get_tx_identity_info("NM_999999.1")
+
+    def test_get_acs_for_protein_seq_md5(self):
+        self.assertEqual(self.json_data_provider.get_acs_for_protein_seq("MSLGR"),
+                         ["MD5_70cbba59219e0ee8b72cc545f0550109"])
+
+    def test_get_tx_for_region_other_aln_method(self):
+        self.assertEqual(self.json_data_provider.get_tx_for_region("NC_000007.13", "blat", 36552000, 36553000), [])
+        self.assertTrue(self.json_data_provider.get_tx_for_region("NC_000007.13", "splign", 36552000, 36553000))
+
 class VersionlessIdJSONDataProvider(JSONDataProvider):
     """ Keys transcripts by versionless accession, like a store that holds one version per
         accession (eg cdot_rest's Redis provider), so the id in hand is "NM_001637" while the
