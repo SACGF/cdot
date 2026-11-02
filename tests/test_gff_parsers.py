@@ -10,7 +10,8 @@ from generate_transcript_data.cdot_json import add_gencode_hgnc, combine_builds,
 from generate_transcript_data.annotation_consortium import RefSeq
 from generate_transcript_data.gff_parser import GTFParser, GFF3Parser
 from generate_transcript_data.transcript_builder import TranscriptBuilder
-from generate_transcript_data.transcript_coordinates import get_transcript_position
+from generate_transcript_data.transcript_coordinates import get_transcript_range_start, get_transcript_range_end, \
+    transcript_position_to_genomic
 
 
 class Test(unittest.TestCase):
@@ -516,10 +517,11 @@ class Test(unittest.TestCase):
             (2_000, 2_100, 1, 101, 200, None),
             (3_000, 3_100, 2, 231, 330, None),
         ]
-        # 50 bases into the exon that follows the hole
-        self.assertEqual(get_transcript_position(True, exons, 3_050), 280)
+        # A CDS from 10 bases into exon 1 to 50 bases into the exon that follows the hole
+        self.assertEqual(get_transcript_range_start(True, exons, 1_010, 3_050), 10)
+        self.assertEqual(get_transcript_range_end(True, exons, 1_010, 3_050), 280)
         # Exons before the hole are unaffected
-        self.assertEqual(get_transcript_position(True, exons, 2_050), 150)
+        self.assertEqual(get_transcript_range_end(True, exons, 1_010, 2_050), 150)
 
         # Same again on the minus strand (exons in stranded order, so genomic order is reversed)
         rev_exons = [
@@ -527,8 +529,9 @@ class Test(unittest.TestCase):
             (2_000, 2_100, 1, 101, 200, None),
             (1_000, 1_100, 2, 231, 330, None),
         ]
-        self.assertEqual(get_transcript_position(False, rev_exons, 1_050), 280)
-        self.assertEqual(get_transcript_position(False, rev_exons, 2_050), 150)
+        self.assertEqual(get_transcript_range_start(False, rev_exons, 1_050, 3_090), 10)
+        self.assertEqual(get_transcript_range_end(False, rev_exons, 1_050, 3_090), 280)
+        self.assertEqual(get_transcript_range_end(False, rev_exons, 2_050, 3_090), 150)
 
     def test_transcript_position_after_gap_deletion(self):
         """ A Gap 'D' is genomic bases the transcript doesn't have, so they count towards the position
@@ -537,24 +540,99 @@ class Test(unittest.TestCase):
         # transcript 1-10 = genomic 1000-1009, genomic 1010-1011 aren't in the transcript,
         # transcript 11-15 = genomic 1012-1016, transcript 16-18 aren't in the genome, 19-28 = genomic 1017-1026
         exons = [(1_000, 1_027, 0, 1, 28, "M10 D2 M5 I3 M10")]
-        self.assertEqual(get_transcript_position(True, exons, 1_012), 10)  # 1st base after the D
-        self.assertEqual(get_transcript_position(True, exons, 1_015), 13)  # before the I
-        self.assertEqual(get_transcript_position(True, exons, 1_017), 18)  # after the I
-        # Minus strand: the Gap is in transcript order, the coordinate is the base's end
-        self.assertEqual(get_transcript_position(False, exons, 1_015), 10)  # 1st base after the D
-        self.assertEqual(get_transcript_position(False, exons, 1_012), 13)  # before the I
-        self.assertEqual(get_transcript_position(False, exons, 1_010), 18)  # after the I
+
+        def base_position(forward_strand, base):
+            return get_transcript_range_start(forward_strand, exons, base, base + 1)
+
+        self.assertEqual(base_position(True, 1_012), 10)  # 1st base after the D
+        self.assertEqual(base_position(True, 1_015), 13)  # before the I
+        self.assertEqual(base_position(True, 1_017), 18)  # after the I
+        # Minus strand: the Gap is in transcript order, so transcript 1-10 = genomic 1026-1017,
+        # genomic 1016-1015 aren't in the transcript, transcript 11-15 = genomic 1014-1010, 19-28 = 1009-1000
+        self.assertEqual(base_position(False, 1_014), 10)  # 1st base after the D
+        self.assertEqual(base_position(False, 1_011), 13)  # before the I
+        self.assertEqual(base_position(False, 1_009), 18)  # after the I
 
     def test_transcript_position_end_before_gap_deletion(self):
-        """ A range (eg the stop codon) can end right before a D. Its end is then at the D's first
-            base, which is only an error for a base. Eg historical NM_014040.1 (CDS 148..504) had
-            stop_codon 503 rather than 504 """
+        """ A range (eg the stop codon) can end right before a D, so its genomic end is the D's first
+            base. The end is placed by the range's last base, which is before the D. Eg historical
+            NM_014040.1 (CDS 148..504) had stop_codon 503 rather than 504 """
         # Same exon as above: genomic 1010-1011 aren't in the transcript
         exons = [(1_000, 1_027, 0, 1, 28, "M10 D2 M5 I3 M10")]
-        self.assertEqual(get_transcript_position(True, exons, 1_010, end=True), 10)
-        self.assertEqual(get_transcript_position(False, exons, 1_017, end=True), 10)  # D is genomic 1015-1016
+        self.assertEqual(get_transcript_range_end(True, exons, 1_000, 1_010), 10)
+        self.assertEqual(get_transcript_range_end(False, exons, 1_017, 1_027), 10)  # D is genomic 1015-1016
+        # A range after the D starts at its first aligned base
+        self.assertEqual(get_transcript_range_start(True, exons, 1_012, 1_020), 10)
+        # A range whose first or last base is in the D has no transcript position for it
         with self.assertRaises(ValueError):
-            get_transcript_position(True, exons, 1_010)
+            get_transcript_range_start(True, exons, 1_010, 1_020)
+        with self.assertRaises(ValueError):
+            get_transcript_range_end(True, exons, 1_000, 1_011)
+
+    def test_transcript_range_at_gap_insertion(self):
+        """ A Gap 'I' is transcript bases the genome doesn't have. A genomic boundary against them could
+            be before or after them in the transcript; the range's base next to the boundary decides,
+            so a range ending there excludes them and a range starting there begins after them """
+        # transcript 1-10 = genomic 1000-1009, transcript 11-13 aren't in the genome, 14-23 = genomic 1010-1019
+        exons = [(1_000, 1_020, 0, 1, 23, "M10 I3 M10")]
+        self.assertEqual(get_transcript_range_end(True, exons, 1_000, 1_010), 10)
+        self.assertEqual(get_transcript_range_start(True, exons, 1_010, 1_020), 13)
+        # Minus strand: transcript 1-10 = genomic 1019-1010, 14-23 = genomic 1009-1000
+        self.assertEqual(get_transcript_range_end(False, exons, 1_010, 1_020), 10)
+        self.assertEqual(get_transcript_range_start(False, exons, 1_000, 1_010), 13)
+
+    def test_transcript_range_both_strands(self):
+        """ A genomic range is 0-based half-open in genomic order on both strands. Its transcript start is
+            the position of its first base in transcript direction, its transcript end the position after
+            its last, so on the minus strand the start comes from the range's genomic end """
+        # Two exons, stranded order, each 100 bases
+        plus_exons = [(1_000, 1_100, 0, 1, 100, None), (2_000, 2_100, 1, 101, 200, None)]
+        minus_exons = [(2_000, 2_100, 0, 1, 100, None), (1_000, 1_100, 1, 101, 200, None)]
+
+        # The whole transcript
+        self.assertEqual(get_transcript_range_start(True, plus_exons, 1_000, 2_100), 0)
+        self.assertEqual(get_transcript_range_end(True, plus_exons, 1_000, 2_100), 200)
+        self.assertEqual(get_transcript_range_start(False, minus_exons, 1_000, 2_100), 0)
+        self.assertEqual(get_transcript_range_end(False, minus_exons, 1_000, 2_100), 200)
+
+        # A CDS from 10 bases into the first exon to 50 bases into the second, in transcript direction
+        self.assertEqual(get_transcript_range_start(True, plus_exons, 1_010, 2_050), 10)
+        self.assertEqual(get_transcript_range_end(True, plus_exons, 1_010, 2_050), 150)
+        self.assertEqual(get_transcript_range_start(False, minus_exons, 1_050, 2_090), 10)
+        self.assertEqual(get_transcript_range_end(False, minus_exons, 1_050, 2_090), 150)
+
+        # A range ending at an exon's end is in that exon, as is one starting at an exon's start
+        self.assertEqual(get_transcript_range_end(True, plus_exons, 1_050, 1_100), 100)
+        self.assertEqual(get_transcript_range_start(True, plus_exons, 2_000, 2_050), 100)
+        self.assertEqual(get_transcript_range_end(False, minus_exons, 2_000, 2_050), 100)
+        self.assertEqual(get_transcript_range_start(False, minus_exons, 1_050, 1_100), 100)
+
+        # Round trip every base through transcript_position_to_genomic and its one base range back
+        for strand, exons in (("+", plus_exons), ("-", minus_exons)):
+            for transcript_position in range(200):
+                base = transcript_position_to_genomic(strand, exons, transcript_position)
+                self.assertEqual(get_transcript_range_start(strand == "+", exons, base, base + 1),
+                                 transcript_position, f"{strand} strand position {transcript_position}")
+                self.assertEqual(get_transcript_range_end(strand == "+", exons, base, base + 1),
+                                 transcript_position + 1, f"{strand} strand position {transcript_position}")
+
+        # A base in an intron has no transcript position, in particular an exon's half-open end
+        for base in (999, 1_100, 1_999, 2_100):
+            for forward_strand, exons in ((True, plus_exons), (False, minus_exons)):
+                with self.assertRaises(ValueError):
+                    get_transcript_range_start(forward_strand, exons, base, base + 1)
+                with self.assertRaises(ValueError):
+                    get_transcript_range_end(forward_strand, exons, base, base + 1)
+
+    def test_transcript_range_abutting_exons(self):
+        """ At a junction of abutting exons, a range ending there is in the first exon and a range starting
+            there is in the next. The two differ when the transcript coordinates have a hole at the junction """
+        plus_exons = [(1_000, 1_100, 0, 1, 100, None), (1_100, 1_200, 1, 131, 230, None)]
+        self.assertEqual(get_transcript_range_end(True, plus_exons, 1_050, 1_100), 100)
+        self.assertEqual(get_transcript_range_start(True, plus_exons, 1_100, 1_150), 130)
+        minus_exons = [(1_100, 1_200, 0, 1, 100, None), (1_000, 1_100, 1, 131, 230, None)]
+        self.assertEqual(get_transcript_range_end(False, minus_exons, 1_100, 1_150), 100)
+        self.assertEqual(get_transcript_range_start(False, minus_exons, 1_050, 1_100), 130)
 
     def test_codon_positions_across_coordinate_hole(self):
         """ End to end version of the above: the codon positions the parser writes out must be in
