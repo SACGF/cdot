@@ -132,7 +132,11 @@ cleaned, fixes = clean_hgvs(messy, ops={HGVSCleanOp.STRIP_WHITESPACE})
 cleaned, fixes = clean_hgvs(messy, ops=ALL_CLEAN_OPS - {HGVSCleanOp.STRIP_PROTEIN_SUFFIX})
 ```
 
-Ops always run in the canonical pipeline order regardless of set order. Pass `validate=False` to skip
+Ops always run in the canonical pipeline order regardless of set order. Some ops rely on the output
+of an earlier one, eg `LOWERCASE_MUTATION_TYPE` only looks after the colon, which
+`RECONSTRUCT_STRUCTURE` inserts when it is missing. Selecting an op without the ops it relies on still
+runs it, but warns with `HGVSCleanOpWarning`, as some inputs it would otherwise fix are left alone.
+Silence it with the standard `warnings` filters if that is what you want. Pass `validate=False` to skip
 the ERROR-level validation pass when you only want normalisation.
 
 ## Read-ahead batch retrieval
