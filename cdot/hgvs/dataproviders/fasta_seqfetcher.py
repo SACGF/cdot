@@ -128,10 +128,10 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
         """ As AbstractTranscriptSeqFetcher.fetch_seq, but a request that includes an unknown base (N,
             either not in the genome alignment or N in the genome) raises GenomeMismatchError: a
             slice is what biocommons reads to normalize or validate a variant, and an N there would
-            silently shift an indel. Fetching the whole transcript (as c_to_p does) only warns with
-            the 'warn' policy. The 'off' policy skips this. """
+            silently shift an indel. Fetching the whole transcript (as c_to_p does) warns instead.
+            This doesn't depend on the genome_mismatch policy. """
         seq = super().fetch_seq(ac, start_i, end_i)
-        if self.genome_mismatch_policy == GenomeMismatchPolicy.OFF or "N" not in seq:
+        if "N" not in seq:
             return seq
         start = start_i or 0
         positions = ", ".join(f"n.{start + s + 1}" if e - s == 1 else f"n.{start + s + 1}_{start + e}"
@@ -139,8 +139,7 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
         msg = (f"{ac} {positions}: FastaSeqFetcher doesn't know these bases (N), as they aren't in the "
                f"genome alignment or are N in the genome. Chain a transcript sequence source such as "
                f"SeqRepo with ChainedSeqFetcher to get them.")
-        whole_transcript = start_i is None and end_i is None
-        if not (whole_transcript and self.genome_mismatch_policy == GenomeMismatchPolicy.WARN):
+        if start_i is not None or end_i is not None:
             raise GenomeMismatchError(msg)
         if ac not in self._warned_padding:
             self._warned_padding.add(ac)

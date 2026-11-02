@@ -230,15 +230,14 @@ def test_whole_transcript_with_padding_warns(padded_files):
     assert len(record) == 1
 
 
-def test_padding_policies(padded_files):
+@pytest.mark.parametrize("genome_mismatch", ["off", "raise"])
+def test_padding_ignores_genome_mismatch_policy(padded_files, genome_mismatch):
     fasta_filename, json_filename = padded_files
-    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename, genome_mismatch="raise"))
+    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename, genome_mismatch=genome_mismatch))
     with pytest.raises(GenomeMismatchError):
+        hdp.seqfetcher.fetch_seq("NM_000001.1", 0, 20)
+    with pytest.warns(GenomeMismatchWarning, match="NM_000001.1 n.11_12"):
         hdp.seqfetcher.fetch_seq("NM_000001.1")
-    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename, genome_mismatch="off"))
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        assert hdp.seqfetcher.fetch_seq("NM_000001.1", 0, 20) == "CGTCGAAAAANNCGTCGTCG"
 
 
 def test_padding_falls_through_chained_seqfetcher(padded_files):
@@ -254,9 +253,6 @@ def test_indel_normalized_into_padding_raises(padded_files):
     fasta_filename, json_filename = padded_files
     parser = hgvs.parser.Parser()
     var_g = parser.parse("NC_000011.9:g.18del")
-
-    am_off = _assembly_mapper(_hdp(json_filename, FastaSeqFetcher(fasta_filename, genome_mismatch="off")))
-    assert str(am_off.g_to_c(var_g, "NM_000001.1")) == "NM_000001.1:c.10del"
 
     am = _assembly_mapper(_hdp(json_filename, FastaSeqFetcher(fasta_filename)))
     with pytest.raises(GenomeMismatchError):
