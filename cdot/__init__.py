@@ -13,7 +13,7 @@
     a client can read data whose schema (major.minor) is not newer than its own, see
     :func:`get_data_schema_int`.
 """
-__version__ = "0.2.34"
+__version__ = "0.2.35"
 # Data version is kept in generate_transcript_data/json_schema_version.py
 
 def get_data_schema_int(version: str) -> int:
