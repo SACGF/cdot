@@ -1031,7 +1031,7 @@ def test_resolve_versionless_disagree_refuses_by_default():
     assert resolved == "NM_000059:c.36del"  # unchanged
     assert [(f.severity, f.code) for f in fixes] == [(E, C.REFUSED_UNSAFE_VERSION)]
     message = fixes[0].message
-    assert "1 of the 2 other versions held in GRCh38 differ from .4" in message
+    assert "1 of the 2 other versions held in GRCh38 differs from .4" in message
     assert ".2 (" in message and ".3 (" not in message
     assert "—" not in message
 
