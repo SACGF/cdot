@@ -9,9 +9,10 @@ from argparse import ArgumentParser
 from datetime import datetime
 
 from Bio import Entrez
+from more_itertools import chunked
+
 from generate_transcript_data.json_encoders import SortedSetEncoder
 from generate_transcript_data.json_schema_version import JSON_SCHEMA_VERSION
-from generate_transcript_data.utils import batch_iterator
 
 
 def handle_args():
@@ -64,7 +65,7 @@ def main():
     with gzip.open(args.gene_info, "rt") as f:
         reader = csv.DictReader(f, dialect='excel-tab')
 
-        for entrez_ids in batch_iterator(iter_entrez_ids(reader), batch_size=NCBI_BATCH_SIZE):
+        for entrez_ids in chunked(iter_entrez_ids(reader), NCBI_BATCH_SIZE):
             # We should really store it under the gene Id so dupe symbols don't wipe
             for gene_summary in _get_entrez_gene_summary(entrez_ids):
                 gene_id = gene_summary.attributes["uid"]

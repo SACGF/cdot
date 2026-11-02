@@ -34,8 +34,7 @@ import logging
 from argparse import ArgumentParser
 
 import requests
-
-from generate_transcript_data.utils import batch_iterator
+from more_itertools import chunked
 
 ENSEMBL_BATCH_SIZE = 100  # Gene IDs per REST request
 
@@ -82,7 +81,7 @@ if __name__ == '__main__':
         writer = csv.writer(f)
         writer.writerow(["gene_id", "canonical_transcript"])
 
-        for gene_list in batch_iterator(genes, batch_size=ENSEMBL_BATCH_SIZE):
+        for gene_list in chunked(genes, ENSEMBL_BATCH_SIZE):
             num_gene_requests += len(gene_list)
             canonical_map = fetch_canonical_transcripts(gene_list)
             for gene_id, transcript_id in canonical_map.items():
