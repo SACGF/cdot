@@ -12,6 +12,7 @@ retain full control over HGVS compatibility.
 """
 
 import re
+import unicodedata
 import warnings
 from dataclasses import dataclass, replace
 from enum import Enum
@@ -369,10 +370,29 @@ _MISSING_REFERENCE = re.compile(rf"^(?:[:.]|{_KIND}(?:[.:]|{_COORD_START}))")
 _PREFIX_COLON_UNDERSCORE = re.compile(
     rf"^({'|'.join(_TWO_LETTER_PREFIXES)}):_", re.IGNORECASE)
 
-# Leading junk before an accession, e.g. "#", ":", "-", "*", a bullet, a literal
-# "\t", whitespace (": NM_..."), or a genome-build prefix like "GRCh38.p2 " /
-# "GRCh37.p12#". Only stripped when an accession actually follows.
-_LEADING_JUNK = re.compile(r"^(?:GRCh\d+(?:\.p\d+)?[#\s]*|\\t|[#:\-*\u2022\u00b7\s])+", re.IGNORECASE)
+# Leading junk before an accession: a literal "\t", whitespace, or a genome-build
+# prefix like "GRCh38.p2 " / "GRCh37.p12#". Stray punctuation and symbols ("#",
+# ":", "-", a bullet...) are stripped by _is_stray_mark. Only stripped when an
+# accession actually follows.
+_LEADING_JUNK = re.compile(r"GRCh\d+(?:\.p\d+)?[#\s]*|\\t|\s", re.IGNORECASE)
+
+# Characters that may end a valid HGVS string (eg "c.(?_-1)", "p.(=)", "c.*") or
+# be part of a truncated one, so are never stripped as a stray trailing mark
+_HGVS_END_CHARS = frozenset(")]=?*>+-_")
+
+
+def _is_stray_mark(c: str) -> bool:
+    """ Punctuation or a symbol (Unicode category P* or S*), eg a bullet, dagger,
+        backslash or full stop, as left by copy/paste around an HGVS string """
+    return unicodedata.category(c)[0] in "PS"
+
+
+def _rstrip_stray_marks(s: str) -> str:
+    """ Strip stray marks from the end, keeping any of _HGVS_END_CHARS """
+    end = len(s)
+    while end and s[end - 1] not in _HGVS_END_CHARS and _is_stray_mark(s[end - 1]):
+        end -= 1
+    return s[:end]
 
 # Gene symbol wedged between extra colons, e.g. "tx:(GENE):c." / "tx:(GENE)c." /
 # "tx:GENE:c." — should be "tx(GENE):c."
@@ -710,13 +730,13 @@ def _op_strip_whitespace(s: str) -> tuple[str, list[HGVSFix]]:
 
 
 def _op_strip_surrounding_punctuation(s: str) -> tuple[str, list[HGVSFix]]:
-    # Strip stray wrapping quotes/backticks and trailing separators left by
-    # copy/paste or search boxes, e.g. "NM_000059.4:c.123A>G'" or
+    # Strip stray wrapping quotes/backticks and trailing punctuation or symbols
+    # left by copy/paste or search boxes, e.g. "NM_000059.4:c.123A>G'",
     # "NM_000059.4:c.123A>G;", "NM_000059.4:c.123A>G." or a footnote mark
     # ("NM_000059.4:c.123A>G†"). No valid HGVS string starts/ends with these.
     # Surrounding whitespace on its own is left for the whitespace step to strip
     # and report (this op runs first).
-    s2 = s.strip().strip("'\"`").rstrip("/;,.\\\u2020\u2021").strip()
+    s2 = _rstrip_stray_marks(s.strip().strip("'\"`")).strip()
     if s2 != s.strip():
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
@@ -805,13 +825,10 @@ def _op_fix_multiple_kind(s: str) -> tuple[str, list[HGVSFix]]:
     return s, fixes
 
 
-_UNICODE_DASHES = re.compile("[\u2010-\u2015\u2212]")
-
-
 def _op_replace_unicode_dash(s: str) -> tuple[str, list[HGVSFix]]:
-    # A typographic dash (hyphen, en/em dash, minus sign) from a word processor in
-    # place of "-", eg "c.67\u20102A>G" -> "c.67-2A>G"
-    s2 = _UNICODE_DASHES.sub("-", s)
+    # A typographic dash (Unicode dash punctuation, eg a hyphen or en dash, or the
+    # minus sign) from a word processor in place of "-", eg "c.67–2A>G" -> "c.67-2A>G"
+    s2 = "".join("-" if c == "\u2212" or unicodedata.category(c) == "Pd" else c for c in s)
     if s2 != s:
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
@@ -945,9 +962,17 @@ def _op_uppercase_bases(s: str) -> tuple[str, list[HGVSFix]]:
 
 def _op_strip_leading_junk(s: str) -> tuple[str, list[HGVSFix]]:
     # Strip junk before the transcript accession, e.g. "#NM_...", ":NM_...",
-    # "GRCh38.p2 NM_...". Only fires when a transcript prefix actually follows,
-    # so a leading gene symbol (e.g. "BRCA1(NM_...)") is never touched.
-    s2 = _LEADING_JUNK.sub("", s)
+    # "• NM_...", "GRCh38.p2 NM_...". Only fires when a transcript prefix actually
+    # follows, so a leading gene symbol (e.g. "BRCA1(NM_...)") is never touched.
+    i = 0
+    while i < len(s):
+        if m := _LEADING_JUNK.match(s, i):
+            i = m.end()
+        elif s[i] not in "([" and _is_stray_mark(s[i]):
+            i += 1
+        else:
+            break
+    s2 = s[i:]
     if s2 != s and re.match(_ANY_ACCESSION_PREFIX, s2, re.IGNORECASE):
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,

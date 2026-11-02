@@ -249,7 +249,7 @@ CLEAN_CASES = [
     # #225: bracket typed for the accession underscore
     ("NM)000059.4:c.68del",                      "NM_000059.4:c.68del",                        {C.ADDED_TRANSCRIPT_UNDERSCORE}),
     # #225: trailing stray "(" opens nothing
-    ("NM_000059.4:c.68del (",                    "NM_000059.4:c.68del",                        {C.STRIPPED_UNBALANCED_BRACKETS}),
+    ("NM_000059.4:c.68del (",                    "NM_000059.4:c.68del",                        {C.STRIPPED_SURROUNDING_PUNCTUATION}),
     # #227: gene symbol before the accession separated by ':' or '.'
     ("BRCA2:NM_000059.4:c.68del",                "NM_000059.4(BRCA2):c.68del",                 {C.WRAPPED_GENE_SYMBOL}),
     ("BRCA2.NM_000059.4:c.68del",                "NM_000059.4(BRCA2):c.68del",                 {C.WRAPPED_GENE_SYMBOL}),

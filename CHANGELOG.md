@@ -2,7 +2,7 @@
 
 ### Added
 
-- #227 - HGVS cleaning: gene symbol before the accession with `:`/`.` (`BRCA2:NM_000059.4:c.68del`), `.`/`:` for the prefix underscore (`NM.000059.4`), typographic dashes, kind repeated in a range (`c.67+3_c.67+6del`), gene repeated after its parens, stray bullets, trailing `.`/`†`/`\`
+- #227 - HGVS cleaning: gene symbol before the accession with `:`/`.` (`BRCA2:NM_000059.4:c.68del`), `.`/`:` for the prefix underscore (`NM.000059.4`), typographic dashes, kind repeated in a range (`c.67+3_c.67+6del`), gene repeated after its parens, any stray leading/trailing punctuation or symbol (`•`, `†`, `.`, `:`...)
 
 ### Fixed
 
