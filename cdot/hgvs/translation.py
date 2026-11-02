@@ -20,17 +20,12 @@ Problems are returned as HGVSFix, as with fix_hgvs().
 """
 
 import copy
-from typing import Optional, TYPE_CHECKING
 
 from bioutils.sequences import TranslationTable, aa1_to_aa3, aa3_to_aa1, translate_cds
 from hgvs.edit import AAExt, AAFs, AASub
 from hgvs.exceptions import HGVSUnsupportedOperationError
 
 from cdot.hgvs.clean import HGVSFix, HGVSFixCode, HGVSFixSeverity
-
-if TYPE_CHECKING:
-    # Only for annotations: hgvs's own import order breaks if this is imported at load time
-    from hgvs.sequencevariant import SequenceVariant
 
 # NCBI genetic code number -> (biocommons translation table, name)
 _TRANSLATION_TABLES = {
@@ -43,8 +38,7 @@ _EXCEPTION_RIBOSOMAL_SLIPPAGE = "ribosomal slippage"
 _START_CODON_EXCEPTIONS = {"alternative start codon", "translation initiation by tRNA-Leu at CUG codon"}
 
 
-def fix_c_to_p(variant_mapper, var_c: "SequenceVariant", raise_on_errors: bool = False,
-               **kwargs) -> tuple["SequenceVariant", list[HGVSFix]]:
+def fix_c_to_p(variant_mapper, var_c, raise_on_errors: bool = False, **kwargs) -> tuple:
     """
     Convert a c. SequenceVariant to p. with a biocommons VariantMapper or AssemblyMapper,
     using cdot's translation data (from the mapper's data provider) to choose the genetic code,
