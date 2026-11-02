@@ -1379,3 +1379,33 @@ def test_kind_reference_mismatch(hgvs_string, message):
 def test_kind_reference_match(hgvs_string):
     _cleaned, fixes = clean_hgvs(hgvs_string)
     assert C.KIND_REFERENCE_MISMATCH not in codes(fixes)
+
+
+@pytest.mark.parametrize("hgvs_string", ["BRCA2:g.32316528del", "brca2:g.32316528del", "MT-ND1:m.3460G>A"])
+def test_gene_symbol_with_genomic_kind(hgvs_string):
+    gene, kind = hgvs_string.split(":")[0], hgvs_string.split(":")[1][0]
+    _cleaned, fixes = clean_hgvs(hgvs_string)
+    assert [(f.severity, f.code, f.message) for f in fixes] == [(
+        E, C.KIND_REFERENCE_MISMATCH,
+        f"{gene} looks like a gene symbol, so it can't take '{kind}.': {kind}. positions are on a "
+        f"genomic accession (eg NC_000013.11)")]
+
+
+@pytest.mark.parametrize("hgvs_string", ["chr13:g.32316528del", "13:g.32316528del", "X:g.100del", "chrM:m.3460G>A",
+                                         "MT:m.3460G>A"])
+def test_chromosome_name_with_genomic_kind_not_a_gene_symbol(hgvs_string):
+    _cleaned, fixes = clean_hgvs(hgvs_string)
+    assert C.KIND_REFERENCE_MISMATCH not in codes(fixes)
+
+
+@pytest.mark.parametrize("hgvs_string, message", [
+    ("chr13:c.68del", "chr13 is a chromosome name, so it can't take 'c.': c. positions are on a transcript "
+                      "accession (eg NM_000059.4)"),
+    ("13:n.68del", "13 is a chromosome name, so it can't take 'n.': n. positions are on a transcript "
+                   "accession (eg NM_000059.4)"),
+    ("X:p.Arg10Gly", "X is a chromosome name, so it can't take 'p.': p. positions are on a protein "
+                     "accession (eg NP_000050.3)"),
+])
+def test_chromosome_name_with_transcript_kind(hgvs_string, message):
+    _cleaned, fixes = clean_hgvs(hgvs_string)
+    assert [(f.severity, f.code, f.message) for f in fixes] == [(E, C.KIND_REFERENCE_MISMATCH, message)]

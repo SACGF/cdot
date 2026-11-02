@@ -92,6 +92,7 @@ def test_parse_gene_only_hgvs_already_has_transcript():
 @pytest.mark.parametrize("hgvs_string", [
     "NC_000013.11:g.32316528del", "NG_012337.3:g.5000A>G", "NC_012920.1:m.3243A>G",
     "NP_000050.2:p.Arg1Gly", "NC_000013.11:c.100del", "BRCA2:g.100del",
+    "chr13:c.100del", "13:c.100del", "X:p.Arg1Gly",
 ])
 def test_parse_gene_only_hgvs_not_gene_only(hgvs_string):
     assert _parse_gene_only_hgvs(hgvs_string) == (None, None)
@@ -113,6 +114,11 @@ def test_parse_gene_only_hgvs_no_colon():
     gene, allele = _parse_gene_only_hgvs("c.36del")
     assert gene is None
     assert allele is None
+
+
+@pytest.mark.parametrize("gene", ["HLA-A", "7SK", "Y_RNA", "AC004556.1"])
+def test_parse_gene_only_hgvs_ensembl_gene_names(gene):
+    assert _parse_gene_only_hgvs(f"{gene}:c.10del") == (gene, "c.10del")
 
 
 def test_parse_gene_only_hgvs_ensembl_transcript():
@@ -1625,3 +1631,40 @@ def test_fix_hgvs_c_on_non_coding_ensembl_transcript():
 
 def test_fix_hgvs_kind_fits_coding_transcript(ensembl_provider):
     assert fix_hgvs("ENST00000617537.5:c.100del", ensembl_provider, "GRCh38") == ("ENST00000617537.5:c.100del", [])
+
+
+
+# ---------------------------------------------------------------------------
+# Gene symbol with p. or r.
+# ---------------------------------------------------------------------------
+
+def test_resolve_gene_protein_uses_transcript_protein(ensembl_provider):
+    resolved, fixes = resolve_gene_hgvs("AOAH:p.(Arg10Gly)", ensembl_provider, "GRCh38",
+                                        annotation_consortium=Consortium.ENSEMBL)
+    assert resolved == "ENSP00000483783.1:p.(Arg10Gly)"
+    assert [(f.severity, f.code, f.fixed) for f in fixes] == [
+        (W, C.RESOLVED_GENE_TO_PROTEIN, "ENSP00000483783.1")]
+    assert "the protein of ENST00000617537.5" in fixes[0].message
+
+
+def test_resolve_gene_protein_no_protein_errors():
+    class _NoProtein(_StubProvider):
+        def get_pro_ac_for_tx_ac(self, tx_ac):
+            return None
+    dp = _NoProtein({"RUNX1": [("NR_038196.1", ["MANE Select"])]})
+    resolved, fixes = resolve_gene_hgvs("RUNX1:p.Arg10Gly", dp, "GRCh38")
+    assert resolved == "RUNX1:p.Arg10Gly"
+    assert [(f.severity, f.code) for f in fixes] == [(E, C.NO_TRANSCRIPT_FOR_GENE)]
+    assert "has no protein" in fixes[0].message
+
+
+def test_resolve_gene_rna(ensembl_provider):
+    resolved, fixes = resolve_gene_hgvs("AOAH:r.100del", ensembl_provider, "GRCh38",
+                                        annotation_consortium=Consortium.ENSEMBL)
+    assert resolved == "ENST00000617537.5:r.100del"
+    assert [f.code for f in fixes] == [C.RESOLVED_GENE_TO_TRANSCRIPT]
+
+
+def test_resolve_gene_genomic_kind_not_resolved(ensembl_provider):
+    # g. needs a genomic accession: clean_hgvs reports it, gene resolution leaves it alone
+    assert resolve_gene_hgvs("AOAH:g.100del", ensembl_provider, "GRCh38") == ("AOAH:g.100del", [])
