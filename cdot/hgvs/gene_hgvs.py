@@ -34,6 +34,7 @@ from cdot.hgvs.clean import (
     HGVSFixSeverity,
     HGVSInputError,
     VersionStrategy,
+    _looks_like_hgvs_prefix,
     _looks_like_transcript,
     _refseq_prefixes,
     clean_hgvs,
@@ -115,8 +116,9 @@ def _parse_gene_only_hgvs(hgvs_string: str) -> tuple[Optional[str], Optional[str
     Return (gene_symbol, allele) if hgvs_string is gene-only HGVS (no transcript),
     or (None, None) if it already contains a transcript accession.
 
-    Gene-only HGVS: the part before ':' does not look like a transcript accession
-    and contains no parentheses (e.g. "BRCA2:c.36del").
+    Gene-only HGVS: a c. or n. allele, and the part before ':' is not an accession
+    and contains no parentheses (e.g. "BRCA2:c.36del"). Genomic and protein HGVS
+    ("NC_000013.11:g.32316528del") are not gene-only.
     """
     if ":" not in hgvs_string:
         return None, None
@@ -124,10 +126,12 @@ def _parse_gene_only_hgvs(hgvs_string: str) -> tuple[Optional[str], Optional[str
     # Parentheses mean a transcript(gene) pair — already has a transcript
     if "(" in prefix or ")" in prefix:
         return None, None
-    # _looks_like_transcript is case-sensitive; uppercase so a lowercase accession
-    # (e.g. "enst00000617537.5" / "nm_000059.4") is recognised as a transcript and
-    # passed through unchanged rather than being treated as a gene symbol.
-    if _looks_like_transcript(prefix.upper()):
+    if not allele.startswith(("c.", "n.")):
+        return None, None
+    # _looks_like_hgvs_prefix is case-sensitive; uppercase so a lowercase accession
+    # (e.g. "enst00000617537.5" / "nm_000059.4") is recognised and passed through
+    # unchanged rather than being treated as a gene symbol.
+    if _looks_like_hgvs_prefix(prefix.upper()):
         return None, None
     return prefix, allele
 
