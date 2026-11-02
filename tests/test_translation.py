@@ -15,7 +15,7 @@ from hgvs.assemblymapper import AssemblyMapper
 from hgvs.exceptions import HGVSUnsupportedOperationError
 
 from cdot.hgvs.clean import HGVSFixCode, HGVSFixSeverity
-from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider
+from cdot.hgvs.dataproviders.json_data_provider import AbstractJSONDataProvider, JSONDataProvider
 from cdot.hgvs.translation import _build_warning_fixes, _exception_fixes, fix_c_to_p
 from tests.mock_seqfetcher import MockSeqFetcher
 
@@ -77,9 +77,9 @@ class TestSelenoprotein:
 
     def test_explicit_translation_table_is_used(self, am_grch38):
         """ Forcing the standard code reads Sec as a stop, which the codon check catches """
-        var_p, fixes = fix_c_to_p(am_grch38, hp.parse("NM_002085.5:c.100G>A"),
-                              translation_table=TranslationTable.standard)
-        assert var_p is None
+        var_c = hp.parse("NM_002085.5:c.100G>A")
+        var_p, fixes = fix_c_to_p(am_grch38, var_c, translation_table=TranslationTable.standard)
+        assert var_p is var_c  # the input, unchanged, as fix_hgvs does on an error
         assert _codes(fixes) == [(E, C.REFERENCE_CODON_MISMATCH)]
         assert "SeqRepo" not in fixes[0].message
 
@@ -92,8 +92,9 @@ def test_mitochondrial(am_grch38):
 
 class TestRibosomalSlippage:
     def test_error(self, am_grch38):
-        var_p, fixes = fix_c_to_p(am_grch38, hp.parse("NM_015068.3:c.100G>A"))
-        assert var_p is None
+        var_c = hp.parse("NM_015068.3:c.100G>A")
+        var_p, fixes = fix_c_to_p(am_grch38, var_c)
+        assert var_p is var_c
         assert _codes(fixes) == [(E, C.RIBOSOMAL_SLIPPAGE_UNSUPPORTED)]
 
     def test_raise_on_errors(self, am_grch38):
@@ -104,8 +105,9 @@ class TestRibosomalSlippage:
 class TestGenomeMismatch:
     def test_genome_stop_codon_is_error(self, am_grch37):
         """ GRCh37 has the ACTN3 R577X stop allele, so the genome derived sequence has a premature stop """
-        var_p, fixes = fix_c_to_p(am_grch37, hp.parse("NM_001104.4:c.100G>A"))
-        assert var_p is None
+        var_c = hp.parse("NM_001104.4:c.100G>A")
+        var_p, fixes = fix_c_to_p(am_grch37, var_c)
+        assert var_p is var_c
         assert _codes(fixes) == [(E, C.REFERENCE_CODON_MISMATCH)]
         assert "codon 577" in fixes[0].message
         assert "SeqRepo" in fixes[0].message
@@ -126,6 +128,34 @@ class TestGenomeMismatch:
         am = _assembly_mapper("GRCh37", seqfetcher=MockSeqFetcher(str(refseq_sequences)))
         var_p, fixes = fix_c_to_p(am, hp.parse("NM_001104.4:c.100G>A"))
         assert str(var_p) == "NP_001095.2:p.(Asp34Asn)"
+        assert fixes == []
+
+
+class TestTranscriptRecordAccess:
+    def test_provider_get_transcript(self, am_grch38):
+        """ The public accessor fix_c_to_p reads the record through """
+        record = am_grch38.hdp.get_transcript("NM_002085.5")
+        assert record["id"] == "NM_002085.5"
+        assert record["translation"]["transl_except"] == {"Sec": [73]}
+        assert am_grch38.hdp.get_transcript("NM_999999.9") is None
+
+    def test_fix_c_to_p_uses_public_accessor(self, am_grch38, monkeypatch):
+        calls = []
+        real_get_transcript = AbstractJSONDataProvider.get_transcript
+
+        def recording_get_transcript(self, tx_ac):
+            calls.append(tx_ac)
+            return real_get_transcript(self, tx_ac)
+
+        monkeypatch.setattr(AbstractJSONDataProvider, "get_transcript", recording_get_transcript)
+        fix_c_to_p(am_grch38, hp.parse("NM_002085.5:c.100G>A"))
+        assert calls == ["NM_002085.5"]
+
+    def test_provider_without_accessor_converts_as_biocommons(self, am_grch38, monkeypatch):
+        """ A data provider that isn't cdot's has no get_transcript, so there is no translation data """
+        monkeypatch.delattr(AbstractJSONDataProvider, "get_transcript")
+        var_p, fixes = fix_c_to_p(am_grch38, hp.parse("NM_002085.5:c.100G>A"))
+        assert str(var_p) == "NP_002076.2:p.?"
         assert fixes == []
 
 

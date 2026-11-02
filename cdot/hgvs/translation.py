@@ -49,11 +49,14 @@ def fix_c_to_p(variant_mapper, var_c, raise_on_errors: bool = False, **kwargs) -
 
     Returns:
         (var_p, fixes)
-        var_p is None if there was an ERROR-level fix, as the p. would be wrong.
-        With raise_on_errors=True, raises HGVSUnsupportedOperationError on the first ERROR instead.
+        If there was an ERROR-level fix the p. would be wrong, so no conversion is done and
+        var_c is returned unchanged as the first element (as fix_hgvs returns its input string),
+        with the ERROR in fixes. With raise_on_errors=True, raises
+        HGVSUnsupportedOperationError on the first ERROR instead.
 
-    Transcripts without translation data (eg data older than schema 0.2.35, or a data
-    provider that isn't cdot's) are converted as biocommons does, with no fixes.
+    The transcript record comes from the data provider's ``get_transcript`` (cdot's providers).
+    Transcripts without translation data (eg data older than schema 0.2.35, or a data provider
+    that isn't cdot's) are converted as biocommons does, with no fixes.
 
     Example::
 
@@ -62,7 +65,7 @@ def fix_c_to_p(variant_mapper, var_c, raise_on_errors: bool = False, **kwargs) -
         # fixes = [HGVSFix(WARNING, USED_TRANSLATION_TABLE, ...)]
     """
     transcript = None
-    if get_transcript := getattr(variant_mapper.hdp, "_get_transcript", None):
+    if get_transcript := getattr(variant_mapper.hdp, "get_transcript", None):
         transcript = get_transcript(var_c.ac)
 
     fixes = []
@@ -83,7 +86,7 @@ def fix_c_to_p(variant_mapper, var_c, raise_on_errors: bool = False, **kwargs) -
     if errors := _errors(fixes):
         if raise_on_errors:
             raise HGVSUnsupportedOperationError(errors[0].message)
-        return None, fixes
+        return var_c, fixes
 
     if translation_table is not None:
         kwargs["translation_table"] = translation_table

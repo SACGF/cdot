@@ -5,6 +5,16 @@
 - #148 - HGVS cleaning: a gene symbol written before the transcript accession, separated by whitespace, is moved into the standard `ACCESSION(SYMBOL)` form (`APC NM_001407446.1:c.-40G>A` → `NM_001407446.1(APC):c.-40G>A`). Previously whitespace stripping glued them together (`APCNM_001407446.1:c.-40G>A`). New op `HGVSCleanOp.FIX_SYMBOL_BEFORE_ACCESSION`, reported as a WARNING with the new fix code `WRAPPED_GENE_SYMBOL`
 - #148 - HGVS cleaning: a chromosome name before its own chromosomal accession is dropped (`chr13 NC_000013.11:g.32316528del` → `NC_000013.11:g.32316528del`), for GRCh37, GRCh38 and T2T-CHM13v2.0 accessions. Only exact `chr1`-`chr22`/`chrX`/`chrY`/`chrM`/`chrMT` names are recognised (gene symbols such as `CHRNA7` are not affected), and the name is only dropped when it matches the accession's chromosome, so `chr7 NC_000013.11:…` is left alone. New op `HGVSCleanOp.STRIP_CONTIG_NAME`, reported as a WARNING with the new fix code `STRIPPED_CONTIG_NAME`
 - #145 - `models.Transcript.fake`: `True` for the RefSeq mitochondrial fake transcripts (data schema >= 0.2.37), `None` for real ones
+- #171 - `get_transcript(tx_ac)` on the biocommons HGVS data providers (`JSONDataProvider`, `RESTDataProvider`): the public way to read cdot's transcript record for a versioned accession (`None` if not held). `fix_c_to_p` now reads the record through it instead of the provider's private `_get_transcript`, so a custom provider only needs to implement `get_transcript` to give `fix_c_to_p` its translation data
+
+### Changed
+
+- #171 - `resolve_gene_hgvs`, `rank_transcripts_for_gene` and `fix_hgvs`: the consortium argument is now `annotation_consortium`, the name the data pipeline and REST API already use (the old name `prefer_consortium` said preference but it has always been a hard filter, and still is). Same position in the signature and same values (`Consortium.REFSEQ` default, `ENSEMBL`, or `None` for either), so positional callers are unaffected; the "no transcript in this consortium" ERROR message now says to pass `annotation_consortium=...`
+- #171 - `fallback_to_longest` now compares the candidates' lengths explicitly (spliced transcript length, the sum of the exon lengths from the provider's `get_tx_identity_info`) instead of trusting the data provider to return transcripts longest-first. With cdot's providers the result is the same transcript; a provider that can't give a length (no `get_tx_identity_info`) gets the first transcript it returned and the `RESOLVED_GENE_TO_TRANSCRIPT` WARNING now says "first transcript returned by the data provider" rather than "longest transcript" in that case
+- #171 - `fix_c_to_p` returns the input `var_c` unchanged (not `None`) as the first element when there is an ERROR-level fix, matching `clean_hgvs`/`fix_hgvs` which return their input string on an error; check `fixes` for the ERROR. The return type is annotated `tuple[SequenceVariant, list[HGVSFix]]`
+- #171 - `fix_hgvs` with a `data_provider` but no `genome_build` records a WARNING with the new fix code `SKIPPED_GENE_RESOLUTION` when the input is gene-only (eg `BRCA2:c.36del`), as gene resolution needs a build, instead of leaving the string alone with no fix. An input that already names a transcript gets no such fix, and nothing is recorded without a data provider
+- #171 - `tag_priority` on `resolve_gene_hgvs`, `rank_transcripts_for_gene` and `fix_hgvs` defaults to `None`, meaning a copy of `DEFAULT_TAG_PRIORITY`, rather than the shared list itself
+- #171 - The `USED_ADJACENT_VERSION_COORD_UNVERIFIED` message reads `...; coordinate may have moved (...)` (a semicolon in place of a dash)
 
 ### Changed
 
@@ -13,6 +23,7 @@
 
 ### Deprecated
 
+- #171 - `prefer_consortium` on `resolve_gene_hgvs`, `rank_transcripts_for_gene` and `fix_hgvs` is a deprecated alias of `annotation_consortium` and emits a `DeprecationWarning`; passing both is a `TypeError`. It will be removed in a future release
 - #186 - `AbstractJSONDataProvider.is_version_substitution_safe()` is deprecated and emits a `DeprecationWarning`. The check is now the pure `cdot.hgvs.version_safety.is_version_substitution_safe(transcript, substitute_transcript, genome_build=None, cited_position=None)` on the two versions' transcript records, with `genomic_bracket_safe(transcript_below, transcript_above, genome_build)` as the fallback for a version held in no build. `is_version_substitution_safe_by_accession(data_provider, transcript_accession, substitute_transcript_accession, genome_build=None, cited_position=None)` is the same check on two versioned accessions, fetching the records from a data provider; the deprecated provider method delegates to it and will be removed in a future release
 
 ### Fixed
