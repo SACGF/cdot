@@ -85,3 +85,30 @@ class TestCdotJsonMerge(unittest.TestCase):
 
         self.assertIn("Method: Combine multiple genome builds",
                       self._run("release_notes", combined_filename, "--show-urls"))
+
+    def _run_error(self, *args) -> str:
+        """ Runs cdot_json.py expecting it to fail, returns stderr """
+        env = dict(os.environ, PYTHONPATH=REPO_DIR)
+        result = subprocess.run([sys.executable, CDOT_JSON, *args], env=env,
+                                capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        return result.stderr
+
+    def _write(self, filename, data) -> str:
+        path = self._path(filename)
+        with gzip.open(path, "wt") as f:
+            json.dump(data, f)
+        return path
+
+    def test_release_notes_no_metadata(self):
+        """ #159 - missing key gave a bare StopIteration rather than the ValueError """
+        filename = self._write("no_metadata.json.gz", {"transcripts": {}, "genes": {}})
+        stderr = self._run_error("release_notes", filename)
+        self.assertIn("ValueError: No metadata in JSON", stderr)
+
+    def test_combine_builds_no_genome_builds(self):
+        """ #159 - input without "genome_builds" should give the build mismatch ValueError """
+        filename = self._write("no_builds.json.gz", {"transcripts": {}, "genes": {}})
+        stderr = self._run_error("combine_builds", "--output", self._path("combined.json.gz"),
+                                 "--grch37", filename, "--grch38", filename, "--t2t_chm13v2", filename)
+        self.assertIn("JSON file provided for GRCh37 needs to have only GRCh37 data (has None)", stderr)

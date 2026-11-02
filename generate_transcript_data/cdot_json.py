@@ -460,7 +460,7 @@ def combine_builds(args):
     for genome_build, filename in genome_build_filename.items():
         with gzip.open(filename) as f:
             # TODO: Check cdot versions
-            json_builds = next(ijson.items(f, "genome_builds", use_float=True))
+            json_builds = next(ijson.items(f, "genome_builds", use_float=True), None)
             if json_builds != [genome_build]:
                 raise ValueError(f"JSON file provided for {genome_build} needs to have only {genome_build} "
                                  f"data (has {json_builds})")
@@ -501,7 +501,7 @@ def combine_builds(args):
 
 def release_notes(args):
     with gzip.open(args.json_filename) as f:
-        metadata = next(ijson.items(f, "metadata", use_float=True))
+        metadata = next(ijson.items(f, "metadata", use_float=True), None)
         if metadata is None:
             raise ValueError("No metadata in JSON (requires schema version >=0.2.31)")
         print(f"### {os.path.basename(args.json_filename)}")
