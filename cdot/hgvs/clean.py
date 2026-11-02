@@ -197,9 +197,13 @@ _REFSEQ_PREFIX_TYPE: dict[str, str] = {
 _ENSEMBL_TRANSCRIPT_PREFIX = 'ENST'
 _LRG_PREFIX = 'LRG_'
 
-# Every HGVS kind letter ("c.", "g.", "m.", "n.", "p.", "r."). This is the one
-# place the set is defined: every pattern below that matches a kind uses it.
-_KIND_LETTERS = "cgmnpr"
+# Every HGVS kind letter ("c.", "g.", "m.", "n.", "p.", "r."), grouped by the kind of
+# reference sequence its positions are on. This is the one place they are defined:
+# every pattern below that matches a kind uses _KIND_LETTERS.
+_GENOMIC_KINDS = frozenset("gm")
+_TRANSCRIPT_KINDS = frozenset("cnr")
+_PROTEIN_KINDS = frozenset("p")
+_KIND_LETTERS = "".join(sorted(_GENOMIC_KINDS | _TRANSCRIPT_KINDS | _PROTEIN_KINDS))
 _KIND = f"[{_KIND_LETTERS}]"
 
 # The kind implied by each reference-sequence type, used to insert a missing one
@@ -399,11 +403,15 @@ _ACCESSION_KIND_SEPARATOR = re.compile(
 # the kind letter, mangling symbols that resemble an accession, eg NR2E3).
 _SPACE_BEFORE_KIND = re.compile(rf"^([A-Za-z][A-Za-z0-9]{{1,9}})\s+(?={_KIND}\.)", re.IGNORECASE)
 
+# Chromosome names of the human assemblies cdot supports, plus "M" (UCSC's chrM)
+_CHROMOSOMES = [str(i) for i in range(1, 23)] + ["X", "Y", "M", "MT"]
+_CHROMOSOME_NAMES = frozenset(_CHROMOSOMES)
+
 # A chromosome name, whitespace, then a chromosomal accession, e.g.
 # "chr13 NC_000013.11:g.32316528del". Only the exact "chr" + chromosome forms,
 # as many gene symbols start with CHR (CHRM1, CHRNA7, CHRD...); no HGNC symbol,
 # alias or previous symbol matches this pattern.
-_CHROM_NAME = r"chr(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)"
+_CHROM_NAME = rf"chr(?:{'|'.join(_CHROMOSOMES)})"
 _CONTIG_NAME_BEFORE_ACCESSION = re.compile(
     rf"(?<![\w.])({_CHROM_NAME})\s+(?=(NC_\d+)(\.\d+)?(?![\w.]))", re.IGNORECASE)
 
@@ -559,31 +567,26 @@ def _on_fields(fn: _StructuralOp) -> _StringOp:
 # The kind letters each reference-sequence type can take, and how to name the type in a message.
 # A coding transcript can't take n.: n. counts from the transcript start and c. from the start
 # codon, so the same number is a different base.
-_KINDS_FOR_TYPE = {'mRNA': ("cr", "coding transcript"), 'RNA': ("nr", "non-coding transcript"),
-                   'genomic': ("gm", "genomic"), 'Protein': ("p", "protein")}
+_KINDS_FOR_TYPE = {'mRNA': (_TRANSCRIPT_KINDS - {"n"}, "coding transcript"),
+                   'RNA': (_TRANSCRIPT_KINDS - {"c"}, "non-coding transcript"),
+                   'genomic': (_GENOMIC_KINDS, "genomic"), 'Protein': (_PROTEIN_KINDS, "protein")}
 
 
-def _kinds_for_reference(accession: str) -> Optional[tuple[str, str]]:
-    """ (kind letters that can follow accession, description of it), eg ("nr", "non-coding
+def _kinds_for_reference(accession: str) -> Optional[tuple[frozenset[str], str]]:
+    """ (kind letters that can follow accession, description of it), eg ({"n", "r"}, "non-coding
         transcript") for NR_, or None if it isn't a known RefSeq or Ensembl transcript accession.
         An Ensembl transcript may be coding or not, so takes either. """
     if accession.upper().startswith(_ENSEMBL_TRANSCRIPT_PREFIX):
-        return "cnr", "transcript"
+        return _TRANSCRIPT_KINDS, "transcript"
     return _KINDS_FOR_TYPE.get(_reference_type(accession))
 
 
 _N_ON_CODING = ": n. counts from the transcript start, not the start codon"
 
 
-@lru_cache(maxsize=1)
-def _chromosome_names() -> frozenset[str]:
-    """ Chromosome names of the supported assemblies ("13", "X", "MT"), plus "M" (UCSC's chrM) """
-    return frozenset(_chromosome_accessions().values()) | {"M"}
-
-
 def _is_chromosome_name(reference: str) -> bool:
     """ True if reference is a chromosome name, with or without "chr" ("chr13", "13", "X", "chrM") """
-    return reference.upper().removeprefix("CHR") in _chromosome_names()
+    return reference.upper().removeprefix("CHR") in _CHROMOSOME_NAMES
 
 
 # Gene names as HGNC and Ensembl write them ("BRCA2", "HLA-A", "7SK", "Y_RNA", "AC004556.1")
@@ -631,22 +634,22 @@ def _validate(s: str) -> list[HGVSFix]:
                 severity=HGVSFixSeverity.ERROR,
                 code=HGVSFixCode.KIND_REFERENCE_MISMATCH,
                 message=(f"{parts.accession} is a {description} accession, so it can't take "
-                         f"'{parts.kind}.' (use {_or_list([k + '.' for k in kinds])})"
+                         f"'{parts.kind}.' (use {_or_list([k + '.' for k in sorted(kinds)])})"
                          + (_N_ON_CODING if parts.kind == "n" and "c" in kinds else "")),
             ))
-    elif parts and parts.kind in ("g", "m") and _looks_like_gene_symbol(parts.reference):
+    elif parts and parts.kind in _GENOMIC_KINDS and _looks_like_gene_symbol(parts.reference):
         fixes.append(HGVSFix(
             severity=HGVSFixSeverity.ERROR,
             code=HGVSFixCode.KIND_REFERENCE_MISMATCH,
             message=(f"{parts.reference} looks like a gene symbol, so it can't take '{parts.kind}.': "
                      f"{parts.kind}. positions are on a genomic accession (eg NC_000013.11)"),
         ))
-    elif parts and parts.kind in ("c", "n", "r", "p") and _is_chromosome_name(parts.reference):
+    elif parts and parts.kind in _TRANSCRIPT_KINDS | _PROTEIN_KINDS and _is_chromosome_name(parts.reference):
         fixes.append(HGVSFix(
             severity=HGVSFixSeverity.ERROR,
             code=HGVSFixCode.KIND_REFERENCE_MISMATCH,
             message=(f"{parts.reference} is a chromosome name, so it can't take '{parts.kind}.': "
-                     + ("p. positions are on a protein accession (eg NP_000050.3)" if parts.kind == "p"
+                     + ("p. positions are on a protein accession (eg NP_000050.3)" if parts.kind in _PROTEIN_KINDS
                         else f"{parts.kind}. positions are on a transcript accession (eg NM_000059.4)")),
         ))
     if _MISSING_REFERENCE.match(s):

@@ -34,6 +34,8 @@ from cdot.hgvs.clean import (
     HGVSFixSeverity,
     HGVSInputError,
     VersionStrategy,
+    _PROTEIN_KINDS,
+    _TRANSCRIPT_KINDS,
     _looks_like_gene_symbol,
     _looks_like_transcript,
     _refseq_prefixes,
@@ -65,6 +67,9 @@ DEFAULT_CONSORTIUM: Consortium = Consortium.REFSEQ
 
 # Marks the deprecated prefer_consortium alias as not passed.
 _UNSET = object()
+
+# Allele prefixes a gene symbol can be resolved for: positions on a transcript or its protein
+_GENE_ONLY_KINDS = tuple(f"{k}." for k in sorted(_TRANSCRIPT_KINDS | _PROTEIN_KINDS))
 
 
 class UnsafeVersionPolicy(Enum):
@@ -123,7 +128,7 @@ def _parse_gene_only_hgvs(hgvs_string: str) -> tuple[Optional[str], Optional[str
     if ":" not in hgvs_string:
         return None, None
     prefix, allele = hgvs_string.split(":", 1)
-    if not allele.startswith(("c.", "n.", "r.", "p.")) or not _looks_like_gene_symbol(prefix):
+    if not allele.startswith(_GENE_ONLY_KINDS) or not _looks_like_gene_symbol(prefix):
         return None, None
     return prefix, allele
 
