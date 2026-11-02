@@ -120,6 +120,8 @@ def add_gencode_hgnc(gencode_hgnc_filename: str, genes, transcripts):
             # Line looks like: ENST00000624431.2	DDX11L17	HGNC:55080
             for line in gi_f.readlines():
                 line = line.strip()
+                if not line:
+                    continue  # eg trailing blank line
                 columns = line.split("\t")
                 num_columns = len(columns)
                 if num_columns == 3:
@@ -412,6 +414,11 @@ def merge_historical(args):
     for filename in args.json_filenames:
         print(f"Loading '{filename}'")
         with gzip.open(filename) as f:
+            json_builds = next(ijson.items(f, "genome_builds", use_float=True), None)
+            if json_builds != [args.genome_build]:
+                raise ValueError(f"'{filename}' needs to have only {args.genome_build} data (has {json_builds})")
+
+            f.seek(0)  # Reset for next ijson call
             for gene_accession, gene_version in ijson.kvitems(f, "genes", use_float=True):
                 gene_versions[gene_accession] = gene_version
                 if not gene_accession.startswith("_"):
@@ -420,7 +427,11 @@ def merge_historical(args):
             f.seek(0)  # Reset for next ijson call
             for transcript_accession, historical_transcript_version in ijson.kvitems(f, "transcripts", use_float=True):
                 gene_accession = historical_transcript_version["gene_version"]
-                gene_version = gene_versions[gene_accession]
+                gene_version = gene_versions.get(gene_accession)
+                if gene_version is None:
+                    raise ValueError(f"'{filename}' transcript '{transcript_accession}' has gene_version "
+                                     f"'{gene_accession}' which is not in 'genes' of this or earlier files "
+                                     "(was it written with --no-genes?)")
 
                 if gene_accession.startswith("_"):  # Not real - fake UTA so try and grab old one
                     fixed_ga = None
@@ -429,8 +440,9 @@ def merge_historical(args):
                     if not fixed_ga:
                         gene_symbol = gene_version["gene_symbol"]
                         if potential_ga := gene_accessions_for_symbol.get(gene_symbol):
-                            if len(potential_ga):
-                                fixed_ga = next(iter(potential_ga))
+                            # Several genes can share a symbol. Take the lowest accession (string order) so
+                            # the output does not depend on set iteration order (PYTHONHASHSEED)
+                            fixed_ga = min(potential_ga)
                     if fixed_ga:
                         gene_accession = fixed_ga
                 historical_transcript_version["gene_version"] = gene_accession
@@ -460,7 +472,7 @@ def combine_builds(args):
     for genome_build, filename in genome_build_filename.items():
         with gzip.open(filename) as f:
             # TODO: Check cdot versions
-            json_builds = next(ijson.items(f, "genome_builds", use_float=True))
+            json_builds = next(ijson.items(f, "genome_builds", use_float=True), None)
             if json_builds != [genome_build]:
                 raise ValueError(f"JSON file provided for {genome_build} needs to have only {genome_build} "
                                  f"data (has {json_builds})")
@@ -501,7 +513,7 @@ def combine_builds(args):
 
 def release_notes(args):
     with gzip.open(args.json_filename) as f:
-        metadata = next(ijson.items(f, "metadata", use_float=True))
+        metadata = next(ijson.items(f, "metadata", use_float=True), None)
         if metadata is None:
             raise ValueError("No metadata in JSON (requires schema version >=0.2.31)")
         print(f"### {os.path.basename(args.json_filename)}")
