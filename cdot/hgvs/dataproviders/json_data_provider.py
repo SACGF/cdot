@@ -129,7 +129,7 @@ class AbstractJSONDataProvider(Interface):
         """
         warnings.warn(
             "AbstractJSONDataProvider.is_version_substitution_safe() is deprecated; use "
-            "cdot.hgvs.version_safety.is_version_substitution_safe(requested, substitute, ...) "
+            "cdot.hgvs.version_safety.is_version_substitution_safe(transcript, substitute_transcript, ...) "
             "on the two records, or cdot.hgvs.gene_hgvs.check_version_substitution(provider, ...)",
             DeprecationWarning, stacklevel=2)
         return gene_hgvs.check_version_substitution(

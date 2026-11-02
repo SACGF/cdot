@@ -429,7 +429,7 @@ def genomic_maps_fully_agree(a, b) -> bool:
 _VERSIONED_ID = re.compile(r"^(.+)\.(\d+)$")
 
 
-def is_known_replacement(accession: str, requested_version: int, substitute_version: int) -> bool:
+def is_known_replacement(transcript_id: str, version: int, substitute_version: int) -> bool:
     """Is this substitution on the shipped genomic re-placement blocklist?
 
     The blocklist (``cdot.hgvs._version_replacement_blocklist``) holds substitutions
@@ -437,20 +437,20 @@ def is_known_replacement(accession: str, requested_version: int, substitute_vers
     they are refused even when the requested version is absent from the loaded data
     and the placement difference cannot be recomputed.
     """
-    key = (accession, requested_version, substitute_version)
+    key = (transcript_id, version, substitute_version)
     return key in _version_replacement_blocklist.KNOWN_REPLACEMENT_SUBSTITUTIONS
 
 
-def is_version_substitution_safe(requested, substitute, genome_build: Optional[str] = None,
+def is_version_substitution_safe(transcript, substitute_transcript, genome_build: Optional[str] = None,
                                  cited_position: Optional[str] = None) -> tuple[bool, str]:
-    """Is substituting transcript record ``substitute`` for ``requested`` coordinate-safe?
+    """Is substituting ``substitute_transcript`` for ``transcript`` coordinate-safe?
 
     Returns ``(safe, reason)``.  "Safe" means the variant's position maps to the
     *same* genomic coordinate under the substitute, so the substitution does not
     silently change what the variant means.
 
-    ``requested`` and ``substitute`` are two versions of one transcript as cdot
-    records (plain JSON dicts or :class:`cdot.models.Transcript`), eg
+    ``transcript`` and ``substitute_transcript`` are two versions of one transcript
+    as cdot records (plain JSON dicts or :class:`cdot.models.Transcript`), eg
     ``NM_000059.3`` and ``NM_000059.4``.  Both must be present; when the requested
     version is held in no build at all there is nothing to compare, and the
     probabilistic :func:`genomic_bracket_safe` on its neighbours is the fallback
@@ -488,59 +488,59 @@ def is_version_substitution_safe(requested, substitute, genome_build: Optional[s
     :func:`cdot.hgvs.gene_hgvs.resolve_transcript_version` (never silently
     applied) per its ``on_unsafe_version`` policy.
     """
-    req_id = _VERSIONED_ID.match(requested.get("id") or "")
-    sub_id = _VERSIONED_ID.match(substitute.get("id") or "")
-    if req_id and sub_id and req_id.group(1) == sub_id.group(1):
-        if is_known_replacement(req_id.group(1), int(req_id.group(2)), int(sub_id.group(2))):
+    transcript_match = _VERSIONED_ID.match(transcript.get("id") or "")
+    substitute_match = _VERSIONED_ID.match(substitute_transcript.get("id") or "")
+    if transcript_match and substitute_match and transcript_match.group(1) == substitute_match.group(1):
+        if is_known_replacement(transcript_match.group(1), int(transcript_match.group(2)), int(substitute_match.group(2))):
             return False, "known genomic re-placement (blocklisted)"
     # Version labels for the reasons: ".3" from the record id, else the role.
-    req_label = f".{req_id.group(2)}" if req_id else "the requested version"
-    sub_label = f".{sub_id.group(2)}" if sub_id else "the substitute"
+    transcript_label = f".{transcript_match.group(2)}" if transcript_match else "the requested version"
+    substitute_label = f".{substitute_match.group(2)}" if substitute_match else "the substitute"
 
-    req_coding, sub_coding = has_cds(requested), has_cds(substitute)
-    if req_coding != sub_coding:
-        coding = req_label if req_coding else sub_label
+    transcript_coding, substitute_coding = has_cds(transcript), has_cds(substitute_transcript)
+    if transcript_coding != substitute_coding:
+        coding = transcript_label if transcript_coding else substitute_label
         return False, f"only {coding} is coding (c. and n. coordinates differ)"
-    if not req_coding:
+    if not transcript_coding:
         # Non-coding (n.): an n. coordinate depends only on the exon lengths in
         # transcript order, the alignment gaps and the genomic exon placement.
-        req_exons = intrinsic_exon_structure(requested, genome_build)
-        sub_exons = intrinsic_exon_structure(substitute, genome_build)
-        if req_exons is None or sub_exons is None:
-            bad = req_label if req_exons is None else sub_label
+        transcript_exons = intrinsic_exon_structure(transcript, genome_build)
+        substitute_exons = intrinsic_exon_structure(substitute_transcript, genome_build)
+        if transcript_exons is None or substitute_exons is None:
+            bad = transcript_label if transcript_exons is None else substitute_label
             return False, f"version {bad} has a malformed exon record; cannot verify"
-        if req_exons[0] != sub_exons[0]:
-            return False, f"strand changed {req_exons[0]}→{sub_exons[0]}"
-        if req_exons != sub_exons:
+        if transcript_exons[0] != substitute_exons[0]:
+            return False, f"strand changed {transcript_exons[0]}→{substitute_exons[0]}"
+        if transcript_exons != substitute_exons:
             return False, "exon structure changed (n. coordinate would shift)"
-        if exon_alignment_gaps(requested, genome_build) != exon_alignment_gaps(substitute, genome_build):
+        if exon_alignment_gaps(transcript, genome_build) != exon_alignment_gaps(substitute_transcript, genome_build):
             return False, "exon alignment gap differs (n. coordinate would shift)"
         if genome_build:
-            req_spans = exon_genomic_spans(requested, genome_build)
-            sub_spans = exon_genomic_spans(substitute, genome_build)
-            if req_spans is not None and sub_spans is not None and req_spans != sub_spans:
+            transcript_spans = exon_genomic_spans(transcript, genome_build)
+            substitute_spans = exon_genomic_spans(substitute_transcript, genome_build)
+            if transcript_spans is not None and substitute_spans is not None and transcript_spans != substitute_spans:
                 return False, "exon genomic placement differs (coordinate would shift)"
         return True, "identical exon structure (non-coding)"
 
-    req_struct = intrinsic_cds_structure(requested, genome_build)
-    sub_struct = intrinsic_cds_structure(substitute, genome_build)
-    if sub_struct is None:
+    transcript_struct = intrinsic_cds_structure(transcript, genome_build)
+    substitute_struct = intrinsic_cds_structure(substitute_transcript, genome_build)
+    if substitute_struct is None:
         # The substitute claims a CDS but it is unusable (malformed exons /
         # zero-length CDS): nothing to compare against.
-        return False, f"substitute version {sub_label} has no usable CDS structure; cannot verify"
-    if req_struct is None:
+        return False, f"substitute version {substitute_label} has no usable CDS structure; cannot verify"
+    if transcript_struct is None:
         # The requested version is present but its CDS is unusable. There is no
         # structure to compare; check_version_substitution brackets it instead.
-        return False, f"requested version {req_label} has no usable CDS structure; cannot verify"
-    if req_struct != sub_struct:
-        return False, describe_structure_change(req_struct, sub_struct)
+        return False, f"requested version {transcript_label} has no usable CDS structure; cannot verify"
+    if transcript_struct != substitute_struct:
+        return False, describe_structure_change(transcript_struct, substitute_struct)
     # Identical transcript structure is necessary but not sufficient: an
     # alignment gap (a transcript-vs-genome indel) present in one version
     # and not the other shifts every coding base downstream of it, so the
     # CDS alignment gaps must match too (gaps are build-specific, so this
     # is exact when both versions are placed in genome_build, conservative
     # across builds).
-    if cds_alignment_gaps(requested, genome_build) != cds_alignment_gaps(substitute, genome_build):
+    if cds_alignment_gaps(transcript, genome_build) != cds_alignment_gaps(substitute_transcript, genome_build):
         return False, "CDS alignment gap differs (coding coordinate would shift)"
     # Intrinsic structure is build-independent and so is blind to genomic
     # *placement*: a version can re-align the same CDS to a different locus
@@ -550,33 +550,33 @@ def is_version_substitution_safe(requested, substitute, genome_build: Optional[s
     # never stale. (Cross-build, where the requested version is absent from
     # genome_build, this cannot be checked and falls back to the build-
     # independent structure.)
-    req_map = cds_genomic_map(requested, genome_build) if genome_build else None
-    sub_map = cds_genomic_map(substitute, genome_build) if genome_build else None
-    if req_map is not None and sub_map is not None:
-        if (req_map["contig"] != sub_map["contig"]
-                or req_map["segs"] != sub_map["segs"]):
+    transcript_map = cds_genomic_map(transcript, genome_build) if genome_build else None
+    substitute_map = cds_genomic_map(substitute_transcript, genome_build) if genome_build else None
+    if transcript_map is not None and substitute_map is not None:
+        if (transcript_map["contig"] != substitute_map["contig"]
+                or transcript_map["segs"] != substitute_map["segs"]):
             return False, "CDS genomic placement differs (coordinate would shift)"
     # The CDS is coordinate-safe. A non-coding cited position additionally
     # needs the relevant UTR length unchanged, since the CDS check says
     # nothing about where a c.-N / c.*N position falls.
     regions = utr_regions_touched(cited_position)
     if regions:
-        req_utr = utr_lengths(requested, genome_build)
-        sub_utr = utr_lengths(substitute, genome_build)
-        if req_utr is not None and sub_utr is not None:
-            if "five_prime" in regions and req_utr[0] != sub_utr[0]:
+        transcript_utr = utr_lengths(transcript, genome_build)
+        substitute_utr = utr_lengths(substitute_transcript, genome_build)
+        if transcript_utr is not None and substitute_utr is not None:
+            if "five_prime" in regions and transcript_utr[0] != substitute_utr[0]:
                 return False, "5'UTR length differs (UTR coordinate would shift)"
-            if "three_prime" in regions and req_utr[1] != sub_utr[1]:
+            if "three_prime" in regions and transcript_utr[1] != substitute_utr[1]:
                 return False, "3'UTR length differs (UTR coordinate would shift)"
     return True, "identical CDS structure"
 
 
-def genomic_bracket_safe(below, above, genome_build: str, *,
+def genomic_bracket_safe(transcript_below, transcript_above, genome_build: str, *,
                          what: str = "requested version absent from all builds") -> tuple[bool, str]:
     """Genomic-bracket fallback when the requested version's structure is unknown.
 
-    ``below`` and ``above`` are the records of the nearest held versions either
-    side of the requested one (``None`` if there is none on that side).  If their
+    ``transcript_below`` and ``transcript_above`` are the records of the nearest held
+    versions either side of the requested one (``None`` if there is none on that side).  If their
     genomic CDS maps in ``genome_build`` agree at every coding base, the gap
     between them is treated as coordinate-safe (probabilistic: a version can
     change and change back between its neighbours); otherwise not safe.  Either
@@ -587,8 +587,8 @@ def genomic_bracket_safe(below, above, genome_build: str, *,
     the requested version is present but has no usable CDS structure (a malformed
     record).
     """
-    lo_map = cds_genomic_map(below, genome_build) if below is not None else None
-    hi_map = cds_genomic_map(above, genome_build) if above is not None else None
+    lo_map = cds_genomic_map(transcript_below, genome_build) if transcript_below is not None else None
+    hi_map = cds_genomic_map(transcript_above, genome_build) if transcript_above is not None else None
     if lo_map is None or hi_map is None:
         return False, f"{what} and cannot bracket it in {genome_build}; coordinate unverified"
     if genomic_maps_fully_agree(lo_map, hi_map):

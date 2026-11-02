@@ -1,13 +1,21 @@
 """
-Gene-symbol HGVS resolution via MANE/canonical transcript tags.
+HGVS fixes that need a data provider.
 
-resolve_gene_hgvs() handles the common case of HGVS strings that name a gene
-instead of a transcript (e.g. "BRCA2:c.36del").  It looks up the best available
-transcript from the data provider's tag data (MANE_Select > MANE_Plus_Clinical >
-RefSeq_Select > Ensembl_canonical > longest) and substitutes it.
+clean_hgvs() (cdot.hgvs.clean) works on the string alone; the fixes here look
+things up in a data provider:
+
+- resolve_gene_hgvs() handles HGVS strings that name a gene instead of a
+  transcript (e.g. "BRCA2:c.36del"), substituting the best available transcript
+  from the provider's tag data (MANE_Select > MANE_Plus_Clinical > RefSeq_Select >
+  Ensembl_canonical > longest).
+- resolve_missing_accession_prefix() restores a dropped RefSeq prefix when the
+  bare number matches exactly one transcript.
+- resolve_transcript_version() substitutes an adjacent transcript version when
+  the cited one is not held, after check_version_substitution() has judged the
+  substitution coordinate-safe (the pure check is cdot.hgvs.version_safety).
 
 fix_hgvs() is the single combined entry point that chains clean_hgvs() and
-resolve_gene_hgvs() in one call — the recommended function for most callers.
+these in one call, the recommended function for most callers.
 """
 
 import inspect
@@ -469,10 +477,13 @@ def _parse_versioned_transcript(hgvs_string: str) -> Optional[tuple[str, int]]:
     return base, int(version)
 
 
-def check_version_substitution(data_provider, accession: str, requested_version: int,
+def check_version_substitution(data_provider, transcript_id: str, version: int,
                                substitute_version: int, genome_build: Optional[str] = None,
                                cited_position: Optional[str] = None) -> tuple[bool, str]:
-    """Is substituting ``substitute_version`` for ``requested_version`` coordinate-safe?
+    """Is substituting ``substitute_version`` for ``version`` of ``transcript_id`` coordinate-safe?
+
+    ``transcript_id`` is the versionless accession (eg ``"NM_000059"``) and the
+    versions are integers, as in the data provider's ``get_tx_versions``.
 
     Returns ``(safe, reason)``.  This fetches the two versions' records from
     ``data_provider`` and runs the pure
@@ -492,48 +503,49 @@ def check_version_substitution(data_provider, accession: str, requested_version:
     Used by :func:`resolve_transcript_version`; a not-safe verdict is surfaced
     (never silently applied) per its ``on_unsafe_version`` policy.
     """
-    if version_safety.is_known_replacement(accession, requested_version, substitute_version):
+    if version_safety.is_known_replacement(transcript_id, version, substitute_version):
         # Checked here as well as in the pure function so the blocklist still
         # applies when the requested version is absent from the loaded data.
         return False, "known genomic re-placement (blocklisted)"
 
-    sub = data_provider._get_transcript(f"{accession}.{substitute_version}")
-    if sub is None:
+    substitute_transcript = data_provider._get_transcript(f"{transcript_id}.{substitute_version}")
+    if substitute_transcript is None:
         return False, f"substitute version .{substitute_version} not found"
 
-    req = data_provider._get_transcript(f"{accession}.{requested_version}")
-    if req is None:
+    transcript = data_provider._get_transcript(f"{transcript_id}.{version}")
+    if transcript is None:
         # Requested version absent from every build the provider can see.
         what = "requested version absent from all builds"
-    elif (version_safety.has_cds(req) and version_safety.has_cds(sub)
-          and version_safety.intrinsic_cds_structure(req, genome_build) is None
-          and version_safety.intrinsic_cds_structure(sub, genome_build) is not None):
+    elif (version_safety.has_cds(transcript) and version_safety.has_cds(substitute_transcript)
+          and version_safety.intrinsic_cds_structure(transcript, genome_build) is None
+          and version_safety.intrinsic_cds_structure(substitute_transcript, genome_build) is not None):
         # Requested version present but its CDS is unusable (a malformed record):
         # nothing to compare, so bracket it rather than guess. The reason says the
         # version is present rather than absent.
         what = "requested version has no usable CDS structure"
     else:
         return version_safety.is_version_substitution_safe(
-            req, sub, genome_build, cited_position=cited_position)
+            transcript, substitute_transcript, genome_build, cited_position=cited_position)
 
     if genome_build is None:
         return False, f"{what}; cannot verify (no genome build for bracket fallback)"
     try:
-        versions = data_provider.get_tx_versions(accession)
+        versions = data_provider.get_tx_versions(transcript_id)
     except NotImplementedError:
         return False, f"{what}; cannot verify structure"
 
     def _nearest(candidates):
         # Nearest held version (in candidate order) that is placed in genome_build.
         for v in candidates:
-            t = data_provider._get_transcript(f"{accession}.{v}")
-            if t is not None and t["genome_builds"].get(genome_build) is not None:
-                return t
+            candidate = data_provider._get_transcript(f"{transcript_id}.{v}")
+            if candidate is not None and candidate["genome_builds"].get(genome_build) is not None:
+                return candidate
         return None
 
-    below = _nearest(sorted((v for v in versions if v < requested_version), reverse=True))
-    above = _nearest(sorted(v for v in versions if v > requested_version))
-    return version_safety.genomic_bracket_safe(below, above, genome_build, what=what)
+    transcript_below = _nearest(sorted((v for v in versions if v < version), reverse=True))
+    transcript_above = _nearest(sorted(v for v in versions if v > version))
+    return version_safety.genomic_bracket_safe(transcript_below, transcript_above, genome_build,
+                                               what=what)
 
 
 def _cited_position(hgvs_string: str) -> Optional[str]:

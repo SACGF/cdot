@@ -67,9 +67,9 @@ intrinsic_cds_structure(record)                 # -> ("+", 10257, (228, 4932, ..
 
 # Verdict for a specific substitution, on the two versions' records (pure).
 from cdot.hgvs.version_safety import is_version_substitution_safe
-requested = dp._get_transcript("NM_000059.2")
-substitute = dp._get_transcript("NM_000059.4")
-safe, reason = is_version_substitution_safe(requested, substitute, genome_build="GRCh38")
+transcript = dp._get_transcript("NM_000059.2")
+substitute_transcript = dp._get_transcript("NM_000059.4")
+safe, reason = is_version_substitution_safe(transcript, substitute_transcript, genome_build="GRCh38")
 
 # The same, fetching the records from a data provider; this is what
 # resolve_transcript_version uses, and it adds the genomic-bracket fallback.

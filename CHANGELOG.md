@@ -8,7 +8,7 @@
 
 ### Deprecated
 
-- #186 - `AbstractJSONDataProvider.is_version_substitution_safe()` is deprecated and emits a `DeprecationWarning`. The check is now the pure `cdot.hgvs.version_safety.is_version_substitution_safe(requested, substitute, genome_build=None, cited_position=None)` on the two versions' transcript records, with `genomic_bracket_safe(below, above, genome_build)` as the fallback for a version held in no build. `cdot.hgvs.check_version_substitution(data_provider, accession, requested_version, substitute_version, genome_build=None, cited_position=None)` fetches the records from a data provider and chooses between the two; the deprecated provider method delegates to it and will be removed in a future release
+- #186 - `AbstractJSONDataProvider.is_version_substitution_safe()` is deprecated and emits a `DeprecationWarning`. The check is now the pure `cdot.hgvs.version_safety.is_version_substitution_safe(transcript, substitute_transcript, genome_build=None, cited_position=None)` on the two versions' transcript records, with `genomic_bracket_safe(transcript_below, transcript_above, genome_build)` as the fallback for a version held in no build. `cdot.hgvs.check_version_substitution(data_provider, transcript_id, version, substitute_version, genome_build=None, cited_position=None)` fetches the records from a data provider and chooses between the two; the deprecated provider method delegates to it and will be removed in a future release
 
 ### Fixed
 
