@@ -178,9 +178,9 @@ class AbstractJSONDataProvider(Interface):
             raise HGVSDataNotAvailableError(
                 f"Contig '{alt_ac}' not supported. Supported assemblies: {supported_assemblies}")
 
-        build_data = transcript["genome_builds"].get(assembly)
-        if build_data is None or build_data["contig"] != alt_ac:
-            return None
+        if build_data := transcript["genome_builds"].get(assembly):
+            if build_data["contig"] != alt_ac:
+                return None
         return build_data
 
     @staticmethod
