@@ -95,6 +95,19 @@ seqfetcher = ChainedSeqFetcher(FastaSeqFetcher(fasta_filename, genome_mismatch="
 
 Older data has no `genome_mismatch` (or only partial), so nothing is reported for it.
 
+### Transcript bases that aren't in the genome
+
+Where the alignment has transcript bases that aren't in the genome (a 5' start that isn't aligned, or
+a gap in an exon), `FastaSeqFetcher` doesn't know them and fills them with `N`. biocommons reads
+slices of the transcript to validate and normalize a variant, and an `N` there would silently stop an
+indel shifting 3', giving the wrong position. So a slice that includes any of these bases raises
+`GenomeMismatchError`, whatever the data's `genome_mismatch` says. Fetching the whole transcript, as
+`c_to_p` does, warns instead (raises with `genome_mismatch="raise"`). `genome_mismatch="off"` turns
+this off too. A `ChainedSeqFetcher` with SeqRepo, as above, gets the real bases.
+
+biocommons also normalizes substitutions, reading 20 bases from the variant 3', so an SNV just before
+the unknown bases fails in `g_to_c` as well.
+
 When choosing which genome reference to use, cdot takes the first one that has a contig we have a
 mapping for. If you want to ensure a certain build is used, instantiate `FastaSeqFetcher()` with just
 that one genome, then only convert HGVS using that genome.

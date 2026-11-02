@@ -161,3 +161,107 @@ def test_no_fasta_files():
         FastaSeqFetcher()
     with pytest.raises(ValueError, match="at least one"):
         ExonsFromGenomeFastaSeqFetcher()
+
+
+# ---------------------------------------------------------------------------
+# Transcript bases that aren't in the genome alignment, filled with N
+#
+# The genome has an AAAAA run at 15-20, right before 2 transcript bases (n.11_12) that the
+# alignment says aren't in the genome (cdot gap "I2", CIGAR "2D")
+# ---------------------------------------------------------------------------
+
+PADDED_GENOME = "CGTCGTCGTC" + "CGTCG" + "AAAAA" + "CGTCGTCGTC" * 6
+PADDED_TRANSCRIPTS = {
+    # Plus strand, 2 bases not in the genome after genomic position 20
+    "NM_000001.1": ("+", [[10, 30, 0, 1, 22, "M10 I2 M10"], [40, 60, 1, 23, 42, None]]),
+    # Minus strand, so the gap is counted from the other end
+    "NM_000002.1": ("-", [[10, 30, 0, 1, 22, "M5 I2 M15"]]),
+    # 5' start not aligned: the first exon starts at transcript position 4
+    "NM_000003.1": ("+", [[10, 30, 0, 4, 23, None]]),
+}
+
+
+@pytest.fixture(scope="module")
+def padded_files(tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp("fasta_padding")
+    fasta_filename = str(tmp_path / "genome.fa")
+    with open(fasta_filename, "w") as f:
+        f.write(f">{CONTIG}\n{PADDED_GENOME}\n")
+    pysam.faidx(fasta_filename)
+    transcripts = {ac: {"id": ac, "gene_name": "TEST", "start_codon": 0, "stop_codon": exons[-1][4],
+                        "genome_builds": {"GRCh37": {"contig": CONTIG, "strand": strand, "exons": exons}}}
+                   for ac, (strand, exons) in PADDED_TRANSCRIPTS.items()}
+    json_filename = str(tmp_path / "cdot.json")
+    with open(json_filename, "w") as f:
+        json.dump({"cdot_version": "0.2.36", "genome_builds": ["GRCh37"],
+                   "transcripts": transcripts, "genes": {}}, f)
+    return fasta_filename, json_filename
+
+
+def _assembly_mapper(hdp):
+    from hgvs.assemblymapper import AssemblyMapper
+    return AssemblyMapper(hdp, assembly_name="GRCh37", alt_aln_method="splign", replace_reference=True)
+
+
+@pytest.mark.parametrize("ac, positions", [
+    ("NM_000001.1", "n.11_12"), ("NM_000002.1", "n.16_17"), ("NM_000003.1", "n.1_3"),
+])
+def test_slice_with_padding_raises(padded_files, ac, positions):
+    fasta_filename, json_filename = padded_files
+    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename))
+    with pytest.raises(GenomeMismatchError, match=rf"{ac} {positions} isn't in the genome alignment"):
+        hdp.seqfetcher.fetch_seq(ac, 0, 20)
+
+
+def test_slice_without_padding(padded_files):
+    fasta_filename, json_filename = padded_files
+    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename))
+    assert hdp.seqfetcher.fetch_seq("NM_000001.1", 0, 10) == "CGTCGAAAAA"
+    assert hdp.seqfetcher.fetch_seq("NM_000001.1", 12, 22) == "CGTCGTCGTC"
+
+
+def test_whole_transcript_with_padding_warns(padded_files):
+    """ c_to_p translates the whole transcript: warn, as padding in the UTR doesn't change the protein """
+    fasta_filename, json_filename = padded_files
+    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename, cache=False))
+    with pytest.warns(GenomeMismatchWarning, match="NM_000001.1 n.11_12") as record:
+        assert hdp.seqfetcher.fetch_seq("NM_000001.1") == "CGTCGAAAAANNCGTCGTCGTC" + PADDED_GENOME[40:60]
+        hdp.seqfetcher.fetch_seq("NM_000001.1")
+    assert len(record) == 1
+
+
+def test_padding_policies(padded_files):
+    fasta_filename, json_filename = padded_files
+    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename, genome_mismatch="raise"))
+    with pytest.raises(GenomeMismatchError):
+        hdp.seqfetcher.fetch_seq("NM_000001.1")
+    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename, genome_mismatch="off"))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert hdp.seqfetcher.fetch_seq("NM_000001.1", 0, 20) == "CGTCGAAAAANNCGTCGTCG"
+
+
+def test_padding_falls_through_chained_seqfetcher(padded_files):
+    fasta_filename, json_filename = padded_files
+    hdp = _hdp(json_filename, ChainedSeqFetcher(FastaSeqFetcher(fasta_filename), StaticSeqFetcher()))
+    assert hdp.seqfetcher.fetch_seq("NM_000001.1", 0, 20) == "REAL"
+
+
+def test_indel_normalized_into_padding_raises(padded_files):
+    """ Normalizing the deletion shifts it 3' along the A run into the unknown bases: with them
+        filled with N the shift stops early, giving c.10del where the real transcript may differ """
+    import hgvs.parser
+    fasta_filename, json_filename = padded_files
+    parser = hgvs.parser.Parser()
+    var_g = parser.parse("NC_000011.9:g.18del")
+
+    am_off = _assembly_mapper(_hdp(json_filename, FastaSeqFetcher(fasta_filename, genome_mismatch="off")))
+    assert str(am_off.g_to_c(var_g, "NM_000001.1")) == "NM_000001.1:c.10del"
+
+    am = _assembly_mapper(_hdp(json_filename, FastaSeqFetcher(fasta_filename)))
+    with pytest.raises(GenomeMismatchError):
+        am.g_to_c(var_g, "NM_000001.1")
+    # An SNV away from the unknown bases maps as before, one inside them can't be checked
+    assert str(am.c_to_g(parser.parse("NM_000001.1:c.30G>A"))) == "NC_000011.9:g.48G>A"
+    with pytest.raises(GenomeMismatchError):
+        am.c_to_g(parser.parse("NM_000001.1:c.11A>G"))
