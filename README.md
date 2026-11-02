@@ -69,6 +69,9 @@ var_c = hp.parse_hgvs_variant('NM_001637.3:c.1582G>A')
 am.c_to_g(var_c)
 ```
 
+For a runnable end-to-end version (find and download the latest data release, load it, then clean
+and resolve HGVS strings) see [examples/quickstart.py](https://github.com/SACGF/cdot/blob/main/examples/quickstart.py).
+
 [more Biocommons examples](https://github.com/SACGF/cdot/blob/main/docs/examples_biocommons.md):
 
 > **Tip:** cdot provides many transcripts that aren't in SeqRepo, so the default sequence fetcher will
