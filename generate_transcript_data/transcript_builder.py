@@ -7,6 +7,8 @@ import importlib
 import logging
 import operator
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Optional
 
 from generate_transcript_data.transcript_coordinates import create_perfect_exons, create_cdna_exons, \
     get_transcript_range_start, get_transcript_range_end
@@ -21,6 +23,22 @@ GENOME_BUILD_FIELDS = ["cds_start", "cds_end", "strand", "contig", "exons", "oth
                        "tag", "note", "ccds", "transcript_support_level", "genome_mismatch", "warnings"]
 
 
+@dataclass
+class TranscriptFeatures:
+    """ The rows collected for one transcript, turned into cdot fields in TranscriptBuilder.finish().
+        Genomic coordinates are 0-based half-open, as HTSeq reads them. Kept apart from the transcript
+        dict as none of this is written out as is """
+    exons: list[tuple[int, int]] = field(default_factory=list)  # (start, end)
+    cdna_matches: list[tuple] = field(default_factory=list)  # (start, end, cdna_start, cdna_end, gap)
+    coding_starts: list[int] = field(default_factory=list)  # Of the CDS/start_codon/stop_codon rows
+    coding_ends: list[int] = field(default_factory=list)
+    transl_except: list[tuple[int, int, str]] = field(default_factory=list)  # (start, end, amino_acid)
+    transl_table: Optional[int] = None
+    ribosomal_slippage_cds: list[tuple[int, int]] = field(default_factory=list)  # (start, end)
+    translation_exceptions: list[str] = field(default_factory=list)
+    genome_mismatch_exceptions: list[str] = field(default_factory=list)
+
+
 class TranscriptBuilder:
     def __init__(self, genome_build, url, name_ac_map):
         self.genome_build = genome_build
@@ -31,8 +49,7 @@ class TranscriptBuilder:
         self.transcript_proteins = {}
         self.fake_transcripts = set()  # No sequence record behind these, eg RefSeq mitochondrial genes
         self.transcript_genome_mismatch = defaultdict(dict)  # Extra genome_mismatch keys, eg note counts
-        # Store features in separate dict as we don't need to write all as JSON
-        self.transcript_features_by_type = defaultdict(lambda: defaultdict(list))
+        self.transcript_features = defaultdict(TranscriptFeatures)
         self._warned_about_htseq_tag_attributes = False
 
     # Genes / transcripts
@@ -121,21 +138,20 @@ class TranscriptBuilder:
             self.store_other_chrom(transcript, feature)
             return False
 
+        features = self.transcript_features[transcript_accession]
         if feature.type == "cDNA_match":
             target = feature.attr.get("Target")  # Target=NM_001304717.2 1 1110 +
             t_cols = target.split()
             cdna_start = int(t_cols[1])  # These are 1-based (as per above)
             cdna_end = int(t_cols[2])
             gap = feature.attr.get("Gap")
-            feature_tuple = (feature.iv.start, feature.iv.end, cdna_start, cdna_end, gap)
-        else:
-            feature_tuple = (feature.iv.start, feature.iv.end)
+            features.cdna_matches.append((feature.iv.start, feature.iv.end, cdna_start, cdna_end, gap))
+        elif feature.type == "exon":
+            features.exons.append((feature.iv.start, feature.iv.end))
 
-        features_by_type = self.transcript_features_by_type[transcript_accession]
-        features_by_type[feature.type].append(feature_tuple)
         if feature.type in CODING_FEATURES:
-            features_by_type["coding_starts"].append(feature.iv.start)
-            features_by_type["coding_ends"].append(feature.iv.end)
+            features.coding_starts.append(feature.iv.start)
+            features.coding_ends.append(feature.iv.end)
 
         if note := feature.attr.get("Note"):
             transcript["note"] = note
@@ -143,27 +159,26 @@ class TranscriptBuilder:
 
     def add_exon_coordinates(self, transcript_accession, feature):
         """ Use a row's coordinates as an exon, without the row itself being one """
-        self.transcript_features_by_type[transcript_accession]["exon"].append((feature.iv.start, feature.iv.end))
+        self.transcript_features[transcript_accession].exons.append((feature.iv.start, feature.iv.end))
 
     # Translation annotations, converted to codon numbers in finish() once the exons and CDS are known
 
     def add_transl_except(self, transcript_accession, start, end, amino_acid):
         """ A codon that codes for amino_acid rather than what the translation table says """
-        self.transcript_features_by_type[transcript_accession]["transl_except"].append((start, end, amino_acid))
+        self.transcript_features[transcript_accession].transl_except.append((start, end, amino_acid))
 
     def set_transl_table(self, transcript_accession, transl_table: int):
-        self.transcript_features_by_type[transcript_accession]["transl_table"] = [transl_table]
+        self.transcript_features[transcript_accession].transl_table = transl_table
 
     def add_ribosomal_slippage_cds(self, transcript_accession, feature):
         """ A CDS row marked as having a ribosomal frameshift """
-        feature_tuple = (feature.iv.start, feature.iv.end)
-        self.transcript_features_by_type[transcript_accession]["ribosomal_slippage_cds"].append(feature_tuple)
+        self.transcript_features[transcript_accession].ribosomal_slippage_cds.append((feature.iv.start, feature.iv.end))
 
     def add_translation_exception(self, transcript_accession, exception):
-        self.transcript_features_by_type[transcript_accession]["translation_exceptions"].append(exception)
+        self.transcript_features[transcript_accession].translation_exceptions.append(exception)
 
     def add_genome_mismatch_exception(self, transcript_accession, exception):
-        self.transcript_features_by_type[transcript_accession]["genome_mismatch_exceptions"].append(exception)
+        self.transcript_features[transcript_accession].genome_mismatch_exceptions.append(exception)
 
     def set_genome_mismatch(self, transcript_accession, key, value):
         """ Stored in the transcript's genome_mismatch, eg 'transcript': {'substitutions': 1} """
@@ -204,31 +219,27 @@ class TranscriptBuilder:
 
     def _build_transcripts(self):
         for transcript_accession, transcript_data in self.transcripts.items():
-            features_by_type = self.transcript_features_by_type.get(transcript_accession, {})
+            features = self.transcript_features.get(transcript_accession, TranscriptFeatures())
 
             # Store coding start/stop transcript positions
             # For RefSeq, we need to deal with alignment gaps, so easiest is to convert exons w/o gaps
             # into cDNA match objects, so the same objects/algorithm can be used
             forward_strand = transcript_data[STRAND] == '+'
-            cdna_matches = features_by_type.get("cDNA_match")
-            if cdna_matches:
-                cdna_matches_stranded_order = cdna_matches
-                cdna_matches_stranded_order.sort(key=operator.itemgetter(0))
+            if features.cdna_matches:
+                cdna_matches_stranded_order = sorted(features.cdna_matches, key=operator.itemgetter(0))
                 if not forward_strand:
                     cdna_matches_stranded_order.reverse()
                 # Need to add exon ID
                 exons_stranded_order = create_cdna_exons(cdna_matches_stranded_order)
-
             else:
-                raw_exon_stranded_order = features_by_type.get("exon", [])
-                raw_exon_stranded_order.sort(key=operator.itemgetter(0))
+                raw_exon_stranded_order = sorted(features.exons, key=operator.itemgetter(0))
                 if not forward_strand:
                     raw_exon_stranded_order.reverse()
                 exons_stranded_order = create_perfect_exons(raw_exon_stranded_order)
 
-            if "coding_starts" in features_by_type:
-                cds_min = min(features_by_type["coding_starts"])
-                cds_max = max(features_by_type["coding_ends"])
+            if features.coding_starts:
+                cds_min = min(features.coding_starts)
+                cds_max = max(features.coding_ends)
 
                 transcript_data["cds_start"] = cds_min
                 transcript_data["cds_end"] = cds_max
@@ -242,7 +253,7 @@ class TranscriptBuilder:
                         logging.warning("Couldn't set %s transcript position: %s", codon, e)
                         self._add_warning(transcript_data, "codons_unplaced", codon)
 
-            self._add_translation(transcript_accession, transcript_data, features_by_type, forward_strand,
+            self._add_translation(transcript_accession, transcript_data, features, forward_strand,
                                   exons_stranded_order)
 
             exons_genomic_order = exons_stranded_order
@@ -277,15 +288,15 @@ class TranscriptBuilder:
             genome differs from the transcript, which depends on the genome build """
         return amino_acid in {"Sec", "TERM", "Other"} or codon == 1
 
-    def _add_translation(self, transcript_accession, transcript_data, features_by_type, forward_strand,
+    def _add_translation(self, transcript_accession, transcript_data, features: TranscriptFeatures, forward_strand,
                          exons_stranded_order):
         translation = {}
         genome_mismatch = {}
-        if transl_table := features_by_type.get("transl_table"):
-            translation["transl_table"] = transl_table[0]
+        if features.transl_table is not None:
+            translation["transl_table"] = features.transl_table
 
         has_codons = "start_codon" in transcript_data and "stop_codon" in transcript_data
-        if transl_except := features_by_type.get("transl_except"):
+        if transl_except := features.transl_except:
             if has_codons:
                 codons, unplaced = self._get_transl_except_codons(transcript_accession, transcript_data,
                                                                   forward_strand, exons_stranded_order,
@@ -303,7 +314,7 @@ class TranscriptBuilder:
             for amino_acid in unplaced:
                 self._add_warning(transcript_data, "transl_except_unplaced", amino_acid)
 
-        if slippage_cds := features_by_type.get("ribosomal_slippage_cds"):
+        if slippage_cds := features.ribosomal_slippage_cds:
             unplaced = True
             if has_codons:
                 slippage, unplaced = self._get_ribosomal_slippage(transcript_accession, transcript_data,
@@ -314,10 +325,10 @@ class TranscriptBuilder:
             if unplaced:
                 self._add_warning(transcript_data, "ribosomal_slippage_unplaced")
 
-        if exceptions := features_by_type.get("translation_exceptions"):
-            translation["exceptions"] = sorted(set(exceptions))
-        if exceptions := features_by_type.get("genome_mismatch_exceptions"):
-            genome_mismatch["exceptions"] = sorted(set(exceptions))
+        if features.translation_exceptions:
+            translation["exceptions"] = sorted(set(features.translation_exceptions))
+        if features.genome_mismatch_exceptions:
+            genome_mismatch["exceptions"] = sorted(set(features.genome_mismatch_exceptions))
         genome_mismatch.update(self.transcript_genome_mismatch.get(transcript_accession, {}))
 
         if translation:
