@@ -26,6 +26,7 @@ Example::
 """
 from __future__ import annotations
 
+import contextlib
 import gzip
 from typing import Any, Dict, List, Optional, Union
 
@@ -268,17 +269,26 @@ def loads(data: bytes | str) -> CdotData:
     return msgspec.json.decode(data, type=CdotData)
 
 
+def open_json(file_or_filename):
+    """Context manager giving a readable binary file object for a cdot JSON file.
+
+    A filename (``.json`` or ``.json.gz``) is opened (gzip or plain) and closed on
+    exit. An already-open file object is yielded as-is and left open for its owner.
+    """
+    if isinstance(file_or_filename, str):
+        open_func = gzip.open if file_or_filename.endswith(".gz") else open
+        return open_func(file_or_filename, "rb")
+    return contextlib.nullcontext(file_or_filename)
+
+
 def load(file_or_filename) -> CdotData:
     """Load a cdot JSON file into a typed :class:`CdotData`.
 
     Accepts a filename (``.json`` or ``.json.gz``) or an already-open binary
-    file object. Mirrors ``JSONDataProvider``'s file handling.
+    file object (see :func:`open_json`). This is how ``JSONDataProvider`` loads its files.
     """
-    if isinstance(file_or_filename, str):
-        open_func = gzip.open if file_or_filename.endswith(".gz") else open
-        with open_func(file_or_filename, "rb") as f:
-            return loads(f.read())
-    return loads(file_or_filename.read())
+    with open_json(file_or_filename) as f:
+        return loads(f.read())
 
 
 def transcript_from_dict(d: dict) -> Transcript:

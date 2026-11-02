@@ -18,6 +18,7 @@
 - #154 - `RESTDataProvider` uses a `requests.Session` (connection reuse) and has a `timeout` argument (default 30 seconds) so a hung connection no longer blocks forever. The `session` argument lets you pass your own. `EnsemblTarkDataProvider`, `RESTPyHGVSTranscriptFactory` and the data release lookup also set a 30 second timeout
 - #154 - A response with no `Content-Type` header raised `TypeError` in `RESTDataProvider`, `EnsemblTarkDataProvider` and `RESTPyHGVSTranscriptFactory`. It now gives the usual "Non-json response" `ValueError`
 - #155 - `RESTDataProvider` rejected T2T-CHM13v2.0 contigs with `ValueError("Contig ... not supported")`. It now supports GRCh37, GRCh38 and T2T-CHM13v2.0 by default, set with the new `assemblies` argument
+- #169 - `JSONDataProvider` and `JSONPyHGVSTranscriptFactory` close the JSON files they open (they leaked the handle, giving `ResourceWarning: unclosed file` under `python -W error` or `-X dev`). Both now load through `cdot.models`, which has a new `open_json(file_or_filename)` context manager for the gzip-or-plain open. `FastaSeqFetcher` opens each FASTA file once instead of twice
 
 ### Removed
 
