@@ -9,8 +9,8 @@ substitute. If it doesn't, the substitution silently changes what the variant me
 This document explains how cdot decides whether a version substitution is safe, the public
 API, and the empirical study that the check is built on.
 
-- API entry points: [`fix_hgvs` / `resolve_transcript_version`](advanced_usage.md) and the
-  data-provider method `is_version_substitution_safe`.
+- API entry points: [`fix_hgvs` / `resolve_transcript_version`](advanced_usage.md) and
+  `cdot.hgvs.version_safety.is_version_substitution_safe`.
 - Reproducible analysis: `analysis/transcript_version_drift.py`,
   `analysis/transcript_version_crossbuild.py`, and the paper facts script
   `paper/scripts/compute_version_stability.py` (paper Results R5).
@@ -64,9 +64,12 @@ raised as `HGVSInputError`.
 from cdot.hgvs import intrinsic_cds_structure
 intrinsic_cds_structure(record)                 # -> ("+", 10257, (228, 4932, ...)) or None
 
-# Provider-level verdict for a specific substitution.
-safe, reason = dp.is_version_substitution_safe("NM_000059", 2, 4, genome_build="GRCh38")
+# Verdict for a specific substitution, given a data provider.
+from cdot.hgvs.version_safety import is_version_substitution_safe
+safe, reason = is_version_substitution_safe(dp, "NM_000059", 2, 4, genome_build="GRCh38")
 ```
+
+(`dp.is_version_substitution_safe(...)` still works but is deprecated and warns.)
 
 `is_version_substitution_safe` reads the requested version's structure from any build that
 holds it (cdot all-builds JSON files, or the REST `/transcript/<ac>` view, return every

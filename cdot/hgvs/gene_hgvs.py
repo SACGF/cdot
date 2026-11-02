@@ -15,6 +15,7 @@ import re
 from enum import Enum
 from typing import Optional
 
+from cdot.hgvs import version_safety
 from cdot.hgvs.clean import (
     HGVSFix,
     HGVSFixCode,
@@ -473,7 +474,7 @@ def _cited_position(hgvs_string: str) -> Optional[str]:
     Used to make the version-substitution safety check position-aware: a 5'UTR
     (``c.-N``) or 3'UTR (``c.*N``) cited position needs the matching UTR length
     preserved, not just the CDS structure (see
-    ``is_version_substitution_safe``).
+    :func:`cdot.hgvs.version_safety.is_version_substitution_safe`).
     """
     if ":" not in hgvs_string:
         return None
@@ -526,10 +527,10 @@ def resolve_transcript_version(
     and RESTDataProvider do). Providers that can't enumerate versions raise
     NotImplementedError, which is surfaced as an ERROR fix.
 
-    Coordinate-safety (#28): if the provider implements
-    ``is_version_substitution_safe`` (JSONDataProvider / RESTDataProvider do, via the
-    build-independent intrinsic CDS structure), the substitution is checked before it
-    is applied:
+    Coordinate-safety (#28): if the provider can return transcript records
+    (``_get_transcript``, as JSONDataProvider / RESTDataProvider do), the substitution
+    is checked by :func:`cdot.hgvs.version_safety.is_version_substitution_safe` (via
+    the build-independent intrinsic CDS structure) before it is applied:
 
       * structure-verified safe → substitute, WARNING USED_ADJACENT_VERSION_COORD_SAFE;
       * not safe and on_unsafe_version=SUBSTITUTE → substitute anyway, WARNING
@@ -581,13 +582,14 @@ def resolve_transcript_version(
         f"{versionless}.{requested_version}", f"{versionless}.{best}", 1
     )
 
-    safety = getattr(data_provider, "is_version_substitution_safe", None)
-    if safety is None:
-        # Provider can't assess coordinate-safety — keep the plain substitution fix.
+    if not hasattr(data_provider, "_get_transcript"):
+        # Provider can't supply transcript records, so coordinate-safety can't be
+        # assessed; keep the plain substitution fix.
         return resolved, [fix]
 
-    safe, reason = safety(versionless, requested_version, best, genome_build,
-                          cited_position=_cited_position(hgvs_string))
+    safe, reason = version_safety.is_version_substitution_safe(
+        data_provider, versionless, requested_version, best, genome_build,
+        cited_position=_cited_position(hgvs_string))
     moved = (f"Transcript version {versionless}.{requested_version} not found; "
              f"using .{best} instead")
     if safe:

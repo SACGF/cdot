@@ -21,6 +21,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from cdot.hgvs.dataproviders import JSONDataProvider
+from cdot.hgvs.version_safety import is_version_substitution_safe
 
 RELEASE = "/data/cdot_data/refseq/cdot-0.2.33.refseq.GRCh38.json.gz"
 A1 = "output/clinvar_pass/refseq_full.csv"
@@ -71,7 +72,7 @@ def classify_alts(base, v):
     for w in versions_by_base.get(base, []):
         if w == v:
             continue
-        safe, _ = p.is_version_substitution_safe(base, v, w, BUILD)
+        safe, _ = is_version_substitution_safe(p, base, v, w, BUILD)
         if not safe:
             continue
         gap_safe += 1
