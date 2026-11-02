@@ -12,7 +12,8 @@ things up in a data provider:
   bare number matches exactly one transcript.
 - resolve_transcript_version() substitutes an adjacent transcript version when
   the cited one is not held, after cdot.hgvs.version_safety has judged the
-  substitution coordinate-safe.
+  substitution coordinate-safe. It also gives a versionless transcript accession
+  (e.g. "NM_000059:c.36del") a version when every held version agrees.
 
 fix_hgvs() is the single combined entry point that chains clean_hgvs() and
 these in one call, the recommended function for most callers.
@@ -80,6 +81,9 @@ class UnsafeVersionPolicy(Enum):
 
     A substitution that IS structure-verified safe is always applied (with a
     ``USED_ADJACENT_VERSION_COORD_SAFE`` WARNING) regardless of this policy.
+
+    The policy does not apply to a versionless accession: when its held versions
+    disagree at the cited position it is always refused.
     """
     REFUSE = "refuse"
     SUBSTITUTE = "substitute"
@@ -542,24 +546,75 @@ def resolve_missing_accession_prefix(
 # Public: resolve_transcript_version — adjacent-version fallback
 # ---------------------------------------------------------------------------
 
-def _parse_versioned_transcript(hgvs_string: str) -> Optional[tuple[str, int]]:
+def _parse_transcript_accession(hgvs_string: str) -> Optional[tuple[str, Optional[int]]]:
     """
-    Return (versionless_accession, version) if hgvs_string carries a versioned
-    transcript accession (e.g. "NM_000059.4:c.36del" → ("NM_000059", 4)), else None.
+    Return (versionless_accession, version) if hgvs_string starts with a transcript
+    accession (e.g. "NM_000059.4:c.36del" → ("NM_000059", 4)), with version None when
+    it has none ("NM_000059:c.36del" → ("NM_000059", None)), else None.
 
     Handles a gene-in-parens suffix ("NM_000059.4(BRCA2):c.36del"). Returns None for
-    gene-only HGVS, genomic refs, or transcripts with no version (nothing to fall back from).
+    gene-only HGVS, genomic refs and LRG accessions (which have no versions).
     """
     if ":" not in hgvs_string:
         return None
     prefix, _allele = hgvs_string.split(":", 1)
     accession = prefix.split("(", 1)[0]  # drop "(GENE)" suffix if present
-    if not _looks_like_transcript(accession):
+    if not _looks_like_transcript(accession) or accession.startswith("LRG_"):
         return None
     base, dot, version = accession.rpartition(".")
-    if not dot or not version.isdigit():
-        return None  # no version present — nothing to fall back from
+    if not dot:
+        return accession, None
+    if not version.isdigit():
+        return None
     return base, int(version)
+
+
+def _resolve_versionless_transcript(hgvs_string: str, accession: str, versions: list[int],
+                                    data_provider, genome_build: Optional[str]) -> tuple[str, list[HGVSFix]]:
+    """
+    Give a versionless accession (eg "NM_000059:c.36del") its latest held version, if
+    every held version gives the same coordinate at the cited position. Otherwise
+    refuse: with no version given there is no nearest version to fall back to, so
+    picking one would be a guess between different variants (``on_unsafe_version``
+    does not apply).
+    """
+    if not versions:
+        return hgvs_string, [HGVSFix(
+            severity=HGVSFixSeverity.ERROR,
+            code=HGVSFixCode.NO_TRANSCRIPT_VERSIONS,
+            message=f"No versions of {accession} are available in the data provider",
+        )]
+    latest = f"{accession}.{max(versions)}"
+    cited_position = _cited_position(hgvs_string)
+    disagree = []
+    for version in sorted(set(versions) - {max(versions)}):
+        if hasattr(data_provider, "_get_transcript"):
+            safe, reason = version_safety.is_version_substitution_safe_by_accession(
+                data_provider, f"{accession}.{version}", latest, genome_build,
+                cited_position=cited_position)
+        else:
+            safe, reason = False, "no transcript records to compare"
+        if not safe:
+            disagree.append(f".{version} ({reason})")
+
+    if disagree:
+        return hgvs_string, [HGVSFix(
+            severity=HGVSFixSeverity.ERROR,
+            code=HGVSFixCode.REFUSED_UNSAFE_VERSION,
+            message=(f"Transcript {accession} has no version, and these versions may give a "
+                     f"different coordinate to {latest}: {', '.join(disagree)}. "
+                     f"Give the transcript version."),
+            original=accession,
+            fixed=latest,
+        )]
+    return latest + hgvs_string[len(accession):], [HGVSFix(
+        severity=HGVSFixSeverity.WARNING,
+        code=HGVSFixCode.RESOLVED_VERSIONLESS_TRANSCRIPT,
+        message=(f"Transcript {accession} has no version; using {latest}, as every "
+                 f"version held gives the same coordinate"),
+        original=accession,
+        fixed=latest,
+    )]
 
 
 def _cited_position(hgvs_string: str) -> Optional[str]:
@@ -612,7 +667,7 @@ def resolve_transcript_version(
     Returns:
         (resolved_string, fixes)
         fixes is empty if the requested version exists (non-destructive) or if the
-        string carries no versioned transcript. When a substitution is made the fix
+        string carries no transcript accession. When a substitution is made the fix
         depends on whether it is coordinate-safe (see below); an ERROR
         NO_TRANSCRIPT_VERSIONS fix (string unchanged) if the provider has no version
         of the accession at all.
@@ -637,6 +692,11 @@ def resolve_transcript_version(
     the structural check itself is build-independent. Providers without the safety
     check fall back to a plain WARNING USED_ADJACENT_VERSION (unchanged behaviour).
 
+    A transcript accession with no version (``"NM_000059:c.36del"``) gets its latest
+    held version (WARNING RESOLVED_VERSIONLESS_TRANSCRIPT) only if every held version
+    gives the same coordinate at the cited position; otherwise it is left unchanged
+    with an ERROR REFUSED_UNSAFE_VERSION, whatever on_unsafe_version says.
+
     Example::
 
         # data provider has NM_000059 versions [3, 4] but not the requested .2
@@ -644,9 +704,9 @@ def resolve_transcript_version(
         # resolved = "NM_000059.4:c.36del"  (if .4 is structure-verified safe)
         # fixes[0].code = USED_ADJACENT_VERSION_COORD_SAFE
     """
-    parsed = _parse_versioned_transcript(hgvs_string)
+    parsed = _parse_transcript_accession(hgvs_string)
     if parsed is None:
-        return hgvs_string, []  # no versioned transcript — nothing to do
+        return hgvs_string, []  # no transcript accession, nothing to do
     versionless, requested_version = parsed
 
     try:
@@ -657,6 +717,10 @@ def resolve_transcript_version(
             code=HGVSFixCode.NO_TRANSCRIPT_VERSIONS,
             message=str(e),
         )]
+
+    if requested_version is None:
+        return _resolve_versionless_transcript(hgvs_string, versionless, available_versions,
+                                               data_provider, genome_build)
 
     try:
         best, fix = get_best_transcript_version(
@@ -766,7 +830,8 @@ def fix_hgvs(
     a WARNING; otherwise on_unsafe_version decides (REFUSE by default → ERROR, string
     unchanged; SUBSTITUTE → apply with a "coordinate may have moved" WARNING). A
     genome_build, if supplied, is used only for the genomic-bracket fallback inside
-    that check.
+    that check. A versionless accession (eg "NM_000059:c.36del") gets a version only
+    when every held version agrees at the cited position.
 
     Example — gene-only input resolved via MANE::
 

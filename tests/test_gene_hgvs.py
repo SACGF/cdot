@@ -20,7 +20,7 @@ from cdot.hgvs.gene_hgvs import (
     _filter_by_consortium,
     _get_tx_versions,
     _parse_gene_only_hgvs,
-    _parse_versioned_transcript,
+    _parse_transcript_accession,
     _rank_transcripts_by_tags,
     consortium_of,
     fix_hgvs,
@@ -641,27 +641,27 @@ def test_fix_hgvs_no_provider_no_genome_build():
 # ---------------------------------------------------------------------------
 
 def test_parse_versioned_transcript_plain():
-    assert _parse_versioned_transcript("NM_000059.4:c.36del") == ("NM_000059", 4)
+    assert _parse_transcript_accession("NM_000059.4:c.36del") == ("NM_000059", 4)
 
 
 def test_parse_versioned_transcript_with_gene_parens():
-    assert _parse_versioned_transcript("NM_000059.4(BRCA2):c.36del") == ("NM_000059", 4)
+    assert _parse_transcript_accession("NM_000059.4(BRCA2):c.36del") == ("NM_000059", 4)
 
 
 def test_parse_versioned_transcript_ensembl():
-    assert _parse_versioned_transcript("ENST00000380152.8:c.36del") == ("ENST00000380152", 8)
+    assert _parse_transcript_accession("ENST00000380152.8:c.36del") == ("ENST00000380152", 8)
 
 
 def test_parse_versioned_transcript_no_version():
-    assert _parse_versioned_transcript("NM_000059:c.36del") is None
+    assert _parse_transcript_accession("NM_000059:c.36del") == ("NM_000059", None)
 
 
 def test_parse_versioned_transcript_gene_only():
-    assert _parse_versioned_transcript("BRCA2:c.36del") is None
+    assert _parse_transcript_accession("BRCA2:c.36del") is None
 
 
 def test_parse_versioned_transcript_no_colon():
-    assert _parse_versioned_transcript("NM_000059.4") is None
+    assert _parse_transcript_accession("NM_000059.4") is None
 
 
 # ---------------------------------------------------------------------------
@@ -834,10 +834,11 @@ def test_resolve_version_unknown_accession_errors(version_provider):
     assert fixes[0].code == C.NO_TRANSCRIPT_VERSIONS
 
 
-def test_resolve_version_no_versioned_transcript_noop(version_provider):
-    # gene-only / versionless input — nothing to do
-    assert resolve_transcript_version("BRCA2:c.36del", version_provider) == ("BRCA2:c.36del", [])
-    assert resolve_transcript_version("NM_000059:c.36del", version_provider) == ("NM_000059:c.36del", [])
+def test_resolve_version_no_transcript_accession_noop(version_provider):
+    # gene-only input, a genomic ref (versionless or not) and an LRG: nothing to do
+    for hgvs_string in ["BRCA2:c.36del", "NC_000013:g.32316528del", "NC_000013.11:g.32316528del",
+                        "LRG_293t1:c.36del"]:
+        assert resolve_transcript_version(hgvs_string, version_provider) == (hgvs_string, [])
 
 
 def test_resolve_version_unsupported_provider_errors():
@@ -938,6 +939,64 @@ def test_fix_hgvs_version_fallback_unsafe_substitute_opt_in():
         on_unsafe_version=UnsafeVersionPolicy.SUBSTITUTE)
     assert result == "NM_000059.3:c.36del"
     assert any(f.code == C.USED_ADJACENT_VERSION_COORD_UNVERIFIED for f in fixes)
+
+
+# ---------------------------------------------------------------------------
+# resolve_transcript_version: versionless accession
+#
+# The test data holds one version per accession, so the versions are built here,
+# all on the same genomic CDS. _VL_LONG_5UTR only lengthens the 5'UTR by 5 bases.
+# ---------------------------------------------------------------------------
+
+_VL_SAME = ([[100, 120, 0, 1, 20, None], [200, 220, 1, 21, 40, None]], 10, 40)
+_VL_LONG_5UTR = ([[95, 120, 0, 1, 25, None], [200, 220, 1, 26, 45, None]], 15, 45)
+_VL_LONGER_CDS = ([[100, 120, 0, 1, 20, None], [200, 223, 1, 21, 43, None]], 10, 43)
+
+
+def _versionless_provider(versions):
+    """JSONDataProvider holding NM_000059 ``{version: (exons, start_codon, stop_codon)}`` in GRCh38."""
+    transcripts = {}
+    for version, (exons, start_codon, stop_codon) in versions.items():
+        tx_ac = f"NM_000059.{version}"
+        transcripts[tx_ac] = {"id": tx_ac, "gene_name": "BRCA2", "start_codon": start_codon,
+                              "stop_codon": stop_codon, "genome_builds": {"GRCh38": _safety_build(exons)}}
+    data = {"cdot_version": "0.2.33", "genome_builds": ["GRCh38"], "transcripts": transcripts}
+    return JSONDataProvider([io.StringIO(json.dumps(data))])
+
+
+def test_resolve_versionless_all_agree_uses_latest():
+    dp = _versionless_provider({3: _VL_SAME, 4: _VL_SAME})
+    for hgvs_string, expected in [("NM_000059:c.36del", "NM_000059.4:c.36del"),
+                                  ("NM_000059(BRCA2):c.36del", "NM_000059.4(BRCA2):c.36del")]:
+        resolved, fixes = resolve_transcript_version(hgvs_string, dp, genome_build="GRCh38")
+        assert resolved == expected
+        assert [(f.severity, f.code) for f in fixes] == [(W, C.RESOLVED_VERSIONLESS_TRANSCRIPT)]
+
+
+def test_resolve_versionless_disagree_refuses():
+    dp = _versionless_provider({2: _VL_LONGER_CDS, 3: _VL_SAME, 4: _VL_SAME})
+    for policy in UnsafeVersionPolicy:  # on_unsafe_version does not apply
+        resolved, fixes = resolve_transcript_version("NM_000059:c.36del", dp, genome_build="GRCh38",
+                                                     on_unsafe_version=policy)
+        assert resolved == "NM_000059:c.36del"
+        assert [(f.severity, f.code) for f in fixes] == [(E, C.REFUSED_UNSAFE_VERSION)]
+        assert ".2 (" in fixes[0].message and ".3 (" not in fixes[0].message
+
+
+def test_resolve_versionless_utr_position():
+    # Same CDS, longer 5'UTR in .3: only a 5'UTR position differs
+    dp = _versionless_provider({3: _VL_LONG_5UTR, 4: _VL_SAME})
+    assert resolve_transcript_version("NM_000059:c.36del", dp, genome_build="GRCh38")[0] == "NM_000059.4:c.36del"
+    assert resolve_transcript_version("NM_000059:c.*5del", dp, genome_build="GRCh38")[0] == "NM_000059.4:c.*5del"
+    assert resolve_transcript_version("NM_000059:c.-5del", dp, genome_build="GRCh38")[0] == "NM_000059:c.-5del"
+
+
+def test_fix_hgvs_versionless_needs_version_fallback():
+    dp = _versionless_provider({4: _VL_SAME})
+    assert fix_hgvs("NM_000059:c.36del", data_provider=dp, genome_build="GRCh38") == ("NM_000059:c.36del", [])
+    result, _fixes = fix_hgvs("NM_000059:c.36del", data_provider=dp, genome_build="GRCh38",
+                              version_fallback=VersionStrategy.UP_THEN_DOWN)
+    assert result == "NM_000059.4:c.36del"
 
 
 # ---------------------------------------------------------------------------

@@ -116,6 +116,12 @@ behaviour outside `fix_hgvs`. Both rely on the data provider's `get_tx_versions(
 (implemented by `JSONDataProvider` and `RESTDataProvider`; the REST version uses the versionless
 `/transcript/<ac>` lookup and warms the cache with every returned version).
 
+A transcript accession with no version (`NM_000059:c.36del`) gets its latest version, with a
+`RESOLVED_VERSIONLESS_TRANSCRIPT` WARNING, but only if every version held gives the same coordinate
+at the cited position. Otherwise it is left unchanged with a `REFUSED_UNSAFE_VERSION` ERROR listing
+the versions that differ (`on_unsafe_version` does not apply). It never switches to another
+transcript of the gene.
+
 ### `clean_hgvs` - string cleaning with op selection
 
 `fix_hgvs` calls `clean_hgvs()` for the string-fixing half. Call it directly when you want only the

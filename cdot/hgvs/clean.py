@@ -77,6 +77,9 @@ class HGVSFixCode(Enum):
     USED_ADJACENT_VERSION_COORD_UNVERIFIED  = "used_adjacent_version_coord_unverified"
     REFUSED_UNSAFE_VERSION                  = "refused_unsafe_version"
     NO_TRANSCRIPT_VERSIONS       = "no_transcript_versions"
+    # Versionless accession (eg NM_000059:c.36del) given a version by the fallback,
+    # because every held version agrees at the cited position
+    RESOLVED_VERSIONLESS_TRANSCRIPT = "resolved_versionless_transcript"
     # Gene → transcript resolution (WARNING on success, ERROR on failure)
     RESOLVED_GENE_TO_TRANSCRIPT  = "resolved_gene_to_transcript"
     NO_TRANSCRIPT_FOR_GENE       = "no_transcript_for_gene"
