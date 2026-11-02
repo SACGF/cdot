@@ -92,6 +92,7 @@ def test_parse_gene_only_hgvs_already_has_transcript():
 @pytest.mark.parametrize("hgvs_string", [
     "NC_000013.11:g.32316528del", "NG_012337.3:g.5000A>G", "NC_012920.1:m.3243A>G",
     "NP_000050.2:p.Arg1Gly", "NC_000013.11:c.100del", "BRCA2:g.100del",
+    "chr13:c.100del", "13:c.100del", "X:p.Arg1Gly",
 ])
 def test_parse_gene_only_hgvs_not_gene_only(hgvs_string):
     assert _parse_gene_only_hgvs(hgvs_string) == (None, None)
@@ -113,6 +114,11 @@ def test_parse_gene_only_hgvs_no_colon():
     gene, allele = _parse_gene_only_hgvs("c.36del")
     assert gene is None
     assert allele is None
+
+
+@pytest.mark.parametrize("gene", ["HLA-A", "7SK", "Y_RNA", "AC004556.1"])
+def test_parse_gene_only_hgvs_ensembl_gene_names(gene):
+    assert _parse_gene_only_hgvs(f"{gene}:c.10del") == (gene, "c.10del")
 
 
 def test_parse_gene_only_hgvs_ensembl_transcript():

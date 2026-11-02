@@ -403,7 +403,8 @@ _SPACE_BEFORE_KIND = re.compile(rf"^([A-Za-z][A-Za-z0-9]{{1,9}})\s+(?={_KIND}\.)
 # "chr13 NC_000013.11:g.32316528del". Only the exact "chr" + chromosome forms,
 # as many gene symbols start with CHR (CHRM1, CHRNA7, CHRD...); no HGNC symbol,
 # alias or previous symbol matches this pattern.
-_CHROM_NAME = r"chr(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)"
+_CHROMOSOME = r"(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)"
+_CHROM_NAME = rf"chr{_CHROMOSOME}"
 _CONTIG_NAME_BEFORE_ACCESSION = re.compile(
     rf"(?<![\w.])({_CHROM_NAME})\s+(?=(NC_\d+)(\.\d+)?(?![\w.]))", re.IGNORECASE)
 
@@ -575,14 +576,18 @@ def _kinds_for_reference(accession: str) -> Optional[tuple[str, str]]:
 _N_ON_CODING = ": n. counts from the transcript start, not the start codon"
 
 
-_GENE_SYMBOL = re.compile(r"[A-Za-z][A-Za-z0-9-]*")
+# Gene names as HGNC and Ensembl write them ("BRCA2", "HLA-A", "7SK", "Y_RNA", "AC004556.1")
+_GENE_SYMBOL = re.compile(r"[A-Za-z0-9][\w.-]*")
+# A chromosome name with or without "chr" ("chr13", "13", "X", "MT"), which a g./m. position can sit on
+_BARE_OR_CHR_CHROM_NAME = re.compile(rf"(?:chr)?{_CHROMOSOME}", re.IGNORECASE)
 
 
 def _looks_like_gene_symbol(reference: str) -> bool:
-    """ True if reference could be a gene symbol: not an accession and not a chromosome name
-        ("chr19"), which a g. position can sit on. """
-    return (bool(_GENE_SYMBOL.fullmatch(reference)) and not _looks_like_hgvs_prefix(reference.upper())
-            and not re.fullmatch(_CHROM_NAME, reference, re.IGNORECASE))
+    """ True if reference (the part of an HGVS string before ':') could be a gene symbol:
+        no parentheses, not an accession in any case ("nm_000059.4"), and not a chromosome name. """
+    return (bool(_GENE_SYMBOL.fullmatch(reference))
+            and not _looks_like_hgvs_prefix(reference.upper())
+            and not _BARE_OR_CHR_CHROM_NAME.fullmatch(reference))
 
 
 def _or_list(items: list[str]) -> str:
@@ -627,6 +632,14 @@ def _validate(s: str) -> list[HGVSFix]:
             code=HGVSFixCode.KIND_REFERENCE_MISMATCH,
             message=(f"{parts.reference} looks like a gene symbol, so it can't take '{parts.kind}.': "
                      f"{parts.kind}. positions are on a genomic accession (eg NC_000013.11)"),
+        ))
+    elif parts and parts.kind in ("c", "n", "r", "p") and _BARE_OR_CHR_CHROM_NAME.fullmatch(parts.reference):
+        fixes.append(HGVSFix(
+            severity=HGVSFixSeverity.ERROR,
+            code=HGVSFixCode.KIND_REFERENCE_MISMATCH,
+            message=(f"{parts.reference} is a chromosome name, so it can't take '{parts.kind}.': "
+                     + ("p. positions are on a protein accession (eg NP_000050.3)" if parts.kind == "p"
+                        else f"{parts.kind}. positions are on a transcript accession (eg NM_000059.4)")),
         ))
     if _MISSING_REFERENCE.match(s):
         fixes.append(HGVSFix(

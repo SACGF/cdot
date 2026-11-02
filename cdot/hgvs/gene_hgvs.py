@@ -34,7 +34,7 @@ from cdot.hgvs.clean import (
     HGVSFixSeverity,
     HGVSInputError,
     VersionStrategy,
-    _looks_like_hgvs_prefix,
+    _looks_like_gene_symbol,
     _looks_like_transcript,
     _refseq_prefixes,
     clean_hgvs,
@@ -116,22 +116,14 @@ def _parse_gene_only_hgvs(hgvs_string: str) -> tuple[Optional[str], Optional[str
     Return (gene_symbol, allele) if hgvs_string is gene-only HGVS (no transcript),
     or (None, None) if it already contains a transcript accession.
 
-    Gene-only HGVS: a c., n., r. or p. allele, and the part before ':' is not an
-    accession and contains no parentheses (e.g. "BRCA2:c.36del", "BRCA2:p.Arg10Gly").
+    Gene-only HGVS: a c., n., r. or p. allele on a reference that looks like a gene
+    symbol (see clean._looks_like_gene_symbol), e.g. "BRCA2:c.36del", "BRCA2:p.Arg10Gly".
     Genomic HGVS ("NC_000013.11:g.32316528del", "BRCA2:g.…") is not gene-only.
     """
     if ":" not in hgvs_string:
         return None, None
     prefix, allele = hgvs_string.split(":", 1)
-    # Parentheses mean a transcript(gene) pair — already has a transcript
-    if "(" in prefix or ")" in prefix:
-        return None, None
-    if not allele.startswith(("c.", "n.", "r.", "p.")):
-        return None, None
-    # _looks_like_hgvs_prefix is case-sensitive; uppercase so a lowercase accession
-    # (e.g. "enst00000617537.5" / "nm_000059.4") is recognised and passed through
-    # unchanged rather than being treated as a gene symbol.
-    if _looks_like_hgvs_prefix(prefix.upper()):
+    if not allele.startswith(("c.", "n.", "r.", "p.")) or not _looks_like_gene_symbol(prefix):
         return None, None
     return prefix, allele
 
