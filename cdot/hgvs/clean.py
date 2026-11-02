@@ -555,8 +555,10 @@ def _on_fields(fn: _StructuralOp) -> _StringOp:
     return string_op
 
 
-# The kind letters each reference-sequence type can take, and how to name the type in a message
-_KINDS_FOR_TYPE = {'mRNA': ("cnr", "coding transcript"), 'RNA': ("nr", "non-coding transcript"),
+# The kind letters each reference-sequence type can take, and how to name the type in a message.
+# A coding transcript can't take n.: n. counts from the transcript start and c. from the start
+# codon, so the same number is a different base.
+_KINDS_FOR_TYPE = {'mRNA': ("cr", "coding transcript"), 'RNA': ("nr", "non-coding transcript"),
                    'genomic': ("gm", "genomic"), 'Protein': ("p", "protein")}
 
 
@@ -567,6 +569,9 @@ def _kinds_for_reference(accession: str) -> Optional[tuple[str, str]]:
     if accession.upper().startswith(_ENSEMBL_TRANSCRIPT_PREFIX):
         return "cnr", "transcript"
     return _KINDS_FOR_TYPE.get(_reference_type(accession))
+
+
+_N_ON_CODING = ": n. counts from the transcript start, not the start codon"
 
 
 def _or_list(items: list[str]) -> str:
@@ -602,7 +607,8 @@ def _validate(s: str) -> list[HGVSFix]:
                 severity=HGVSFixSeverity.ERROR,
                 code=HGVSFixCode.KIND_REFERENCE_MISMATCH,
                 message=(f"{parts.accession} is a {description} accession, so it can't take "
-                         f"'{parts.kind}.' (use {_or_list([k + '.' for k in kinds])})"),
+                         f"'{parts.kind}.' (use {_or_list([k + '.' for k in kinds])})"
+                         + (_N_ON_CODING if parts.kind == "n" and "c" in kinds else "")),
             ))
     if _MISSING_REFERENCE.match(s):
         fixes.append(HGVSFix(

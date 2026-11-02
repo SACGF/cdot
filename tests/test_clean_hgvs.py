@@ -845,7 +845,7 @@ ALREADY_VALID = [
     "NG_012337.3:g.5000A>G",
     "NP_000050.2:p.Arg1Gly",
     "NP_000050.2:p.(Glu23fs)",
-    "NM_000059.4:n.68del",
+    "NR_003051.3:n.68del",
     # Gene symbols that start with a two-letter RefSeq prefix (AC, NS, ...)
     "ACTB:c.100A>G",
     "NSD1:c.100A>G",
@@ -1339,13 +1339,15 @@ def test_parse_round_trips(s):
 
 
 @pytest.mark.parametrize("hgvs_string, message", [
-    ("NM_000059.4:g.32316528del", "NM_000059.4 is a coding transcript accession, so it can't take 'g.' (use c., n. or r.)"),
-    ("NM_000059.4:p.Arg10Gly", "NM_000059.4 is a coding transcript accession, so it can't take 'p.' (use c., n. or r.)"),
+    ("NM_000059.4:g.32316528del", "NM_000059.4 is a coding transcript accession, so it can't take 'g.' (use c. or r.)"),
+    ("NM_000059.4:p.Arg10Gly", "NM_000059.4 is a coding transcript accession, so it can't take 'p.' (use c. or r.)"),
+    ("NM_000059.4:n.68del", "NM_000059.4 is a coding transcript accession, so it can't take 'n.' (use c. or r.): "
+                            "n. counts from the transcript start, not the start codon"),
     ("NR_003051.3:c.10del", "NR_003051.3 is a non-coding transcript accession, so it can't take 'c.' (use n. or r.)"),
     ("NC_000013.11:c.68del", "NC_000013.11 is a genomic accession, so it can't take 'c.' (use g. or m.)"),
     ("NP_000050.2:c.68del", "NP_000050.2 is a protein accession, so it can't take 'c.' (use p.)"),
     ("ENST00000380152.8:g.32316528del", "ENST00000380152.8 is a transcript accession, so it can't take 'g.' (use c., n. or r.)"),
-    ("NM_000059.4(BRCA2):g.32316528del", "NM_000059.4 is a coding transcript accession, so it can't take 'g.' (use c., n. or r.)"),
+    ("NM_000059.4(BRCA2):g.32316528del", "NM_000059.4 is a coding transcript accession, so it can't take 'g.' (use c. or r.)"),
 ])
 def test_kind_reference_mismatch(hgvs_string, message):
     cleaned, fixes = clean_hgvs(hgvs_string)
@@ -1354,7 +1356,7 @@ def test_kind_reference_mismatch(hgvs_string, message):
 
 
 @pytest.mark.parametrize("hgvs_string", [
-    "NM_000059.4:c.68del", "NM_000059.4:n.68del", "NM_000059.4:r.68del", "NR_003051.3:n.10del",
+    "NM_000059.4:c.68del", "NM_000059.4:r.68del", "NR_003051.3:n.10del",
     "NC_000013.11:g.32316528del", "NC_012920.1:m.3243A>G", "NP_000050.2:p.Arg10Gly",
     "ENST00000380152.8:n.68del", "BRCA2:c.68del", "LRG_199t1:c.100del",
 ])
