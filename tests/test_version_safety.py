@@ -18,11 +18,13 @@ import pytest
 
 from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider, LocalDataProvider
 from cdot.hgvs.version_safety import (
+    _genomic_at,
     cds_alignment_gaps,
     cds_genomic_map,
     describe_structure_change,
     exon_alignment_gaps,
     genomic_bracket_safe,
+    genomic_maps_fully_agree,
     intrinsic_cds_structure,
     intrinsic_exon_structure,
     is_version_substitution_safe,
@@ -713,4 +715,119 @@ def test_noncoding_malformed_does_not_crash():
     safe, reason = is_version_substitution_safe(transcript, substitute_transcript, "GRCh38")
     assert not safe
     assert "version .3 has a malformed exon record" in reason
+
+
+# ---------------------------------------------------------------------------
+# _genomic_at and genomic_maps_fully_agree: the genomic CDS map arithmetic
+# behind the placement check and the bracket fallback
+# ---------------------------------------------------------------------------
+
+def test_genomic_at_plus_strand_walks_each_segment():
+    sig = cds_genomic_map(_tx("NM_000059.4", 0, 30, {"GRCh38": EXONS}), "GRCh38")
+    assert sig["segs"] == [(0, 100), (10, 200)]
+    # first segment: c.1..c.10 at genomic 100..109
+    assert _genomic_at(sig, 0) == 100
+    assert _genomic_at(sig, 9) == 109
+    # second segment: c.11..c.30 at genomic 200..219
+    assert _genomic_at(sig, 10) == 200
+    assert _genomic_at(sig, 29) == 219
+
+
+def test_genomic_at_minus_strand_counts_down():
+    sig = cds_genomic_map(_tx("NM_000059.4", 0, 30, {"GRCh38": EXONS_MINUS}, strand="-"), "GRCh38")
+    assert sig["segs"] == [(0, 209), (10, 119)]
+    # c.1 is the last base of the higher exon, then genomic coordinates decrease
+    assert _genomic_at(sig, 0) == 209
+    assert _genomic_at(sig, 9) == 200
+    assert _genomic_at(sig, 10) == 119
+    assert _genomic_at(sig, 29) == 100
+
+
+def test_genomic_at_single_segment():
+    sig = cds_genomic_map(_tx("NM_000059.4", 0, 30, {"GRCh38": [[100, 130, 0, 1, 30, None]]}), "GRCh38")
+    assert sig["segs"] == [(0, 100)]
+    assert [_genomic_at(sig, off) for off in (0, 15, 29)] == [100, 115, 129]
+
+
+def test_genomic_at_many_segments_picks_the_right_one():
+    # Five one-codon exons so the binary search has several breakpoints to choose from
+    exons = [[100 + 50 * i, 103 + 50 * i, i, 1 + 3 * i, 3 + 3 * i, None] for i in range(5)]
+    sig = cds_genomic_map(_tx("NM_000059.4", 0, 15, {"GRCh38": exons}), "GRCh38")
+    assert sig["segs"] == [(0, 100), (3, 150), (6, 200), (9, 250), (12, 300)]
+    for off in range(15):
+        assert _genomic_at(sig, off) == 100 + 50 * (off // 3) + off % 3
+
+
+def _map(exons, strand="+", stop_codon=30, start_codon=0, contig="NC_000013.11"):
+    rec = _tx("NM_000059.4", start_codon, stop_codon, {"GRCh38": exons}, strand=strand)
+    rec["genome_builds"]["GRCh38"]["contig"] = contig
+    return cds_genomic_map(rec, "GRCh38")
+
+
+def test_genomic_maps_fully_agree_identical():
+    assert genomic_maps_fully_agree(_map(EXONS), _map(EXONS))
+    assert genomic_maps_fully_agree(_map(EXONS_MINUS, strand="-"), _map(EXONS_MINUS, strand="-"))
+
+
+def test_genomic_maps_fully_agree_moved_placement():
+    assert not genomic_maps_fully_agree(_map(EXONS), _map(EXONS_MOVED))
+    assert not genomic_maps_fully_agree(_map(EXONS_MINUS, strand="-"), _map(EXONS_MINUS_MOVED, strand="-"))
+
+
+def test_genomic_maps_fully_agree_different_exon_split_same_genomic_bases():
+    # The second exon is split in two in b, but every coding base maps to the same
+    # genomic coordinate, so the maps agree (b's extra breakpoint is checked in a)
+    split = [[100, 110, 0, 1, 10, None], [200, 210, 1, 11, 20, None], [210, 220, 2, 21, 30, None]]
+    assert genomic_maps_fully_agree(_map(EXONS), _map(split))
+    assert genomic_maps_fully_agree(_map(split), _map(EXONS))
+
+
+def test_genomic_maps_fully_agree_longer_cds_agrees_on_shared_bases():
+    # Same placement, the CDS of b runs 3 bases further: compared on the shared 30
+    longer = [[100, 110, 0, 1, 10, None], [200, 223, 1, 11, 33, None]]
+    assert genomic_maps_fully_agree(_map(EXONS), _map(longer, stop_codon=33))
+    assert genomic_maps_fully_agree(_map(longer, stop_codon=33), _map(EXONS))
+
+
+def test_genomic_maps_disagree_after_shared_breakpoint():
+    # First exon identical, second exon shifted by one base
+    shifted = [[100, 110, 0, 1, 10, None], [201, 221, 1, 11, 30, None]]
+    assert not genomic_maps_fully_agree(_map(EXONS), _map(shifted))
+
+
+def test_genomic_maps_disagree_within_a_resplit():
+    # Same CDS length, exon boundary moved: c.11..c.15 sit at 110..114 in b, 200..204 in a
+    assert not genomic_maps_fully_agree(_map(EXONS), _map(EXONS_RESPLIT))
+
+
+def test_genomic_maps_fully_agree_gap_is_non_comparable():
+    assert not genomic_maps_fully_agree(_map(EXONS), _map(EXONS_GAP))
+    assert not genomic_maps_fully_agree(_map(EXONS_GAP), _map(EXONS_GAP))
+
+
+def test_genomic_maps_fully_agree_none_or_different_contig_or_strand():
+    assert not genomic_maps_fully_agree(None, _map(EXONS))
+    assert not genomic_maps_fully_agree(_map(EXONS), None)
+    assert not genomic_maps_fully_agree(_map(EXONS), _map(EXONS, contig="NC_000012.12"))
+    # EXONS_MINUS covers the same genomic bases as EXONS, on the other strand
+    assert not genomic_maps_fully_agree(_map(EXONS), _map(EXONS_MINUS, strand="-"))
+
+
+def test_cds_genomic_map_minus_strand_with_utrs():
+    # Minus strand with a 5-base 5'UTR and a 3'UTR: the CDS starts part way into the
+    # higher exon and ends before the lower exon does
+    exons = [[100, 120, 1, 16, 35, None], [200, 215, 0, 1, 15, None]]
+    sig = cds_genomic_map(_tx("NM_000059.4", 5, 30, {"GRCh38": exons}, strand="-"), "GRCh38")
+    assert sig["cds_len"] == 25
+    # c.1 (tx 6) is five bases down from the top of the higher exon (214)
+    assert sig["segs"] == [(0, 209), (10, 119)]
+    assert _genomic_at(sig, 24) == 105  # last CDS base (tx 30), five above the exon start at 100
+
+
+def test_cds_genomic_map_skips_utr_only_exons():
+    exons = [[50, 60, 0, 1, 10, None], [100, 110, 1, 11, 20, None], [200, 220, 2, 21, 40, None],
+             [300, 310, 3, 41, 50, None]]
+    sig = cds_genomic_map(_tx("NM_000059.4", 10, 40, {"GRCh38": exons}), "GRCh38")
+    assert sig["cds_len"] == 30
+    assert sig["segs"] == [(0, 100), (10, 200)]
 
