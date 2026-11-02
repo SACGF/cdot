@@ -7,7 +7,7 @@ import requests
 from hgvs.dataproviders.seqfetcher import SeqFetcher
 from hgvs.exceptions import HGVSDataNotAvailableError
 
-from cdot.hgvs.dataproviders import get_ac_name_map, get_name_ac_map
+from cdot.hgvs.dataproviders.json_data_provider import get_ac_name_map, get_name_ac_map
 from cdot.hgvs.dataproviders.seqfetcher import AbstractTranscriptSeqFetcher, PrefixSeqFetcher, \
     AlwaysFailSeqFetcher
 from hgvs.dataproviders.interface import Interface

@@ -5,7 +5,8 @@ Reference and how-to docs for [cdot](../README.md). These live in the repo, vers
 ## Getting started
 
 - **[Using local downloaded JSON.gz files](local_json_files.md)** - load release files into the HGVS libraries.
-- **[Biocommons HGVS examples](examples_biocommons.md)** - c→g / g→c, plus a T2T-CHM13v2.0 example.
+- **[Biocommons HGVS examples](examples_biocommons.md)** - c→g / g→c, a T2T-CHM13v2.0 example, and
+  `EnsemblTarkDataProvider` (Ensembl's Tark REST API, no cdot data).
 - **[PyHGVS examples](examples_pyhgvs.md)** - legacy PyHGVS integration (prefer biocommons).
 - **[FastaSeqFetcher](fasta_seqfetcher.md)** - local FASTA sequence fetching (SeqRepo replacement).
 

@@ -768,6 +768,20 @@ class Test(unittest.TestCase):
         self.assertEqual(build_data["contig"], "X")
         self.assertEqual(build_data["other_chroms"], {"Y"})
 
+    def test_gtf_row_without_gene_id(self):
+        """ Every GTF row needs a gene_id, the error names the row """
+        with open(self.ENSEMBL_111_GTF_FILENAME) as f:
+            lines = f.read().splitlines()
+        exon_line = next(line for line in lines if "\texon\t" in line)
+        lines.append(exon_line.replace('gene_id "ENSG00000186092"; ', ""))
+        with tempfile.NamedTemporaryFile("w", suffix=".gtf") as f:
+            f.write("\n".join(lines) + "\n")
+            f.flush()
+            parser = GTFParser(f.name, "GRCh38", self.FAKE_URL)
+            with self.assertRaisesRegex(ValueError, r"GTF row has no gene_id: 1\thavana\texon\t65419") as cm:
+                parser.get_genes_and_transcripts()
+        self.assertIn('transcript_id "ENST00000641515"', str(cm.exception))
+
 
 class TestDetectAnnotationConsortium(unittest.TestCase):
     def _detect(self, lines) -> str:

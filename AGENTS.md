@@ -141,6 +141,10 @@ The same team works on the REST server - http://github.com/SACGF/cdot_rest the R
 
 Work on a branch off `origin/main` named `<topic>-<issue number>`, eg `ensembl-transcript-biotype-153`. Commit subjects are `#NNN - description`, with the issue number first (`#150, #152 - clean_hgvs: ...` when a change covers several). PR titles use the same `#NNN - description` form. The PR body starts with `🤖 By Claude <model>` on its own line, then `Fixes #NNN`, then what changed and how it was verified. The maintainer merges PRs (with a merge commit) and closes issues; do not merge, and do not close issues unless told to.
 
+**Every PR targets `main`.** Do not stack PRs, meaning a PR whose base is another PR's branch. When one stacked PR is merged into main, the next PR still targets the old branch. Merging it then lands the changes on that dead branch instead of main, and GitHub reports it as merged. If work depends on an unmerged PR, either wait for that PR to be merged, or base the branch on it but open the PR against `main` and say in the body which PR has to go in first (the diff includes the earlier PR's commits until it is merged). Before opening or updating a PR, check `gh pr view <n> --json baseRefName` shows `main`. If the base is anything else, fix it with `gh pr edit <n> --base main`.
+
+If a PR the maintainer already accepted (merged, or approved) ended up merged into a branch other than `main`, re-land it: branch off `origin/main`, bring in its commits, open a PR to `main` that names the original PR, and once CI passes merge it yourself with `gh pr merge <n> --merge`. This is the one exception to "do not merge". If re-landing needed conflict resolution that changes behaviour, leave the PR for the maintainer to review.
+
 Commit only as the configured git user. Do NOT add `Co-Authored-By: Claude` trailers or any `Claude-Session` / Claude attribution lines to commit messages.
 
 ## GitHub Comments

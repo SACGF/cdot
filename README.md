@@ -81,6 +81,10 @@ and resolve HGVS strings) see [examples/quickstart.py](https://github.com/SACGF/
 
 For fast bulk processing over the REST API, see [read-ahead batch retrieval](https://github.com/SACGF/cdot/blob/main/docs/advanced_usage.md#read-ahead-batch-retrieval).
 
+`cdot.hgvs.dataproviders` also has `EnsemblTarkDataProvider`, which answers the same biocommons interface from Ensembl's
+[Tark](https://tark.ensembl.org/) transcript archive REST API, with no cdot data at all
+(see [Ensembl Tark](https://github.com/SACGF/cdot/blob/main/docs/examples_biocommons.md#ensembl-tark-no-cdot-data) in the biocommons examples).
+
 [PyHGVS](https://github.com/counsyl/hgvs) example (needs `pip install 'cdot[fasta]'` for pysam):
 
 ```

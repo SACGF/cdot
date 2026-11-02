@@ -1,3 +1,7 @@
+""" Sequence fetchers backed by a local genome FASTA (needs pysam: ``pip install cdot[fasta]``).
+
+    :class:`FastaSeqFetcher` is the one to use: genomic contigs straight from the FASTA, transcript
+    sequences spliced together from their exons on it. See docs/fasta_seqfetcher.md. """
 import re
 import warnings
 from enum import Enum
@@ -8,6 +12,16 @@ from hgvs.exceptions import HGVSDataNotAvailableError
 from bioutils.sequences import reverse_complement
 
 from cdot.hgvs.dataproviders.seqfetcher import AbstractTranscriptSeqFetcher, PrefixSeqFetcher
+
+__all__ = [
+    "FastaSeqFetcher",
+    "GenomeFastaSeqFetcher",
+    "ExonsFromGenomeFastaSeqFetcher",
+    "GenomeMismatchPolicy",
+    "GenomeMismatchWarning",
+    "GenomeMismatchError",
+    "get_ensembl_tark_fasta_seqfetchers",
+]
 
 
 class GenomeFastaSeqFetcher:

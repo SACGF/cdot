@@ -138,10 +138,8 @@ class GTFParser(GFFParser):
     def handle_feature(self, feature):
         gene_accession = self._get_gene_accession(feature, gene_row=feature.type == "gene")
         if gene_accession is None:
-            gene_data = {}  # Empty
-            # logging.warning("Read gene accession = None for %s", feature)  # Think this may not happen now with GTFs
-        else:
-            gene_data = self.builder.get_or_create_gene(feature, gene_accession)
+            raise ValueError(f"GTF row has no gene_id: {feature.get_gff_line()}")
+        gene_data = self.builder.get_or_create_gene(feature, gene_accession)
 
         if transcript_accession := self._get_transcript_accession(feature, version_key="transcript_version"):
             transcript = self.builder.transcripts.get(transcript_accession)
@@ -197,80 +195,94 @@ class GFF3Parser(GFFParser):
         # RefSeq genes are always one of GFF3_GENES, Ensembl has lots of different types (lincRNA_gene etc)
         # Ensembl treats pseudogene as a transcript (has parent)
         if parent_id is None and (feature.type in self.GFF3_GENES or "gene_id" in feature.attr):
-            # Gene
-            gene_accession = self._get_gene_accession(feature, gene_row=True)
+            self._handle_gene(feature)
+            return
+
+        if feature.type in self.GFF3_TRANSCRIPTS_DATA:
+            if transcript_accession := self._get_transcript_data_accession(feature, parent_id):
+                self._handle_transcript_data(transcript_accession, feature)
+                return
+
+        # Transcript rows (mRNA, lnc_RNA etc), and data rows whose parent is not a transcript (RefSeq
+        # mitochondrial CDS rows have the gene as their parent)
+        self._handle_transcript_row(feature, parent_id)
+
+    def _handle_gene(self, feature):
+        gene_accession = self._get_gene_accession(feature, gene_row=True)
+        if not gene_accession:
+            gene_accession = self.consortium.get_gene_accession_fallback(feature)
             if not gene_accession:
-                gene_accession = self.consortium.get_gene_accession_fallback(feature)
-                if not gene_accession:
-                    raise ValueError("Could not obtain 'gene_id', even using 'Dbxref[GeneID]'")
+                raise ValueError("Could not obtain 'gene_id', even using 'Dbxref[GeneID]'")
 
-            # Gene can have multiple loci, thus entries in GFF, keep original so all transcripts are added
-            gene_data = self.builder.get_or_create_gene(feature, gene_accession)
+        # Gene can have multiple loci, thus entries in GFF, keep original so all transcripts are added
+        gene_data = self.builder.get_or_create_gene(feature, gene_accession)
 
-            if hgnc := self.consortium.get_hgnc(feature, gene_data):
-                gene_data["hgnc"] = hgnc
+        if hgnc := self.consortium.get_hgnc(feature, gene_data):
+            gene_data["hgnc"] = hgnc
 
-            if feature.source:
-                gene_data["source"].add(feature.source)
+        if feature.source:
+            gene_data["source"].add(feature.source)
 
-            self.gene_accession_by_feature_id[feature.attr["ID"]] = gene_accession
+        self.gene_accession_by_feature_id[feature.attr["ID"]] = gene_accession
+
+    def _get_transcript_data_accession(self, feature, parent_id) -> Optional[str]:
+        """ The transcript an exon/CDS/UTR/cDNA_match row belongs to, None if its parent is not a transcript """
+        if feature.type == 'cDNA_match':
+            target = feature.attr["Target"]
+            return target.split()[0]
+        if parent_id is None:
+            # Some exons etc may be for miRNAs that have no transcript ID, so skip those (won't have parent)
+            logging.warning("Transcript data has no parent: %s" % feature.get_gff_line())
+            return None
+        return self.transcript_accession_by_feature_id.get(parent_id)
+
+    def _handle_transcript_data(self, transcript_accession, feature):
+        """ An exon/CDS/UTR/cDNA_match row of a transcript """
+        transcript = self.builder.transcripts.get(transcript_accession)
+        if not transcript:
+            # cDNA_match rows name their transcript in Target, which can be absent from the annotation
+            msg = f"Couldn't find transcript data for accession '{transcript_accession}'"
+            if self.skip_missing_parents:
+                logging.warning(msg)
+                self.skipped_features_no_parents[feature.type] += 1
+                return
+            raise ValueError(msg)
+        self._handle_protein_version(transcript_accession, feature)
+        self._gff_handle_transcript_data(transcript_accession, transcript, feature)
+
+    def _handle_transcript_row(self, feature, parent_id):
+        """ A row that creates a transcript. There are so many different transcript ontology terms that this
+            takes everything that has a transcript_id and is a child of a gene (ie skips miRNA etc that are
+            children of a primary_transcript), plus the RefSeq mitochondrial rows that stand in for one """
+        transcript_and_parent = self._get_transcript_accession_and_parent(feature)
+        if transcript_and_parent is None:
+            return
+        transcript_accession, replaced_parent_id = transcript_and_parent
+        if replaced_parent_id:
+            parent_id = replaced_parent_id
+        gene_accession = self.gene_accession_by_feature_id.get(parent_id)
+        if not gene_accession:
+            if self.skip_missing_parents:
+                self.skipped_features_no_parents[feature.type] += 1
+                return
+            raise ValueError(f"Don't know how to handle feature type {feature.type} "
+                             f"(couldn't find parent gene {parent_id})")
+        gene_data = self.builder.genes[gene_accession]
+        self._handle_transcript(gene_data, transcript_accession, feature)
+        transcript = self.builder.transcripts[transcript_accession]
+
+        if feature.type == 'CDS':
+            # A RefSeq mitochondrial CDS whose parent is the gene: the row is the fake transcript's coding data
+            self._gff_handle_transcript_data(transcript_accession, transcript, feature)
         else:
-            # Transcripts
-            transcript_accession = None
-            if feature.type in self.GFF3_TRANSCRIPTS_DATA:
-                if feature.type == 'cDNA_match':
-                    target = feature.attr["Target"]
-                    transcript_accession = target.split()[0]
-                else:
-                    # Some exons etc may be for miRNAs that have no transcript ID, so skip those (won't have parent)
-                    if parent_id:
-                        transcript_accession = self.transcript_accession_by_feature_id.get(parent_id)
-                        if transcript_accession:
-                            self._handle_protein_version(transcript_accession, feature)
-                    else:
-                        logging.warning("Transcript data has no parent: %s" % feature.get_gff_line())
+            if feature.type not in EXCLUDE_BIOTYPES:
+                transcript["biotype"].add(feature.type)
+            # Ensembl GFF3 transcript rows also carry the transcript biotype (RefSeq's don't)
+            if transcript_biotype := feature.attr.get("biotype"):
+                transcript["biotype"].add(transcript_biotype)
 
-                if transcript_accession:
-                    transcript = self.builder.transcripts.get(transcript_accession)
-                    if not transcript:
-                        msg = f"Couldn't find transcript data for accession '{transcript_accession}'"
-                        if self.skip_missing_parents:
-                            logging.warning(msg)
-                            self.skipped_features_no_parents[feature.type] += 1
-                            return
-                        raise ValueError(msg)
-                    self._gff_handle_transcript_data(transcript_accession, transcript, feature)
-
-            if transcript_accession is None:
-                # There are so many different transcript ontology terms just taking everything that
-                # has a transcript_id and is child of gene (ie skip miRNA etc that is child of primary_transcript)
-                if transcript_and_parent := self._get_transcript_accession_and_parent(feature):
-                    transcript_accession, replaced_parent_id = transcript_and_parent
-                    if replaced_parent_id:
-                        parent_id = replaced_parent_id
-                    gene_accession = self.gene_accession_by_feature_id.get(parent_id)
-                    if not gene_accession:
-                        if self.skip_missing_parents:
-                            self.skipped_features_no_parents[feature.type] += 1
-                            return
-                        msg = f"Don't know how to handle feature type {feature.type} (couldn't find parent gene {parent_id})"
-                        raise ValueError(msg)
-                    gene_data = self.builder.genes[gene_accession]
-                    self._handle_transcript(gene_data, transcript_accession, feature)
-                    transcript = self.builder.transcripts[transcript_accession]
-
-                    if feature.type == 'CDS':
-                        # We should only be here if transcript_id wasn't on it (chrM)
-                        self._gff_handle_transcript_data(transcript_accession, transcript, feature)
-                    else:
-                        if feature.type not in EXCLUDE_BIOTYPES:
-                            transcript["biotype"].add(feature.type)
-                        # Ensembl GFF3 transcript rows also carry the transcript biotype (RefSeq's don't)
-                        if transcript_biotype := feature.attr.get("biotype"):
-                            transcript["biotype"].add(transcript_biotype)
-
-                    if feature.source:
-                        transcript["source"].add(feature.source)
+        if feature.source:
+            transcript["source"].add(feature.source)
 
     def _get_transcript_accession_and_parent(self, feature) -> Optional[tuple[str, Optional[str]]]:
         if transcript_accession := self._get_transcript_accession(feature, version_key="version"):
@@ -291,6 +303,7 @@ class GFF3Parser(GFFParser):
         self.transcript_accession_by_feature_id[feature.attr["ID"]] = transcript_accession
 
     def _gff_handle_transcript_data(self, transcript_accession, transcript, feature):
+        """ Exon/CDS/UTR/cDNA_match coordinates and annotations, for a transcript on any kind of parent row """
         self._add_transcript_data(transcript_accession, transcript, feature)
         if ccds := self.consortium.get_ccds(feature):
             transcript["ccds"] = ccds
