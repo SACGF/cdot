@@ -1,10 +1,12 @@
 ## [unreleased]
 
+## [0.2.34] - 2026-11-02
+
 ### Added
 
 - #148 - HGVS cleaning: gene symbol before the accession becomes `ACCESSION(SYMBOL)` (`APC NM_001407446.1:c.-40G>A` → `NM_001407446.1(APC):c.-40G>A`)
 - #148 - HGVS cleaning: drop a chromosome name before its own accession (`chr13 NC_000013.11:g.32316528del`)
-- #145 - `models.Transcript.fake` for RefSeq mitochondrial fake transcripts
+- #145 - `models.Transcript.fake` for RefSeq mitochondrial fake transcripts (needs data schema >= 0.2.37)
 - #166 - `clean_hgvs` warns (`HGVSCleanOpWarning`) when `ops` selects an op without one it depends on
 - #171 - `get_transcript(tx_ac)` on data providers, the public way to get a transcript record
 - #181 - Export `EnsemblTarkDataProvider` / `EnsemblTarkSeqFetcher` from `cdot.hgvs.dataproviders`, and `__all__` on public modules
