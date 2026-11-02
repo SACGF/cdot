@@ -82,10 +82,8 @@ class UnsafeVersionPolicy(Enum):
     A substitution that IS structure-verified safe is always applied (with a
     ``USED_ADJACENT_VERSION_COORD_SAFE`` WARNING) regardless of this policy.
 
-    The same policy applies when a versionless accession's held versions disagree
-    at the cited position: REFUSE gives a ``REFUSED_UNSAFE_VERSION`` ERROR, and
-    SUBSTITUTE writes out the chosen version with a
-    ``RESOLVED_VERSIONLESS_TRANSCRIPT_COORD_UNVERIFIED`` WARNING.
+    The policy does not apply to a versionless accession: when its held versions
+    disagree at the cited position it is always refused.
     """
     REFUSE = "refuse"
     SUBSTITUTE = "substitute"
@@ -605,7 +603,6 @@ def _resolve_versionless_transcript(
     accession: str,
     data_provider,
     genome_build: Optional[str],
-    on_unsafe_version: UnsafeVersionPolicy,
 ) -> tuple[str, list[HGVSFix]]:
     """
     Give a versionless transcript accession (eg "NM_000059:c.36del") a version, staying
@@ -616,8 +613,10 @@ def _resolve_versionless_transcript(
     the latest. It is checked against every other held version with
     :func:`cdot.hgvs.version_safety.is_version_substitution_safe` at the cited
     position. If they all agree it is applied with a WARNING
-    RESOLVED_VERSIONLESS_TRANSCRIPT; if any disagree (or a record can't be read)
-    ``on_unsafe_version`` decides, as for an adjacent version.
+    RESOLVED_VERSIONLESS_TRANSCRIPT. If any disagree (or a record can't be read) the
+    string is left unchanged with an ERROR REFUSED_UNSAFE_VERSION, whatever
+    ``on_unsafe_version`` says: with no version given there is no nearest version to
+    fall back to, so picking one would be a guess between different variants.
     """
     try:
         versions = _get_tx_versions(data_provider, accession, genome_build)
@@ -676,23 +675,12 @@ def _resolve_versionless_transcript(
 
     differ = (f"{len(disagreeing)} of the {len(records) - 1} other versions held{in_build} "
               f"{'differs' if len(disagreeing) == 1 else 'differ'} from .{best} at this position: {', '.join(disagreeing)}")
-    if on_unsafe_version == UnsafeVersionPolicy.SUBSTITUTE:
-        return resolved, [HGVSFix(
-            severity=HGVSFixSeverity.WARNING,
-            code=HGVSFixCode.RESOLVED_VERSIONLESS_TRANSCRIPT_COORD_UNVERIFIED,
-            message=(f"Transcript {accession} has no version; using {chosen_desc}; "
-                     f"coordinate may not be the one meant ({differ})"),
-            original=accession,
-            fixed=chosen,
-        )]
-    # REFUSE (default): do not choose a version; leave the string unchanged.
     return hgvs_string, [HGVSFix(
         severity=HGVSFixSeverity.ERROR,
         code=HGVSFixCode.REFUSED_UNSAFE_VERSION,
         message=(
             f"Transcript {accession} has no version and its versions disagree: {differ}; "
-            f"not choosing one. Pass on_unsafe_version=UnsafeVersionPolicy.SUBSTITUTE "
-            f"to use {chosen}."
+            f"not choosing one. Give the transcript version."
         ),
         original=accession,
         fixed=chosen,
@@ -781,10 +769,9 @@ def resolve_transcript_version(
     position with every other held version:
 
       * all agree (or only one version is held) → WARNING RESOLVED_VERSIONLESS_TRANSCRIPT;
-      * any disagree (or a record can't be read) and on_unsafe_version=SUBSTITUTE →
-        WARNING RESOLVED_VERSIONLESS_TRANSCRIPT_COORD_UNVERIFIED;
-      * any disagree and on_unsafe_version=REFUSE (default) → string unchanged, ERROR
-        REFUSED_UNSAFE_VERSION naming the versions that disagree.
+      * any disagree (or a record can't be read) → string unchanged, ERROR
+        REFUSED_UNSAFE_VERSION naming the versions that disagree. on_unsafe_version
+        does not apply here.
 
     Example::
 
@@ -799,7 +786,7 @@ def resolve_transcript_version(
         if versionless_accession is None:
             return hgvs_string, []  # no transcript accession, nothing to do
         return _resolve_versionless_transcript(hgvs_string, versionless_accession, data_provider,
-                                               genome_build, on_unsafe_version)
+                                               genome_build)
     versionless, requested_version = parsed
 
     try:
@@ -920,8 +907,8 @@ def fix_hgvs(
     unchanged; SUBSTITUTE → apply with a "coordinate may have moved" WARNING). A
     genome_build, if supplied, is used only for the genomic-bracket fallback inside
     that check. A versionless transcript accession (eg "NM_000059:c.36del") is given a
-    version only when every version held agrees at the cited position, again with
-    on_unsafe_version deciding otherwise. Without version_fallback it is left as it is.
+    version only when every version held agrees at the cited position, and refused
+    otherwise. Without version_fallback it is left as it is.
 
     Example — gene-only input resolved via MANE::
 

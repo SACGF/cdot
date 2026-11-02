@@ -1025,7 +1025,7 @@ def test_resolve_versionless_gene_in_parens():
     assert fixes[0].code == C.RESOLVED_VERSIONLESS_TRANSCRIPT
 
 
-def test_resolve_versionless_disagree_refuses_by_default():
+def test_resolve_versionless_disagree_refuses():
     dp = _versionless_provider({2: (_VL_LONGER_CDS, None), 3: (_VL_SAME, None), 4: (_VL_SAME, None)})
     resolved, fixes = resolve_transcript_version("NM_000059:c.36del", dp, genome_build="GRCh38")
     assert resolved == "NM_000059:c.36del"  # unchanged
@@ -1036,15 +1036,13 @@ def test_resolve_versionless_disagree_refuses_by_default():
     assert "—" not in message
 
 
-def test_resolve_versionless_disagree_substitute_policy_warns():
+def test_resolve_versionless_disagree_refuses_even_with_substitute_policy():
     dp = _versionless_provider({2: (_VL_LONGER_CDS, None), 3: (_VL_SAME, None), 4: (_VL_SAME, None)})
     resolved, fixes = resolve_transcript_version(
         "NM_000059:c.36del", dp, genome_build="GRCh38",
         on_unsafe_version=UnsafeVersionPolicy.SUBSTITUTE)
-    assert resolved == "NM_000059.4:c.36del"
-    assert [(f.severity, f.code) for f in fixes] == [
-        (W, C.RESOLVED_VERSIONLESS_TRANSCRIPT_COORD_UNVERIFIED)]
-    assert ".2 (" in fixes[0].message
+    assert resolved == "NM_000059:c.36del"  # unchanged
+    assert [(f.severity, f.code) for f in fixes] == [(E, C.REFUSED_UNSAFE_VERSION)]
 
 
 def test_resolve_versionless_disagree_raise_on_errors():

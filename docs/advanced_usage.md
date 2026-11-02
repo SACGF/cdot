@@ -126,10 +126,11 @@ difference here.
 | Situation | `result` | `HGVSFix` code | Severity |
 |---|---|---|---|
 | Every held version agrees (or only one is held) | `NM_000059.4:c.36del` | `RESOLVED_VERSIONLESS_TRANSCRIPT` | WARNING |
-| Versions disagree, `on_unsafe_version=REFUSE` (default) | unchanged | `REFUSED_UNSAFE_VERSION` | ERROR |
-| Versions disagree, `on_unsafe_version=SUBSTITUTE` | rewritten | `RESOLVED_VERSIONLESS_TRANSCRIPT_COORD_UNVERIFIED` | WARNING |
+| Versions disagree | unchanged | `REFUSED_UNSAFE_VERSION` | ERROR |
 
-The ERROR and the unverified WARNING list each version that disagrees, with the reason.
+The ERROR lists each version that disagrees, with the reason. `on_unsafe_version` does not apply:
+with no version given there is no nearest version to fall back to, so cdot never guesses between
+versions that give different variants.
 
 ### `clean_hgvs` - string cleaning with op selection
 

@@ -9,7 +9,7 @@
 - #171 - `get_transcript(tx_ac)` on data providers, the public way to get a transcript record
 - #181 - Export `EnsemblTarkDataProvider` / `EnsemblTarkSeqFetcher` from `cdot.hgvs.dataproviders`, and `__all__` on public modules
 - #181 - `FastaSeqFetcher` without pysam gives a helpful `ImportError` on construction
-- #206 - Version fallback gives a versionless transcript a version (`NM_000059:c.36del` → `NM_000059.4:c.36del`) when all held versions agree at that position (`RESOLVED_VERSIONLESS_TRANSCRIPT`), otherwise `on_unsafe_version` decides
+- #206 - Version fallback gives a versionless transcript a version (`NM_000059:c.36del` → `NM_000059.4:c.36del`) when all held versions agree at that position (`RESOLVED_VERSIONLESS_TRANSCRIPT`), otherwise refuses
 
 ### Changed
 
@@ -21,6 +21,7 @@
 - #171 - `fix_hgvs` warns `SKIPPED_GENE_RESOLUTION` for gene-only input with no `genome_build`
 - #168 - `JSONDataProvider.get_tx_versions()` uses an index instead of scanning every transcript
 - #179 - Python 3.10-3.14 classifiers
+- #180 - Removed the no-op `hgvs` extra (`hgvs` is a core dependency)
 
 ### Deprecated
 
