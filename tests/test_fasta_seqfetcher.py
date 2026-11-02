@@ -84,15 +84,6 @@ def test_warning_describes_mismatch(test_files):
     assert "annotated by transcript or proteomic data" in message
 
 
-def test_warns_once_per_transcript(test_files):
-    fasta_filename, json_filename = test_files
-    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename, cache=False))
-    with pytest.warns(GenomeMismatchWarning) as record:
-        hdp.seqfetcher.fetch_seq("NM_000399.3")
-        hdp.seqfetcher.fetch_seq("NM_000399.3", 0, 5)
-    assert len(record) == 1
-
-
 def test_no_warning_when_transcript_matches_genome(test_files):
     fasta_filename, json_filename = test_files
     hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename))
@@ -163,20 +154,12 @@ def test_no_fasta_files():
         ExonsFromGenomeFastaSeqFetcher()
 
 
-# ---------------------------------------------------------------------------
-# Transcript bases that aren't in the genome alignment, filled with N
-#
-# The genome has an AAAAA run at 15-20, right before 2 transcript bases (n.11_12) that the
-# alignment says aren't in the genome (cdot gap "I2", CIGAR "2D")
-# ---------------------------------------------------------------------------
+# AAAAA run at 15-20, then 2 transcript bases not in the genome (filled with N)
 
 PADDED_GENOME = "CGTCGTCGTC" + "CGTCG" + "AAAAA" + "CGTCGTCGTC" * 6
 PADDED_TRANSCRIPTS = {
-    # Plus strand, 2 bases not in the genome after genomic position 20
     "NM_000001.1": ("+", [[10, 30, 0, 1, 22, "M10 I2 M10"], [40, 60, 1, 23, 42, None]]),
-    # Minus strand, so the gap is counted from the other end
     "NM_000002.1": ("-", [[10, 30, 0, 1, 22, "M5 I2 M15"]]),
-    # 5' start not aligned: the first exon starts at transcript position 4
     "NM_000003.1": ("+", [[10, 30, 0, 4, 23, None]]),
 }
 
@@ -209,7 +192,7 @@ def _assembly_mapper(hdp):
 def test_slice_with_padding_raises(padded_files, ac, positions):
     fasta_filename, json_filename = padded_files
     hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename))
-    with pytest.raises(GenomeMismatchError, match=rf"{ac} {positions}: FastaSeqFetcher doesn't know these bases"):
+    with pytest.raises(GenomeMismatchError, match=rf"{ac} {positions} unknown"):
         hdp.seqfetcher.fetch_seq(ac, 0, 20)
 
 
@@ -221,7 +204,6 @@ def test_slice_without_padding(padded_files):
 
 
 def test_whole_transcript_with_padding_warns(padded_files):
-    """ c_to_p translates the whole transcript: warn, as padding in the UTR doesn't change the protein """
     fasta_filename, json_filename = padded_files
     hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename))
     with pytest.warns(GenomeMismatchWarning, match="NM_000001.1 n.11_12"):
@@ -245,8 +227,7 @@ def test_padding_falls_through_chained_seqfetcher(padded_files):
 
 
 def test_indel_normalized_into_padding_raises(padded_files):
-    """ Normalizing the deletion shifts it 3' along the A run into the unknown bases: with them
-        filled with N the shift stops early, giving c.10del where the real transcript may differ """
+    """ Shifting the del 3' along the A run would stop at the Ns """
     import hgvs.parser
     fasta_filename, json_filename = padded_files
     parser = hgvs.parser.Parser()
@@ -255,7 +236,6 @@ def test_indel_normalized_into_padding_raises(padded_files):
     am = _assembly_mapper(_hdp(json_filename, FastaSeqFetcher(fasta_filename)))
     with pytest.raises(GenomeMismatchError):
         am.g_to_c(var_g, "NM_000001.1")
-    # An SNV away from the unknown bases maps as before, one inside them can't be checked
     assert str(am.c_to_g(parser.parse("NM_000001.1:c.30G>A"))) == "NC_000011.9:g.48G>A"
     with pytest.raises(GenomeMismatchError):
         am.c_to_g(parser.parse("NM_000001.1:c.11A>G"))

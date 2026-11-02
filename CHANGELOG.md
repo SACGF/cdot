@@ -33,7 +33,7 @@
 
 ### Fixed
 
-- #221 - `FastaSeqFetcher` raises `GenomeMismatchError` for a slice that includes transcript bases not in the genome alignment (filled with `N`), so an indel next to them isn't normalized to the wrong position; fetching the whole transcript warns
+- #221 - `FastaSeqFetcher` raises `GenomeMismatchError` for a slice containing unknown (`N`) bases, which broke normalization
 - #150 - HGVS cleaning: missing colon no longer produces wrong but valid-looking HGVS; ambiguous cases are a `NO_COLON` ERROR
 - #151 - HGVS cleaning: fix op ordering (quotes, separators, case, tabs)
 - #152 - HGVS cleaning: handle all accession prefixes and kinds (lowercase `ng_`/`np_`, `m.`, `r.`, protein alleles)

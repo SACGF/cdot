@@ -46,7 +46,7 @@ class GenomeFastaSeqFetcher:
 class GenomeMismatchPolicy(str, Enum):
     """ What to do when building a transcript the data says differs from the genome (#115) """
     OFF = "off"  # Build it anyway, silently
-    WARN = "warn"  # Build it, and issue a GenomeMismatchWarning (once per transcript)
+    WARN = "warn"  # Build it, and issue a GenomeMismatchWarning
     RAISE = "raise"  # Refuse, raising GenomeMismatchError
 
 
@@ -77,7 +77,6 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
     def __init__(self, *args, cache=True, genome_mismatch=GenomeMismatchPolicy.WARN):
         super().__init__(*args, cache=cache)
         self.genome_mismatch_policy = GenomeMismatchPolicy(genome_mismatch)
-        self._warned_genome_mismatch = set()
         self.source = "Transcript Exons using Genome Fasta file reference"
         self.genome_fasta_seq_fetcher = GenomeFastaSeqFetcher(*args)
 
@@ -119,25 +118,17 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
                    f"real transcript sequence. {_describe_genome_mismatch(genome_mismatch)}")
             if self.genome_mismatch_policy == GenomeMismatchPolicy.RAISE:
                 raise GenomeMismatchError(msg)
-            if ac not in self._warned_genome_mismatch:
-                self._warned_genome_mismatch.add(ac)
-                warnings.warn(msg, GenomeMismatchWarning)
+            warnings.warn(msg, GenomeMismatchWarning)
 
     def fetch_seq(self, ac, start_i=None, end_i=None):
-        """ As AbstractTranscriptSeqFetcher.fetch_seq, but a request that includes an unknown base (N,
-            either not in the genome alignment or N in the genome) raises GenomeMismatchError: a
-            slice is what biocommons reads to normalize or validate a variant, and an N there would
-            silently shift an indel. Fetching the whole transcript (as c_to_p does) warns instead.
-            This doesn't depend on the genome_mismatch policy. """
+        """ Unknown bases (N) raise for a slice, as they break normalization, and warn for the whole transcript """
         seq = super().fetch_seq(ac, start_i, end_i)
         if "N" not in seq:
             return seq
         start = start_i or 0
         positions = ", ".join(f"n.{start + s + 1}" if e - s == 1 else f"n.{start + s + 1}_{start + e}"
                               for s, e in (m.span() for m in re.finditer("N+", seq)))
-        msg = (f"{ac} {positions}: FastaSeqFetcher doesn't know these bases (N), as they aren't in the "
-               f"genome alignment or are N in the genome. Chain a transcript sequence source such as "
-               f"SeqRepo with ChainedSeqFetcher to get them.")
+        msg = f"{ac} {positions} unknown (N) in genome sequence, chain SeqRepo to get them"
         if start_i is not None or end_i is not None:
             raise GenomeMismatchError(msg)
         warnings.warn(msg, GenomeMismatchWarning)
