@@ -65,6 +65,8 @@ class HGVSFixCode(Enum):
     ADDED_MISSING_KIND           = "added_missing_kind"
     # Gene/transcript fixes (all WARNING)
     SWAPPED_GENE_TRANSCRIPT      = "swapped_gene_transcript"
+    # g./m. HGVS with a genomic and a transcript accession: the genomic one is kept
+    DROPPED_TRANSCRIPT_FOR_GENOMIC_KIND = "dropped_transcript_for_genomic_kind"
     UPPERCASED_TRANSCRIPT        = "uppercased_transcript"
     UPPERCASED_HGVS_PREFIX       = "uppercased_hgvs_prefix"
     UPPERCASED_GENE_SYMBOL       = "uppercased_gene_symbol"
@@ -1096,8 +1098,10 @@ def _op_fix_gene_transcript(parts: _HGVSParts) -> tuple[_HGVSParts, list[HGVSFix
     accession, gene_symbol = parts.accession, parts.gene_symbol or None
 
     transcript_ok = _looks_like_transcript(accession)
+    # A genomic accession is the right reference for g./m. HGVS, so it isn't swapped out
+    genomic_ref_for_genomic_kind = parts.kind in ("g", "m") and _GENOMIC_ACCESSION.fullmatch(accession)
 
-    if not transcript_ok and gene_symbol:
+    if not transcript_ok and gene_symbol and not genomic_ref_for_genomic_kind:
         uc_gene = gene_symbol.upper()
         if _looks_like_transcript(uc_gene):
             accession, gene_symbol = gene_symbol, accession
@@ -1147,9 +1151,24 @@ def _op_drop_genomic_ref_in_parens(parts: _HGVSParts) -> tuple[_HGVSParts, list[
     # "NM_000059.4(NC_000013.11):c.68del" -> "NM_000059.4:c.68del". The
     # transcript on its own is a complete reference, so the genomic accession is
     # redundant and (being neither a gene symbol nor a valid selector here) only
-    # blocks parsing. The valid form "NC_000013.11(NM_000059.4):c.68del"
-    # (genomic reference, transcript selector) is not touched, as its accession
-    # is not a transcript.
+    # blocks parsing. "NC_000013.11(NM_000059.4):c.68del" ends up the same way,
+    # as the gene/transcript fix has already swapped it.
+    #
+    # For g./m. HGVS the genomic accession is the reference instead, so the
+    # transcript is dropped: "NC_000013.11(NM_000059.4):g.32316528del" and
+    # "NM_000059.4(NC_000013.11):g.32316528del" -> "NC_000013.11:g.32316528del".
+    if parts.kind in ("g", "m") and parts.gene_symbol is not None:
+        accessions = [parts.accession, parts.gene_symbol]
+        genomic = [a for a in accessions if _GENOMIC_ACCESSION.fullmatch(a)]
+        transcript = [a for a in accessions if _TRANSCRIPT_ACCESSION.fullmatch(a)]
+        if len(genomic) == 1 and len(transcript) == 1:
+            fixed = replace(parts, accession=genomic[0], gene_symbol=None)
+            return fixed, [HGVSFix(
+                severity=HGVSFixSeverity.WARNING,
+                code=HGVSFixCode.DROPPED_TRANSCRIPT_FOR_GENOMIC_KIND,
+                message=f"Dropped transcript {transcript[0]}: a {parts.kind}. variant is on the genomic accession",
+                original=str(parts), fixed=str(fixed),
+            )]
     if (parts.gene_symbol is None
             or not _TRANSCRIPT_ACCESSION.fullmatch(parts.accession)
             or not _GENOMIC_ACCESSION.fullmatch(parts.gene_symbol)):

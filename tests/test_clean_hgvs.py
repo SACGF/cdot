@@ -443,6 +443,22 @@ def test_drop_genomic_ref_in_parens_collapses_genomic_selector_form():
     assert C.DROPPED_GENOMIC_REF_IN_PARENS in codes(fixes)
 
 
+@pytest.mark.parametrize("bad", [
+    "NC_000013.11(NM_000059.4):g.32316528del",
+    "NM_000059.4(NC_000013.11):g.32316528del",
+])
+def test_genomic_kind_keeps_genomic_accession(bad):
+    # A g. position is on the genomic accession, so the transcript is the one dropped
+    cleaned, fixes = clean_hgvs(bad, validate=False)
+    assert cleaned == "NC_000013.11:g.32316528del", f"Input: {bad!r}"
+    assert codes(fixes) == {C.DROPPED_TRANSCRIPT_FOR_GENOMIC_KIND}
+
+
+def test_genomic_kind_keeps_mitochondrial_accession():
+    cleaned, _fixes = clean_hgvs("NC_012920.1(MT-ND1):m.3460G>A", validate=False)
+    assert cleaned == "NC_012920.1(MT-ND1):m.3460G>A"  # a gene symbol, not a transcript: untouched
+
+
 def test_accession_separator_semicolon_inside_allele_untouched():
     # A ';' inside a (balanced-bracket) multi-variant allele is real HGVS
     # punctuation, not a separator typo, so the anchored rule must not fire.
