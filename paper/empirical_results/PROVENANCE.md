@@ -292,7 +292,8 @@ here.
 ### coverage.csv
 
 `paper/scripts/compute_coverage.py` over the release JSON.gz files (needs
-`--config data_dir=...`).
+`--config data_dir=...`). Committed snapshot: cdot 0.2.36, measured 2026-10-13 (counts
+identical to 0.2.34, as no transcript sources were added between them).
 
 ### benchmark.csv
 
@@ -305,7 +306,9 @@ median (q1, q3) HGVS/s over 5 passes of the committed 500-pair set (remote UTA: 
 ### version_stability.csv, positional_drift.csv
 
 `paper/scripts/compute_version_stability.py`. Committed snapshot: GRCh38,
-`--sample 12000 --seed 1`, cdot 0.2.34. Relative to the pre-0.2.33 snapshot, the
+`--sample 12000 --seed 1`, cdot 0.2.36 (re-measured 2026-10-13). The only change from
+0.2.34 is `refseq_struct_portable_pct` 99.3 -> 99.4; everything else, including
+positional_drift.csv, is identical. Relative to the pre-0.2.33 snapshot, the
 RefSeq drift increase comes from the #51 historical alignments (old versions drift
 more), and the large Ensembl stability improvement from Ensembl 116 entering the data
 (verified by re-running on the 0.2.33 files: RefSeq matched the old snapshot exactly,

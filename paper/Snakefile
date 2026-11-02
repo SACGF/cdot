@@ -327,7 +327,7 @@ rule version_stability:
     (needed for the cross-build numbers) are taken from --config
     refseq_allbuilds=... ensembl_allbuilds=.... Without data the committed
     measurement in paper/empirical_results/ is copied (GRCh38, --sample 12000
-    --seed 1, cdot 0.2.34; see PROVENANCE.md).
+    --seed 1, cdot 0.2.36; see PROVENANCE.md).
 
     The same script run also bins preserved coding bases by relative CDS position
     (deciles, 5'->3') into positional_drift.csv, conditioned on the partial-drift
