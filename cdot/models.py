@@ -196,6 +196,11 @@ class Transcript(_DictAccessStruct, forbid_unknown_fields=False):
     gene_name: Optional[str] = None
     gene_version: Optional[str] = None
     biotype: Optional[List[str]] = None
+    """Transcript types, as a sorted list. From a GTF/GFF3 this has ``'mRNA'`` (coding) or ``'ncRNA'``
+    (non-coding), plus the source's own type for this transcript: the RefSeq GFF3 row type
+    (eg ``'mRNA'``, ``'lnc_RNA'``, ``'tRNA'``) or the Ensembl transcript biotype (eg
+    ``'protein_coding'``, ``'retained_intron'``, ``'nonsense_mediated_decay'``). Ensembl GFF3
+    data has both the row type and the biotype."""
     protein: Optional[str] = None
     """Protein accession (coding transcripts only)."""
     start_codon: Optional[int] = None

@@ -99,7 +99,8 @@
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "description": "Transcript types, as a sorted list. From a GTF/GFF3 this has `'mRNA'` (coding) or `'ncRNA'` (non-coding), plus the source's own type for this transcript: the RefSeq GFF3 row type (eg `'mRNA'`, `'lnc_RNA'`, `'tRNA'`) or the Ensembl transcript biotype (eg `'protein_coding'`, `'retained_intron'`, `'nonsense_mediated_decay'`). Ensembl GFF3 data has both the row type and the biotype."
         },
         "protein": {
           "anyOf": [
