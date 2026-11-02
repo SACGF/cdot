@@ -9,9 +9,9 @@ substitute. If it doesn't, the substitution silently changes what the variant me
 This document explains how cdot decides whether a version substitution is safe, the public
 API, and the empirical study that the check is built on.
 
-- API entry points: [`fix_hgvs` / `resolve_transcript_version`](advanced_usage.md),
-  `cdot.hgvs.version_safety.is_version_substitution_safe` (two transcript records) and
-  `cdot.hgvs.gene_hgvs.check_version_substitution` (accession and versions, via a data provider).
+- API entry points: [`fix_hgvs` / `resolve_transcript_version`](advanced_usage.md), and in
+  `cdot.hgvs.version_safety`: `is_version_substitution_safe` (two transcript records) and
+  `is_version_substitution_safe_by_accession` (two versioned accessions, via a data provider).
 - Reproducible analysis: `analysis/transcript_version_drift.py`,
   `analysis/transcript_version_crossbuild.py`, and the paper facts script
   `paper/scripts/compute_version_stability.py` (paper Results R5).
@@ -71,10 +71,11 @@ transcript = dp._get_transcript("NM_000059.2")
 substitute_transcript = dp._get_transcript("NM_000059.4")
 safe, reason = is_version_substitution_safe(transcript, substitute_transcript, genome_build="GRCh38")
 
-# The same, fetching the records from a data provider; this is what
-# resolve_transcript_version uses, and it adds the genomic-bracket fallback.
-from cdot.hgvs import check_version_substitution
-safe, reason = check_version_substitution(dp, "NM_000059", 2, 4, genome_build="GRCh38")
+# The same on two versioned accessions, fetching the records from a data provider;
+# this is what resolve_transcript_version uses, and it adds the genomic-bracket fallback.
+from cdot.hgvs.version_safety import is_version_substitution_safe_by_accession
+safe, reason = is_version_substitution_safe_by_accession(
+    dp, "NM_000059.2", "NM_000059.4", genome_build="GRCh38")
 ```
 
 (`dp.is_version_substitution_safe(...)` still works but is deprecated and warns.)
@@ -82,7 +83,7 @@ safe, reason = check_version_substitution(dp, "NM_000059", 2, 4, genome_build="G
 `is_version_substitution_safe` reads the requested version's structure from any build that
 holds it (cdot all-builds JSON files, or the REST `/transcript/<ac>` view, return every
 version across builds). Only when the requested version exists in **no** build does
-`check_version_substitution` fall back to a probabilistic genomic-bracket check
+`is_version_substitution_safe_by_accession` fall back to a probabilistic genomic-bracket check
 (`genomic_bracket_safe`: do the held versions either side of the gap agree?). `get_tx_versions(accession, genome_build=...)` restricts the substitution candidate
 pool to versions placeable in the target build.
 

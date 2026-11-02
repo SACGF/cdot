@@ -19,13 +19,15 @@ REST ``/transcript/<ac>`` view which returns every version across builds).  This
 catches the transient-revert versions (A→B→A) that a genomic-bracket check is
 blind to, and needs no flanking pair.
 
-This module is pure: every function takes transcript records, never a data
-provider.  :func:`is_version_substitution_safe` is the check, on the two versions'
-records; :func:`intrinsic_cds_structure` is the build-independent structural helper
-behind it; :func:`genomic_bracket_safe` is the probabilistic fallback on the two
+:func:`is_version_substitution_safe` is the check, on the two versions' records;
+:func:`intrinsic_cds_structure` is the build-independent structural helper behind
+it; :func:`genomic_bracket_safe` is the probabilistic fallback on the two
 neighbouring records for the residual case where the requested version exists in
-no build at all.  Fetching the records from a data provider and choosing between
-the two is :func:`cdot.hgvs.gene_hgvs.check_version_substitution`.
+no build at all.  These take transcript records and are pure.
+:func:`is_version_substitution_safe_by_accession` is the same check on two
+versioned accessions: it fetches the records from a data provider and chooses
+between the pure checks, and is what the version fallback in
+:mod:`cdot.hgvs.gene_hgvs` calls.
 
 Method note (why this is exact and cheap, mirroring the analysis scripts): cdot
 stores the genome *alignment*, not the sequence.  Each exon is
@@ -454,8 +456,8 @@ def is_version_substitution_safe(transcript, substitute_transcript, genome_build
     ``NM_000059.3`` and ``NM_000059.4``.  Both must be present; when the requested
     version is held in no build at all there is nothing to compare, and the
     probabilistic :func:`genomic_bracket_safe` on its neighbours is the fallback
-    (:func:`cdot.hgvs.gene_hgvs.check_version_substitution` fetches the records
-    from a data provider and chooses between the two).
+    (:func:`is_version_substitution_safe_by_accession` fetches the records from a
+    data provider and chooses between the two).
 
     The check is structural and near-deterministic: compare the two versions'
     build-independent intrinsic CDS structure.  The requested version's structure
@@ -530,7 +532,8 @@ def is_version_substitution_safe(transcript, substitute_transcript, genome_build
         return False, f"substitute version {substitute_label} has no usable CDS structure; cannot verify"
     if transcript_struct is None:
         # The requested version is present but its CDS is unusable. There is no
-        # structure to compare; check_version_substitution brackets it instead.
+        # structure to compare; is_version_substitution_safe_by_accession brackets
+        # it instead.
         return False, f"requested version {transcript_label} has no usable CDS structure; cannot verify"
     if transcript_struct != substitute_struct:
         return False, describe_structure_change(transcript_struct, substitute_struct)
@@ -569,6 +572,81 @@ def is_version_substitution_safe(transcript, substitute_transcript, genome_build
             if "three_prime" in regions and transcript_utr[1] != substitute_utr[1]:
                 return False, "3'UTR length differs (UTR coordinate would shift)"
     return True, "identical CDS structure"
+
+
+def is_version_substitution_safe_by_accession(data_provider, transcript_accession: str,
+                                              substitute_transcript_accession: str,
+                                              genome_build: Optional[str] = None,
+                                              cited_position: Optional[str] = None) -> tuple[bool, str]:
+    """:func:`is_version_substitution_safe` on two versioned accessions, fetched from a provider.
+
+    ``transcript_accession`` and ``substitute_transcript_accession`` are two versions
+    of one transcript (eg ``"NM_000059.3"`` and ``"NM_000059.4"``).  Their records
+    come from ``data_provider._get_transcript``, and the pure check decides.  Only
+    when there is no structure to compare (the requested version exists in no build
+    the provider can see, or is present but its CDS is unusable) does this fall back
+    to the probabilistic :func:`genomic_bracket_safe` on the nearest held versions
+    either side, which needs ``genome_build`` and the provider's
+    ``get_tx_versions``; without them the verdict is an honest "cannot verify".
+    The shipped re-placement blocklist is applied first, so it holds even when the
+    requested record is absent.
+
+    This is the one function in the module that touches a data provider; it only
+    fetches records and chooses between the pure checks.  Used by
+    :func:`cdot.hgvs.gene_hgvs.resolve_transcript_version`.
+    """
+    transcript_match = _VERSIONED_ID.match(transcript_accession)
+    substitute_match = _VERSIONED_ID.match(substitute_transcript_accession)
+    if transcript_match is None or substitute_match is None:
+        return False, "both accessions must be versioned (eg NM_000059.4); cannot verify"
+    transcript_id, version = transcript_match.group(1), int(transcript_match.group(2))
+    substitute_transcript_id, substitute_version = (substitute_match.group(1),
+                                                    int(substitute_match.group(2)))
+    if transcript_id != substitute_transcript_id:
+        return False, (f"{transcript_accession} and {substitute_transcript_accession} are "
+                       "versions of different transcripts")
+    if is_known_replacement(transcript_id, version, substitute_version):
+        # Applied here as well as in the pure check so it holds when the requested
+        # record is absent from the loaded data.
+        return False, "known genomic re-placement (blocklisted)"
+
+    substitute_transcript = data_provider._get_transcript(substitute_transcript_accession)
+    if substitute_transcript is None:
+        return False, f"substitute version .{substitute_version} not found"
+
+    transcript = data_provider._get_transcript(transcript_accession)
+    if transcript is None:
+        # Requested version absent from every build the provider can see.
+        what = "requested version absent from all builds"
+    elif (has_cds(transcript) and has_cds(substitute_transcript)
+          and intrinsic_cds_structure(transcript, genome_build) is None
+          and intrinsic_cds_structure(substitute_transcript, genome_build) is not None):
+        # Requested version present but its CDS is unusable (a malformed record):
+        # nothing to compare, so bracket it rather than guess. The reason says the
+        # version is present rather than absent.
+        what = "requested version has no usable CDS structure"
+    else:
+        return is_version_substitution_safe(transcript, substitute_transcript, genome_build,
+                                            cited_position=cited_position)
+
+    if genome_build is None:
+        return False, f"{what}; cannot verify (no genome build for bracket fallback)"
+    try:
+        versions = data_provider.get_tx_versions(transcript_id)
+    except NotImplementedError:
+        return False, f"{what}; cannot verify structure"
+
+    def _nearest(candidates):
+        # Nearest held version (in candidate order) that is placed in genome_build.
+        for v in candidates:
+            candidate = data_provider._get_transcript(f"{transcript_id}.{v}")
+            if candidate is not None and candidate["genome_builds"].get(genome_build) is not None:
+                return candidate
+        return None
+
+    transcript_below = _nearest(sorted((v for v in versions if v < version), reverse=True))
+    transcript_above = _nearest(sorted(v for v in versions if v > version))
+    return genomic_bracket_safe(transcript_below, transcript_above, genome_build, what=what)
 
 
 def genomic_bracket_safe(transcript_below, transcript_above, genome_build: str, *,

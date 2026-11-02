@@ -4,7 +4,7 @@
 compute_version_stability.py (R5) proves *structurally* that a version bump is
 coordinate-preserving iff the version's intrinsic CDS structure is unchanged. This
 script is the empirical complement: take every real ClinVar variant where another
-version of its transcript exists and the safety check (check_version_substitution)
+version of its transcript exists and the safety check (is_version_substitution_safe_by_accession)
 calls the V->W substitution safe, resolve the variant under W, and confirm the
 genomic coordinate is byte-identical to resolving it under V. The structural Tier-1
 claim then becomes an observed zero-error rate, the strongest reviewer defence of
@@ -45,7 +45,7 @@ from hgvs.assemblymapper import AssemblyMapper
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from benchmark_resolution import build_provider, classify  # noqa: E402
 from cdot.hgvs.gene_hgvs import _cited_position  # noqa: E402
-from cdot.hgvs.gene_hgvs import check_version_substitution  # noqa: E402
+from cdot.hgvs.version_safety import is_version_substitution_safe_by_accession  # noqa: E402
 
 
 def under_version(c_hgvs, tx, w):
@@ -111,8 +111,8 @@ def main():
         agg["variants_with_alt"] += 1
         cited_position = _cited_position(row["c_hgvs"])
         for w in others:
-            safe, _reason = check_version_substitution(
-                provider, tx, v, w, args.build, cited_position=cited_position)
+            safe, _reason = is_version_substitution_safe_by_accession(
+                provider, f"{tx}.{v}", f"{tx}.{w}", args.build, cited_position=cited_position)
             if not safe:
                 agg["unsafe_subs"] += 1
                 continue

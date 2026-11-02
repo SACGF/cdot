@@ -1169,9 +1169,9 @@ def get_best_transcript_version(
     This picks a version from a bare ``list[int]`` and is deliberately
     structure-agnostic: it has no transcript records, so it cannot judge whether
     the substitution is *coordinate-safe*.  That check lives in the provider-aware
-    layer — ``resolve_transcript_version`` calls ``check_version_substitution``
-    (which fetches the two versions' records and runs
-    ``cdot.hgvs.version_safety.is_version_substitution_safe`` on them)
+    layer — ``resolve_transcript_version`` calls
+    ``cdot.hgvs.version_safety.is_version_substitution_safe_by_accession`` (which
+    fetches the two versions' records and runs the pure check on them)
     and upgrades this plain USED_ADJACENT_VERSION
     fix to a coordinate-safe / unverified / refused outcome (#28).
 

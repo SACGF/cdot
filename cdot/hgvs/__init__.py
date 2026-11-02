@@ -14,7 +14,6 @@ from cdot.hgvs.clean import (
     warning_messages,
 )
 from cdot.hgvs.gene_hgvs import (
-    check_version_substitution,
     Consortium,
     consortium_of,
     DEFAULT_CONSORTIUM,
@@ -27,5 +26,9 @@ from cdot.hgvs.gene_hgvs import (
     resolve_transcript_version,
     UnsafeVersionPolicy,
 )
-from cdot.hgvs.version_safety import intrinsic_cds_structure
+from cdot.hgvs.version_safety import (
+    intrinsic_cds_structure,
+    is_version_substitution_safe,
+    is_version_substitution_safe_by_accession,
+)
 from cdot.hgvs.translation import fix_c_to_p
