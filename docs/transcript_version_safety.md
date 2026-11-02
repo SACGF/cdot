@@ -12,8 +12,8 @@ API, and the empirical study that the check is built on.
 - API entry points: [`fix_hgvs` / `resolve_transcript_version`](advanced_usage.md), and in
   `cdot.hgvs.version_safety`: `is_version_substitution_safe` (two transcript records) and
   `is_version_substitution_safe_by_accession` (two versioned accessions, via a data provider).
-- Reproducible analysis: `analysis/transcript_version_drift.py`,
-  `analysis/transcript_version_crossbuild.py`, and the paper facts script
+- Reproducible analysis: `paper/scripts/exploratory/transcript_version_drift.py`,
+  `paper/scripts/exploratory/transcript_version_crossbuild.py`, and the paper facts script
   `paper/scripts/compute_version_stability.py` (paper Results R5).
 
 ## The check, in one sentence
@@ -193,11 +193,11 @@ requested version is in no build at all.
 
 ```bash
 # Single-build drift, concentration, per-variant safety (Q1-Q7 in the analysis script)
-python analysis/transcript_version_drift.py \
+python paper/scripts/exploratory/transcript_version_drift.py \
     --json /path/to/cdot-0.2.33.refseq.GRCh38.json.gz --build GRCh38 --sample 12000 --seed 1
 
 # Cross-build structure portability + structure<=>drift equivalence
-python analysis/transcript_version_crossbuild.py \
+python paper/scripts/exploratory/transcript_version_crossbuild.py \
     --json /path/to/cdot-0.2.33.all-builds-refseq-grch37_grch38_t2t-chm13v2.0.json.gz \
     --target GRCh38 --other GRCh37 --sample 12000 --seed 1
 

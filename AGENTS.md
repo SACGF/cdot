@@ -10,7 +10,7 @@ Performance comparison: UTA public DB ~1s/transcript vs cdot JSON.gz ~500-1000 t
 
 ## Important Constraints
 
-**Never run code against full datasets.** Processing full GTF/GFF3 files or complete JSON.gz data releases takes a very long time. Always use test data (in `tests/`) when verifying changes.
+**Never run code against full datasets.** Processing full GTF/GFF3 files or complete JSON.gz data releases takes a very long time. Always use test data (in `tests/`) when verifying changes. The test suite itself is not covered by this rule: it runs in a few seconds, so run it as often as you like (see [Test Suite](#test-suite)).
 
 **PyHGVS is abandoned — prefer biocommons HGVS.** The `cdot/pyhgvs/` integration exists for legacy compatibility but PyHGVS is no longer maintained. Do not write new features that require significant PyHGVS-specific work. Focus new development on the biocommons HGVS path (`cdot/hgvs/dataproviders/`). If a feature is straightforward to support in both libraries, fine; if it requires real effort for PyHGVS, skip it and biocommons-only is acceptable.
 
@@ -21,7 +21,7 @@ Performance comparison: UTA public DB ~1s/transcript vs cdot JSON.gz ~500-1000 t
 
 Put the entry in whichever one the change actually ships in; a change affecting both gets an entry in each. Add it to that file's `[unreleased]` section under `### Added`, `### Changed`, or `### Fixed`, and reference the GitHub issue it is done against (eg `#27`).
 
-Do **NOT** add changelog entries for things a client-code user never sees: documentation, the paper (`paper/`), benchmark/analysis tooling (`analysis/`, `tests/benchmark_*.py`), CI/dev infrastructure, or the data-generation/build pipeline (`generate_transcript_data/`, Snakemake) when it doesn't change the released data. When in doubt, ask "would someone who only does `pip install cdot` and calls the library (or downloads a data release) notice this?" — if no, leave it out.
+Do **NOT** add changelog entries for things a client-code user never sees: documentation, the paper (`paper/`), benchmark/analysis tooling (`paper/scripts/`, `tests/benchmark_*.py`), CI/dev infrastructure, or the data-generation/build pipeline (`generate_transcript_data/`, Snakemake) when it doesn't change the released data. When in doubt, ask "would someone who only does `pip install cdot` and calls the library (or downloads a data release) notice this?" — if no, leave it out.
 
 **The `cdot_private` repo holds real-world data — never copy examples from it into this repo.** It is checked out as a sibling directory (`../cdot_private`, github.com/SACGF/cdot_private) and contains a corpus of real search-bar HGVS strings (`combined_search_hgvs.csv`, built by its `process_search_hgvs.py`) plus `analyze_cleaning.py`, which runs that corpus through `cdot.hgvs.clean.clean_hgvs` to report rescue rates and failure patterns (issue #112). Use it to find what cleaning should handle, but **no example string sourced from `cdot_private` may ever appear in this repo's tests, comments, docstrings, or changelog** — synthesise equivalents from the standard public examples already used in the tests (eg `NM_000059.4` BRCA2, `NM_001754.5` RUNX1).
 
@@ -50,7 +50,31 @@ python -m pytest tests/test_json_data_provider_refseq.py::TestJsonDataProvider::
 
 # Convert GTF/GFF3 to JSON (data generation - not part of installed package)
 python generate_transcript_data/cdot_json.py gtf_or_gff [options]
+
+# Regenerate docs/json_data_format.md and docs/cdot-json-schema.json after editing cdot/models.py
+python generate_transcript_data/generate_json_docs.py
 ```
+
+## Test Suite
+
+`python -m pytest tests/` runs about 1300 tests in about 3 seconds, so run it freely and after every change. It needs the `test` extra (`pip install -e '.[test]'`: pytest, msgspec, pysam) and `pyhgvs` (in the `build` extra) for `tests/test_pyhgvs.py`. The handful of skips reported are the abstract base class `AbstractEnsemblTestCase` in `tests/test_json_data_provider_ensembl.py` skipping itself; its subclasses run the same tests against the JSON provider and the mocked TARK provider.
+
+Almost everything in the suite runs offline:
+
+- REST provider tests build `RESTDataProvider(url="https://example.org")` and either monkeypatch its `_get_from_url` / `_post_to_url` seams or hand it a `mock.Mock(spec=requests.Session)`; `tests/test_data_release.py` patches `requests.get`.
+- Ensembl TARK tests run the real `EnsemblTarkDataProvider` code against recorded responses on disk (see `mock_ensembl_tark.py` below).
+- Sequence fetching uses the mocks below, or a tiny FASTA written to a temp dir (`tests/test_fasta_seqfetcher.py`).
+
+The exception is the `test_transcript` methods in `tests/test_json_data_provider_refseq.py` and `tests/test_json_data_provider_ensembl.py` (and any test built the same way). Their seqfetcher is `ChainedSeqFetcher(MockSeqFetcher, SeqFetcher())` and `c_to_g` with `replace_reference=True` fetches one genomic base, which the mock does not hold, so it falls through to biocommons `SeqFetcher`: a local SeqRepo when `HGVS_SEQREPO_DIR` is set, otherwise NCBI over the network. Everything else passes with `SeqFetcher.fetch_seq` patched to raise.
+
+Helper modules in `tests/` (no `test_` prefix, not collected by pytest):
+
+- `tests/genome.py`: `MockGenome` / `MockGenomeTestFile`, copied from counsyl pyhgvs. A pygr-style genome that answers `genome[chrom][start:end]` from a tab-separated lookup table of `(chrom, start, end, seq)` rows, `tests/test_data/grch37.genome`. Used by `test_pyhgvs.py`. Constructing it with `create_data=True` and a real FASTA `db_filename` records every query to the table, which is how the table is extended.
+- `tests/mock_seqfetcher.py`: `MockSeqFetcher`, a biocommons-style seqfetcher that serves transcript sequences from a JSON `{accession: sequence}` file (`tests/test_data/transcript_sequences.json`, `translation_transcript_sequences.json`) and raises `HGVSDataNotAvailableError` for anything else. Used by the JSON provider and translation tests.
+- `tests/mock_ensembl_tark.py`: `MockEnsemblTarkDataProvider`, a subclass of `EnsemblTarkDataProvider` whose `_get_from_url` maps the request URL to `tests/test_data/ensembl_tark/<path>/<query string>.json` and returns that recorded response. Add a new JSON file there to cover a new TARK query.
+- `tests/benchmark_hgvs.py`: not a test. A CLI that resolves a file of (g.HGVS, c.HGVS) pairs through a UTA, REST, JSON or TARK provider and reports accuracy and timing, with notes at the end of the file on how the ClinVar input files were made. `paper/scripts/benchmark_resolution.py` is the current benchmark; this is the older one.
+
+Test data lives in `tests/test_data/`: small GTF/GFF3 slices (single genes, the mitochondrial genome, a chr21 slice), small cdot JSON files, `clinvar_hgvs/` TSVs of (g., c.) pairs for the benchmarks, `ensembl_tark/` recorded responses, `version_safety/` real ClinVar records, and `gff_parser_golden/`, the expected JSON output for every GTF/GFF3 fixture. `tests/test_gff_parser_golden.py` compares parser output to the goldens byte for byte; after an intentional change to the output, regenerate them with `CDOT_UPDATE_GOLDEN=1 python -m pytest tests/test_gff_parser_golden.py` and review the diff.
 
 ## Architecture
 
@@ -68,6 +92,8 @@ Each transcript contains `id`, `gene_name`, `protein`, `start_codon`, `stop_codo
 - `exons`: array of `[alt_start, alt_end, exon_id, cds_start, cds_end, gap_or_null]`
 
 Schema versioning (`cdot/__init__.py`) uses major.minor; clients validate compatibility on load. Current schema: v0.2.
+
+The typed models are in `cdot/models.py`. `docs/json_data_format.md` and `docs/cdot-json-schema.json` are generated from them by `generate_transcript_data/generate_json_docs.py` (field descriptions come from the docstring under each field), so never edit those two files by hand. After touching `models.py`, run `python generate_transcript_data/generate_json_docs.py` and commit the result; a test checks that the generated files match the models.
 
 ### Key Data Flows
 
@@ -89,6 +115,16 @@ Schema versioning (`cdot/__init__.py`) uses major.minor; clients validate compat
 
 `generate_transcript_data/cdot_transcripts.yaml` defines all transcript sources: Ensembl GTF (releases 81–116, GRCh37/GRCh38), RefSeq GFF3, UTA, and T2T-CHM13v2.0. When sources are merged, newer entries override older ones.
 
+Adding a source touches more than the yaml. Checklist:
+
+1. `generate_transcript_data/cdot_transcripts.yaml` (and `ensembl_gencode.csv` for a new Ensembl release).
+2. The per-source release assets: the `files` array in the "Assemble release assets and notes" step of `.github/workflows/data_release.yml`, and the same list in `generate_transcript_data/github_release_upload.sh`. The two must match.
+3. The file tables in `docs/release_files.md`, which list every asset a data release ships.
+4. The example release number in `docs/create_data_from_scratch.md`.
+5. `CHANGELOG-data.md`.
+
+`docs/checking_for_new_sources.md` has the detail for steps 1, 2, 4 and 5 (which files are shipped individually, the GENCODE mapping, the parse check); `release_files.md` is the one it does not mention.
+
 ### Release Management
 
 **Releases are done manually by the maintainer.** Do not tag, publish to PyPI, publish a GitHub release (including the data-release draft), or start the data-release workflow unless the user explicitly asks for that specific step in that message. Preparing a release (version bumps, changelog headings, building to check) is fine when asked; answering a question about release tooling is not permission to release.
@@ -101,7 +137,10 @@ To check for new upstream annotation releases (Ensembl, RefSeq, UTA, GENCODE) an
 
 The same team works on the REST server - http://github.com/SACGF/cdot_rest the REST API docs are here: https://cdotlib.org/static/api-docs.html 
 
-## Git Commits
+## Branches, Commits and Pull Requests
+
+Work on a branch off `origin/main` named `<topic>-<issue number>`, eg `ensembl-transcript-biotype-153`. Commit subjects are `#NNN - description`, with the issue number first (`#150, #152 - clean_hgvs: ...` when a change covers several). PR titles use the same `#NNN - description` form. The PR body starts with `🤖 By Claude <model>` on its own line, then `Fixes #NNN`, then what changed and how it was verified. The maintainer merges PRs (with a merge commit) and closes issues; do not merge, and do not close issues unless told to.
+
 Commit only as the configured git user. Do NOT add `Co-Authored-By: Claude` trailers or any `Claude-Session` / Claude attribution lines to commit messages.
 
 ## GitHub Comments
