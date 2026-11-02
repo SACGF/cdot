@@ -65,6 +65,8 @@ class HGVSFixCode(Enum):
     ADDED_MISSING_KIND           = "added_missing_kind"
     # Gene/transcript fixes (all WARNING)
     SWAPPED_GENE_TRANSCRIPT      = "swapped_gene_transcript"
+    # g./m. HGVS with a genomic and a transcript accession: the genomic one is kept
+    DROPPED_TRANSCRIPT_FOR_GENOMIC_KIND = "dropped_transcript_for_genomic_kind"
     UPPERCASED_TRANSCRIPT        = "uppercased_transcript"
     UPPERCASED_HGVS_PREFIX       = "uppercased_hgvs_prefix"
     UPPERCASED_GENE_SYMBOL       = "uppercased_gene_symbol"
@@ -102,6 +104,7 @@ class HGVSFixCode(Enum):
     # Validation errors (ERROR)
     NO_COLON                     = "no_colon"
     MISSING_REFERENCE_SEQUENCE   = "missing_reference_sequence"
+    KIND_REFERENCE_MISMATCH      = "kind_reference_mismatch"  # eg NM_ with g., NC_ with c.
     INS_WITH_INTEGER_LENGTH      = "ins_with_integer_length"
     INS_MISSING_SEQUENCE         = "ins_missing_sequence"
 
@@ -554,6 +557,30 @@ def _on_fields(fn: _StructuralOp) -> _StringOp:
     return string_op
 
 
+# The kind letters each reference-sequence type can take, and how to name the type in a message.
+# A coding transcript can't take n.: n. counts from the transcript start and c. from the start
+# codon, so the same number is a different base.
+_KINDS_FOR_TYPE = {'mRNA': ("cr", "coding transcript"), 'RNA': ("nr", "non-coding transcript"),
+                   'genomic': ("gm", "genomic"), 'Protein': ("p", "protein")}
+
+
+def _kinds_for_reference(accession: str) -> Optional[tuple[str, str]]:
+    """ (kind letters that can follow accession, description of it), eg ("nr", "non-coding
+        transcript") for NR_, or None if it isn't a known RefSeq or Ensembl transcript accession.
+        An Ensembl transcript may be coding or not, so takes either. """
+    if accession.upper().startswith(_ENSEMBL_TRANSCRIPT_PREFIX):
+        return "cnr", "transcript"
+    return _KINDS_FOR_TYPE.get(_reference_type(accession))
+
+
+_N_ON_CODING = ": n. counts from the transcript start, not the start codon"
+
+
+def _or_list(items: list[str]) -> str:
+    """ "a", "a or b", "a, b or c" """
+    return " or ".join([", ".join(items[:-1]), items[-1]] if len(items) > 2 else items)
+
+
 def _validate(s: str) -> list[HGVSFix]:
     """Post-cleaning validation — returns ERROR-level fixes for unfixable problems."""
     fixes = []
@@ -575,6 +602,16 @@ def _validate(s: str) -> list[HGVSFix]:
             code=HGVSFixCode.NO_COLON,
             message="No colon ':' found in HGVS string",
         ))
+    if (parts := _parse(s)) and parts.kind and (allowed := _kinds_for_reference(parts.accession)):
+        kinds, description = allowed
+        if parts.kind not in kinds:
+            fixes.append(HGVSFix(
+                severity=HGVSFixSeverity.ERROR,
+                code=HGVSFixCode.KIND_REFERENCE_MISMATCH,
+                message=(f"{parts.accession} is a {description} accession, so it can't take "
+                         f"'{parts.kind}.' (use {_or_list([k + '.' for k in kinds])})"
+                         + (_N_ON_CODING if parts.kind == "n" and "c" in kinds else "")),
+            ))
     if _MISSING_REFERENCE.match(s):
         fixes.append(HGVSFix(
             severity=HGVSFixSeverity.ERROR,
@@ -1096,8 +1133,10 @@ def _op_fix_gene_transcript(parts: _HGVSParts) -> tuple[_HGVSParts, list[HGVSFix
     accession, gene_symbol = parts.accession, parts.gene_symbol or None
 
     transcript_ok = _looks_like_transcript(accession)
+    # A genomic accession is the right reference for g./m. HGVS, so it isn't swapped out
+    genomic_ref_for_genomic_kind = parts.kind in ("g", "m") and _GENOMIC_ACCESSION.fullmatch(accession)
 
-    if not transcript_ok and gene_symbol:
+    if not transcript_ok and gene_symbol and not genomic_ref_for_genomic_kind:
         uc_gene = gene_symbol.upper()
         if _looks_like_transcript(uc_gene):
             accession, gene_symbol = gene_symbol, accession
@@ -1147,9 +1186,24 @@ def _op_drop_genomic_ref_in_parens(parts: _HGVSParts) -> tuple[_HGVSParts, list[
     # "NM_000059.4(NC_000013.11):c.68del" -> "NM_000059.4:c.68del". The
     # transcript on its own is a complete reference, so the genomic accession is
     # redundant and (being neither a gene symbol nor a valid selector here) only
-    # blocks parsing. The valid form "NC_000013.11(NM_000059.4):c.68del"
-    # (genomic reference, transcript selector) is not touched, as its accession
-    # is not a transcript.
+    # blocks parsing. "NC_000013.11(NM_000059.4):c.68del" ends up the same way,
+    # as the gene/transcript fix has already swapped it.
+    #
+    # For g./m. HGVS the genomic accession is the reference instead, so the
+    # transcript is dropped: "NC_000013.11(NM_000059.4):g.32316528del" and
+    # "NM_000059.4(NC_000013.11):g.32316528del" -> "NC_000013.11:g.32316528del".
+    if parts.kind in ("g", "m") and parts.gene_symbol is not None:
+        accessions = [parts.accession, parts.gene_symbol]
+        genomic = [a for a in accessions if _GENOMIC_ACCESSION.fullmatch(a)]
+        transcript = [a for a in accessions if _TRANSCRIPT_ACCESSION.fullmatch(a)]
+        if len(genomic) == 1 and len(transcript) == 1:
+            fixed = replace(parts, accession=genomic[0], gene_symbol=None)
+            return fixed, [HGVSFix(
+                severity=HGVSFixSeverity.WARNING,
+                code=HGVSFixCode.DROPPED_TRANSCRIPT_FOR_GENOMIC_KIND,
+                message=f"Dropped transcript {transcript[0]}: a {parts.kind}. variant is on the genomic accession",
+                original=str(parts), fixed=str(fixed),
+            )]
     if (parts.gene_symbol is None
             or not _TRANSCRIPT_ACCESSION.fullmatch(parts.accession)
             or not _GENOMIC_ACCESSION.fullmatch(parts.gene_symbol)):

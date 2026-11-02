@@ -265,7 +265,7 @@ class EnsemblTarkDataProvider(Interface):
         self._check_alt_aln_method(alt_aln_method)
         transcript_results = self._get_transcript_results(tx_ac)
         if not transcript_results:
-            return None
+            raise HGVSDataNotAvailableError(f"No tx_exons for (tx_ac={tx_ac},alt_ac={alt_ac},alt_aln_method={alt_aln_method})")
 
         transcript = self._get_transcript_for_contig(transcript_results, alt_ac)
         if transcript is None:

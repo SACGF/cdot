@@ -1595,3 +1595,33 @@ def test_resolve_version_json_provider_candidates_filtered_by_build():
     assert fixes[0].fixed == "NM_000059.2"
     _resolved, fixes = resolve_transcript_version("NM_000059.1:c.36del", dp, genome_build="GRCh38")
     assert fixes[0].fixed == "NM_000059.3"
+
+
+# ---------------------------------------------------------------------------
+# fix_hgvs: c./n. checked against whether the transcript is coding
+# ---------------------------------------------------------------------------
+
+def test_fix_hgvs_n_on_coding_ensembl_transcript(ensembl_provider):
+    for hgvs_string in ["ENST00000617537.5:n.100del", "AOAH:n.100del"]:
+        result, fixes = fix_hgvs(hgvs_string, ensembl_provider, "GRCh38",
+                                 annotation_consortium=Consortium.ENSEMBL)
+        assert result == "ENST00000617537.5:n.100del"
+        errors = [(f.code, f.message) for f in fixes if f.severity == E]
+        assert errors == [(C.KIND_REFERENCE_MISMATCH,
+                           "ENST00000617537.5 is a coding transcript, so it can't take 'n.' (use c.): "
+                           "n. counts from the transcript start, not the start codon")]
+
+
+def test_fix_hgvs_c_on_non_coding_ensembl_transcript():
+    tx_ac = "ENST00000999999.1"
+    data = {"cdot_version": "0.2.33", "genome_builds": ["GRCh38"], "transcripts": {
+        tx_ac: {"id": tx_ac, "gene_name": "RUNX1",
+                "genome_builds": {"GRCh38": _safety_build([[100, 400, 0, 1, 300, None]])}}}}
+    dp = JSONDataProvider([io.StringIO(json.dumps(data))])
+    _result, fixes = fix_hgvs(f"{tx_ac}:c.100del", dp, "GRCh38")
+    assert [(f.severity, f.code) for f in fixes] == [(E, C.KIND_REFERENCE_MISMATCH)]
+    assert fix_hgvs(f"{tx_ac}:n.100del", dp, "GRCh38") == (f"{tx_ac}:n.100del", [])
+
+
+def test_fix_hgvs_kind_fits_coding_transcript(ensembl_provider):
+    assert fix_hgvs("ENST00000617537.5:c.100del", ensembl_provider, "GRCh38") == ("ENST00000617537.5:c.100del", [])

@@ -167,8 +167,8 @@ class AbstractJSONDataProvider(Interface):
             genome_build=genome_build, cited_position=cited_position)
 
     def _get_transcript_coordinates_for_contig(self, transcript, alt_ac):
-        """ The transcript's coordinates (its ``genome_builds`` entry) on the build that contig
-            ``alt_ac`` belongs to, or None if the transcript has no coordinates on that build.
+        """ The transcript's coordinates (its ``genome_builds`` entry) on contig ``alt_ac``, or
+            None if the transcript isn't on that contig.
 
             Raises HGVSDataNotAvailableError if ``alt_ac`` is not a contig of any assembly this
             provider was constructed with: the same error biocommons hgvs handles for any other
@@ -179,7 +179,10 @@ class AbstractJSONDataProvider(Interface):
             raise HGVSDataNotAvailableError(
                 f"Contig '{alt_ac}' not supported. Supported assemblies: {supported_assemblies}")
 
-        return transcript["genome_builds"].get(assembly)
+        if build_data := transcript["genome_builds"].get(assembly):
+            if build_data["contig"] != alt_ac:
+                return None
+        return build_data
 
     @staticmethod
     def _get_contig_start_end_strand(build_data):
@@ -236,12 +239,12 @@ class AbstractJSONDataProvider(Interface):
 
     def get_tx_exons(self, tx_ac, alt_ac, alt_aln_method):
         """ Exon alignments of ``tx_ac`` on contig ``alt_ac`` in biocommons hgvs form (one dict per
-            exon, with a CIGAR), or None if the transcript is unknown or has no coordinates on that
-            contig's build. Raises HGVSDataNotAvailableError for an alt_aln_method other than
-            splign, or a contig outside the provider's assemblies. """
+            exon, with a CIGAR). Raises HGVSDataNotAvailableError, as biocommons' UTA provider does,
+            if the transcript is unknown or isn't on that contig, for an alt_aln_method other than
+            splign, or for a contig outside the provider's assemblies. """
         self._check_alt_aln_method(alt_aln_method)  # raises unless alt_aln_method == splign
         # alt_aln_method is validated above (always splign) so it is not part of the key.
-        # Only successful builds are cached: a None result can become available later on
+        # Only successful builds are cached: missing data can become available later on
         # providers that fetch lazily (eg RESTDataProvider after prefetch()).
         # Callers get the cached list itself and must not mutate it (biocommons hgvs
         # only reads it; sorted() takes a copy).
@@ -251,12 +254,10 @@ class AbstractJSONDataProvider(Interface):
             return cached
 
         transcript = self._get_transcript(tx_ac)
-        if not transcript:
-            return None
-
-        assembly_coordinates = self._get_transcript_coordinates_for_contig(transcript, alt_ac)
-        if assembly_coordinates is None:
-            return None
+        assembly_coordinates = transcript and self._get_transcript_coordinates_for_contig(transcript, alt_ac)
+        if not assembly_coordinates:
+            raise HGVSDataNotAvailableError(
+                f"No tx_exons for (tx_ac={tx_ac},alt_ac={alt_ac},alt_aln_method={alt_aln_method})")
 
         tx_exons = []  # Genomic order
         exons = assembly_coordinates["exons"]

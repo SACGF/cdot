@@ -12,6 +12,7 @@
 - #181 - Export `EnsemblTarkDataProvider` / `EnsemblTarkSeqFetcher` from `cdot.hgvs.dataproviders`, and `__all__` on public modules
 - #181 - `FastaSeqFetcher` without pysam gives a helpful `ImportError` on construction
 - #206 - Version fallback gives a versionless transcript a version (`NM_000059:c.36del` → `NM_000059.4:c.36del`) when all held versions agree at that position (`RESOLVED_VERSIONLESS_TRANSCRIPT`), otherwise refuses
+- #215 - HGVS cleaning reports a kind that doesn't fit the accession (`NC_000013.11:c.68del`, `NM_000059.4:n.…`) as an ERROR, `KIND_REFERENCE_MISMATCH`. With a data provider, `fix_hgvs` also checks `c.`/`n.` against whether the transcript is coding (Ensembl, and gene resolution)
 
 ### Changed
 
@@ -45,6 +46,8 @@
 - #169 - Close JSON file handles (`ResourceWarning`)
 - #219 - Data providers match biocommons' UTA provider: `get_acs_for_protein_seq` returns the `MD5_` accession (fixes `IndexError` in `c_to_p` for a transcript with no protein ID), `get_tx_identity_info` raises `HGVSDataNotAvailableError` for an unknown transcript, region queries return `[]` for a non-splign method
 - #209 - `fix_hgvs` no longer gives a `NO_TRANSCRIPT_FOR_GENE` ERROR for genomic or protein HGVS (`NC_000013.11:g.32316528del`)
+- #211 - `get_tx_exons` raises `HGVSDataNotAvailableError` for an unknown transcript or a contig it isn't on, as biocommons' UTA provider does (was `None`, or exons labelled with the wrong contig)
+- #213 - HGVS cleaning: `NC_000013.11(NM_000059.4):g.32316528del` keeps the genomic accession (`NC_000013.11:g.32316528del`, `DROPPED_TRANSCRIPT_FOR_GENOMIC_KIND`) instead of becoming `NM_000059.4:g.…`
 
 ## [0.2.33] - 2026-10-06
 

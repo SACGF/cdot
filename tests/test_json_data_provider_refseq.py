@@ -111,6 +111,16 @@ class TestJSONDataProvider(unittest.TestCase):
             self.json_data_provider.get_tx_exons("NM_001637.3", "chr7", "splign")
 
 
+    def test_get_tx_exons_other_contig_same_build(self):
+        """ NM_001637.3 (AOAH) is on chr7, so there are no exons on chr2 of the same build """
+        self.assertIsNotNone(self.json_data_provider.get_tx_exons("NM_001637.3", "NC_000007.13", "splign"))
+        with self.assertRaisesRegex(HGVSDataNotAvailableError, "No tx_exons for"):
+            self.json_data_provider.get_tx_exons("NM_001637.3", "NC_000002.11", "splign")
+
+    def test_get_tx_exons_unknown_transcript(self):
+        with self.assertRaisesRegex(HGVSDataNotAvailableError, "No tx_exons for"):
+            self.json_data_provider.get_tx_exons("NM_999999.1", "NC_000007.13", "splign")
+
     # Behaviour matching biocommons' UTA provider
     def test_get_tx_identity_info_unknown_transcript(self):
         with self.assertRaisesRegex(HGVSDataNotAvailableError, "No transcript definition"):

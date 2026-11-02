@@ -621,6 +621,30 @@ def _resolve_versionless_transcript(hgvs_string: str, accession: str, versions: 
     )]
 
 
+def _check_kind_fits_transcript(hgvs_string: str, data_provider) -> list[HGVSFix]:
+    """ An ERROR KIND_REFERENCE_MISMATCH if hgvs_string is c. on a non-coding transcript or n. on
+        a coding one, going by the transcript record (the accession alone doesn't say for Ensembl,
+        or for a transcript that gene resolution picked). n. counts from the transcript start and
+        c. from the start codon, so the same number on the other one is a different base. """
+    parsed = _parse_transcript_accession(hgvs_string)
+    if parsed is None or parsed[1] is None or not hasattr(data_provider, "get_transcript"):
+        return []
+    tx_ac = f"{parsed[0]}.{parsed[1]}"
+    kind = hgvs_string.split(":", 1)[1][:2]
+    if kind not in ("c.", "n.") or (transcript := data_provider.get_transcript(tx_ac)) is None:
+        return []
+    coding = version_safety.has_cds(transcript)
+    if coding and kind == "n.":
+        message = (f"{tx_ac} is a coding transcript, so it can't take 'n.' (use c.): "
+                   f"n. counts from the transcript start, not the start codon")
+    elif not coding and kind == "c.":
+        message = f"{tx_ac} is a non-coding transcript, so it can't take 'c.' (use n.): it has no start codon"
+    else:
+        return []
+    return [HGVSFix(severity=HGVSFixSeverity.ERROR, code=HGVSFixCode.KIND_REFERENCE_MISMATCH,
+                    message=message)]
+
+
 def _cited_position(hgvs_string: str) -> Optional[str]:
     """Return the text after ``c.``/``n.`` (position plus edit) of a c./n. HGVS, else None.
 
@@ -895,6 +919,9 @@ def fix_hgvs(
             genome_build=genome_build, on_unsafe_version=on_unsafe_version,
         )
         fixes.extend(version_fixes)
+
+    if data_provider is not None and HGVSFixCode.KIND_REFERENCE_MISMATCH not in {f.code for f in fixes}:
+        fixes.extend(_check_kind_fits_transcript(result, data_provider))
 
     if raise_on_errors:
         errors = [f for f in fixes if f.severity == HGVSFixSeverity.ERROR]
