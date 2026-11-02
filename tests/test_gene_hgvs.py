@@ -4,6 +4,8 @@ Tests for cdot.hgvs.gene_hgvs — gene-symbol HGVS resolution via MANE/canonical
 Uses the Ensembl GRCh38 test data fixture which has a single gene (AOAH) with
 ENST00000617537.5 tagged as MANE_Select.
 """
+import io
+import json
 import os
 import pytest
 
@@ -202,9 +204,9 @@ def test_consortium_of_public_alias():
 # ---------------------------------------------------------------------------
 
 def test_rank_transcripts_for_gene_returns_full_ordered_list(refseq_mixed_provider):
-    # prefer_consortium=None keeps both consortiums so we get the full ranking
+    # consortium=None keeps both consortiums so we get the full ranking
     ranked, fixes = rank_transcripts_for_gene(
-        "BRCA2", refseq_mixed_provider, "GRCh38", prefer_consortium=None,
+        "BRCA2", refseq_mixed_provider, "GRCh38", consortium=None,
     )
     assert [tx_ac for tx_ac, _tags, _matched in ranked] == [
         "ENST00000380152.8", "NM_000059.4",
@@ -215,7 +217,7 @@ def test_rank_transcripts_for_gene_returns_full_ordered_list(refseq_mixed_provid
 
 def test_rank_transcripts_for_gene_consortium_hard_filter(refseq_mixed_provider):
     ranked, fixes = rank_transcripts_for_gene(
-        "BRCA2", refseq_mixed_provider, "GRCh38", prefer_consortium=Consortium.REFSEQ,
+        "BRCA2", refseq_mixed_provider, "GRCh38", consortium=Consortium.REFSEQ,
     )
     assert [tx_ac for tx_ac, _tags, _matched in ranked] == ["NM_000059.4"]
     assert fixes == []
@@ -233,7 +235,7 @@ def test_rank_transcripts_for_gene_no_transcript_errors(refseq_mixed_provider):
 def test_rank_transcripts_for_gene_preferred_consortium_absent_errors(refseq_mixed_provider):
     # ENSEMBLONLY has only an Ensembl transcript; prefer=REFSEQ must error, not cross over
     ranked, fixes = rank_transcripts_for_gene(
-        "ENSEMBLONLY", refseq_mixed_provider, "GRCh38", prefer_consortium=Consortium.REFSEQ,
+        "ENSEMBLONLY", refseq_mixed_provider, "GRCh38", consortium=Consortium.REFSEQ,
     )
     assert ranked == []
     assert fixes[-1].code == C.NO_TRANSCRIPT_FOR_GENE
@@ -257,7 +259,7 @@ def test_filter_by_consortium_ensembl():
 def test_resolve_prefers_refseq_from_mixed(refseq_mixed_provider):
     resolved, fixes = resolve_gene_hgvs(
         "BRCA2:c.36del", refseq_mixed_provider, "GRCh38",
-        prefer_consortium=Consortium.REFSEQ,
+        consortium=Consortium.REFSEQ,
     )
     assert resolved == "NM_000059.4:c.36del"
 
@@ -265,7 +267,7 @@ def test_resolve_prefers_refseq_from_mixed(refseq_mixed_provider):
 def test_resolve_prefers_ensembl_from_mixed(refseq_mixed_provider):
     resolved, fixes = resolve_gene_hgvs(
         "BRCA2:c.36del", refseq_mixed_provider, "GRCh38",
-        prefer_consortium=Consortium.ENSEMBL,
+        consortium=Consortium.ENSEMBL,
     )
     assert resolved == "ENST00000380152.8:c.36del"
 
@@ -274,7 +276,7 @@ def test_resolve_refseq_filter_errors_when_only_ensembl(refseq_mixed_provider):
     # ENSG-only gene with prefer=REFSEQ must error, never cross to Ensembl
     resolved, fixes = resolve_gene_hgvs(
         "ENSEMBLONLY:c.36del", refseq_mixed_provider, "GRCh38",
-        prefer_consortium=Consortium.REFSEQ,
+        consortium=Consortium.REFSEQ,
     )
     assert resolved == "ENSEMBLONLY:c.36del"  # unchanged
     assert fixes[-1].severity == E
@@ -285,9 +287,231 @@ def test_resolve_refseq_filter_errors_when_only_ensembl(refseq_mixed_provider):
 def test_resolve_none_allows_either(refseq_mixed_provider):
     resolved, _fixes = resolve_gene_hgvs(
         "ENSEMBLONLY:c.36del", refseq_mixed_provider, "GRCh38",
-        prefer_consortium=None,
+        consortium=None,
     )
     assert resolved == "ENST00000999999.1:c.36del"
+
+
+def test_consortium_absent_message_names_consortium_kwarg(refseq_mixed_provider):
+    _resolved, fixes = resolve_gene_hgvs(
+        "ENSEMBLONLY:c.36del", refseq_mixed_provider, "GRCh38", consortium=Consortium.REFSEQ,
+    )
+    assert "consortium=Consortium.ENSEMBL or None" in fixes[-1].message
+    assert "prefer_consortium" not in fixes[-1].message
+
+
+# ---------------------------------------------------------------------------
+# prefer_consortium: deprecated alias of consortium (#171)
+# ---------------------------------------------------------------------------
+
+def test_prefer_consortium_alias_resolve_gene_hgvs_warns_and_filters(refseq_mixed_provider):
+    with pytest.warns(DeprecationWarning, match="prefer_consortium is deprecated"):
+        resolved, fixes = resolve_gene_hgvs(
+            "BRCA2:c.36del", refseq_mixed_provider, "GRCh38",
+            prefer_consortium=Consortium.ENSEMBL,
+        )
+    assert resolved == "ENST00000380152.8:c.36del"
+    assert [f.code for f in fixes] == [C.RESOLVED_GENE_TO_TRANSCRIPT]  # no fix recorded for the alias
+
+
+def test_prefer_consortium_alias_rank_transcripts_for_gene_warns(refseq_mixed_provider):
+    with pytest.warns(DeprecationWarning):
+        ranked, _fixes = rank_transcripts_for_gene(
+            "BRCA2", refseq_mixed_provider, "GRCh38", prefer_consortium=None,
+        )
+    assert [tx_ac for tx_ac, _tags, _matched in ranked] == ["ENST00000380152.8", "NM_000059.4"]
+
+
+def test_prefer_consortium_alias_fix_hgvs_warns_once(refseq_mixed_provider):
+    # fix_hgvs maps the alias itself and passes consortium= down, so one warning, not three
+    with pytest.warns(DeprecationWarning) as record:
+        result, _fixes = fix_hgvs(
+            "BRCA2:c.36del", data_provider=refseq_mixed_provider, genome_build="GRCh38",
+            prefer_consortium=Consortium.ENSEMBL,
+        )
+    assert result == "ENST00000380152.8:c.36del"
+    assert len([w for w in record if issubclass(w.category, DeprecationWarning)]) == 1
+
+
+def test_prefer_consortium_alias_warning_points_at_caller(refseq_mixed_provider):
+    with pytest.warns(DeprecationWarning) as record:
+        resolve_gene_hgvs("BRCA2:c.36del", refseq_mixed_provider, "GRCh38",
+                          prefer_consortium=Consortium.ENSEMBL)
+    assert record[0].filename == __file__
+
+
+@pytest.mark.parametrize("func, args", [
+    (resolve_gene_hgvs, ("BRCA2:c.36del",)),
+    (rank_transcripts_for_gene, ("BRCA2",)),
+])
+def test_consortium_and_alias_together_is_an_error(refseq_mixed_provider, func, args):
+    with pytest.raises(TypeError, match="both given"):
+        func(*args, refseq_mixed_provider, "GRCh38",
+             consortium=Consortium.ENSEMBL, prefer_consortium=Consortium.ENSEMBL)
+
+
+def test_fix_hgvs_consortium_and_alias_together_is_an_error(refseq_mixed_provider):
+    with pytest.raises(TypeError, match="both given"):
+        fix_hgvs("BRCA2:c.36del", data_provider=refseq_mixed_provider, genome_build="GRCh38",
+                 consortium=None, prefer_consortium=Consortium.ENSEMBL)
+
+
+def test_consortium_kwarg_does_not_warn(refseq_mixed_provider, recwarn):
+    resolve_gene_hgvs("BRCA2:c.36del", refseq_mixed_provider, "GRCh38", consortium=Consortium.ENSEMBL)
+    rank_transcripts_for_gene("BRCA2", refseq_mixed_provider, "GRCh38", consortium=None)
+    fix_hgvs("BRCA2:c.36del", data_provider=refseq_mixed_provider, genome_build="GRCh38")
+    assert not [w for w in recwarn if issubclass(w.category, DeprecationWarning)]
+
+
+# ---------------------------------------------------------------------------
+# tag_priority defaults to a copy of DEFAULT_TAG_PRIORITY (#171)
+# ---------------------------------------------------------------------------
+
+def test_tag_priority_none_uses_default_and_does_not_share_it(refseq_mixed_provider):
+    before = list(DEFAULT_TAG_PRIORITY)
+    ranked, _fixes = rank_transcripts_for_gene("BRCA2", refseq_mixed_provider, "GRCh38", tag_priority=None)
+    assert ranked[0][2] == "MANE_Select"
+    resolved, _fixes = resolve_gene_hgvs("BRCA2:c.36del", refseq_mixed_provider, "GRCh38", tag_priority=None)
+    assert resolved == "NM_000059.4:c.36del"
+    assert DEFAULT_TAG_PRIORITY == before
+
+
+def test_tag_priority_custom_list_is_used(refseq_mixed_provider):
+    # Only Ensembl_canonical counts, so the RefSeq MANE Select transcript is untagged
+    _resolved, fixes = resolve_gene_hgvs(
+        "BRCA2:c.36del", refseq_mixed_provider, "GRCh38", tag_priority=["Ensembl_canonical"],
+    )
+    assert fixes[-1].code == C.NO_TRANSCRIPT_FOR_GENE
+    assert "fallback_to_longest=True" in fixes[-1].message
+
+
+# ---------------------------------------------------------------------------
+# fallback_to_longest sorts by transcript length explicitly (#171)
+# ---------------------------------------------------------------------------
+
+def _untagged_build(exons):
+    return {
+        "contig": "NC_000013.11", "strand": "+", "url": None,
+        "cds_start": None, "cds_end": None, "exons": exons,
+    }
+
+
+@pytest.fixture
+def untagged_provider():
+    """Three untagged transcripts of one gene. Exons are [alt_start, alt_end, exon_id,
+    transcript_start, transcript_end, gap]; the spliced length is the transcript span."""
+    data = {
+        "cdot_version": "0.2.26",
+        "genome_builds": ["GRCh38"],
+        "transcripts": {
+            "NR_000001.1": {
+                "id": "NR_000001.1", "gene_name": "UNTAGGED",
+                "genome_builds": {"GRCh38": _untagged_build([[0, 100, 1, 1, 100, None]])},
+            },
+            "NR_000002.1": {
+                "id": "NR_000002.1", "gene_name": "UNTAGGED",
+                "genome_builds": {"GRCh38": _untagged_build(
+                    [[0, 300, 1, 1, 300, None], [1000, 1300, 2, 301, 600, None]])},
+            },
+            "NR_000003.1": {
+                "id": "NR_000003.1", "gene_name": "UNTAGGED",
+                "genome_builds": {"GRCh38": _untagged_build([[0, 250, 1, 1, 250, None]])},
+            },
+        },
+    }
+    return JSONDataProvider([io.StringIO(json.dumps(data))])
+
+
+def test_fallback_to_longest_off_errors(untagged_provider):
+    resolved, fixes = resolve_gene_hgvs("UNTAGGED:n.10del", untagged_provider, "GRCh38")
+    assert resolved == "UNTAGGED:n.10del"
+    assert fixes[-1].severity == E
+    assert fixes[-1].code == C.NO_TRANSCRIPT_FOR_GENE
+
+
+def test_fallback_to_longest_picks_longest(untagged_provider):
+    resolved, fixes = resolve_gene_hgvs(
+        "UNTAGGED:n.10del", untagged_provider, "GRCh38", fallback_to_longest=True,
+    )
+    assert resolved == "NR_000002.1:n.10del"
+    assert fixes[-1].code == C.RESOLVED_GENE_TO_TRANSCRIPT
+    assert "longest transcript" in fixes[-1].message
+
+
+def test_fallback_to_longest_does_not_trust_provider_order(untagged_provider, monkeypatch):
+    # A provider returning shortest-first must still give the longest transcript
+    monkeypatch.setattr(untagged_provider, "get_tx_ac_tags_for_gene",
+                        lambda gene, build: [("NR_000001.1", []), ("NR_000003.1", []), ("NR_000002.1", [])])
+    resolved, fixes = resolve_gene_hgvs(
+        "UNTAGGED:n.10del", untagged_provider, "GRCh38", fallback_to_longest=True,
+    )
+    assert resolved == "NR_000002.1:n.10del"
+    assert "longest transcript" in fixes[-1].message
+
+
+def test_fallback_to_longest_tie_keeps_provider_order(untagged_provider, monkeypatch):
+    monkeypatch.setattr(untagged_provider, "get_tx_ac_tags_for_gene",
+                        lambda gene, build: [("NR_000003.1", []), ("NR_000001.1", [])])
+    monkeypatch.setattr(untagged_provider, "get_tx_identity_info", lambda tx_ac: {"lengths": [100]})
+    resolved, _fixes = resolve_gene_hgvs(
+        "UNTAGGED:n.10del", untagged_provider, "GRCh38", fallback_to_longest=True,
+    )
+    assert resolved == "NR_000003.1:n.10del"
+
+
+def test_fallback_to_longest_without_lengths_uses_first_and_says_so():
+    # _StubProvider has no get_tx_identity_info, so lengths can't be compared
+    dp = _StubProvider({"UNTAGGED": [("NM_000001.1", []), ("NM_000002.1", [])]})
+    resolved, fixes = resolve_gene_hgvs(
+        "UNTAGGED:c.10del", dp, "GRCh38", fallback_to_longest=True,
+    )
+    assert resolved == "NM_000001.1:c.10del"
+    assert fixes[-1].code == C.RESOLVED_GENE_TO_TRANSCRIPT
+    assert "longest" not in fixes[-1].message
+    assert "first transcript returned by the data provider" in fixes[-1].message
+
+
+def test_fallback_to_longest_tagged_transcript_still_wins(untagged_provider, monkeypatch):
+    # A priority tag beats length, whatever the lengths
+    monkeypatch.setattr(untagged_provider, "get_tx_ac_tags_for_gene",
+                        lambda gene, build: [("NR_000002.1", []), ("NR_000001.1", ["RefSeq Select"])])
+    resolved, fixes = resolve_gene_hgvs(
+        "UNTAGGED:n.10del", untagged_provider, "GRCh38", fallback_to_longest=True,
+    )
+    assert resolved == "NR_000001.1:n.10del"
+    assert "(RefSeq_Select)" in fixes[-1].message
+
+
+# ---------------------------------------------------------------------------
+# fix_hgvs with a data provider but no genome_build records the skipped
+# gene resolution (#171)
+# ---------------------------------------------------------------------------
+
+def test_fix_hgvs_provider_without_genome_build_records_skipped_gene_resolution(refseq_mixed_provider):
+    result, fixes = fix_hgvs("BRCA2:c.36del", data_provider=refseq_mixed_provider)
+    assert result == "BRCA2:c.36del"
+    assert [(f.severity, f.code) for f in fixes] == [(W, C.SKIPPED_GENE_RESOLUTION)]
+    assert "genome_build" in fixes[0].message
+    assert fixes[0].original == "BRCA2"
+
+
+def test_fix_hgvs_provider_without_genome_build_skip_is_not_an_error(refseq_mixed_provider):
+    result, fixes = fix_hgvs("BRCA2:c.36del", data_provider=refseq_mixed_provider, raise_on_errors=True)
+    assert result == "BRCA2:c.36del"
+    assert fixes[0].code == C.SKIPPED_GENE_RESOLUTION
+
+
+def test_fix_hgvs_provider_without_genome_build_transcript_input_no_skip_fix(refseq_mixed_provider):
+    result, fixes = fix_hgvs("NM_000059.4:c.36del", data_provider=refseq_mixed_provider)
+    assert result == "NM_000059.4:c.36del"
+    assert fixes == []
+
+
+def test_fix_hgvs_no_provider_gene_input_no_skip_fix():
+    # Without a provider nothing could have been resolved anyway, so no fix
+    result, fixes = fix_hgvs("BRCA2:c.36del")
+    assert result == "BRCA2:c.36del"
+    assert fixes == []
 
 
 # ---------------------------------------------------------------------------
@@ -309,7 +533,7 @@ def test_resolve_passthrough_when_transcript_present(ensembl_provider):
 def test_resolve_gene_symbol_picks_mane_select(ensembl_provider):
     # Fixture is Ensembl data, so allow Ensembl (default is RefSeq)
     resolved, fixes = resolve_gene_hgvs("AOAH:c.36del", ensembl_provider, "GRCh38",
-                                        prefer_consortium=Consortium.ENSEMBL)
+                                        consortium=Consortium.ENSEMBL)
     assert resolved == "ENST00000617537.5:c.36del"
     assert len(fixes) == 1
     fix = fixes[0]
@@ -325,7 +549,7 @@ def test_resolve_gene_symbol_picks_mane_select(ensembl_provider):
 def test_resolve_lowercase_gene_symbol_retries_uppercased(ensembl_provider):
     # Gene lookups are case-sensitive; a lowercase symbol should retry uppercased
     resolved, fixes = resolve_gene_hgvs("aoah:c.36del", ensembl_provider, "GRCh38",
-                                        prefer_consortium=Consortium.ENSEMBL)
+                                        consortium=Consortium.ENSEMBL)
     assert resolved == "ENST00000617537.5:c.36del"
     assert any(f.code == C.UPPERCASED_GENE_SYMBOL for f in fixes)
     uc_fix = next(f for f in fixes if f.code == C.UPPERCASED_GENE_SYMBOL)
@@ -364,7 +588,7 @@ def test_fix_hgvs_cleaning_only_no_provider():
 
 def test_fix_hgvs_gene_resolution_with_provider(ensembl_provider):
     result, fixes = fix_hgvs("AOAH:c.36del", data_provider=ensembl_provider,
-                             genome_build="GRCh38", prefer_consortium=Consortium.ENSEMBL)
+                             genome_build="GRCh38", consortium=Consortium.ENSEMBL)
     assert result == "ENST00000617537.5:c.36del"
     assert any(f.code == C.RESOLVED_GENE_TO_TRANSCRIPT for f in fixes)
 
@@ -372,7 +596,7 @@ def test_fix_hgvs_gene_resolution_with_provider(ensembl_provider):
 def test_fix_hgvs_cleaning_then_resolution(ensembl_provider):
     # uppercase mutation type should be cleaned, then gene resolved
     result, fixes = fix_hgvs("AOAH:c.36DEL", data_provider=ensembl_provider,
-                             genome_build="GRCh38", prefer_consortium=Consortium.ENSEMBL)
+                             genome_build="GRCh38", consortium=Consortium.ENSEMBL)
     assert result == "ENST00000617537.5:c.36del"
     fix_codes = {f.code for f in fixes}
     assert C.LOWERCASED_MUTATION_TYPE in fix_codes
@@ -395,7 +619,7 @@ def test_fix_hgvs_no_raise_when_no_errors(ensembl_provider):
         data_provider=ensembl_provider,
         genome_build="GRCh38",
         raise_on_errors=True,
-        prefer_consortium=Consortium.ENSEMBL,
+        consortium=Consortium.ENSEMBL,
     )
     assert result == "ENST00000617537.5:c.36del"
     assert all(f.severity == W for f in fixes)
@@ -689,6 +913,8 @@ def test_resolve_version_unsafe_substitute_policy_warns():
     assert resolved == "NM_000059.3:c.36del"   # substituted under SUBSTITUTE policy
     assert fixes[0].severity == W
     assert fixes[0].code == C.USED_ADJACENT_VERSION_COORD_UNVERIFIED
+    assert "; coordinate may have moved (" in fixes[0].message
+    assert "—" not in fixes[0].message
 
 
 def test_fix_hgvs_version_fallback_unsafe_refuses_by_default():

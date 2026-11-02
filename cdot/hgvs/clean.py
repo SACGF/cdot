@@ -78,6 +78,7 @@ class HGVSFixCode(Enum):
     # Gene → transcript resolution (WARNING on success, ERROR on failure)
     RESOLVED_GENE_TO_TRANSCRIPT  = "resolved_gene_to_transcript"
     NO_TRANSCRIPT_FOR_GENE       = "no_transcript_for_gene"
+    SKIPPED_GENE_RESOLUTION      = "skipped_gene_resolution"  # WARNING: fix_hgvs got no genome_build
     # Accession prefix restoration for a bare-number accession, verified against
     # a data provider (see gene_hgvs.resolve_missing_accession_prefix; WARNING)
     ADDED_ACCESSION_PREFIX       = "added_accession_prefix"

@@ -52,8 +52,8 @@ Useful options:
 | Argument | Default | Effect |
 |----------|---------|--------|
 | `raise_on_errors` | `False` | Raise `HGVSInputError` on the first ERROR-level fix instead of returning it. |
-| `prefer_consortium` | `Consortium.REFSEQ` | Hard-filter resolved transcripts to RefSeq (default) or `ENSEMBL`; pass `None` to allow either. |
-| `fallback_to_longest` | `False` | If no tagged/canonical transcript exists for a gene, fall back to the longest. |
+| `consortium` | `Consortium.REFSEQ` | Hard-filter resolved transcripts to RefSeq (default) or `ENSEMBL`; pass `None` to allow either. (`prefer_consortium` is a deprecated alias.) |
+| `fallback_to_longest` | `False` | If no tagged/canonical transcript exists for a gene, fall back to the longest (by spliced transcript length). |
 | `tag_priority` | MANE_Select > MANE_Plus_Clinical > RefSeq_Select > Ensembl_canonical | Order used when resolving a gene to a transcript. |
 | `ops` | `None` (all) | Restrict which cleaning operations run (see below). |
 | `version_fallback` | `None` (off) | Opt in to adjacent transcript-version fallback (see below). |
