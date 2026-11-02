@@ -160,6 +160,10 @@ def build_schema(field_docs):
         name = cls.__name__
         docs = field_docs.get(name, {})
         d = defs.get(name, {})
+        if "description" in d:
+            # The struct's docstring. Python 3.13+ strips the indentation of its
+            # continuation lines at compile time, older versions keep it
+            d["description"] = inspect.cleandoc(d["description"])
         props = d.get("properties", {})
         for field in props:
             if desc := field_description(name, field, docs):
