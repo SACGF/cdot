@@ -183,7 +183,8 @@ CLEAN_CASES = [
     # #112 — leading junk before the transcript accession
     ("#NM_000059.4:c.316+5G>A",                  "NM_000059.4:c.316+5G>A",                     {C.STRIPPED_LEADING_JUNK}),
     (":NM_000059.4:c.316+5G>A",                  "NM_000059.4:c.316+5G>A",                     {C.STRIPPED_LEADING_JUNK}),
-    ("GRCh38.p2 NM_000059.4:c.316+5G>A",         "NM_000059.4:c.316+5G>A",                     {C.STRIPPED_LEADING_JUNK}),
+    ("GRCh38.p2 NM_000059.4:c.316+5G>A",         "NM_000059.4:c.316+5G>A",                     {C.STRIPPED_BUILD_NAME}),
+    ("GRCh37.p12#NM_000059.4:c.68del",           "NM_000059.4:c.68del",                        {C.STRIPPED_BUILD_NAME}),
     # #112 — gene symbol wedged between extra colons / stray parens
     ("NM_001754.5:(RUNX1):c.1415T>C",            "NM_001754.5(RUNX1):c.1415T>C",              {C.FIXED_GENE_WRAPPER}),
     ("NM_001754.5:RUNX1:c.1415T>C",              "NM_001754.5(RUNX1):c.1415T>C",              {C.FIXED_GENE_WRAPPER}),
@@ -233,6 +234,10 @@ CLEAN_CASES = [
     ("BRCA2 NM_000059.4 c.68del",                "NM_000059.4(BRCA2):c.68del",                 {C.WRAPPED_GENE_SYMBOL}),
     ("BRCA2 NM_000059:c.68del",                  "NM_000059(BRCA2):c.68del",                   {C.WRAPPED_GENE_SYMBOL}),
     ("RUNX1  NM_001754.5:c.1415T>C",             "NM_001754.5(RUNX1):c.1415T>C",               {C.WRAPPED_GENE_SYMBOL}),
+    # #165: a genome build name before the reference is dropped, not taken for a
+    # gene symbol (was "NM_000059.4(hg19):c.68del" / "GRCh38BRCA2NM_000059.4:c.68del")
+    ("hg19 NM_000059.4:c.68del",                 "NM_000059.4:c.68del",                        {C.STRIPPED_BUILD_NAME}),
+    ("GRCh38 BRCA2 NM_000059.4:c.68del",         "NM_000059.4(BRCA2):c.68del",                 {C.STRIPPED_BUILD_NAME, C.WRAPPED_GENE_SYMBOL}),
 ]
 
 
@@ -286,6 +291,126 @@ def test_drop_del_dup_count_requires_range():
     cleaned, fixes = clean_hgvs("NM_000059.4:c.123del5", validate=False)
     assert cleaned == "NM_000059.4:c.123del5"
     assert C.DROPPED_DEL_DUP_COUNT not in codes(fixes)
+
+
+# ---------------------------------------------------------------------------
+# #165: a del/dup count is checked against the range before it is dropped
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bad,expected", [
+    # Plain integer positions on every kind: the count agrees with the range
+    ("NM_000059.4:c.123_127del5",                "NM_000059.4:c.123_127del"),
+    ("NM_000059.4:c.1315_1337dup23",             "NM_000059.4:c.1315_1337dup"),
+    ("NC_000013.11:g.32316528_32316530del3",     "NC_000013.11:g.32316528_32316530del"),
+    ("NR_003051.3:n.601_602dup2",                "NR_003051.3:n.601_602dup"),
+    ("NC_012920.1:m.3243_3245del3",              "NC_012920.1:m.3243_3245del"),
+    # Kind dot missing: the count is still checked before the structure is rebuilt
+    ("NM_000059.4:c123_127del5",                 "NM_000059.4:c.123_127del"),
+])
+def test_del_dup_count_matching_range_is_dropped(bad, expected):
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == expected
+    assert C.DROPPED_DEL_DUP_COUNT in codes(fixes)
+    assert E not in severities(fixes)
+
+
+@pytest.mark.parametrize("bad", [
+    "NM_000059.4:c.123_127del3",                 # 5 bp range, count says 3
+    "NM_000059.4:c.1315_1337dup3",               # 23 bp range, count says 3
+    "NC_000013.11:g.32316528_32316530del5",      # 3 bp range, count says 5
+    "NM_000059.4(BRCA2):c.123_127dup7",
+])
+def test_del_dup_count_contradicting_range_is_error(bad):
+    # The count and the range disagree, so which one is right is a guess:
+    # neither is changed and the contradiction is reported as an ERROR.
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == bad
+    assert C.DEL_DUP_COUNT_MISMATCH in codes(fixes)
+    assert C.DROPPED_DEL_DUP_COUNT not in codes(fixes)
+    error = next(f for f in fixes if f.code == C.DEL_DUP_COUNT_MISMATCH)
+    assert error.severity == E
+    assert error.original == bad
+    with pytest.raises(HGVSInputError):
+        clean_hgvs(bad, raise_on_errors=True)
+
+
+def test_del_dup_count_mismatch_message_gives_both_lengths():
+    _cleaned, fixes = clean_hgvs("NM_000059.4:c.123_127del3")
+    error = next(f for f in fixes if f.code == C.DEL_DUP_COUNT_MISMATCH)
+    assert error.message == "Base count 3 after del contradicts the 5 bp range 123_127"
+
+
+@pytest.mark.parametrize("bad,expected", [
+    # Intronic offsets: the range's length needs the transcript, so the count
+    # cannot be checked and is dropped as before
+    ("NM_000059.4:c.100+5_200-3del5",            "NM_000059.4:c.100+5_200-3del"),
+    ("NM_000059.4:c.100+5_200-3dup2",            "NM_000059.4:c.100+5_200-3dup"),
+    # A range starting in the 5' UTR (there is no position 0, so the length is
+    # not end - start + 1) is not checked either
+    ("NM_000059.4:c.-30_5dup3",                  "NM_000059.4:c.-30_5dup"),
+])
+def test_del_dup_count_dropped_unchecked_when_range_length_unknown(bad, expected):
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == expected
+    assert C.DROPPED_DEL_DUP_COUNT in codes(fixes)
+    assert C.DEL_DUP_COUNT_MISMATCH not in codes(fixes)
+
+
+@pytest.mark.parametrize("unchanged", [
+    "NM_000059.4:c.*10_*20del3",                 # 3' UTR positions
+    "NM_000059.4:c.(100_200)del3",               # uncertain range
+])
+def test_del_dup_count_left_alone_on_utr_or_uncertain_range(unchanged):
+    # The count rule does not match these at all, so they pass through untouched
+    # and without a count error, as before.
+    cleaned, fixes = clean_hgvs(unchanged)
+    assert cleaned == unchanged
+    assert C.DROPPED_DEL_DUP_COUNT not in codes(fixes)
+    assert C.DEL_DUP_COUNT_MISMATCH not in codes(fixes)
+
+
+# ---------------------------------------------------------------------------
+# #165: an unbalanced bracket in the allele is kept, not stripped
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bad", [
+    "NM_000059.4:c.(100_200del",                 # closing bracket of an uncertain range lost
+    "NM_000059.4:c.100_200)del",                 # opening bracket lost
+    "NM_000059.4(BRCA2):c.(100_200del",          # gene wrapper balanced, allele not
+    "NM_000059.4:c.(100_200)_(300_400del",
+    "NP_000050.2:p.(Glu23fs",                    # predicted protein consequence
+])
+def test_unbalanced_bracket_in_allele_is_error(bad):
+    # Stripping would turn an uncertain range into a certain one (was
+    # "NM_000059.4:c.100_200del"), and where the missing bracket belongs is a
+    # guess, so the string is left alone and reported as an ERROR.
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == bad
+    assert C.UNBALANCED_BRACKETS in codes(fixes)
+    assert C.STRIPPED_UNBALANCED_BRACKETS not in codes(fixes)
+    error = next(f for f in fixes if f.code == C.UNBALANCED_BRACKETS)
+    assert error.severity == E
+    assert error.original == bad
+
+
+@pytest.mark.parametrize("bad,expected", [
+    # A stray bracket around the reference is still stripped, and a balanced
+    # uncertain range in the allele survives it
+    ("(NM_000059.4:c.(100_200)del",              "NM_000059.4:c.(100_200)del"),
+    ("NM_000059.4(BRCA2:c.68del",                "NM_000059.4(BRCA2):c.68del"),
+    ("NM_000059.4(BRCA2)):c.68del",              "NM_000059.4(BRCA2):c.68del"),
+    # A wrapping bracket that closes/opens nothing in the allele is unambiguous
+    ("NM_000059.4:c.68del)",                     "NM_000059.4:c.68del"),
+    ("NM_000059.4:c.(100_200)del)",              "NM_000059.4:c.(100_200)del"),
+    ("NM_000059.4:(c.68del",                     "NM_000059.4:c.68del"),
+    # No colon yet: the allele still starts at the kind letter
+    ("(NM_000059.4 c.(100_200)del",              "NM_000059.4:c.(100_200)del"),
+])
+def test_stray_bracket_stripped_keeping_uncertain_range(bad, expected):
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == expected
+    assert C.STRIPPED_UNBALANCED_BRACKETS in codes(fixes)
+    assert E not in severities(fixes)
 
 
 def test_drop_genomic_ref_in_parens():
@@ -402,6 +527,61 @@ def test_new_ops_leave_valid_hgvs_unchanged(valid):
     cleaned, fixes = clean_hgvs(valid)
     assert cleaned == valid
     assert not fixes
+
+
+# ---------------------------------------------------------------------------
+# #165: a genome build name before the reference is dropped
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("build", [
+    "hg19", "hg38", "hg37", "HG19",
+    "GRCh37", "GRCh38", "grch38", "GRCh38.p14",
+    "T2T", "CHM13", "T2T-CHM13v2.0", "CHM13v2.0",
+])
+def test_build_name_before_accession_stripped(build):
+    cleaned, fixes = clean_hgvs(f"{build} NM_000059.4:c.68del")
+    assert cleaned == "NM_000059.4:c.68del"
+    assert C.STRIPPED_BUILD_NAME in codes(fixes)
+    assert C.WRAPPED_GENE_SYMBOL not in codes(fixes)
+    assert C.STRIPPED_LEADING_JUNK not in codes(fixes)
+
+
+@pytest.mark.parametrize("bad,expected", [
+    # Build name, then a gene symbol, which is wrapped as usual
+    ("GRCh38 BRCA2 NM_000059.4:c.68del",         "NM_000059.4(BRCA2):c.68del"),
+    ("hg19 BRCA2 c.68del",                       "BRCA2:c.68del"),
+    # Colon or '#' as the separator
+    ("hg38:NM_000059.4:c.68del",                 "NM_000059.4:c.68del"),
+    ("GRCh37.p12#NM_000059.4:c.68del",           "NM_000059.4:c.68del"),
+    # Build name, then a chromosome name, then the chromosome's accession
+    ("T2T chr1 NC_060925.1:g.1000A>G",           "NC_060925.1:g.1000A>G"),
+    ("GRCh38 chr13 NC_000013.11:g.32316528del",  "NC_000013.11:g.32316528del"),
+])
+def test_build_name_before_symbol_or_contig(bad, expected):
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == expected
+    assert C.STRIPPED_BUILD_NAME in codes(fixes)
+    assert E not in severities(fixes)
+
+
+@pytest.mark.parametrize("symbol", [
+    "CHM",     # choroideremia: a real gene symbol that starts like CHM13
+    "HGS",     # a real gene symbol that starts like hg19/hg38
+    "HG19X",   # a build name is only recognised as a whole token
+])
+def test_build_name_lookalike_gene_symbols_kept(symbol):
+    cleaned, fixes = clean_hgvs(f"{symbol} NM_000059.4:c.68del")
+    assert cleaned == f"NM_000059.4({symbol}):c.68del"
+    assert C.WRAPPED_GENE_SYMBOL in codes(fixes)
+    assert C.STRIPPED_BUILD_NAME not in codes(fixes)
+
+
+def test_build_name_alone_is_not_stripped():
+    # The op never empties the string: a bare build name is left for validation
+    cleaned, fixes = clean_hgvs("hg19")
+    assert cleaned == "hg19"
+    assert C.STRIPPED_BUILD_NAME not in codes(fixes)
+    assert C.NO_COLON in codes(fixes)
 
 
 def test_symbol_only_input_skips_symbol_before_accession():

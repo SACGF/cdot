@@ -50,6 +50,7 @@ class HGVSFixCode(Enum):
     FIXED_PREFIX_COLON           = "fixed_prefix_colon"
     STRIPPED_LEADING_JUNK        = "stripped_leading_junk"
     STRIPPED_CONTIG_NAME         = "stripped_contig_name"
+    STRIPPED_BUILD_NAME          = "stripped_build_name"
     FIXED_GENE_WRAPPER           = "fixed_gene_wrapper"
     WRAPPED_GENE_SYMBOL          = "wrapped_gene_symbol"
     FIXED_SEPARATOR_TYPO         = "fixed_separator_typo"
@@ -90,6 +91,9 @@ class HGVSFixCode(Enum):
     REFERENCE_CODON_MISMATCH     = "reference_codon_mismatch"       # WARNING, ERROR if it makes a stop
     UNSUPPORTED_TRANSLATION_TABLE = "unsupported_translation_table"  # ERROR
     RIBOSOMAL_SLIPPAGE_UNSUPPORTED = "ribosomal_slippage_unsupported"  # ERROR
+    # Problems a cleaning op found but could not fix without guessing (ERROR)
+    DEL_DUP_COUNT_MISMATCH       = "del_dup_count_mismatch"
+    UNBALANCED_BRACKETS          = "unbalanced_brackets"
     # Validation errors (ERROR)
     NO_COLON                     = "no_colon"
     MISSING_REFERENCE_SEQUENCE   = "missing_reference_sequence"
@@ -109,6 +113,7 @@ class HGVSCleanOp(Enum):
     STRIP_SURROUNDING_PUNCTUATION = "strip_surrounding_punctuation"
     STRIP_PROTEIN_SUFFIX     = "strip_protein_suffix"
     STRIP_CONTIG_NAME        = "strip_contig_name"
+    STRIP_BUILD_NAME         = "strip_build_name"
     STRIP_LEADING_JUNK       = "strip_leading_junk"
     FIX_SYMBOL_BEFORE_ACCESSION = "fix_symbol_before_accession"
     FIX_SPACE_BEFORE_KIND    = "fix_space_before_kind"
@@ -395,6 +400,15 @@ _CONTIG_NAME_BEFORE_ACCESSION = re.compile(
 _SYMBOL_BEFORE_ACCESSION = re.compile(
     rf"^(?!{_CHROM_NAME}\s)([A-Za-z][A-Za-z0-9-]{{1,9}})\s+({_ANY_ACCESSION_PREFIX}[\w.]+)", re.IGNORECASE)
 
+# A genome build / assembly name at the start, e.g. "hg19 NM_000059.4:c.68del" or
+# "GRCh38 BRCA2 NM_000059.4:c.68del". Without this the symbol-before-accession
+# rule above would take the build name for a gene symbol. Only the exact build
+# names (UCSC hg19/hg38, GRCh37/GRCh38 with an optional patch, T2T-CHM13), none
+# of which is an HGNC gene symbol, followed by whitespace or a '#'/':' separator
+# and then the rest of the string (never the whole input).
+_BUILD_NAME = r"(?:GRCh3[78](?:\.p\d+)?|hg(?:19|37|38)|T2T(?:-CHM13(?:v[\d.]+)?)?|CHM13(?:v[\d.]+)?)"
+_BUILD_NAME_BEFORE_REFERENCE = re.compile(rf"^{_BUILD_NAME}[\s#:]+(?=\S)", re.IGNORECASE)
+
 # An empty version field: accession, a dot, then no digits before the colon,
 # e.g. "NM_001754.:c.749G>A". The version digits were dropped, so drop the dot
 # and leave a valid unversioned accession.
@@ -407,6 +421,15 @@ _EMPTY_VERSION = re.compile(
 # single-position "c.123del5" (delete 5 bases). delins/ins are excluded — they
 # genuinely need the inserted sequence, so they stay flagged as errors.
 _DEL_DUP_RANGE_COUNT = re.compile(r"(\d+_\d[\d+\-_*]*(?:del|dup))\d+$", re.IGNORECASE)
+# The subset of the above whose range is two plain positions (no 5'/3' UTR "-"
+# or "*", no intronic offset), so its length is known without the transcript and
+# the count can be checked against it before it is dropped.
+_DEL_DUP_PLAIN_RANGE_COUNT = re.compile(
+    r"(?<![\d+\-*])(?P<start>\d+)_(?P<end>\d+)(?P<op>del|dup)(?P<count>\d+)$", re.IGNORECASE)
+
+# The kind letter and its dot, used to find where the allele starts when the
+# reference:allele colon is missing
+_KIND_DOT = re.compile(rf"{_KIND}\.")
 
 # A genomic accession (NC_/NG_/NW_, ...) wedged into the gene-symbol
 # parenthetical slot of a transcript reference, e.g.
@@ -559,7 +582,8 @@ def _validate(s: str) -> list[HGVSFix]:
 #
 # Each op has the signature (s: str) -> tuple[str, list[HGVSFix]]: it returns
 # the (possibly unchanged) string and a list of HGVSFix describing what it did
-# (empty if it made no change).  Ops are pure and order-dependent — _PIPELINE
+# (empty if it made no change), or an ERROR for a problem it found but could not
+# fix without guessing.  Ops are pure and order-dependent: _PIPELINE
 # fixes the canonical order; selection only filters which ops run.
 # ---------------------------------------------------------------------------
 
@@ -714,22 +738,63 @@ def _op_lowercase_mutation_type(s: str) -> tuple[str, list[HGVSFix]]:
     return s, fixes
 
 
+def _split_reference_allele(s: str) -> tuple[str, str, str]:
+    """ (reference, separator, allele): the allele is what follows the last ':',
+        or, with no colon, starts at the kind letter and its dot ("c."). With
+        neither the whole string is the reference. """
+    reference, sep, allele = s.rpartition(":")
+    if sep:
+        return reference, sep, allele
+    if m := _KIND_DOT.search(s):
+        return s[:m.start()], "", s[m.start():]
+    return s, "", ""
+
+
+def _brackets_balanced(s: str) -> bool:
+    return s.count("(") == s.count(")")
+
+
 def _op_strip_unbalanced_brackets(s: str) -> tuple[str, list[HGVSFix]]:
-    # Only strip when brackets are genuinely unbalanced (a stray "(" or ")" from
+    # Only act when brackets are genuinely unbalanced (a stray "(" or ")" from
     # copy/paste). Do NOT strip when they balance: multiple balanced pairs are
     # valid HGVS - a gene symbol in parens plus uncertain-range notation, e.g.
     # "NM_004006.2(DMD):c.(4071+1_4072-1)_(5154+1_5155-1)del".
-    open_b  = s.count("(")
-    close_b = s.count(")")
-    if open_b != close_b:
-        s2 = s.replace("(", "").replace(")", "")
-        return s2, [HGVSFix(
+    if _brackets_balanced(s):
+        return s, []
+    # In the reference a bracket is the gene-symbol wrapper or a stray, so
+    # stripping is safe (a glued "NM_000059.4BRCA2" is re-wrapped by structure
+    # reconstruction). In the allele a bracket marks an uncertain position
+    # ("c.(100_200)del") or a predicted consequence ("p.(Glu23fs)"), and
+    # stripping it would make an uncertain variant look certain. The only
+    # unambiguous repair there is a wrapping bracket that closes/opens nothing:
+    # a trailing ")" or a "(" before the kind letter. Anything else is left
+    # alone and reported as an ERROR.
+    reference, sep, allele = _split_reference_allele(s)
+    fixes = []
+    if not _brackets_balanced(reference):
+        reference = reference.replace("(", "").replace(")", "")
+    if not _brackets_balanced(allele):
+        if allele.endswith(")") and _brackets_balanced(allele[:-1]):
+            allele = allele[:-1]
+        elif allele.startswith("(") and _brackets_balanced(allele[1:]):
+            allele = allele[1:]
+        else:
+            fixes.append(HGVSFix(
+                severity=HGVSFixSeverity.ERROR,
+                code=HGVSFixCode.UNBALANCED_BRACKETS,
+                message=f"Unbalanced brackets in '{allele}' not stripped: a bracket in the "
+                        f"allele marks an uncertain position",
+                original=s,
+            ))
+    s2 = f"{reference}{sep}{allele}"
+    if s2 != s:
+        fixes.insert(0, HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.STRIPPED_UNBALANCED_BRACKETS,
             message="Stripped unbalanced brackets",
             original=s, fixed=s2,
-        )]
-    return s, []
+        ))
+    return s2, fixes
 
 
 def _op_add_transcript_underscore(s: str) -> tuple[str, list[HGVSFix]]:
@@ -894,6 +959,22 @@ def _op_strip_contig_name(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
+def _op_strip_build_name(s: str) -> tuple[str, list[HGVSFix]]:
+    # A genome build name before the reference is not part of the HGVS string:
+    #   "hg19 NM_000059.4:c.68del"         -> "NM_000059.4:c.68del"
+    #   "GRCh38 BRCA2 NM_000059.4:c.68del" -> "BRCA2 NM_000059.4:c.68del"
+    # (the gene symbol is then wrapped by the symbol-before-accession step).
+    s2 = _BUILD_NAME_BEFORE_REFERENCE.sub("", s)
+    if s2 != s:
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.STRIPPED_BUILD_NAME,
+            message="Stripped genome build name before the reference",
+            original=s, fixed=s2,
+        )]
+    return s, []
+
+
 def _op_fix_symbol_before_accession(s: str) -> tuple[str, list[HGVSFix]]:
     # Gene symbol written before the accession, separated by whitespace:
     #   "APC NM_001407446.1:c.-40G>A"  -> "NM_001407446.1(APC):c.-40G>A"
@@ -960,10 +1041,26 @@ def _op_fix_separator_typo(s: str) -> tuple[str, list[HGVSFix]]:
 
 def _op_drop_del_dup_count(s: str) -> tuple[str, list[HGVSFix]]:
     # Drop a redundant base count after a ranged del/dup, normalising to plain
-    # del/dup, e.g. "c.1315_1337dup23" -> "c.1315_1337dup".
+    # del/dup, e.g. "c.1315_1337dup23" -> "c.1315_1337dup". When both positions
+    # are plain integers the range's length is known, so a count that disagrees
+    # with it ("c.123_127del3", a 5 bp range) is a contradiction: the string is
+    # left alone and reported as an ERROR rather than the count being dropped.
+    # A range with an intronic offset or UTR position ("c.100+5_200-3del5") has
+    # no length without the transcript, so its count is dropped unchecked.
     head, sep, allele = s.rpartition(":")
     target = allele if sep else s
     if _DEL_DUP_RANGE_COUNT.search(target):
+        if m := _DEL_DUP_PLAIN_RANGE_COUNT.search(target):
+            start, end, count = int(m["start"]), int(m["end"]), int(m["count"])
+            length = end - start + 1
+            if count != length:
+                return s, [HGVSFix(
+                    severity=HGVSFixSeverity.ERROR,
+                    code=HGVSFixCode.DEL_DUP_COUNT_MISMATCH,
+                    message=f"Base count {count} after {m['op'].lower()} contradicts the "
+                            f"{length} bp range {start}_{end}",
+                    original=s,
+                )]
         new_allele = _DEL_DUP_RANGE_COUNT.sub(r"\1", target)
         s2 = f"{head}:{new_allele}" if sep else new_allele
         return s2, [HGVSFix(
@@ -1000,6 +1097,9 @@ _PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
     (HGVSCleanOp.STRIP_SURROUNDING_PUNCTUATION, _op_strip_surrounding_punctuation),
     (HGVSCleanOp.STRIP_PROTEIN_SUFFIX,      _op_strip_protein_suffix),
     (HGVSCleanOp.STRIP_CONTIG_NAME,         _op_strip_contig_name),
+    # Before the symbol-before-accession op, which would otherwise take a build
+    # name for a gene symbol
+    (HGVSCleanOp.STRIP_BUILD_NAME,          _op_strip_build_name),
     (HGVSCleanOp.STRIP_LEADING_JUNK,        _op_strip_leading_junk),
     (HGVSCleanOp.FIX_SYMBOL_BEFORE_ACCESSION, _op_fix_symbol_before_accession),
     (HGVSCleanOp.FIX_SPACE_BEFORE_KIND,     _op_fix_space_before_kind),
