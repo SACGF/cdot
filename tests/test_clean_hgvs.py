@@ -1157,3 +1157,130 @@ def test_get_best_version_message():
     _version, fix = get_best_transcript_version("NM_000059", 4, [1, 2, 3, 5, 6])
     assert "NM_000059.4" in fix.message
     assert "NM_000059.5" in fix.message or "5" in fix.message
+
+
+# ---------------------------------------------------------------------------
+# UPPERCASED_HGVS_PREFIX: a lowercase non-transcript accession (eg NG_, NP_) is
+# uppercased in either position of the prefix, and is reported distinctly from a
+# lowercase transcript (UPPERCASED_TRANSCRIPT)
+# ---------------------------------------------------------------------------
+
+def test_uppercased_hgvs_prefix_in_gene_parens():
+    # Lowercase genomic accession where the gene symbol goes: not a transcript, so
+    # not a gene/transcript swap, just uppercased in place
+    cleaned, fixes = clean_hgvs("BRCA2(ng_012337.3):g.5000A>G",
+                                ops={HGVSCleanOp.FIX_GENE_TRANSCRIPT}, validate=False)
+    assert cleaned == "BRCA2(NG_012337.3):g.5000A>G"
+    assert fixes == [HGVSFix(W, C.UPPERCASED_HGVS_PREFIX, "Upper cased HGVS prefix",
+                             original="BRCA2(ng_012337.3)", fixed="BRCA2(NG_012337.3)")]
+
+
+def test_uppercased_hgvs_prefix_in_gene_parens_full_pipeline():
+    cleaned, fixes = clean_hgvs("BRCA2(ng_012337.3):g.5000A>G")
+    assert cleaned == "BRCA2(NG_012337.3):g.5000A>G"
+    assert codes(fixes) == {C.UPPERCASED_HGVS_PREFIX}
+
+
+@pytest.mark.parametrize("bad,expected,original,fixed", [
+    ("ng_012337.3:g.5000A>G", "NG_012337.3:g.5000A>G", "ng_012337.3", "NG_012337.3"),
+    ("np_000050.2:p.Arg1Gly", "NP_000050.2:p.Arg1Gly", "np_000050.2", "NP_000050.2"),
+    ("nc_012920.1:m.3243A>G", "NC_012920.1:m.3243A>G", "nc_012920.1", "NC_012920.1"),
+])
+def test_uppercased_hgvs_prefix_accession_position(bad, expected, original, fixed):
+    cleaned, fixes = clean_hgvs(bad, ops={HGVSCleanOp.FIX_GENE_TRANSCRIPT}, validate=False)
+    assert cleaned == expected
+    assert fixes == [HGVSFix(W, C.UPPERCASED_HGVS_PREFIX, "Upper cased HGVS prefix",
+                             original=original, fixed=fixed)]
+
+
+def test_lowercase_transcript_is_not_reported_as_hgvs_prefix():
+    # A lowercase mRNA accession gets the more specific UPPERCASED_TRANSCRIPT code
+    cleaned, fixes = clean_hgvs("nm_000059.4:c.68del",
+                                ops={HGVSCleanOp.FIX_GENE_TRANSCRIPT}, validate=False)
+    assert cleaned == "NM_000059.4:c.68del"
+    assert codes(fixes) == {C.UPPERCASED_TRANSCRIPT}
+
+
+def test_lowercase_transcript_in_gene_parens_is_swap_not_hgvs_prefix():
+    cleaned, fixes = clean_hgvs("BRCA2(nm_000059.4):c.68del",
+                                ops={HGVSCleanOp.FIX_GENE_TRANSCRIPT}, validate=False)
+    assert cleaned == "NM_000059.4(BRCA2):c.68del"
+    assert codes(fixes) == {C.SWAPPED_GENE_TRANSCRIPT, C.UPPERCASED_TRANSCRIPT}
+
+
+def test_uppercase_prefix_already_uppercase_no_fix():
+    cleaned, fixes = clean_hgvs("NG_012337.3:g.5000A>G",
+                                ops={HGVSCleanOp.FIX_GENE_TRANSCRIPT}, validate=False)
+    assert cleaned == "NG_012337.3:g.5000A>G"
+    assert fixes == []
+
+
+# ---------------------------------------------------------------------------
+# NO_COLON: validation of a string with no accession/allele separator
+# ---------------------------------------------------------------------------
+
+def test_no_colon_is_the_only_error_for_bare_accession():
+    cleaned, fixes = clean_hgvs("NM_000059.4")
+    assert cleaned == "NM_000059.4"
+    assert fixes == [HGVSFix(E, C.NO_COLON, "No colon ':' found in HGVS string")]
+    assert error_messages(fixes) == ["No colon ':' found in HGVS string"]
+
+
+def test_no_colon_not_reported_when_validation_off():
+    cleaned, fixes = clean_hgvs("NM_000059.4", validate=False)
+    assert cleaned == "NM_000059.4"
+    assert fixes == []
+
+
+def test_no_colon_absent_for_well_formed_input():
+    _cleaned, fixes = clean_hgvs("NM_000059.4:c.68del")
+    assert C.NO_COLON not in codes(fixes)
+    # and after a repair that inserts the colon
+    _cleaned, fixes = clean_hgvs("NM_000059.4 c.68del")
+    assert C.NO_COLON not in codes(fixes)
+    assert E not in severities(fixes)
+
+
+def test_no_colon_reported_alongside_other_warnings():
+    # Whitespace is cleaned (WARNING) but the missing colon is still an ERROR
+    cleaned, fixes = clean_hgvs("NM_000059.4 ")
+    assert cleaned == "NM_000059.4"
+    assert codes(fixes) == {C.STRIPPED_WHITESPACE, C.NO_COLON}
+    assert severities(fixes) == {W, E}
+
+
+# ---------------------------------------------------------------------------
+# STRIPPED_LEADING_JUNK: a tab character, and the two-character literal "\t"
+# left by a copy from an escaped export, before the accession
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bad", [
+    "\tNM_000059.4:c.68del",            # a real tab
+    "\\tNM_000059.4:c.68del",           # the two characters backslash, t
+    "\\t\\tNM_000059.4:c.68del",        # repeated
+    "GRCh38\\tNM_000059.4:c.68del",     # build name joined to the accession by a literal tab
+    "#\\tNM_000059.4:c.68del",          # mixed with other junk
+])
+def test_literal_and_real_tab_before_accession_is_leading_junk(bad):
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == "NM_000059.4:c.68del"
+    assert C.STRIPPED_LEADING_JUNK in codes(fixes)
+    assert E not in severities(fixes)
+    junk = [f for f in fixes if f.code == C.STRIPPED_LEADING_JUNK][0]
+    assert junk.original == bad
+    assert junk.fixed == "NM_000059.4:c.68del"
+
+
+def test_literal_tab_needs_the_leading_junk_op():
+    # Without the op the literal "\t" is not whitespace, so nothing else removes it
+    cleaned, fixes = clean_hgvs("\\tNM_000059.4:c.68del",
+                                ops=ALL_CLEAN_OPS - {HGVSCleanOp.STRIP_LEADING_JUNK})
+    assert cleaned == "\\tNM_000059.4:c.68del"
+    assert C.STRIPPED_LEADING_JUNK not in codes(fixes)
+
+
+def test_literal_tab_not_followed_by_accession_is_kept():
+    # The op only fires when an accession follows the junk
+    cleaned, fixes = clean_hgvs("\\tBRCA2:c.68del", validate=False)
+    assert C.STRIPPED_LEADING_JUNK not in codes(fixes)
+    assert cleaned.endswith("BRCA2:c.68del")

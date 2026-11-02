@@ -142,3 +142,68 @@ def test_t2t_transcript_coordinates():
 def test_assemblies_argument():
     dp = RESTDataProvider(url="https://example.org", assemblies=["GRCh38"])
     assert list(dp.assembly_maps) == ["GRCh38"]
+
+
+def test_timeout_propagates_and_is_not_cached(dp):
+    dp.session.get.side_effect = requests.Timeout("read timed out")
+    with pytest.raises(requests.Timeout):
+        dp._get_transcript("NM_000059.4")
+    assert "NM_000059.4" not in dp.transcripts
+
+    # The next call goes back to the server
+    dp.session.get.side_effect = None
+    dp.session.get.return_value = _response(200, {"id": "NM_000059.4"})
+    assert dp._get_transcript("NM_000059.4") == {"id": "NM_000059.4"}
+
+
+def test_connection_error_on_gene_propagates_and_is_not_cached(dp):
+    dp.session.get.side_effect = requests.ConnectionError("refused")
+    with pytest.raises(requests.ConnectionError):
+        dp._get_gene("BRCA2")
+    assert "BRCA2" not in dp.genes
+
+
+def test_server_error_on_get_tx_versions_raises(dp):
+    dp.session.get.return_value = _response(500)
+    with pytest.raises(requests.HTTPError):
+        dp.get_tx_versions("NM_000059")
+    assert dp.transcripts == {}
+
+
+@pytest.mark.parametrize("content_type", ["text/html; charset=utf-8", "text/plain", ""])
+def test_non_json_content_type_raises_value_error(dp, content_type):
+    dp.session.get.return_value = _response(200, {"id": "NM_000059.4"}, content_type=content_type)
+    with pytest.raises(ValueError, match="Non-json response"):
+        dp._get_transcript("NM_000059.4")
+    assert "NM_000059.4" not in dp.transcripts
+
+
+def test_post_non_json_content_type_raises_value_error(dp):
+    dp.session.post.return_value = _response(200, {}, content_type="text/html")
+    with pytest.raises(ValueError, match="Non-json response"):
+        dp._post_to_url("https://example.org/transcripts", {"ids": ["NM_000059.4"]})
+
+
+def test_json_content_type_with_charset_accepted(dp):
+    dp.session.get.return_value = _response(200, {"id": "NM_000059.4"},
+                                            content_type="application/json; charset=utf-8")
+    assert dp._get_transcript("NM_000059.4") == {"id": "NM_000059.4"}
+
+
+def test_post_405_means_endpoint_absent(dp):
+    dp.session.post.return_value = _response(405)
+    assert dp._post_to_url("https://example.org/transcripts", {"ids": ["NM_000059.4"]}) is None
+
+
+def test_prefetch_server_error_propagates(dp):
+    dp.session.post.return_value = _response(500)
+    with pytest.raises(requests.HTTPError):
+        dp.prefetch(["NM_000059.4", "NM_001754.5"])
+    assert dp.transcripts == {}
+
+
+def test_prefetch_timeout_propagates(dp):
+    dp.session.post.side_effect = requests.Timeout("read timed out")
+    with pytest.raises(requests.Timeout):
+        dp.prefetch(["NM_000059.4"])
+    assert dp.transcripts == {}

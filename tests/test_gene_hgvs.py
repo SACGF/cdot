@@ -4,6 +4,7 @@ Tests for cdot.hgvs.gene_hgvs — gene-symbol HGVS resolution via MANE/canonical
 Uses the Ensembl GRCh38 test data fixture which has a single gene (AOAH) with
 ENST00000617537.5 tagged as MANE_Select.
 """
+import inspect
 import io
 import json
 import os
@@ -14,8 +15,10 @@ from cdot.hgvs.dataproviders.json_data_provider import JSONDataProvider, LocalDa
 from cdot.hgvs.gene_hgvs import (
     DEFAULT_TAG_PRIORITY,
     Consortium,
+    _cited_position,
     _consortium_of,
     _filter_by_consortium,
+    _get_tx_versions,
     _parse_gene_only_hgvs,
     _parse_versioned_transcript,
     _rank_transcripts_by_tags,
@@ -1354,3 +1357,168 @@ def test_get_tags_by_tx_ac_default_batches_then_reads_per_transcript_hook(ensemb
     tx_acs = ensembl_provider._get_transcript_ids_for_gene("AOAH")
     by_ac = ensembl_provider._get_tags_by_tx_ac(list(tx_acs), "GRCh38")
     assert "MANE_Select" in by_ac["ENST00000617537.5"]
+
+
+# ---------------------------------------------------------------------------
+# _cited_position: the allele text handed to the version-safety check
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("hgvs_string,expected", [
+    ("NM_000059.4:c.68del", "68del"),
+    ("NM_000059.4:c.-49=", "-49="),
+    ("NM_000059.4:c.*100A>G", "*100A>G"),
+    ("NM_000059.4(BRCA2):c.316+5G>A", "316+5G>A"),
+    ("NR_038196.1:n.100A>G", "100A>G"),
+    ("NR_038196.1:n.100_101del", "100_101del"),
+    # not a c. or n. coordinate
+    ("NP_000050.2:p.Arg1Gly", None),
+    ("NG_012337.3:g.5000A>G", None),
+    ("NC_012920.1:m.3243A>G", None),
+    ("NM_000059.4:r.68a>g", None),
+    # no colon
+    ("NM_000059.4", None),
+    ("c.68del", None),
+])
+def test_cited_position(hgvs_string, expected):
+    assert _cited_position(hgvs_string) == expected
+
+
+def _capturing_safety_check(monkeypatch, captured):
+    from cdot.hgvs import gene_hgvs
+
+    def fake_safe(data_provider, transcript_accession, substitute_transcript_accession,
+                  genome_build=None, cited_position=None):
+        captured["accessions"] = (transcript_accession, substitute_transcript_accession, genome_build)
+        captured["cited_position"] = cited_position
+        return True, "stubbed"
+
+    monkeypatch.setattr(gene_hgvs.version_safety, "is_version_substitution_safe_by_accession", fake_safe)
+
+
+def test_resolve_version_passes_c_position_to_safety_check(monkeypatch):
+    captured = {}
+    _capturing_safety_check(monkeypatch, captured)
+    dp = _safety_provider(_SAFE_EXONS, 30)  # .2 in GRCh37 only, .3/.4 in GRCh38
+    resolved, fixes = resolve_transcript_version("NM_000059.2:c.-49=", dp, genome_build="GRCh38")
+    assert resolved == "NM_000059.3:c.-49="
+    assert captured["accessions"] == ("NM_000059.2", "NM_000059.3", "GRCh38")
+    assert captured["cited_position"] == "-49="
+    assert fixes[0].code == C.USED_ADJACENT_VERSION_COORD_SAFE
+    assert "stubbed" in fixes[0].message
+
+
+def _noncoding_provider(builds_by_version):
+    """NR_038196 versions, each placed in the given build with one 300-base exon."""
+    exons = [[100, 400, 0, 1, 300, None]]
+    transcripts = {}
+    for version, build in builds_by_version.items():
+        tx_ac = f"NR_038196.{version}"
+        transcripts[tx_ac] = {"id": tx_ac, "gene_name": "RUNX1",
+                              "genome_builds": {build: _safety_build(exons)}}
+    data = {"cdot_version": "0.2.33", "genome_builds": ["GRCh37", "GRCh38"], "transcripts": transcripts}
+    return JSONDataProvider([io.StringIO(json.dumps(data))])
+
+
+def test_resolve_version_passes_n_position_to_safety_check(monkeypatch):
+    captured = {}
+    _capturing_safety_check(monkeypatch, captured)
+    dp = _noncoding_provider({2: "GRCh38"})
+    resolved, _fixes = resolve_transcript_version("NR_038196.1:n.100A>G", dp, genome_build="GRCh38")
+    assert resolved == "NR_038196.2:n.100A>G"
+    assert captured["accessions"] == ("NR_038196.1", "NR_038196.2", "GRCh38")
+    assert captured["cited_position"] == "100A>G"
+
+
+def test_resolve_version_noncoding_end_to_end_is_coordinate_safe():
+    # The real check on two NR_ versions with the same exon structure: the requested
+    # version is placed only in GRCh37, so the build-independent exon structure decides
+    dp = _noncoding_provider({1: "GRCh37", 2: "GRCh38"})
+    resolved, fixes = resolve_transcript_version("NR_038196.1:n.100A>G", dp, genome_build="GRCh38")
+    assert resolved == "NR_038196.2:n.100A>G"
+    assert fixes[0].code == C.USED_ADJACENT_VERSION_COORD_SAFE
+    assert "non-coding" in fixes[0].message
+
+
+# ---------------------------------------------------------------------------
+# _get_tx_versions: pass genome_build only to providers that accept it
+# ---------------------------------------------------------------------------
+
+class _BuildAwareVersions:
+    def __init__(self):
+        self.calls = []
+
+    def get_tx_versions(self, accession, genome_build=None):
+        self.calls.append((accession, genome_build))
+        return [4]
+
+
+class _AccessionOnlyVersions:
+    def __init__(self):
+        self.calls = []
+
+    def get_tx_versions(self, accession):
+        self.calls.append(accession)
+        return [4]
+
+
+def test_get_tx_versions_provider_with_build_kwarg_receives_it():
+    provider = _BuildAwareVersions()
+    assert _get_tx_versions(provider, "NM_000059", "GRCh38") == [4]
+    assert provider.calls == [("NM_000059", "GRCh38")]
+
+
+def test_get_tx_versions_provider_without_build_kwarg_gets_accession_only():
+    provider = _AccessionOnlyVersions()
+    assert _get_tx_versions(provider, "NM_000059", "GRCh38") == [4]
+    assert provider.calls == ["NM_000059"]
+
+
+def test_get_tx_versions_without_build_never_passes_it():
+    provider = _BuildAwareVersions()
+    assert _get_tx_versions(provider, "NM_000059", None) == [4]
+    assert provider.calls == [("NM_000059", None)]
+
+
+def test_get_tx_versions_var_kwargs_provider_gets_accession_only():
+    # **kwargs does not name genome_build, so it is not passed
+    calls = []
+
+    class _Kwargs:
+        def get_tx_versions(self, accession, **kwargs):
+            calls.append((accession, kwargs))
+            return [4]
+
+    assert _get_tx_versions(_Kwargs(), "NM_000059", "GRCh38") == [4]
+    assert calls == [("NM_000059", {})]
+
+
+def test_get_tx_versions_uninspectable_signature_falls_back_to_accession_only():
+    # inspect.signature raises for a callable with a bogus __signature__; the
+    # fallback still calls the provider rather than propagating the error
+    class _Odd(_AccessionOnlyVersions):
+        pass
+
+    _Odd.get_tx_versions.__signature__ = "not a signature"
+    provider = _Odd()
+    with pytest.raises((ValueError, TypeError)):
+        inspect.signature(provider.get_tx_versions)
+    assert _get_tx_versions(provider, "NM_000059", "GRCh38") == [4]
+    assert provider.calls == ["NM_000059"]
+
+
+def test_resolve_version_with_build_on_accession_only_provider(version_provider):
+    # The stub only takes the accession; passing genome_build still resolves
+    resolved, fixes = resolve_transcript_version(
+        "NM_000059.1:c.36del", version_provider, genome_build="GRCh38")
+    assert resolved == "NM_000059.2:c.36del"
+    assert fixes[0].code == C.USED_ADJACENT_VERSION
+
+
+def test_resolve_version_json_provider_candidates_filtered_by_build():
+    # JSONDataProvider accepts genome_build, so only versions placed in that build
+    # are candidates: .2 is in GRCh37 only, .3/.4 in GRCh38 only
+    dp = _safety_provider(_SAFE_EXONS, 30)
+    _resolved, fixes = resolve_transcript_version("NM_000059.1:c.36del", dp, genome_build="GRCh37")
+    assert fixes[0].fixed == "NM_000059.2"
+    _resolved, fixes = resolve_transcript_version("NM_000059.1:c.36del", dp, genome_build="GRCh38")
+    assert fixes[0].fixed == "NM_000059.3"
