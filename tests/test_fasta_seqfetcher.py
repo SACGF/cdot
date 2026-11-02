@@ -209,7 +209,7 @@ def _assembly_mapper(hdp):
 def test_slice_with_padding_raises(padded_files, ac, positions):
     fasta_filename, json_filename = padded_files
     hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename))
-    with pytest.raises(GenomeMismatchError, match=rf"{ac} {positions} isn't in the genome alignment"):
+    with pytest.raises(GenomeMismatchError, match=rf"{ac} {positions}: FastaSeqFetcher doesn't know these bases"):
         hdp.seqfetcher.fetch_seq(ac, 0, 20)
 
 

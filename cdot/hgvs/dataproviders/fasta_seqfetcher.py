@@ -78,7 +78,6 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
         super().__init__(*args, cache=cache)
         self.genome_mismatch_policy = GenomeMismatchPolicy(genome_mismatch)
         self._warned_genome_mismatch = set()
-        self._padded_ranges = {}  # {ac: [(start, end), ...]} transcript positions not in the genome, filled with N
         self._warned_padding = set()
         self.source = "Transcript Exons using Genome Fasta file reference"
         self.genome_fasta_seq_fetcher = GenomeFastaSeqFetcher(*args)
@@ -126,27 +125,26 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
                 warnings.warn(msg, GenomeMismatchWarning)
 
     def fetch_seq(self, ac, start_i=None, end_i=None):
-        """ As AbstractTranscriptSeqFetcher.fetch_seq, but a request that includes transcript bases
-            filled with N (not in the genome alignment, so unknown) raises GenomeMismatchError: a
+        """ As AbstractTranscriptSeqFetcher.fetch_seq, but a request that includes an unknown base (N,
+            either not in the genome alignment or N in the genome) raises GenomeMismatchError: a
             slice is what biocommons reads to normalize or validate a variant, and an N there would
             silently shift an indel. Fetching the whole transcript (as c_to_p does) only warns with
             the 'warn' policy. The 'off' policy skips this. """
         seq = super().fetch_seq(ac, start_i, end_i)
-        if self.genome_mismatch_policy == GenomeMismatchPolicy.OFF or not (padded := self._padded_ranges.get(ac)):
+        if self.genome_mismatch_policy == GenomeMismatchPolicy.OFF or "N" not in seq:
             return seq
         start = start_i or 0
-        end = start + len(seq)
-        if touched := [(s, e) for s, e in padded if s < end and start < e]:
-            positions = ", ".join(f"n.{s + 1}" if e - s == 1 else f"n.{s + 1}_{e}" for s, e in touched)
-            msg = (f"{ac} {positions} isn't in the genome alignment, so FastaSeqFetcher doesn't know its "
-                   f"bases (filled with N). Chain a transcript sequence source such as SeqRepo with "
-                   f"ChainedSeqFetcher to get them.")
-            whole_transcript = start_i is None and end_i is None
-            if not (whole_transcript and self.genome_mismatch_policy == GenomeMismatchPolicy.WARN):
-                raise GenomeMismatchError(msg)
-            if ac not in self._warned_padding:
-                self._warned_padding.add(ac)
-                warnings.warn(msg, GenomeMismatchWarning)
+        positions = ", ".join(f"n.{start + s + 1}" if e - s == 1 else f"n.{start + s + 1}_{start + e}"
+                              for s, e in (m.span() for m in re.finditer("N+", seq)))
+        msg = (f"{ac} {positions}: FastaSeqFetcher doesn't know these bases (N), as they aren't in the "
+               f"genome alignment or are N in the genome. Chain a transcript sequence source such as "
+               f"SeqRepo with ChainedSeqFetcher to get them.")
+        whole_transcript = start_i is None and end_i is None
+        if not (whole_transcript and self.genome_mismatch_policy == GenomeMismatchPolicy.WARN):
+            raise GenomeMismatchError(msg)
+        if ac not in self._warned_padding:
+            self._warned_padding.add(ac)
+            warnings.warn(msg, GenomeMismatchWarning)
         return seq
 
     def _fetch_seq_from_fasta(self, ac, alt_ac, alt_aln_method):
@@ -155,14 +153,12 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
 
         exons = self.hdp.get_tx_exons(ac, alt_ac, alt_aln_method)
         exon_sequences = []
-        padding_mask = []  # "1" for each transcript base filled with N, as it isn't in the genome alignment
         expected_transcript_length = 0
         sorted_exons = list(sorted(exons, key=lambda ex: ex["ord"]))
         first_exon = sorted_exons[0]
         transcript_start_offset = first_exon["tx_start_i"]  # HGVS/UTA starts w/0
         if transcript_start_offset:
             exon_sequences.append("N" * transcript_start_offset)
-            padding_mask.append("1" * transcript_start_offset)
             expected_transcript_length += transcript_start_offset
 
         for exon in sorted_exons:
@@ -170,34 +166,27 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
             exon_seq = exon_seq.upper()
 
             exon_seq_list = []
-            exon_mask_list = []
             start = 0
             # We are using HGVS cigar
             for (length_str, op) in self._CIGAR_PATTERN.findall(exon["cigar"]):
                 length = int(length_str)
                 if op == 'D':    # Deletion in reference vs transcript
                     exon_seq_list.append("N" * length)
-                    exon_mask_list.append("1" * length)
                     # Don't increment start (as we didn't move along genomic exon)
                 elif op == 'I':  # Insertion in reference vs transcript
                     # Leave out of exon_seq
                     start += length  # We do increment through genomic sequence though
                 else:  # match/mismatch
                     exon_seq_list.append(exon_seq[start:start+length])
-                    exon_mask_list.append("0" * length)
                     start += length
 
             exon_seq = "".join(exon_seq_list)
-            exon_mask = "".join(exon_mask_list)
             if exon["alt_strand"] == -1:
                 exon_seq = reverse_complement(exon_seq)
-                exon_mask = exon_mask[::-1]
             exon_sequences.append(exon_seq)
-            padding_mask.append(exon_mask)
             expected_transcript_length += exon["tx_end_i"] - exon["tx_start_i"]
 
         transcript_sequence = "".join(exon_sequences)
-        self._padded_ranges[ac] = [m.span() for m in re.finditer("1+", "".join(padding_mask))]
         if len(transcript_sequence) != expected_transcript_length:
             raise ValueError(f"Error creating {ac} sequence from genome fasta ({alt_ac}): "
                              f"{expected_transcript_length=} != {len(transcript_sequence)=}")
