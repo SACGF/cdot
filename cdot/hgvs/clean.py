@@ -178,6 +178,40 @@ _REFSEQ_PREFIX_TYPE: dict[str, str] = {
     'XP_': 'Protein', 'ZP_': 'Protein',
 }
 
+# Non-RefSeq accession prefixes cdot handles. Ensembl transcripts have no
+# underscore after the prefix; LRG references do, and may carry a "t1"/"p1"
+# transcript/protein suffix.
+_ENSEMBL_TRANSCRIPT_PREFIX = 'ENST'
+_LRG_PREFIX = 'LRG_'
+
+# Every HGVS kind letter ("c.", "g.", "m.", "n.", "p.", "r."). This is the one
+# place the set is defined: every pattern below that matches a kind uses it.
+_KIND_LETTERS = "cgmnpr"
+_KIND = f"[{_KIND_LETTERS}]"
+
+# The kind implied by each reference-sequence type, used to insert a missing one
+_KIND_FOR_TYPE = {'mRNA': 'c', 'RNA': 'n', 'genomic': 'g'}
+
+
+def _refseq_prefixes(*types: str) -> list[str]:
+    """ RefSeq prefixes (eg 'NM_') of the given types, or all of them if none given """
+    return sorted(p for p, t in _REFSEQ_PREFIX_TYPE.items() if not types or t in types)
+
+
+def _alternation(prefixes) -> str:
+    """ Non-capturing regex alternation of literal prefixes """
+    return "(?:" + "|".join(re.escape(p) for p in prefixes) + ")"
+
+
+# Any accession prefix: every RefSeq type, Ensembl transcript and LRG
+_ANY_ACCESSION_PREFIX = _alternation(
+    _refseq_prefixes() + [_ENSEMBL_TRANSCRIPT_PREFIX, _LRG_PREFIX])
+# As above minus LRG, whose accessions legitimately contain a second underscore
+_NON_LRG_ACCESSION_PREFIX = _alternation(_refseq_prefixes() + [_ENSEMBL_TRANSCRIPT_PREFIX])
+_TRANSCRIPT_ACCESSION_PREFIX = _alternation(
+    _refseq_prefixes('mRNA', 'RNA') + [_ENSEMBL_TRANSCRIPT_PREFIX, _LRG_PREFIX])
+_GENOMIC_ACCESSION_PREFIX = _alternation(_refseq_prefixes('genomic'))
+
 
 def _looks_like_transcript(s: str) -> bool:
     """True if s starts with a known mRNA/RNA RefSeq prefix, or is Ensembl/LRG.
@@ -185,7 +219,7 @@ def _looks_like_transcript(s: str) -> bool:
     Case-sensitive — callers must uppercase s themselves if they want a
     case-insensitive check (matching VG behaviour).
     """
-    if s.startswith('ENST') or s.startswith('LRG_'):
+    if s.startswith(_ENSEMBL_TRANSCRIPT_PREFIX) or s.startswith(_LRG_PREFIX):
         return True
     # Keys in _REFSEQ_PREFIX_TYPE are uppercase 3-char prefixes e.g. 'NM_'
     return _REFSEQ_PREFIX_TYPE.get(s[:3]) in ('mRNA', 'RNA')
@@ -196,16 +230,36 @@ def _looks_like_hgvs_prefix(s: str) -> bool:
 
     Case-sensitive — callers must uppercase s themselves if needed.
     """
-    if s.startswith('ENST') or s.startswith('LRG_'):
+    if s.startswith(_ENSEMBL_TRANSCRIPT_PREFIX) or s.startswith(_LRG_PREFIX):
         return True
     return s[:3] in _REFSEQ_PREFIX_TYPE
+
+
+# A known accession prefix (any case) at the start of a string, followed by the
+# accession digits. Only the prefix is uppercased, so an LRG "t1" suffix stays.
+_ACCESSION_PREFIX_AT_START = re.compile(rf"^{_ANY_ACCESSION_PREFIX}(?=\d)", re.IGNORECASE)
+
+
+def _uppercase_accession_prefix(s: str) -> str:
+    """ s with a leading known accession prefix uppercased (eg "ng_012337.3" ->
+        "NG_012337.3"). Returned unchanged if it doesn't start with one. """
+    if m := _ACCESSION_PREFIX_AT_START.match(s):
+        return m.group(0).upper() + s[m.end():]
+    return s
 
 
 # ---------------------------------------------------------------------------
 # Compiled regex patterns
 # ---------------------------------------------------------------------------
 
-_P_HGVS_REMOVAL = re.compile(r"^(?P<main>.*?) (p\.|[(]p\.).*$")
+# A trailing protein annotation after a nucleotide allele, eg
+# "NM_000059.4:c.68del p.(Glu23fs)". Any whitespace separates them (a tab is as
+# common as a space in pasted text).
+_P_HGVS_REMOVAL = re.compile(r"^(?P<main>.*?)\s+(p\.|[(]p\.).*$")
+# The part before the protein annotation must hold a nucleotide allele (a
+# non-protein kind, or something other than "p." after the colon). Otherwise the
+# "p." is the allele itself, eg "NP_000050.2 p.Arg1Gly", and must be kept.
+_HAS_NUCLEOTIDE_ALLELE = re.compile(r":\s*(?!p\.)\S|[cgmnr]\.", re.IGNORECASE)
 
 # Two-letter RefSeq accession prefixes (NM, NR, XM, XR, NC, NG, ...) taken from
 # the type table, used to repair an accession missing its underscore. Requires
@@ -221,73 +275,94 @@ _TRANSCRIPT_NO_UNDERSCORE = re.compile(
 _N_PREFIX_SECOND_LETTERS = frozenset(
     p[1] for p in _REFSEQ_PREFIX_TYPE if p.startswith("N"))
 
+# A coordinate may start with a digit, "-" (5' UTR), "*" (3' UTR), "(" (an
+# uncertain position) or "[" (an allele).
+_COORD_START = r"[\d*\-(\[]"
+
 # Lenient pattern — matches HGVS strings whether or not they have a transcript,
 # gene symbol, version, colon, or dot.  Used to reconstruct the canonical form.
+#
+# Kept tight on purpose (#150), as whatever it matches is rewritten:
+#  * an accession needs a real prefix (with its underscore) and digits, so a
+#    gene symbol starting with prefix letters (NR3C1, ACTB) is not read as one;
+#  * the version is bounded, so its digits can't be split off into a coordinate;
+#  * the gene symbol is letters, digits and "-" only (never '>', '+', ')');
+#  * the kind letter must be followed by its '.' (or a stray ':'), or directly
+#    by a coordinate. An uppercase kind letter is only accepted with the '.'/':',
+#    so a base or the last letter of a gene symbol (eg "FANCG100A>G") is not
+#    taken as the kind.
 _HGVS_CLEAN_PATTERN = re.compile(
     # transcript_value allows an optional LRG transcript/protein suffix (eg the
     # "t1" in "LRG_199t1") so the suffix isn't mis-parsed as the gene symbol.
-    r"^((?P<transcript_prefix>NR|NM|NC|ENST|LRG|XR|XM)(?P<transcript_value>[0-9_]*(?:[tp][0-9]+)?)"
-    r"(\.(?P<transcript_version>[0-9]+))?)?"
-    r"([(]?(?P<gene_symbol>[^):\.]{2,8})[)]?)?"
+    rf"^((?P<transcript_prefix>(?i:{_ANY_ACCESSION_PREFIX}))(?P<transcript_value>\d+(?:[tp]\d+)?)"
+    r"(\.(?P<transcript_version>\d+)(?!\d))?)?"
+    r"([(]?(?P<gene_symbol>[A-Za-z][A-Za-z0-9-]*[A-Za-z0-9])[)]?)?"
     # A stray colon between the kind letter and the coordinate (eg "...2c:1188")
     # is accepted as the kind separator, so the same glued-kind input reconstructs
     # whether or not that colon is present (it is just misplaced, belonging before
     # the kind letter rather than after it).
-    r":?(?P<letter>c|g|n|p)[.:]?(?P<nomen>[^:\.]*)$",
-    re.IGNORECASE,
+    rf":?(?:(?P<letter>{_KIND})(?:[.:]|(?={_COORD_START}))|(?P<upper_letter>{_KIND.upper()})[.:])"
+    r"(?P<nomen>[^:.]*)$",
 )
 
 # Missing kind letter after the colon, classified by reference-sequence type so
 # the right kind is inserted: mRNA/Ensembl transcript → "c.", non-coding RNA →
-# "n.", genomic → "g.". The coordinate may start with a digit, "-" (5' UTR) or
-# "*" (3' UTR).
-_COORD_START = r"[\d*\-]"
-_HGVS_MRNA_NO_KIND    = re.compile(rf"^(NM_|XM_|ENST)\d+.*:{_COORD_START}", re.IGNORECASE)
-_HGVS_RNA_NO_KIND     = re.compile(rf"^(NR_|XR_)\d+.*:{_COORD_START}", re.IGNORECASE)
-_HGVS_GENOMIC_NO_KIND = re.compile(
-    rf"^(NC_|NG_|NW_|NT_|AC_|NS_|NZ_)\d+.*:{_COORD_START}", re.IGNORECASE)
+# "n.", genomic → "g.".
+_HGVS_NO_KIND: list[tuple[re.Pattern, str]] = []
+for _ref_type, _kind in _KIND_FOR_TYPE.items():
+    _prefixes = _refseq_prefixes(_ref_type)
+    if _ref_type == 'mRNA':
+        _prefixes.append(_ENSEMBL_TRANSCRIPT_PREFIX)
+    _HGVS_NO_KIND.append(
+        (re.compile(rf"^{_alternation(_prefixes)}\d+.*:{_COORD_START}", re.IGNORECASE), _kind))
 
 _REF_ALT_NUC     = re.compile(r"(?P<ref>[gatc]+)>(?P<alt>[gatc=]+)$", re.IGNORECASE)
 _DEL_INS_DUP_NUC = re.compile(
     r"(del(?P<del>[gatc]+))?(?P<op>ins|dup|del)(?P<ins>[gatc]*)$",
     re.IGNORECASE,
 )
+# RNA ("r.") alleles are written in lowercase (eg r.76a>c), so their bases must
+# not be uppercased
+_RNA_ALLELE = re.compile(r":r\.")
 
 _GENE_IN_PARENS = re.compile(r"^(.+)\((.*)\)$")
 
 _INS_INTEGER = re.compile(r".*ins\d+$", re.IGNORECASE)
 _INS_EMPTY   = re.compile(r".*ins$",    re.IGNORECASE)
 
-# Misplaced colon between an mRNA/RNA prefix and its underscore, e.g. "NM:_000059"
-_PREFIX_COLON_UNDERSCORE = re.compile(r"^(N[MR]|X[MR]):_", re.IGNORECASE)
+# A string with no reference sequence: it starts with ':' or '.', or with a bare
+# kind letter followed by its '.'/':' or directly by a coordinate. A lowercase
+# accession that merely starts with a kind letter (eg "ng_012337.3") is not one.
+_MISSING_REFERENCE = re.compile(rf"^(?:[:.]|{_KIND}(?:[.:]|{_COORD_START}))")
 
-# Transcript accession prefixes (used to locate the HGVS core within a string)
-_TX_PREFIX = r"(?:NM_|NR_|XM_|XR_|NC_|NG_|ENST|LRG_)"
+# Misplaced colon between a RefSeq prefix and its underscore, e.g. "NM:_000059"
+_PREFIX_COLON_UNDERSCORE = re.compile(
+    rf"^({'|'.join(_TWO_LETTER_PREFIXES)}):_", re.IGNORECASE)
 
-# Leading junk before a transcript accession, e.g. "#", ":", "-", a literal
+# Leading junk before an accession, e.g. "#", ":", "-", a literal
 # "\t", whitespace (": NM_..."), or a genome-build prefix like "GRCh38.p2 " /
-# "GRCh37.p12#". Only stripped when a transcript accession actually follows.
+# "GRCh37.p12#". Only stripped when an accession actually follows.
 _LEADING_JUNK = re.compile(r"^(?:GRCh\d+(?:\.p\d+)?[#\s]*|\\t|[#:\-\s])+", re.IGNORECASE)
 
 # Gene symbol wedged between extra colons, e.g. "tx:(GENE):c." / "tx:(GENE)c." /
 # "tx:GENE:c." — should be "tx(GENE):c."
 _GENE_WRAPPER = re.compile(
-    rf"^({_TX_PREFIX}[\w.]+):\(?([A-Za-z][A-Za-z0-9-]+)\)?:?([cgnmp][.,])", re.IGNORECASE)
+    rf"^({_ANY_ACCESSION_PREFIX}[\w.]+):\(?([A-Za-z][A-Za-z0-9-]+)\)?:?({_KIND}[.,])", re.IGNORECASE)
 # Stray colon inside the gene parens, e.g. "(RAD51C:)" -> "(RAD51C)"
 _GENE_PARENS_COLON = re.compile(r"\(([A-Za-z][A-Za-z0-9-]*):\)")
 # Parens wrapping the whole accession, e.g. "(NM_000059.4):c." -> "NM_000059.4:c."
-_PARENS_WRAPPED_ACCESSION = re.compile(rf"^\(({_TX_PREFIX}[\w.]+)\)(?=:)", re.IGNORECASE)
+_PARENS_WRAPPED_ACCESSION = re.compile(rf"^\(({_ANY_ACCESSION_PREFIX}[\w.]+)\)(?=:)", re.IGNORECASE)
 # Missing colon between a (gene) wrapper and the kind, e.g.
 # "BRCA1(NM_000059.4)c.123A>G" -> "BRCA1(NM_000059.4):c.123A>G" (the
 # gene/transcript swap is then done by _fix_gene_transcript).
-_MISSING_COLON_BEFORE_KIND = re.compile(r"(\([^)]+\))([cgnmp]\.)", re.IGNORECASE)
+_MISSING_COLON_BEFORE_KIND = re.compile(rf"(\([^)]+\))({_KIND}\.)", re.IGNORECASE)
 
 # Comma used in place of the c./g. dot, e.g. ":c,1811" -> ":c.1811"
-_KIND_COMMA = re.compile(r":([cgnmp]),", re.IGNORECASE)
+_KIND_COMMA = re.compile(rf":({_KIND}),", re.IGNORECASE)
 # Colon used in place of the kind dot, e.g. ":c:1811" -> ":c.1811". The
 # lookahead keeps this from touching a normal ":c." (the second char is a dot,
 # not a coordinate).
-_KIND_COLON = re.compile(r":([cgnmp]):(?=[\d*?(\-])", re.IGNORECASE)
+_KIND_COLON = re.compile(rf":({_KIND}):(?=[\d*?(\-])", re.IGNORECASE)
 # Period used in place of the substitution '>', e.g. "1030C.T" -> "1030C>T"
 _SUB_PERIOD = re.compile(r"([ACGT])\.([ACGT])$", re.IGNORECASE)
 
@@ -296,14 +371,14 @@ _SUB_PERIOD = re.compile(r"([ACGT])\.([ACGT])$", re.IGNORECASE)
 # ';' inside a multi-variant allele is never touched. LRG is excluded (its
 # accessions legitimately contain underscores).
 _ACCESSION_KIND_SEPARATOR = re.compile(
-    r"^((?:NM_|NR_|XM_|XR_|NC_|NG_|ENST)\d+(?:\.\d+)?)[;_](?=[cgnmp]\.)", re.IGNORECASE)
+    rf"^({_NON_LRG_ACCESSION_PREFIX}\d+(?:\.\d+)?)[;_](?={_KIND}\.)", re.IGNORECASE)
 
 # Whitespace used in place of the reference:kind colon after a bare gene symbol,
 # e.g. "BRCA2 c.68del" -> "BRCA2:c.68del". Restricted to a plain symbol (no
 # '_'/'.'/':') so accessions are left to the whitespace/reconstruction steps,
 # and runs before whitespace stripping (which would otherwise glue the symbol to
 # the kind letter, mangling symbols that resemble an accession, eg NR2E3).
-_SPACE_BEFORE_KIND = re.compile(r"^([A-Za-z][A-Za-z0-9]{1,9})\s+(?=[cgnmp]\.)", re.IGNORECASE)
+_SPACE_BEFORE_KIND = re.compile(rf"^([A-Za-z][A-Za-z0-9]{{1,9}})\s+(?={_KIND}\.)", re.IGNORECASE)
 
 # A chromosome name, whitespace, then a chromosomal accession, e.g.
 # "chr13 NC_000013.11:g.32316528del". Only the exact "chr" + chromosome forms,
@@ -313,18 +388,18 @@ _CHROM_NAME = r"chr(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)"
 _CONTIG_NAME_BEFORE_ACCESSION = re.compile(
     rf"(?<![\w.])({_CHROM_NAME})\s+(?=(NC_\d+)(\.\d+)?(?![\w.]))", re.IGNORECASE)
 
-# A gene symbol, whitespace, then a transcript accession, e.g.
+# A gene symbol, whitespace, then an accession, e.g.
 # "APC NM_001407446.1:c.-40G>A" -> "NM_001407446.1(APC):c.-40G>A". Runs before
 # whitespace stripping, which would otherwise glue the symbol onto the accession
 # ("APCNM_001407446.1"), leaving something that parses as neither.
 _SYMBOL_BEFORE_ACCESSION = re.compile(
-    rf"^(?!{_CHROM_NAME}\s)([A-Za-z][A-Za-z0-9-]{{1,9}})\s+({_TX_PREFIX}[\w.]+)", re.IGNORECASE)
+    rf"^(?!{_CHROM_NAME}\s)([A-Za-z][A-Za-z0-9-]{{1,9}})\s+({_ANY_ACCESSION_PREFIX}[\w.]+)", re.IGNORECASE)
 
 # An empty version field: accession, a dot, then no digits before the colon,
 # e.g. "NM_001754.:c.749G>A". The version digits were dropped, so drop the dot
 # and leave a valid unversioned accession.
 _EMPTY_VERSION = re.compile(
-    r"^((?:NM_|NR_|XM_|XR_|NC_|NG_|ENST)\d+)\.(?=:)", re.IGNORECASE)
+    rf"^({_NON_LRG_ACCESSION_PREFIX}\d+)\.(?=:)", re.IGNORECASE)
 
 # del/dup with an explicit range followed by a redundant base count, e.g.
 # "c.1315_1337dup23" -> "c.1315_1337dup" (the range already gives the length;
@@ -333,16 +408,17 @@ _EMPTY_VERSION = re.compile(
 # genuinely need the inserted sequence, so they stay flagged as errors.
 _DEL_DUP_RANGE_COUNT = re.compile(r"(\d+_\d[\d+\-_*]*(?:del|dup))\d+$", re.IGNORECASE)
 
-# A genomic accession (NC_/NG_/NW_) wedged into the gene-symbol parenthetical
-# slot of a transcript reference, e.g. "NM_000059.4(NC_000013.11):c.68del". A
-# genomic accession is not a gene symbol, so the parser rejects it; dropping the
-# parenthetical (the transcript alone is a complete reference) makes it parse.
+# A genomic accession (NC_/NG_/NW_, ...) wedged into the gene-symbol
+# parenthetical slot of a transcript reference, e.g.
+# "NM_000059.4(NC_000013.11):c.68del". A genomic accession is not a gene symbol,
+# so the parser rejects it; dropping the parenthetical (the transcript alone is
+# a complete reference) makes it parse.
 # Only fires when the part *before* the parens is a transcript and the part
 # *inside* is genomic — this deliberately does NOT touch the valid HGVS form
 # "NC_000013.11(NM_000059.4):c.68del" (genomic reference, transcript selector),
 # where the parenthetical holds the transcript, not the genomic accession.
 _GENOMIC_REF_IN_GENE_PARENS = re.compile(
-    r"^((?:NM_|NR_|XM_|XR_|ENST|LRG_)[\w.]+)\((?:NC_|NG_|NW_)\d[\w.]*\)(?=:)",
+    rf"^({_TRANSCRIPT_ACCESSION_PREFIX}[\w.]+)\({_GENOMIC_ACCESSION_PREFIX}\d[\w.]*\)(?=:)",
     re.IGNORECASE,
 )
 
@@ -362,7 +438,7 @@ def _fix_del_ins_bases(m: re.Match) -> str:
 
 def _reconstruct(m: re.Match) -> str:
     """Rebuild a canonical HGVS string from a _HGVS_CLEAN_PATTERN match."""
-    kind = m.group("letter").lower()
+    kind = (m.group("letter") or m.group("upper_letter")).lower()
     nomen = m.group("nomen")
     c_nomen = f":{kind}.{nomen}"
 
@@ -427,13 +503,19 @@ def _fix_gene_transcript(hgvs_string: str) -> tuple[str, list[HGVSFix]]:
             ))
 
     if not transcript_ok and transcript_accession:
-        uc = transcript_accession.upper()
-        if _looks_like_transcript(uc):
+        # Any known accession prefix, not only transcripts: a lowercase genomic or
+        # protein accession (eg "ng_012337.3", "np_000050.2") is uppercased too.
+        uc = _uppercase_accession_prefix(transcript_accession)
+        if uc != transcript_accession:
             transcript_accession = uc
+            if _looks_like_transcript(uc):
+                code, message = HGVSFixCode.UPPERCASED_TRANSCRIPT, "Upper cased transcript"
+            else:
+                code, message = HGVSFixCode.UPPERCASED_HGVS_PREFIX, "Upper cased HGVS prefix"
             fixes.append(HGVSFix(
                 severity=HGVSFixSeverity.WARNING,
-                code=HGVSFixCode.UPPERCASED_TRANSCRIPT,
-                message="Upper cased transcript",
+                code=code,
+                message=message,
                 original=prefix,
                 fixed=transcript_accession,
             ))
@@ -463,14 +545,12 @@ def _validate(s: str) -> list[HGVSFix]:
             code=HGVSFixCode.NO_COLON,
             message="No colon ':' found in HGVS string",
         ))
-    for ch in (":", "c", "g", "n", "m", "p", "r", "."):
-        if s.startswith(ch):
-            fixes.append(HGVSFix(
-                severity=HGVSFixSeverity.ERROR,
-                code=HGVSFixCode.MISSING_REFERENCE_SEQUENCE,
-                message=f"Missing reference sequence (string starts with '{ch}')",
-            ))
-            break
+    if _MISSING_REFERENCE.match(s):
+        fixes.append(HGVSFix(
+            severity=HGVSFixSeverity.ERROR,
+            code=HGVSFixCode.MISSING_REFERENCE_SEQUENCE,
+            message=f"Missing reference sequence (string starts with '{s[0]}')",
+        ))
     return fixes
 
 
@@ -485,7 +565,7 @@ def _validate(s: str) -> list[HGVSFix]:
 
 def _op_strip_protein_suffix(s: str) -> tuple[str, list[HGVSFix]]:
     # e.g. "NM_000059.4:c.316+5G>A p.Arg106*" → "NM_000059.4:c.316+5G>A"
-    if m := _P_HGVS_REMOVAL.match(s):
+    if (m := _P_HGVS_REMOVAL.match(s)) and _HAS_NUCLEOTIDE_ALLELE.search(m.group("main")):
         new_s = m.group("main")
         return new_s, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
@@ -576,7 +656,7 @@ def _op_fix_prefix_colon(s: str) -> tuple[str, list[HGVSFix]]:
 def _op_fix_multiple_kind(s: str) -> tuple[str, list[HGVSFix]]:
     # Collapse a repeated kind prefix, e.g. "c.c." or "c.c.c." → "c."
     fixes = []
-    for kind in "cgmnpr":
+    for kind in _KIND_LETTERS:
         if f"{kind}.{kind}." in s.lower():
             # (?:c\.){2,} matches a run of 2+ of this kind prefix
             s2 = re.sub(rf"(?:{kind}\.){{2,}}", f"{kind}.", s, flags=re.IGNORECASE)
@@ -668,16 +748,10 @@ def _op_add_transcript_underscore(s: str) -> tuple[str, list[HGVSFix]]:
 def _op_reconstruct_structure(s: str) -> tuple[str, list[HGVSFix]]:
     # Structural reconstruction: uppercase prefix, lowercase kind letter,
     # insert ':' and '.' where missing, place gene symbol correctly
+    # The pattern's accession prefixes include their underscore, so a gene symbol
+    # that merely starts with prefix letters plus a digit (eg NR3C1, NC2) is
+    # matched as a gene symbol, never reconstructed into "NR3(C1)".
     if m := _HGVS_CLEAN_PATTERN.match(s):
-        # A 2-letter RefSeq prefix (NM, NR, NC, XM, ...) is always followed by an
-        # underscore, and _op_add_transcript_underscore has already inserted any
-        # missing one by now. If the matched "transcript" still has none, this is
-        # really a gene symbol that merely starts with those letters plus a digit
-        # (eg NR3C1, NC2) — do not reconstruct it into "NR3(C1)".
-        prefix = m.group("transcript_prefix")
-        value = m.group("transcript_value") or ""
-        if prefix and len(prefix) == 2 and "_" not in value:
-            return s, []
         reconstructed = _reconstruct(m)
         if reconstructed and reconstructed != s:
             transcript_prefix = m.group("transcript_prefix")
@@ -697,6 +771,8 @@ def _op_reconstruct_structure(s: str) -> tuple[str, list[HGVSFix]]:
 
 def _op_uppercase_bases(s: str) -> tuple[str, list[HGVSFix]]:
     fixes = []
+    if _RNA_ALLELE.search(s):
+        return s, fixes  # r. alleles use lowercase bases
     # Uppercase bases in ref>alt substitutions (e.g. "c.100a>g" → "c.100A>G")
     s2 = _REF_ALT_NUC.sub(
         lambda m: m.group("ref").upper() + ">" + m.group("alt").upper(), s
@@ -729,11 +805,7 @@ def _op_add_missing_kind(s: str) -> tuple[str, list[HGVSFix]]:
     #   mRNA / Ensembl transcript (NM_, XM_, ENST) → "c."  eg "NM_001754.5:557T>A"
     #   non-coding RNA           (NR_, XR_)        → "n."  eg "NR_002196.2:601A>G"
     #   genomic                  (NC_, NG_, ...)   → "g."  eg "NC_000007.13:1G>T"
-    for pattern, kind in (
-        (_HGVS_MRNA_NO_KIND, "c"),
-        (_HGVS_RNA_NO_KIND, "n"),
-        (_HGVS_GENOMIC_NO_KIND, "g"),
-    ):
+    for pattern, kind in _HGVS_NO_KIND:
         if pattern.match(s):
             s2 = s.replace(":", f":{kind}.", 1)
             return s2, [HGVSFix(
@@ -750,7 +822,7 @@ def _op_strip_leading_junk(s: str) -> tuple[str, list[HGVSFix]]:
     # "GRCh38.p2 NM_...". Only fires when a transcript prefix actually follows,
     # so a leading gene symbol (e.g. "BRCA1(NM_...)") is never touched.
     s2 = _LEADING_JUNK.sub("", s)
-    if s2 != s and re.match(_TX_PREFIX, s2, re.IGNORECASE):
+    if s2 != s and re.match(_ANY_ACCESSION_PREFIX, s2, re.IGNORECASE):
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.STRIPPED_LEADING_JUNK,
