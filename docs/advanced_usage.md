@@ -116,6 +116,21 @@ behaviour outside `fix_hgvs`. Both rely on the data provider's `get_tx_versions(
 (implemented by `JSONDataProvider` and `RESTDataProvider`; the REST version uses the versionless
 `/transcript/<ac>` lookup and warms the cache with every returned version).
 
+A transcript accession with no version (`NM_000059:c.36del`, or `NM_000059(BRCA2):c.36del`) is also
+handled by the version fallback, and left alone without it. Any held version could be the one
+meant, so cdot stays on that accession (it never swaps in the gene's MANE transcript), picks the
+version tagged MANE Select (then MANE Plus Clinical), else the latest, and checks it against every
+other version held in `genome_build` at the cited position. The `VersionStrategy` makes no
+difference here.
+
+| Situation | `result` | `HGVSFix` code | Severity |
+|---|---|---|---|
+| Every held version agrees (or only one is held) | `NM_000059.4:c.36del` | `RESOLVED_VERSIONLESS_TRANSCRIPT` | WARNING |
+| Versions disagree, `on_unsafe_version=REFUSE` (default) | unchanged | `REFUSED_UNSAFE_VERSION` | ERROR |
+| Versions disagree, `on_unsafe_version=SUBSTITUTE` | rewritten | `RESOLVED_VERSIONLESS_TRANSCRIPT_COORD_UNVERIFIED` | WARNING |
+
+The ERROR and the unverified WARNING list each version that disagrees, with the reason.
+
 ### `clean_hgvs` - string cleaning with op selection
 
 `fix_hgvs` calls `clean_hgvs()` for the string-fixing half. Call it directly when you want only the
