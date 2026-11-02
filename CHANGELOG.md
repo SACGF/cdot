@@ -44,7 +44,7 @@
 - #155 - `RESTDataProvider` supports T2T-CHM13v2.0 (new `assemblies` argument)
 - #169 - Close JSON file handles (`ResourceWarning`)
 - #209 - `fix_hgvs` no longer gives a `NO_TRANSCRIPT_FOR_GENE` ERROR for genomic or protein HGVS (`NC_000013.11:g.32316528del`)
-- #211 - `get_tx_exons` returns `None` for a contig the transcript isn't on, instead of its exons labelled with that contig
+- #211 - `get_tx_exons` raises `HGVSDataNotAvailableError` for an unknown transcript or a contig it isn't on, as biocommons' UTA provider does (was `None`, or exons labelled with the wrong contig)
 
 ## [0.2.33] - 2026-10-06
 
