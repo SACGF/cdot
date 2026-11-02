@@ -1,5 +1,4 @@
 import abc
-import gzip
 import requests
 import warnings
 
@@ -555,15 +554,10 @@ class JSONDataProvider(LocalDataProvider):
         self.transcripts = {}
         self.genes = {}
         for file_or_filename in file_or_filename_list:
-            if isinstance(file_or_filename, str):
-                open_func = gzip.open if file_or_filename.endswith(".gz") else open
-                f = open_func(file_or_filename)
-            else:
-                f = file_or_filename
             # msgspec decodes ~2.5x faster than json.load and into more compact typed
             # structs (see cdot/models.py). The structs are dict-read-compatible, so the
             # rest of the provider is unchanged and consumers see identical output.
-            data = models.loads(f.read())
+            data = models.load(file_or_filename)
             assemblies.update(data.genome_builds)
             self.transcripts.update(data.transcripts)
             if genes := data.genes:
