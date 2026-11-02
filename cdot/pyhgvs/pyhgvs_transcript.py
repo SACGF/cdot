@@ -1,5 +1,4 @@
 import abc
-import gzip
 import json
 from importlib import metadata
 from typing import Dict
@@ -7,6 +6,8 @@ from typing import Dict
 import requests
 
 from pyhgvs.utils import make_transcript
+
+from cdot import models
 
 
 class AbstractPyHGVSTranscriptFactory(abc.ABC):
@@ -81,12 +82,9 @@ class JSONPyHGVSTranscriptFactory(PyHGVSTranscriptFactory):
     def __init__(self, file_or_filename_list):
         transcripts = {}
         for file_or_filename in file_or_filename_list:
-            if isinstance(file_or_filename, str):
-                open_func = gzip.open if file_or_filename.endswith(".gz") else open
-                f = open_func(file_or_filename)
-            else:
-                f = file_or_filename
-            data = json.load(f)
+            # PyHGVS make_transcript works on the plain dicts, so load with json rather than models.load
+            with models.open_json(file_or_filename) as f:
+                data = json.load(f)
             transcripts.update(data["transcripts"])
         super().__init__(transcripts=transcripts)
 

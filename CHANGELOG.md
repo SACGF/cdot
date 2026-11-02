@@ -8,6 +8,7 @@
 
 ### Changed
 
+- #168 - `JSONDataProvider.get_tx_versions()` looks the versions up in a per-accession index built lazily on first use, instead of scanning every loaded transcript on each call. The version fallback in `resolve_transcript_version()` (and `fix_hgvs()` with it) no longer pays a full scan for every versionless or unavailable transcript version. Results are unchanged
 - #179 - Package metadata lists the supported Python versions (3.10 to 3.14) in its classifiers
 
 ### Deprecated
@@ -22,6 +23,7 @@
 - #154 - `RESTDataProvider` uses a `requests.Session` (connection reuse) and has a `timeout` argument (default 30 seconds) so a hung connection no longer blocks forever. The `session` argument lets you pass your own. `EnsemblTarkDataProvider`, `RESTPyHGVSTranscriptFactory` and the data release lookup also set a 30 second timeout
 - #154 - A response with no `Content-Type` header raised `TypeError` in `RESTDataProvider`, `EnsemblTarkDataProvider` and `RESTPyHGVSTranscriptFactory`. It now gives the usual "Non-json response" `ValueError`
 - #155 - `RESTDataProvider` rejected T2T-CHM13v2.0 contigs with `ValueError("Contig ... not supported")`. It now supports GRCh37, GRCh38 and T2T-CHM13v2.0 by default, set with the new `assemblies` argument
+- #169 - `JSONDataProvider` and `JSONPyHGVSTranscriptFactory` close the JSON files they open (they leaked the handle, giving `ResourceWarning: unclosed file` under `python -W error` or `-X dev`). Both now load through `cdot.models`, which has a new `open_json(file_or_filename)` context manager for the gzip-or-plain open. `FastaSeqFetcher` opens each FASTA file once instead of twice
 
 ### Removed
 

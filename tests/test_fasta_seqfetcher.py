@@ -132,3 +132,32 @@ def test_invalid_policy(test_files):
     fasta_filename, _ = test_files
     with pytest.raises(ValueError):
         FastaSeqFetcher(fasta_filename, genome_mismatch="loud")
+
+
+def test_fasta_opened_once(test_files, monkeypatch):
+    """ FastaSeqFetcher shares one GenomeFastaSeqFetcher between contigs and exon-built transcripts (#169) """
+    import cdot.hgvs.dataproviders.fasta_seqfetcher as fasta_seqfetcher_module
+
+    fasta_filename, json_filename = test_files
+    opened = []
+    real_fasta_file = fasta_seqfetcher_module.FastaFile
+
+    def counting_fasta_file(filename):
+        opened.append(filename)
+        return real_fasta_file(filename)
+
+    monkeypatch.setattr(fasta_seqfetcher_module, "FastaFile", counting_fasta_file)
+    seqfetcher = FastaSeqFetcher(fasta_filename)
+    assert opened == [fasta_filename]
+    assert seqfetcher.default_seqfetcher.contig_fastas is seqfetcher.contig_fastas
+
+    hdp = _hdp(json_filename, seqfetcher)
+    assert hdp.seqfetcher.fetch_seq(CONTIG, 10, 20) == GENOME[10:20]
+    assert hdp.seqfetcher.fetch_seq(MATCHES_GENOME) == TRANSCRIPT_SEQ
+
+
+def test_no_fasta_files():
+    with pytest.raises(ValueError, match="at least one"):
+        FastaSeqFetcher()
+    with pytest.raises(ValueError, match="at least one"):
+        ExonsFromGenomeFastaSeqFetcher()
