@@ -104,6 +104,65 @@ class TestJSONDataProvider(unittest.TestCase):
         with self.assertRaises(HGVSDataNotAvailableError):
             tx_info = self.json_data_provider.get_tx_info("NM_001637.3", "NC_000007.14", "splign")
 
+    def test_get_tx_exons_unknown_contig(self):
+        """ A contig outside the provider's assemblies is missing data, the error biocommons
+            hgvs handles (the same one get_tx_info raises), not a ValueError """
+        with self.assertRaisesRegex(HGVSDataNotAvailableError, "Contig 'chr7' not supported"):
+            self.json_data_provider.get_tx_exons("NM_001637.3", "chr7", "splign")
+
+
+class VersionlessIdJSONDataProvider(JSONDataProvider):
+    """ Keys transcripts by versionless accession, like a store that holds one version per
+        accession (eg cdot_rest's Redis provider), so the id in hand is "NM_001637" while the
+        record's "id" is "NM_001637.3" """
+
+    @staticmethod
+    def _versionless(tx_ac):
+        return tx_ac.rpartition(".")[0] or tx_ac
+
+    def _get_transcript(self, tx_ac):
+        if transcript := super()._get_transcript(tx_ac):
+            return transcript
+        for versioned_tx_ac, transcript in self.transcripts.items():
+            if self._versionless(versioned_tx_ac) == tx_ac:
+                return transcript
+        return None
+
+    def _get_transcript_ids_for_gene(self, gene):
+        return {self._versionless(tx_ac) for tx_ac in super()._get_transcript_ids_for_gene(gene)}
+
+    def _get_contig_interval_tree(self, alt_ac):
+        from intervaltree import IntervalTree
+        tree = super()._get_contig_interval_tree(alt_ac)
+        return IntervalTree(iv._replace(data=self._versionless(iv.data)) for iv in tree)
+
+
+class TestVersionlessIdProvider(unittest.TestCase):
+    """ Every transcript-listing method returns the record's versioned accession as tx_ac, whatever
+        id the provider stores its transcripts under """
+
+    @classmethod
+    def setUpClass(cls):
+        this_file_dir = os.path.dirname(abspath(getsourcefile(lambda: 0)))
+        test_json_file = os.path.join(this_file_dir, "test_data/cdot.refseq.grch37.json")
+        cls.json_data_provider = VersionlessIdJSONDataProvider([test_json_file])
+
+    def test_get_tx_for_region_returns_versioned_accession(self):
+        tx_acs = {tx["tx_ac"] for tx in
+                  self.json_data_provider.get_tx_for_region("NC_000007.13", "splign", 36570024, 36570025)}
+        self.assertIn("NM_001637.3", tx_acs)
+        self.assertNotIn("NM_001637", tx_acs)
+
+    def test_get_tx_for_gene_returns_versioned_accession(self):
+        tx_acs = {tx["tx_ac"] for tx in self.json_data_provider.get_tx_for_gene("AOAH")}
+        self.assertIn("NM_001637.3", tx_acs)
+        self.assertNotIn("NM_001637", tx_acs)
+
+    def test_get_tx_ac_tags_for_gene_returns_versioned_accession(self):
+        tx_acs = {tx_ac for tx_ac, _tags in self.json_data_provider.get_tx_ac_tags_for_gene("AOAH", "GRCh37")}
+        self.assertIn("NM_001637.3", tx_acs)
+        self.assertNotIn("NM_001637", tx_acs)
+
 
 if __name__ == '__main__':
     unittest.main()
