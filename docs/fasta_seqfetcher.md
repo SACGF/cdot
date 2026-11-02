@@ -102,7 +102,7 @@ a gap in an exon), `FastaSeqFetcher` doesn't know them and fills them with `N`. 
 slices of the transcript to validate and normalize a variant, and an `N` there would silently stop an
 indel shifting 3', giving the wrong position. So a slice that includes an `N` (one of these bases, or
 an `N` in the genome FASTA) raises `GenomeMismatchError`. Fetching the whole transcript, as `c_to_p`
-does, warns instead (once per transcript). The `genome_mismatch` argument doesn't change this. A
+does, warns instead. The `genome_mismatch` argument doesn't change this. A
 `ChainedSeqFetcher` with SeqRepo, as above, gets the real bases.
 
 biocommons also normalizes substitutions, reading 20 bases from the variant 3', so an SNV just before

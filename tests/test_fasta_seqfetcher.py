@@ -223,11 +223,9 @@ def test_slice_without_padding(padded_files):
 def test_whole_transcript_with_padding_warns(padded_files):
     """ c_to_p translates the whole transcript: warn, as padding in the UTR doesn't change the protein """
     fasta_filename, json_filename = padded_files
-    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename, cache=False))
-    with pytest.warns(GenomeMismatchWarning, match="NM_000001.1 n.11_12") as record:
+    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename))
+    with pytest.warns(GenomeMismatchWarning, match="NM_000001.1 n.11_12"):
         assert hdp.seqfetcher.fetch_seq("NM_000001.1") == "CGTCGAAAAANNCGTCGTCGTC" + PADDED_GENOME[40:60]
-        hdp.seqfetcher.fetch_seq("NM_000001.1")
-    assert len(record) == 1
 
 
 @pytest.mark.parametrize("genome_mismatch", ["off", "raise"])

@@ -78,7 +78,6 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
         super().__init__(*args, cache=cache)
         self.genome_mismatch_policy = GenomeMismatchPolicy(genome_mismatch)
         self._warned_genome_mismatch = set()
-        self._warned_padding = set()
         self.source = "Transcript Exons using Genome Fasta file reference"
         self.genome_fasta_seq_fetcher = GenomeFastaSeqFetcher(*args)
 
@@ -141,9 +140,7 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
                f"SeqRepo with ChainedSeqFetcher to get them.")
         if start_i is not None or end_i is not None:
             raise GenomeMismatchError(msg)
-        if ac not in self._warned_padding:
-            self._warned_padding.add(ac)
-            warnings.warn(msg, GenomeMismatchWarning)
+        warnings.warn(msg, GenomeMismatchWarning)
         return seq
 
     def _fetch_seq_from_fasta(self, ac, alt_ac, alt_aln_method):
