@@ -724,9 +724,19 @@ class JSONDataProvider(LocalDataProvider):
 
 
 class RESTDataProvider(AbstractJSONDataProvider):
+    # Genome builds served by cdotlib.org
+    DEFAULT_ASSEMBLIES = ["GRCh37", "GRCh38", "T2T-CHM13v2.0"]
+    # Seconds - passed to requests as both the connect and read timeout
+    DEFAULT_TIMEOUT = 30
 
-    def __init__(self, url=None, secure=True, mode=None, cache=None, seqfetcher=None):
-        assemblies = ["GRCh37", "GRCh38"]
+    def __init__(self, url=None, secure=True, mode=None, cache=None, seqfetcher=None,
+                 assemblies: List[str] = None, timeout=DEFAULT_TIMEOUT, session=None):
+        """ assemblies: genome builds to recognise contigs for, defaults to DEFAULT_ASSEMBLIES
+            timeout: seconds to wait on the server (connect and read) before raising, None waits forever
+            session: requests.Session to use (eg to set headers/proxies/retries), default creates one
+        """
+        if assemblies is None:
+            assemblies = self.DEFAULT_ASSEMBLIES
         super().__init__(assemblies=assemblies, mode=mode, cache=cache, seqfetcher=seqfetcher)
         if url is None:
             if secure:
@@ -734,18 +744,27 @@ class RESTDataProvider(AbstractJSONDataProvider):
             else:
                 url = "http://cdotlib.org"
         self.url = url
+        self.timeout = timeout
+        if session is None:
+            session = requests.Session()
+        self.session = session
         self.transcripts = {}
         self.genes = {}
 
     def _get_from_url(self, url):
-        data = None
-        response = requests.get(url)
-        if response.ok:
-            if 'application/json' in response.headers.get('Content-Type'):
-                data = response.json()
-            else:
-                raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % url)
-        return data
+        """ Returns the parsed JSON response, or None if the server says it doesn't exist (404).
+
+            Any other non-ok status raises requests.HTTPError, so callers never mistake a
+            transient failure (eg 429/503) for a missing record and cache it.
+        """
+        response = self.session.get(url, timeout=self.timeout)
+        if response.status_code == 404:
+            return None
+        if not response.ok:
+            response.raise_for_status()
+        if 'application/json' in response.headers.get('Content-Type', ''):
+            return response.json()
+        raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % url)
 
     def _post_to_url(self, url, json_body):
         """ POST helper mirroring _get_from_url.
@@ -753,7 +772,7 @@ class RESTDataProvider(AbstractJSONDataProvider):
             Returns the parsed JSON response, or None if the endpoint is absent (404/405) so
             the caller can fall back to an older code path. Any other non-ok status raises.
         """
-        response = requests.post(url, json=json_body)
+        response = self.session.post(url, json=json_body, timeout=self.timeout)
         if response.status_code in (404, 405):
             return None  # Server predates this endpoint - caller falls back
         if not response.ok:
@@ -763,7 +782,7 @@ class RESTDataProvider(AbstractJSONDataProvider):
         raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % url)
 
     def _get_transcript(self, tx_ac):
-        # We store None for 404 on REST
+        # We store None for 404 on REST (_get_from_url raises for other errors, so they aren't cached)
         if tx_ac in self.transcripts:
             return self.transcripts[tx_ac]
 
@@ -821,7 +840,9 @@ class RESTDataProvider(AbstractJSONDataProvider):
             batch=False to force this).
 
             Already-cached accessions are skipped. Missing/404 transcripts are stored as None,
-            matching _get_transcript. Returns the number of transcripts added to the cache.
+            matching _get_transcript. In the concurrent fallback, an accession whose request fails
+            for any other reason is left uncached, so a later _get_transcript retries it.
+            Returns the number of transcripts added to the cache.
         """
         to_fetch = sorted(ac for ac in tx_acs if ac not in self.transcripts)
         if not to_fetch:
@@ -860,18 +881,25 @@ class RESTDataProvider(AbstractJSONDataProvider):
         """
         from concurrent.futures import ThreadPoolExecutor
 
+        _failed = object()
+
         def _fetch(tx_ac):
             try:
+                # None here means 404, which is cached like _get_transcript does
                 return tx_ac, self._get_from_url(self.url + "/transcript/" + tx_ac)
             except Exception:
-                # Match _get_transcript's "store None for missing" behaviour; a failed
-                # prefetch must not be fatal - a later _get_transcript can retry/raise.
-                return tx_ac, None
+                # A failed prefetch must not be fatal. Leave it out of the cache, so a
+                # later _get_transcript retries (and raises if it still fails).
+                return tx_ac, _failed
 
+        added = 0
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             for tx_ac, transcript in executor.map(_fetch, to_fetch):
+                if transcript is _failed:
+                    continue
                 self.transcripts[tx_ac] = transcript
-        return len(to_fetch)
+                added += 1
+        return added
 
     def prefetch_from_hgvs(self, hgvs_strings, clean=True, **kwargs):
         """ Convenience wrapper: extract transcript accessions from HGVS strings and prefetch.
@@ -914,7 +942,7 @@ class RESTDataProvider(AbstractJSONDataProvider):
         return None
 
     def _get_gene(self, gene_name):
-        # We store None for 404 on REST
+        # We store None for 404 on REST (_get_from_url raises for other errors, so they aren't cached)
         if gene_name in self.genes:
             return self.genes[gene_name]
 

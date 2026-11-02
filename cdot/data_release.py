@@ -26,7 +26,7 @@ def get_latest_data_version_and_release() -> tuple[Optional[str], dict]:
     client_data_schema = get_data_schema_int(cdot.__version__)
 
     url = "https://api.github.com/repos/SACGF/cdot/releases?per_page=100"
-    response = requests.get(url)
+    response = requests.get(url, timeout=30)
     response.raise_for_status()
     json_data = response.json()
     for release in json_data:
