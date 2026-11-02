@@ -1,11 +1,9 @@
-import abc
 import re
 import warnings
 from enum import Enum
 
 import msgspec
 from pysam.libcfaidx import FastaFile
-from hgvs.dataproviders.interface import Interface
 from hgvs.exceptions import HGVSDataNotAvailableError
 from bioutils.sequences import reverse_complement
 
@@ -63,21 +61,15 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
     _CIGAR_PATTERN = re.compile(r"(\d+)([=DIX])")
 
     def __init__(self, *args, cache=True, genome_mismatch=GenomeMismatchPolicy.WARN):
+        super().__init__(*args, cache=cache)
         self.genome_mismatch_policy = GenomeMismatchPolicy(genome_mismatch)
         self._warned_genome_mismatch = set()
-        self.cache = cache
-        self.transcript_cache = {}
-        self.hdp = None  # Set when passed to data provider (via set_data_provider)
         self.source = "Transcript Exons using Genome Fasta file reference"
-        self.contig_fastas = {}
-        for fasta_filename in args:
-            fasta_file = FastaFile(fasta_filename)
-            for contig in fasta_file.references:
-                self.contig_fastas[contig] = fasta_file
+        self.genome_fasta_seq_fetcher = GenomeFastaSeqFetcher(*args)
 
-        if not self.contig_fastas:
-            raise ValueError("Need to provide at least one of fasta file as argument")
-        super().__init__(*args, cache=cache)
+    @property
+    def contig_fastas(self):
+        return self.genome_fasta_seq_fetcher.contig_fastas
 
     def get_mapping_options(self, ac):
         return self.hdp.get_tx_mapping_options(ac)
@@ -204,7 +196,7 @@ class FastaSeqFetcher(PrefixSeqFetcher):
     def __init__(self, *args, cache=True, genome_mismatch=GenomeMismatchPolicy.WARN):
         default_seqfetcher = ExonsFromGenomeFastaSeqFetcher(*args, cache=cache, genome_mismatch=genome_mismatch)
         super().__init__(default_seqfetcher=default_seqfetcher)
-        self.genome_fasta_seq_fetcher = GenomeFastaSeqFetcher(*args)
+        self.genome_fasta_seq_fetcher = default_seqfetcher.genome_fasta_seq_fetcher
         # Genomic contigs: chromosomes, and patch/alt scaffolds (some Ensembl transcripts are only on patches)
         self.prefix_seqfetchers.update({
             "NC_": self.genome_fasta_seq_fetcher,

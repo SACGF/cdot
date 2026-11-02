@@ -16,6 +16,11 @@ readme = "README.md"
 license = {text = "MIT"}
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -51,7 +56,7 @@ test = [
     "pysam",
 ]
 # Build the manuscript and regenerate its reproducible facts
-# (paper/Snakefile + analysis/*.py). Not needed to use cdot as a library.
+# (paper/Snakefile + paper/scripts/*.py). Not needed to use cdot as a library.
 # weasyprint provides the optional PDF toolchain (vibepaper --pdf / the `pdf` rule).
 paper = [
     "snakemake",
@@ -70,3 +75,23 @@ version = {attr = "cdot.__version__"}
 # Only ship the cdot package. An allowlist avoids accidentally pulling in
 # non-package directories (paper/, docs/, output/, etc) as namespace packages.
 include = ["cdot*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# -rs: print the reason for every skipped test in the summary
+addopts = "-rs"
+
+[tool.ruff]
+# paper/ holds one-off analysis scripts for the manuscript, not shipped or tested
+extend-exclude = ["paper"]
+
+[tool.ruff.lint]
+# Lint only (no formatting): pyflakes (unused imports, undefined names, unused
+# variables), pycodestyle statement rules (E7) and syntax/IO errors (E9)
+select = ["F", "E7", "E9"]
+
+[tool.ruff.lint.per-file-ignores]
+# Package __init__ files re-export their submodules' public names
+"__init__.py" = ["F401", "F403"]
+# One f-string without placeholders; fixing it is deferred so this PR doesn't conflict with open PRs on the file
+"generate_transcript_data/cdot_json.py" = ["F541"]

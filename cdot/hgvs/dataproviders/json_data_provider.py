@@ -1,5 +1,4 @@
 import abc
-import gzip
 import requests
 import warnings
 
@@ -533,6 +532,20 @@ class LocalDataProvider(AbstractJSONDataProvider):
                 tx_intervals[contig][tx_start:tx_end] = transcript_id
         return tx_by_gene, tx_intervals
 
+    @staticmethod
+    def _get_tx_versions_by_accession(transcript_iter_items):
+        """ {versionless accession: [(version, transcript), ...]} sorted by version, for
+            get_tx_versions(). Transcript IDs without an integer version after the last
+            dot are left out. """
+        tx_versions = defaultdict(list)
+        for transcript_id, transcript_data in transcript_iter_items:
+            base, _dot, version = transcript_id.rpartition(".")
+            if version.isdigit():
+                tx_versions[base].append((int(version), transcript_data))
+        for versions in tx_versions.values():
+            versions.sort(key=lambda version_transcript: version_transcript[0])
+        return dict(tx_versions)
+
 
 class JSONDataProvider(LocalDataProvider):
     """ Local JSON file """
@@ -541,15 +554,10 @@ class JSONDataProvider(LocalDataProvider):
         self.transcripts = {}
         self.genes = {}
         for file_or_filename in file_or_filename_list:
-            if isinstance(file_or_filename, str):
-                open_func = gzip.open if file_or_filename.endswith(".gz") else open
-                f = open_func(file_or_filename)
-            else:
-                f = file_or_filename
             # msgspec decodes ~2.5x faster than json.load and into more compact typed
             # structs (see cdot/models.py). The structs are dict-read-compatible, so the
             # rest of the provider is unchanged and consumers see identical output.
-            data = models.loads(f.read())
+            data = models.load(file_or_filename)
             assemblies.update(data.genome_builds)
             self.transcripts.update(data.transcripts)
             if genes := data.genes:
@@ -566,17 +574,12 @@ class JSONDataProvider(LocalDataProvider):
         return self.transcripts.get(tx_ac)
 
     def get_tx_versions(self, accession: str, genome_build: str = None) -> list[int]:
-        prefix = accession + "."  # so "NM_000059" doesn't also match "NM_0000591"
         versions = []
-        for tx_ac, transcript in self.transcripts.items():
-            if tx_ac.startswith(prefix):
-                _base, _dot, version = tx_ac.rpartition(".")
-                if not version.isdigit():
-                    continue
-                if genome_build is not None and genome_build not in transcript["genome_builds"]:
-                    continue
-                versions.append(int(version))
-        return sorted(versions)
+        for version, transcript in self._tx_versions_by_accession.get(accession, ()):
+            if genome_build is not None and genome_build not in transcript["genome_builds"]:
+                continue
+            versions.append(version)
+        return versions
 
     def _get_gene(self, gene):
         return self.genes.get(gene)
@@ -600,6 +603,10 @@ class JSONDataProvider(LocalDataProvider):
     @lazy
     def _tx_by_gene_and_intervals(self):
         return self._get_tx_by_gene_and_intervals(self.transcripts.items())
+
+    @lazy
+    def _tx_versions_by_accession(self):
+        return self._get_tx_versions_by_accession(self.transcripts.items())
 
     def get_gene_info(self, gene):
         if self.cdot_data_version < (0, 2, 10):

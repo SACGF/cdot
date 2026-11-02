@@ -4,6 +4,8 @@ Tests for cdot.hgvs.gene_hgvs — gene-symbol HGVS resolution via MANE/canonical
 Uses the Ensembl GRCh38 test data fixture which has a single gene (AOAH) with
 ENST00000617537.5 tagged as MANE_Select.
 """
+import io
+import json
 import os
 import pytest
 
@@ -28,6 +30,7 @@ from cdot.hgvs.gene_hgvs import (
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
 ENSEMBL_JSON = os.path.join(TEST_DATA_DIR, "cdot.ensembl.grch38.json")
+REFSEQ_GRCH37_JSON = os.path.join(TEST_DATA_DIR, "cdot.refseq.grch37.json")
 
 C = HGVSFixCode
 W = HGVSFixSeverity.WARNING
@@ -932,6 +935,97 @@ def test_json_provider_get_tx_versions_unknown(ensembl_provider):
 def test_json_provider_get_tx_versions_no_prefix_overmatch(ensembl_provider):
     # "ENST0000061753" must not match "ENST00000617537.5" (dot guard)
     assert ensembl_provider.get_tx_versions("ENST0000061753") == []
+
+
+def _scan_tx_versions(transcripts, accession, genome_build=None):
+    """Reference implementation: a linear scan over every transcript, which the
+    provider's per-accession index must agree with."""
+    prefix = accession + "."
+    versions = []
+    for tx_ac, transcript in transcripts.items():
+        if tx_ac.startswith(prefix):
+            _base, _dot, version = tx_ac.rpartition(".")
+            if not version.isdigit():
+                continue
+            if genome_build is not None and genome_build not in transcript["genome_builds"]:
+                continue
+            versions.append(int(version))
+    return sorted(versions)
+
+
+def _versions_provider():
+    """Several versions of one accession spread across builds, a near-miss accession,
+    a versionless id and a non-integer version, so the index has edge cases to get wrong."""
+    def tx(tx_ac, builds):
+        return {
+            "id": tx_ac, "gene_name": "BRCA2", "biotype": ["protein_coding"],
+            "genome_builds": {
+                build: {"contig": "NC_000013.11", "strand": "+",
+                        "exons": [[100, 200, 1, 0, 100, None]]}
+                for build in builds
+            },
+        }
+    data = {
+        "cdot_version": "0.2.33",
+        "genome_builds": ["GRCh37", "GRCh38"],
+        "transcripts": {
+            "NM_000059.4": tx("NM_000059.4", ["GRCh37", "GRCh38"]),
+            "NM_000059.2": tx("NM_000059.2", ["GRCh37"]),
+            "NM_000059.3": tx("NM_000059.3", ["GRCh38"]),
+            "NM_0000591.1": tx("NM_0000591.1", ["GRCh38"]),
+            "NM_001754": tx("NM_001754", ["GRCh38"]),
+            "NM_001754.5": tx("NM_001754.5", ["GRCh38"]),
+            "NM_001754.x": tx("NM_001754.x", ["GRCh38"]),
+        },
+    }
+    return JSONDataProvider([io.StringIO(json.dumps(data))])
+
+
+@pytest.mark.parametrize("make_provider", [
+    lambda: JSONDataProvider([REFSEQ_GRCH37_JSON]),
+    _versions_provider,
+])
+def test_json_provider_get_tx_versions_matches_scan(make_provider):
+    # The lazy per-accession index gives the same answer as scanning every transcript,
+    # for every stored transcript, with and without a build filter.
+    dp = make_provider()
+    assert dp.transcripts, "fixture has no transcripts"
+    accessions = {tx_ac.rpartition(".")[0] for tx_ac in dp.transcripts if "." in tx_ac}
+    accessions |= set(dp.transcripts)  # versionless ids, and versioned ids used as a base
+    builds = [None] + sorted(dp.assembly_maps)
+    for accession in accessions:
+        for genome_build in builds:
+            expected = _scan_tx_versions(dp.transcripts, accession, genome_build)
+            assert dp.get_tx_versions(accession, genome_build) == expected, (accession, genome_build)
+
+
+def test_json_provider_get_tx_versions_refseq_fixture():
+    dp = JSONDataProvider([REFSEQ_GRCH37_JSON])
+    assert dp.get_tx_versions("NM_001637") == [3]
+    assert dp.get_tx_versions("NR_023343", "GRCh37") == [1]
+    assert dp.get_tx_versions("NM_001637", "GRCh38") == []
+
+
+def test_json_provider_get_tx_versions_genome_build_filter():
+    dp = _versions_provider()
+    assert dp.get_tx_versions("NM_000059") == [2, 3, 4]
+    assert dp.get_tx_versions("NM_000059", "GRCh37") == [2, 4]
+    assert dp.get_tx_versions("NM_000059", "GRCh38") == [3, 4]
+    assert dp.get_tx_versions("NM_000059", "T2T-CHM13v2.0") == []
+
+
+def test_json_provider_get_tx_versions_unknown_accession():
+    dp = _versions_provider()
+    assert dp.get_tx_versions("NM_999999") == []
+    assert dp.get_tx_versions("NM_999999", "GRCh38") == []
+    assert dp.get_tx_versions("NM_00005") == []  # prefix of a stored accession
+    assert dp.get_tx_versions("NM_000059.4") == []  # a versioned accession is not a base
+
+
+def test_json_provider_get_tx_versions_skips_ids_without_integer_version():
+    dp = _versions_provider()
+    # "NM_001754" (versionless) and "NM_001754.x" are stored but are not versions
+    assert dp.get_tx_versions("NM_001754") == [5]
 
 
 # ---------------------------------------------------------------------------
