@@ -106,13 +106,15 @@ class HGVSCleanOp(Enum):
     selection only *filters* the pipeline — it never reorders it (several steps
     depend on earlier ones running first).
     """
+    STRIP_SURROUNDING_PUNCTUATION = "strip_surrounding_punctuation"
     STRIP_PROTEIN_SUFFIX     = "strip_protein_suffix"
     STRIP_CONTIG_NAME        = "strip_contig_name"
     STRIP_LEADING_JUNK       = "strip_leading_junk"
     FIX_SYMBOL_BEFORE_ACCESSION = "fix_symbol_before_accession"
     FIX_SPACE_BEFORE_KIND    = "fix_space_before_kind"
     STRIP_WHITESPACE         = "strip_whitespace"
-    STRIP_SURROUNDING_PUNCTUATION = "strip_surrounding_punctuation"
+    ADD_N_PREFIX             = "add_n_prefix"
+    ADD_TRANSCRIPT_UNDERSCORE = "add_transcript_underscore"
     FIX_MULTIPLE_COLON       = "fix_multiple_colon"
     FIX_GENE_WRAPPER         = "fix_gene_wrapper"
     FIX_MULTIPLE_DOT         = "fix_multiple_dot"
@@ -121,12 +123,10 @@ class HGVSCleanOp(Enum):
     FIX_MULTIPLE_KIND        = "fix_multiple_kind"
     FIX_SEPARATOR_TYPO       = "fix_separator_typo"
     DROP_EMPTY_VERSION       = "drop_empty_version"
-    ADD_N_PREFIX             = "add_n_prefix"
-    LOWERCASE_MUTATION_TYPE  = "lowercase_mutation_type"
     DROP_DEL_DUP_COUNT       = "drop_del_dup_count"
     STRIP_UNBALANCED_BRACKETS = "strip_unbalanced_brackets"
-    ADD_TRANSCRIPT_UNDERSCORE = "add_transcript_underscore"
     RECONSTRUCT_STRUCTURE    = "reconstruct_structure"
+    LOWERCASE_MUTATION_TYPE  = "lowercase_mutation_type"
     UPPERCASE_BASES          = "uppercase_bases"
     ADD_MISSING_KIND         = "add_missing_kind"
     FIX_GENE_TRANSCRIPT      = "fix_gene_transcript"
@@ -593,8 +593,10 @@ def _op_strip_surrounding_punctuation(s: str) -> tuple[str, list[HGVSFix]]:
     # Strip stray wrapping quotes/backticks and trailing separators left by
     # copy/paste or search boxes, e.g. "NM_000059.4:c.123A>G'" or
     # "NM_000059.4:c.123A>G;". No valid HGVS string starts/ends with these.
+    # Surrounding whitespace on its own is left for the whitespace step to strip
+    # and report (this op runs first).
     s2 = s.strip().strip("'\"`").rstrip("/;,").strip()
-    if s2 != s:
+    if s2 != s.strip():
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
             code=HGVSFixCode.STRIPPED_SURROUNDING_PUNCTUATION,
@@ -993,13 +995,19 @@ def _op_drop_genomic_ref_in_parens(s: str) -> tuple[str, list[HGVSFix]]:
 # Canonical pipeline: (op, function), in the order they must run.
 # clean_hgvs() filters this by the caller's `ops` set but never reorders it.
 _PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
+    # Wrapping quotes first: the ops below that are anchored to the start of the
+    # string ('^') can't see an accession or symbol behind a leading quote (#151).
+    (HGVSCleanOp.STRIP_SURROUNDING_PUNCTUATION, _op_strip_surrounding_punctuation),
     (HGVSCleanOp.STRIP_PROTEIN_SUFFIX,      _op_strip_protein_suffix),
     (HGVSCleanOp.STRIP_CONTIG_NAME,         _op_strip_contig_name),
     (HGVSCleanOp.STRIP_LEADING_JUNK,        _op_strip_leading_junk),
     (HGVSCleanOp.FIX_SYMBOL_BEFORE_ACCESSION, _op_fix_symbol_before_accession),
     (HGVSCleanOp.FIX_SPACE_BEFORE_KIND,     _op_fix_space_before_kind),
     (HGVSCleanOp.STRIP_WHITESPACE,          _op_strip_whitespace),
-    (HGVSCleanOp.STRIP_SURROUNDING_PUNCTUATION, _op_strip_surrounding_punctuation),
+    # Restore the accession prefix ("M_" -> "NM_", "NM000059" -> "NM_000059")
+    # before the ops that look for a full prefix (#151)
+    (HGVSCleanOp.ADD_N_PREFIX,              _op_add_n_prefix),
+    (HGVSCleanOp.ADD_TRANSCRIPT_UNDERSCORE, _op_add_transcript_underscore),
     (HGVSCleanOp.FIX_MULTIPLE_COLON,        _op_fix_multiple_colon),
     (HGVSCleanOp.FIX_GENE_WRAPPER,          _op_fix_gene_wrapper),
     (HGVSCleanOp.FIX_MULTIPLE_DOT,          _op_fix_multiple_dot),
@@ -1008,12 +1016,11 @@ _PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
     (HGVSCleanOp.FIX_MULTIPLE_KIND,         _op_fix_multiple_kind),
     (HGVSCleanOp.FIX_SEPARATOR_TYPO,        _op_fix_separator_typo),
     (HGVSCleanOp.DROP_EMPTY_VERSION,        _op_drop_empty_version),
-    (HGVSCleanOp.ADD_N_PREFIX,              _op_add_n_prefix),
-    (HGVSCleanOp.LOWERCASE_MUTATION_TYPE,   _op_lowercase_mutation_type),
     (HGVSCleanOp.DROP_DEL_DUP_COUNT,        _op_drop_del_dup_count),
     (HGVSCleanOp.STRIP_UNBALANCED_BRACKETS, _op_strip_unbalanced_brackets),
-    (HGVSCleanOp.ADD_TRANSCRIPT_UNDERSCORE, _op_add_transcript_underscore),
     (HGVSCleanOp.RECONSTRUCT_STRUCTURE,     _op_reconstruct_structure),
+    # Needs the ':' that reconstruction may have just inserted (#151)
+    (HGVSCleanOp.LOWERCASE_MUTATION_TYPE,   _op_lowercase_mutation_type),
     (HGVSCleanOp.UPPERCASE_BASES,           _op_uppercase_bases),
     (HGVSCleanOp.ADD_MISSING_KIND,          _op_add_missing_kind),
     (HGVSCleanOp.FIX_GENE_TRANSCRIPT,       _fix_gene_transcript),
