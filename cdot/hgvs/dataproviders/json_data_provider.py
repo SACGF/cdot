@@ -91,6 +91,16 @@ class AbstractJSONDataProvider(Interface):
         """
         return {tx_ac: self._get_transcript(tx_ac) for tx_ac in tx_acs}
 
+    def get_transcript(self, tx_ac):
+        """
+        Return cdot's transcript record for a versioned accession (eg ``"NM_000059.4"``),
+        a dict in the cdot JSON data format, or None if the provider doesn't hold it.
+
+        The public way for code outside the provider (eg :func:`cdot.hgvs.fix_c_to_p`)
+        to read a record's fields, such as ``translation`` and ``genome_builds``.
+        """
+        return self._get_transcript(tx_ac)
+
     @abc.abstractmethod
     def _get_gene(self, gene):
         pass
