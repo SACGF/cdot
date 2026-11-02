@@ -46,6 +46,7 @@
 - #169 - Close JSON file handles (`ResourceWarning`)
 - #209 - `fix_hgvs` no longer gives a `NO_TRANSCRIPT_FOR_GENE` ERROR for genomic or protein HGVS (`NC_000013.11:g.32316528del`)
 - #211 - `get_tx_exons` raises `HGVSDataNotAvailableError` for an unknown transcript or a contig it isn't on, as biocommons' UTA provider does (was `None`, or exons labelled with the wrong contig)
+- #213 - HGVS cleaning: `NC_000013.11(NM_000059.4):g.32316528del` keeps the genomic accession (`NC_000013.11:g.32316528del`, `DROPPED_TRANSCRIPT_FOR_GENOMIC_KIND`) instead of becoming `NM_000059.4:g.…`
 
 ## [0.2.33] - 2026-10-06
 
