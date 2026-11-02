@@ -6,6 +6,13 @@
 - #148 - HGVS cleaning: a chromosome name before its own chromosomal accession is dropped (`chr13 NC_000013.11:g.32316528del` → `NC_000013.11:g.32316528del`), for GRCh37, GRCh38 and T2T-CHM13v2.0 accessions. Only exact `chr1`-`chr22`/`chrX`/`chrY`/`chrM`/`chrMT` names are recognised (gene symbols such as `CHRNA7` are not affected), and the name is only dropped when it matches the accession's chromosome, so `chr7 NC_000013.11:…` is left alone. New op `HGVSCleanOp.STRIP_CONTIG_NAME`, reported as a WARNING with the new fix code `STRIPPED_CONTIG_NAME`
 - #145 - `models.Transcript.fake`: `True` for the RefSeq mitochondrial fake transcripts (data schema >= 0.2.37), `None` for real ones
 
+### Fixed
+
+- #154 - `RESTDataProvider` only caches a 404 as a missing transcript/gene. Other HTTP errors (eg 429 or 503) now raise `requests.HTTPError` instead of returning `None`, and are not cached, so a transient server error no longer makes a transcript permanently missing for the provider's lifetime. `prefetch()`'s concurrent fallback leaves failed accessions uncached so a later lookup retries them
+- #154 - `RESTDataProvider` uses a `requests.Session` (connection reuse) and has a `timeout` argument (default 30 seconds) so a hung connection no longer blocks forever. The `session` argument lets you pass your own. `EnsemblTarkDataProvider`, `RESTPyHGVSTranscriptFactory` and the data release lookup also set a 30 second timeout
+- #154 - A response with no `Content-Type` header raised `TypeError` in `RESTDataProvider`, `EnsemblTarkDataProvider` and `RESTPyHGVSTranscriptFactory`. It now gives the usual "Non-json response" `ValueError`
+- #155 - `RESTDataProvider` rejected T2T-CHM13v2.0 contigs with `ValueError("Contig ... not supported")`. It now supports GRCh37, GRCh38 and T2T-CHM13v2.0 by default, set with the new `assemblies` argument
+
 ### Removed
 
 - #103 - The mouse (Mus musculus GRCm38/GRCm39) RefSeq bash scripts under `generate_transcript_data/Mus_musculus/`. They have been dead since the move to Snakemake (#92) removed the wrapper and gene_info download they depended on, and mouse data was never part of a data release. cdot does not currently support non-human species: `bioutils` has no mouse assemblies for contig name mapping, so the data provider can't load a mouse file. #103 tracks what adding it would take

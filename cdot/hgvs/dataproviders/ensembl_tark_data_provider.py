@@ -68,6 +68,9 @@ class EnsemblTarkDataProvider(Interface):
     NCBI_ALN_METHOD = "splign"
     required_version = "1.1"
 
+    # Seconds - passed to requests as both the connect and read timeout
+    REQUESTS_TIMEOUT = 30
+
     def __init__(self, assemblies: list[str] = None, mode=None, cache=None, seqfetcher=None):
         """ assemblies: defaults to ["GRCh37", "GRCh38"]
             seqfetcher defaults to EnsemblTarkSeqFetcher(), which uses hgvs SeqFetcher for fastas
@@ -100,9 +103,9 @@ class EnsemblTarkDataProvider(Interface):
             self.assembly_by_contig.update({contig: assembly_name for contig in contig_map.keys()})
 
     def _get_from_url(self, url):
-        response = requests.get(url)
+        response = requests.get(url, timeout=self.REQUESTS_TIMEOUT)
         if response.ok:
-            if 'application/json' in response.headers.get('Content-Type'):
+            if 'application/json' in response.headers.get('Content-Type', ''):
                 return response.json()
             else:
                 raise ValueError("Non-json response received for '%s' - are you behind a firewall?" % url)
