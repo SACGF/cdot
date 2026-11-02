@@ -371,8 +371,10 @@ class EnsemblTarkDataProvider(Interface):
         return mapping_options
 
     def get_acs_for_protein_seq(self, seq):
-        """ Only the MD5-based accession, which biocommons c_to_p uses when a transcript has no
-            protein accession (see AbstractJSONDataProvider.get_acs_for_protein_seq) """
+        """ Deprecated: do not call this. Returns only the MD5-based accession, as biocommons'
+            UTA provider ends its list with, because biocommons c_to_p takes ``[0]`` when a
+            transcript has no protein accession. Remove once biocommons no longer calls it
+            (see AbstractJSONDataProvider.get_acs_for_protein_seq). """
         return ["MD5_" + seq_md5(seq)]
 
     def get_gene_info(self, gene):

@@ -353,9 +353,18 @@ class AbstractJSONDataProvider(Interface):
         return mapping_options
 
     def get_acs_for_protein_seq(self, seq):
-        """ Only the MD5-based accession (``MD5_<md5 of seq>``): cdot has no protein sequence
-            index. biocommons' UTA provider always ends its list with this one, and biocommons
-            c_to_p takes ``[0]`` of the list when a transcript has no protein accession. """
+        """ Deprecated: do not call this. Returns only the MD5-based accession (``MD5_<md5 of seq>``),
+            as cdot has no protein sequence index.
+
+            This copies biocommons' UTA provider, which returns any protein accessions with that
+            sequence followed by ``"MD5_" + seq_md5(seq)``, so the list is never empty. The only
+            caller is biocommons ``RefTranscriptData`` (used by ``c_to_p``), which takes ``[0]``
+            when ``get_pro_ac_for_tx_ac`` gives no protein accession, so returning ``[]`` would
+            raise ``IndexError``. biocommons marks that call "TODO: drop get_acs_for_protein_seq".
+
+            There's no DeprecationWarning, because biocommons calls this and the user can't do
+            anything about it. Remove this method once biocommons no longer calls it and cdot
+            requires that hgvs version. """
         return ["MD5_" + seq_md5(seq)]
 
     def get_gene_info(self, gene):
