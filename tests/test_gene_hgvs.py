@@ -89,6 +89,20 @@ def test_parse_gene_only_hgvs_already_has_transcript():
     assert allele is None
 
 
+@pytest.mark.parametrize("hgvs_string", [
+    "NC_000013.11:g.32316528del", "NG_012337.3:g.5000A>G", "NC_012920.1:m.3243A>G",
+    "NP_000050.2:p.Arg1Gly", "NC_000013.11:c.100del", "BRCA2:g.100del",
+])
+def test_parse_gene_only_hgvs_not_gene_only(hgvs_string):
+    assert _parse_gene_only_hgvs(hgvs_string) == (None, None)
+
+
+def test_fix_hgvs_genomic_no_gene_resolution(ensembl_provider):
+    # Genomic and protein HGVS are not resolved as genes
+    for hgvs_string in ["NC_000013.11:g.32316528del", "NP_000050.2:p.Arg1Gly"]:
+        assert fix_hgvs(hgvs_string, ensembl_provider, "GRCh38") == (hgvs_string, [])
+
+
 def test_parse_gene_only_hgvs_transcript_with_gene_parens():
     gene, allele = _parse_gene_only_hgvs("NM_000059.4(BRCA2):c.36del")
     assert gene is None
