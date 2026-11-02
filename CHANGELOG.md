@@ -2,6 +2,8 @@
 
 ### Added
 
+- #148 - HGVS cleaning: a gene symbol written before the transcript accession, separated by whitespace, is moved into the standard `ACCESSION(SYMBOL)` form (`APC NM_001407446.1:c.-40G>A` → `NM_001407446.1(APC):c.-40G>A`). Previously whitespace stripping glued them together (`APCNM_001407446.1:c.-40G>A`). New op `HGVSCleanOp.FIX_SYMBOL_BEFORE_ACCESSION`, reported as a WARNING with the new fix code `WRAPPED_GENE_SYMBOL`
+- #148 - HGVS cleaning: a chromosome name before its own chromosomal accession is dropped (`chr13 NC_000013.11:g.32316528del` → `NC_000013.11:g.32316528del`), for GRCh37, GRCh38 and T2T-CHM13v2.0 accessions. Only exact `chr1`-`chr22`/`chrX`/`chrY`/`chrM`/`chrMT` names are recognised (gene symbols such as `CHRNA7` are not affected), and the name is only dropped when it matches the accession's chromosome, so `chr7 NC_000013.11:…` is left alone. New op `HGVSCleanOp.STRIP_CONTIG_NAME`, reported as a WARNING with the new fix code `STRIPPED_CONTIG_NAME`
 - #145 - `models.Transcript.fake`: `True` for the RefSeq mitochondrial fake transcripts (data schema >= 0.2.37), `None` for real ones
 
 ### Removed

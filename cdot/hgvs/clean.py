@@ -14,6 +14,7 @@ retain full control over HGVS compatibility.
 import re
 from dataclasses import dataclass
 from enum import Enum
+from functools import lru_cache
 from typing import Optional
 
 
@@ -48,7 +49,9 @@ class HGVSFixCode(Enum):
     FIXED_MULTIPLE_DOT           = "fixed_multiple_dot"
     FIXED_PREFIX_COLON           = "fixed_prefix_colon"
     STRIPPED_LEADING_JUNK        = "stripped_leading_junk"
+    STRIPPED_CONTIG_NAME         = "stripped_contig_name"
     FIXED_GENE_WRAPPER           = "fixed_gene_wrapper"
+    WRAPPED_GENE_SYMBOL          = "wrapped_gene_symbol"
     FIXED_SEPARATOR_TYPO         = "fixed_separator_typo"
     DROPPED_DEL_DUP_COUNT        = "dropped_del_dup_count"
     DROPPED_GENOMIC_REF_IN_PARENS = "dropped_genomic_ref_in_parens"
@@ -104,7 +107,9 @@ class HGVSCleanOp(Enum):
     depend on earlier ones running first).
     """
     STRIP_PROTEIN_SUFFIX     = "strip_protein_suffix"
+    STRIP_CONTIG_NAME        = "strip_contig_name"
     STRIP_LEADING_JUNK       = "strip_leading_junk"
+    FIX_SYMBOL_BEFORE_ACCESSION = "fix_symbol_before_accession"
     FIX_SPACE_BEFORE_KIND    = "fix_space_before_kind"
     STRIP_WHITESPACE         = "strip_whitespace"
     STRIP_SURROUNDING_PUNCTUATION = "strip_surrounding_punctuation"
@@ -299,6 +304,21 @@ _ACCESSION_KIND_SEPARATOR = re.compile(
 # and runs before whitespace stripping (which would otherwise glue the symbol to
 # the kind letter, mangling symbols that resemble an accession, eg NR2E3).
 _SPACE_BEFORE_KIND = re.compile(r"^([A-Za-z][A-Za-z0-9]{1,9})\s+(?=[cgnmp]\.)", re.IGNORECASE)
+
+# A chromosome name, whitespace, then a chromosomal accession, e.g.
+# "chr13 NC_000013.11:g.32316528del". Only the exact "chr" + chromosome forms,
+# as many gene symbols start with CHR (CHRM1, CHRNA7, CHRD...); no HGNC symbol,
+# alias or previous symbol matches this pattern.
+_CHROM_NAME = r"chr(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)"
+_CONTIG_NAME_BEFORE_ACCESSION = re.compile(
+    rf"(?<![\w.])({_CHROM_NAME})\s+(?=(NC_\d+)(\.\d+)?(?![\w.]))", re.IGNORECASE)
+
+# A gene symbol, whitespace, then a transcript accession, e.g.
+# "APC NM_001407446.1:c.-40G>A" -> "NM_001407446.1(APC):c.-40G>A". Runs before
+# whitespace stripping, which would otherwise glue the symbol onto the accession
+# ("APCNM_001407446.1"), leaving something that parses as neither.
+_SYMBOL_BEFORE_ACCESSION = re.compile(
+    rf"^(?!{_CHROM_NAME}\s)([A-Za-z][A-Za-z0-9-]{{1,9}})\s+({_TX_PREFIX}[\w.]+)", re.IGNORECASE)
 
 # An empty version field: accession, a dot, then no digits before the colon,
 # e.g. "NM_001754.:c.749G>A". The version digits were dropped, so drop the dot
@@ -759,6 +779,63 @@ def _op_fix_gene_wrapper(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
+@lru_cache(maxsize=1)
+def _chromosome_accessions() -> dict[str, str]:
+    """ Chromosome name (eg "13", "X", "MT") for each NC_ accession of the human
+        assemblies cdot supports, keyed by both versioned and unversioned accession """
+    from bioutils.assemblies import make_ac_name_map
+
+    ac_to_chrom = {}
+    for assembly in ("GRCh37.p13", "GRCh38.p14", "T2T-CHM13v2.0"):
+        for ac, name in make_ac_name_map(assembly).items():
+            if ac.startswith("NC_"):
+                ac_to_chrom[ac] = name.upper()
+                ac_to_chrom[ac.split(".")[0]] = name.upper()
+    return ac_to_chrom
+
+
+def _op_strip_contig_name(s: str) -> tuple[str, list[HGVSFix]]:
+    # A chromosome name before its own accession is redundant:
+    #   "chr13 NC_000013.11:g.32316528del" -> "NC_000013.11:g.32316528del"
+    # Only stripped when the name matches the accession's chromosome, so a
+    # mismatch (eg "chr7 NC_000013.11"), which suggests a copy/paste mix-up, is
+    # left alone rather than guessing which one was meant.
+    def _strip_if_matching(m: re.Match) -> str:
+        chrom = m.group(1)[3:].upper()
+        if chrom == "M":
+            chrom = "MT"
+        accession = m.group(2) + (m.group(3) or "")
+        if _chromosome_accessions().get(accession.upper()) == chrom:
+            return ""
+        return m.group(0)
+
+    s2 = _CONTIG_NAME_BEFORE_ACCESSION.sub(_strip_if_matching, s)
+    if s2 != s:
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.STRIPPED_CONTIG_NAME,
+            message="Stripped chromosome name before its accession",
+            original=s, fixed=s2,
+        )]
+    return s, []
+
+
+def _op_fix_symbol_before_accession(s: str) -> tuple[str, list[HGVSFix]]:
+    # Gene symbol written before the accession, separated by whitespace:
+    #   "APC NM_001407446.1:c.-40G>A"  -> "NM_001407446.1(APC):c.-40G>A"
+    #   "BRCA2 NM_000059.4 c.68del"    -> "NM_000059.4(BRCA2) c.68del"
+    # (the remaining space is stripped and the colon restored by later steps).
+    s2 = _SYMBOL_BEFORE_ACCESSION.sub(r"\2(\1)", s)
+    if s2 != s:
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.WRAPPED_GENE_SYMBOL,
+            message="Moved gene symbol before transcript into transcript(gene) form",
+            original=s, fixed=s2,
+        )]
+    return s, []
+
+
 def _op_fix_space_before_kind(s: str) -> tuple[str, list[HGVSFix]]:
     # Whitespace in place of the reference:kind colon after a bare gene symbol,
     # e.g. "BRCA2 c.68del" -> "BRCA2:c.68del". Must run before whitespace
@@ -845,7 +922,9 @@ def _op_drop_genomic_ref_in_parens(s: str) -> tuple[str, list[HGVSFix]]:
 # clean_hgvs() filters this by the caller's `ops` set but never reorders it.
 _PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
     (HGVSCleanOp.STRIP_PROTEIN_SUFFIX,      _op_strip_protein_suffix),
+    (HGVSCleanOp.STRIP_CONTIG_NAME,         _op_strip_contig_name),
     (HGVSCleanOp.STRIP_LEADING_JUNK,        _op_strip_leading_junk),
+    (HGVSCleanOp.FIX_SYMBOL_BEFORE_ACCESSION, _op_fix_symbol_before_accession),
     (HGVSCleanOp.FIX_SPACE_BEFORE_KIND,     _op_fix_space_before_kind),
     (HGVSCleanOp.STRIP_WHITESPACE,          _op_strip_whitespace),
     (HGVSCleanOp.STRIP_SURROUNDING_PUNCTUATION, _op_strip_surrounding_punctuation),

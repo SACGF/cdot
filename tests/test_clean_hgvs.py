@@ -228,6 +228,11 @@ CLEAN_CASES = [
     # prefix + digit, eg NR2E3), which reconstruction deliberately refuses.
     ("BRCA2 c.68del",                            "BRCA2:c.68del",                              {C.FIXED_SEPARATOR_TYPO}),
     ("NR2E3 c.349G>A",                           "NR2E3:c.349G>A",                             {C.FIXED_SEPARATOR_TYPO}),
+    # #148: gene symbol, space, then transcript accession -> accession(symbol)
+    ("APC NM_001407446.1:c.-40G>A",              "NM_001407446.1(APC):c.-40G>A",               {C.WRAPPED_GENE_SYMBOL}),
+    ("BRCA2 NM_000059.4 c.68del",                "NM_000059.4(BRCA2):c.68del",                 {C.WRAPPED_GENE_SYMBOL}),
+    ("BRCA2 NM_000059:c.68del",                  "NM_000059(BRCA2):c.68del",                   {C.WRAPPED_GENE_SYMBOL}),
+    ("RUNX1  NM_001754.5:c.1415T>C",             "NM_001754.5(RUNX1):c.1415T>C",               {C.WRAPPED_GENE_SYMBOL}),
 ]
 
 
@@ -336,6 +341,75 @@ def test_space_before_kind_leaves_accessions_to_whitespace_strip():
     assert cleaned == "NM_000059.4:c.316+5G>A"
     assert C.STRIPPED_WHITESPACE in codes(fixes)
     assert C.FIXED_SEPARATOR_TYPO not in codes(fixes)
+
+
+CONTIG_NAME_CASES = [
+    # #148: a chromosome name before its own accession is redundant and dropped,
+    # for each supported build, unversioned, upper case, and chrM/chrMT.
+    ("chr13 NC_000013.11:g.32316528del",         "NC_000013.11:g.32316528del"),
+    ("chr13 NC_000013.10:g.32890665del",         "NC_000013.10:g.32890665del"),
+    ("CHR13 NC_000013:g.32316528del",            "NC_000013:g.32316528del"),
+    ("chrX NC_000023.11:g.73820651A>G",          "NC_000023.11:g.73820651A>G"),
+    ("chr1 NC_060925.1:g.1000A>G",               "NC_060925.1:g.1000A>G"),
+    ("chrM NC_012920.1:m.3243A>G",               "NC_012920.1:m.3243A>G"),
+    ("chrMT NC_012920.1:m.3243A>G",              "NC_012920.1:m.3243A>G"),
+    ("GRCh38 chr13 NC_000013.11:g.32316528del",  "NC_000013.11:g.32316528del"),
+]
+
+
+@pytest.mark.parametrize("bad,expected", CONTIG_NAME_CASES)
+def test_strip_matching_contig_name(bad, expected):
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == expected
+    assert C.STRIPPED_CONTIG_NAME in codes(fixes)
+    assert C.WRAPPED_GENE_SYMBOL not in codes(fixes)
+
+
+@pytest.mark.parametrize("bad", [
+    "chr7 NC_000013.11:g.32316528del",  # contig disagrees with the accession
+    "chr13 NM_000059.4:c.68del",        # can't check a transcript's contig
+])
+def test_contig_name_not_stripped_or_wrapped_unless_it_matches(bad):
+    # Strict: never guess which of two disagreeing references was meant, and
+    # never treat a chromosome name as a gene symbol.
+    cleaned, fixes = clean_hgvs(bad)
+    assert C.STRIPPED_CONTIG_NAME not in codes(fixes)
+    assert C.WRAPPED_GENE_SYMBOL not in codes(fixes)
+    assert not cleaned.startswith("NC_000013.11:")
+    assert "(chr" not in cleaned
+
+
+@pytest.mark.parametrize("bad,expected", [
+    # Many genes start with CHR; they must still be treated as gene symbols
+    ("CHRNA7 NM_000746.6:c.1A>G",                "NM_000746.6(CHRNA7):c.1A>G"),
+    ("CHRM1 NM_000738.3:c.1A>G",                 "NM_000738.3(CHRM1):c.1A>G"),
+])
+def test_chr_gene_symbol_before_accession(bad, expected):
+    cleaned, fixes = clean_hgvs(bad)
+    assert cleaned == expected
+    assert C.WRAPPED_GENE_SYMBOL in codes(fixes)
+    assert C.STRIPPED_CONTIG_NAME not in codes(fixes)
+
+
+@pytest.mark.parametrize("valid", [
+    "NC_000013.11:g.32316528del",
+    "NM_000059.4:c.68del",
+    "NM_000059.4(BRCA2):c.68del",
+    "NM_000746.6(CHRNA7):c.1A>G",
+    "NC_012920.1:m.3243A>G",
+])
+def test_new_ops_leave_valid_hgvs_unchanged(valid):
+    cleaned, fixes = clean_hgvs(valid)
+    assert cleaned == valid
+    assert not fixes
+
+
+def test_symbol_only_input_skips_symbol_before_accession():
+    # #148: with no accession after the symbol, the space-before-kind rule fixes it
+    cleaned, fixes = clean_hgvs("BRCA2 c.68del")
+    assert cleaned == "BRCA2:c.68del"
+    assert C.FIXED_SEPARATOR_TYPO in codes(fixes)
+    assert C.WRAPPED_GENE_SYMBOL not in codes(fixes)
 
 
 def test_clean_hgvs_protein_suffix():
