@@ -200,8 +200,7 @@ class Transcript(_DictAccessStruct, forbid_unknown_fields=False):
     (non-coding), plus the source's own type for this transcript: the RefSeq GFF3 row type
     (eg ``'mRNA'``, ``'lnc_RNA'``, ``'tRNA'``) or the Ensembl transcript biotype (eg
     ``'protein_coding'``, ``'retained_intron'``, ``'nonsense_mediated_decay'``). Ensembl GFF3
-    data has both the row type and the biotype. Data before 0.2.37 had the Ensembl gene
-    biotype here instead of the transcript one (issue #153)."""
+    data has both the row type and the biotype."""
     protein: Optional[str] = None
     """Protein accession (coding transcripts only)."""
     start_codon: Optional[int] = None
