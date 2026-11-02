@@ -63,11 +63,14 @@ QUIRKS = """\
 """
 MODELS_PY = os.path.join(os.path.dirname(models.__file__), "models.py")
 DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs")
+SCHEMA_FILENAME = "cdot-json-schema.json"
+MARKDOWN_FILENAME = "json_data_format.md"
 
 
 def extract_field_docs():
     """{ClassName: {field_name: description}} from the ``\"\"\"...\"\"\"`` after each field."""
-    tree = ast.parse(open(MODELS_PY).read())
+    with open(MODELS_PY) as f:
+        tree = ast.parse(f.read())
     out = {}
     for node in tree.body:
         if not isinstance(node, ast.ClassDef):
@@ -171,7 +174,7 @@ def render_markdown(field_docs):
         "```python",
         "from cdot import models",
         "",
-        'data = models.load("cdot-0.2.32.refseq.GRCh38.json.gz")',
+        'data = models.load("cdot-0.2.36.refseq.GRCh38.json.gz")',
         'tx = data.transcripts["NM_001637.3"]',
         "print(tx.gene_name, tx.protein)",
         "for build_name, build in tx.genome_builds.items():",
@@ -210,23 +213,31 @@ def render_markdown(field_docs):
     return "\n".join(lines)
 
 
-def main():
-    os.makedirs(DOCS_DIR, exist_ok=True)
+def generate_docs(output_dir):
+    """Write ``cdot-json-schema.json`` and ``json_data_format.md`` into ``output_dir``.
+
+    Returns the paths written. ``tests/test_docs_in_sync.py`` calls this with a
+    temporary directory to check the committed ``docs/`` files are up to date.
+    """
+    os.makedirs(output_dir, exist_ok=True)
     field_docs = extract_field_docs()
 
     schema = build_schema(field_docs)
-    schema_path = os.path.join(DOCS_DIR, "cdot-json-schema.json")
+    schema_path = os.path.join(output_dir, SCHEMA_FILENAME)
     with open(schema_path, "w") as f:
         json.dump(schema, f, indent=2)
         f.write("\n")
 
     md = render_markdown(field_docs)
-    md_path = os.path.join(DOCS_DIR, "json_data_format.md")
+    md_path = os.path.join(output_dir, MARKDOWN_FILENAME)
     with open(md_path, "w") as f:
         f.write(md)
+    return [schema_path, md_path]
 
-    print(f"wrote {schema_path}")
-    print(f"wrote {md_path}")
+
+def main():
+    for path in generate_docs(DOCS_DIR):
+        print(f"wrote {path}")
 
 
 if __name__ == "__main__":
