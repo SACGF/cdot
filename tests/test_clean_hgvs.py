@@ -4,10 +4,13 @@ Tests for cdot.hgvs.clean — pure string operations, no data provider required.
 Test cases ported from vg_code/test_hgvs.py (test_clean_hgvs and
 test_fix_gene_transcript) and extended for the version-fallback helpers.
 """
+import warnings
+
 import pytest
 
 from cdot.hgvs.clean import (
     ALL_CLEAN_OPS,
+    HGVSCleanOpWarning,
     HGVSCleanOp,
     HGVSFix,
     HGVSFixCode,
@@ -861,6 +864,7 @@ def test_already_valid_unchanged(hgvs_string):
     assert not fixes, f"Unexpected errors for valid HGVS {hgvs_string!r}: {[f.code.value for f in fixes]}"
 
 
+@pytest.mark.filterwarnings("ignore::cdot.hgvs.clean.HGVSCleanOpWarning")
 @pytest.mark.parametrize("op", list(HGVSCleanOp))
 @pytest.mark.parametrize("hgvs_string", ALREADY_VALID)
 def test_already_valid_is_fixed_point_of_every_op(hgvs_string, op):
@@ -874,7 +878,39 @@ def test_already_valid_is_fixed_point_of_every_op(hgvs_string, op):
 def test_clean_op_enum_matches_pipeline_order():
     # HGVSCleanOp documents that its members are listed in pipeline order
     from cdot.hgvs.clean import _PIPELINE
-    assert [op for op, _fn in _PIPELINE] == list(HGVSCleanOp)
+    assert [step.op for step in _PIPELINE] == list(HGVSCleanOp)
+
+
+def test_pipeline_prerequisites_run_earlier():
+    # An op can only rely on output from an op that runs before it
+    from cdot.hgvs.clean import _PIPELINE
+    earlier = set()
+    for step in _PIPELINE:
+        assert step.requires <= earlier, f"{step.op.name} requires a later op"
+        earlier.add(step.op)
+
+
+def test_missing_prerequisite_warns():
+    # #166: without the reconstruction that inserts the colon, the mutation type
+    # in a colon-less string is not lowercased
+    s = "NM_000059.4 c.68_69DELINSAT"
+    with pytest.warns(HGVSCleanOpWarning, match="LOWERCASE_MUTATION_TYPE.*RECONSTRUCT_STRUCTURE"):
+        cleaned, _fixes = clean_hgvs(s, ops={HGVSCleanOp.STRIP_WHITESPACE,
+                                             HGVSCleanOp.LOWERCASE_MUTATION_TYPE}, validate=False)
+    assert cleaned == "NM_000059.4c.68_69DELINSAT"
+
+
+@pytest.mark.parametrize("ops", [
+    None,
+    ALL_CLEAN_OPS - {HGVSCleanOp.STRIP_PROTEIN_SUFFIX},
+    {HGVSCleanOp.STRIP_WHITESPACE},
+    {HGVSCleanOp.RECONSTRUCT_STRUCTURE, HGVSCleanOp.LOWERCASE_MUTATION_TYPE,
+     HGVSCleanOp.ADD_N_PREFIX, HGVSCleanOp.ADD_TRANSCRIPT_UNDERSCORE},
+])
+def test_prerequisites_selected_no_warning(ops):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", HGVSCleanOpWarning)
+        clean_hgvs("NM_000059.4 c.68_69DELINSAT", ops=ops)
 
 
 # ---------------------------------------------------------------------------
@@ -1284,3 +1320,19 @@ def test_literal_tab_not_followed_by_accession_is_kept():
     cleaned, fixes = clean_hgvs("\\tBRCA2:c.68del", validate=False)
     assert C.STRIPPED_LEADING_JUNK not in codes(fixes)
     assert cleaned.endswith("BRCA2:c.68del")
+
+
+@pytest.mark.parametrize("s", [
+    "NM_000059.4:c.68del",
+    "NM_000059.4(BRCA2):c.68del",
+    "NM_000059.4(BRCA2)\n:c.68del",
+    "BRCA2(NM_000059.4):68del",
+    "NM_000059.4(BRCA2)(X):C.68DEL",
+    "(BRCA2):c.(100_200)del",
+    "NM_000059.4():c.68del",
+])
+def test_parse_round_trips(s):
+    # #166: the structural ops rely on parsing being lossless, so one that
+    # changes nothing returns its input
+    from cdot.hgvs.clean import _parse
+    assert str(_parse(s)) == s

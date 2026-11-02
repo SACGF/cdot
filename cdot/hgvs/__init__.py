@@ -4,6 +4,7 @@ from cdot.hgvs.clean import (
     error_messages,
     get_best_transcript_version,
     HGVSCleanOp,
+    HGVSCleanOpWarning,
     HGVSFix,
     HGVSFixCode,
     HGVSFixSeverity,

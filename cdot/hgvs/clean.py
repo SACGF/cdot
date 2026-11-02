@@ -12,10 +12,11 @@ retain full control over HGVS compatibility.
 """
 
 import re
-from dataclasses import dataclass
+import warnings
+from dataclasses import dataclass, replace
 from enum import Enum
-from functools import lru_cache
-from typing import Optional
+from functools import lru_cache, wraps
+from typing import Callable, Optional
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +110,8 @@ class HGVSCleanOp(Enum):
     each member here names exactly one step, so it is a stable key for selecting
     a subset of cleaning operations.  Members are listed in pipeline order, but
     selection only *filters* the pipeline — it never reorders it (several steps
-    depend on earlier ones running first).
+    depend on earlier ones running first). Selecting a step without a step it
+    relies on warns with HGVSCleanOpWarning.
     """
     STRIP_SURROUNDING_PUNCTUATION = "strip_surrounding_punctuation"
     STRIP_PROTEIN_SUFFIX     = "strip_protein_suffix"
@@ -254,6 +256,18 @@ def _uppercase_accession_prefix(s: str) -> str:
     return s
 
 
+def _reference_type(s: str) -> Optional[str]:
+    """ Reference-sequence type ('mRNA', 'RNA', 'genomic' or 'Protein') of the
+        known accession prefix (any case) s starts with. An Ensembl transcript is
+        'mRNA'. None for an LRG or anything without a known prefix. """
+    if not (m := _ACCESSION_PREFIX_AT_START.match(s)):
+        return None
+    prefix = m.group(0).upper()
+    if prefix == _ENSEMBL_TRANSCRIPT_PREFIX:
+        return 'mRNA'
+    return _REFSEQ_PREFIX_TYPE.get(prefix)
+
+
 # ---------------------------------------------------------------------------
 # Compiled regex patterns
 # ---------------------------------------------------------------------------
@@ -285,8 +299,9 @@ _N_PREFIX_SECOND_LETTERS = frozenset(
 # uncertain position) or "[" (an allele).
 _COORD_START = r"[\d*\-(\[]"
 
-# Lenient pattern — matches HGVS strings whether or not they have a transcript,
-# gene symbol, version, colon, or dot.  Used to reconstruct the canonical form.
+# Lenient pattern, matching HGVS strings whether or not they have a transcript,
+# gene symbol, version, colon, or dot. _parse_loose() reads its groups into the
+# fields, which the canonical form is serialised from.
 #
 # Kept tight on purpose (#150), as whatever it matches is rewritten:
 #  * an accession needs a real prefix (with its underscore) and digits, so a
@@ -297,7 +312,7 @@ _COORD_START = r"[\d*\-(\[]"
 #    by a coordinate. An uppercase kind letter is only accepted with the '.'/':',
 #    so a base or the last letter of a gene symbol (eg "FANCG100A>G") is not
 #    taken as the kind.
-_HGVS_CLEAN_PATTERN = re.compile(
+_LOOSE_HGVS_PATTERN = re.compile(
     # transcript_value allows an optional LRG transcript/protein suffix (eg the
     # "t1" in "LRG_199t1") so the suffix isn't mis-parsed as the gene symbol.
     rf"^((?P<transcript_prefix>(?i:{_ANY_ACCESSION_PREFIX}))(?P<transcript_value>\d+(?:[tp]\d+)?)"
@@ -311,16 +326,9 @@ _HGVS_CLEAN_PATTERN = re.compile(
     r"(?P<nomen>[^:.]*)$",
 )
 
-# Missing kind letter after the colon, classified by reference-sequence type so
-# the right kind is inserted: mRNA/Ensembl transcript → "c.", non-coding RNA →
-# "n.", genomic → "g.".
-_HGVS_NO_KIND: list[tuple[re.Pattern, str]] = []
-for _ref_type, _kind in _KIND_FOR_TYPE.items():
-    _prefixes = _refseq_prefixes(_ref_type)
-    if _ref_type == 'mRNA':
-        _prefixes.append(_ENSEMBL_TRANSCRIPT_PREFIX)
-    _HGVS_NO_KIND.append(
-        (re.compile(rf"^{_alternation(_prefixes)}\d+.*:{_COORD_START}", re.IGNORECASE), _kind))
+# An allele with no kind letter: it starts with a coordinate, or a later colon on
+# the same line is followed by one.
+_ALLELE_WITHOUT_KIND = re.compile(rf"(?:.*:)?{_COORD_START}")
 
 _REF_ALT_NUC     = re.compile(r"(?P<ref>[gatc]+)>(?P<alt>[gatc=]+)$", re.IGNORECASE)
 _DEL_INS_DUP_NUC = re.compile(
@@ -331,7 +339,7 @@ _DEL_INS_DUP_NUC = re.compile(
 # not be uppercased
 _RNA_ALLELE = re.compile(r":r\.")
 
-_GENE_IN_PARENS = re.compile(r"^(.+)\((.*)\)$")
+_GENE_IN_PARENS = re.compile(r"(.+)\((.*)\)")
 
 _INS_INTEGER = re.compile(r".*ins\d+$", re.IGNORECASE)
 _INS_EMPTY   = re.compile(r".*ins$",    re.IGNORECASE)
@@ -410,11 +418,10 @@ _SYMBOL_BEFORE_ACCESSION = re.compile(
 _BUILD_NAME = r"(?:GRCh3[78](?:\.p\d+)?|hg(?:19|37|38)|T2T(?:-CHM13(?:v[\d.]+)?)?|CHM13(?:v[\d.]+)?)"
 _BUILD_NAME_BEFORE_REFERENCE = re.compile(rf"^{_BUILD_NAME}[\s#:]+(?=\S)", re.IGNORECASE)
 
-# An empty version field: accession, a dot, then no digits before the colon,
-# e.g. "NM_001754.:c.749G>A". The version digits were dropped, so drop the dot
-# and leave a valid unversioned accession.
-_EMPTY_VERSION = re.compile(
-    rf"^({_NON_LRG_ACCESSION_PREFIX}\d+)\.(?=:)", re.IGNORECASE)
+# An accession with an empty version field: a dot and no digits after it, e.g.
+# the "NM_001754." of "NM_001754.:c.749G>A".
+_EMPTY_VERSION_ACCESSION = re.compile(
+    rf"({_NON_LRG_ACCESSION_PREFIX}\d+)\.", re.IGNORECASE)
 
 # del/dup with an explicit range followed by a redundant base count, e.g.
 # "c.1315_1337dup23" -> "c.1315_1337dup" (the range already gives the length;
@@ -429,22 +436,13 @@ _DEL_DUP_PLAIN_RANGE_COUNT = re.compile(
     r"(?<![\d+\-*])(?P<start>\d+)_(?P<end>\d+)(?P<op>del|dup)(?P<count>\d+)$", re.IGNORECASE)
 
 # The kind letter and its dot, used to find where the allele starts when the
-# reference:allele colon is missing
+# reference:allele colon is missing, and to split the kind off an allele
 _KIND_DOT = re.compile(rf"{_KIND}\.")
 
-# A genomic accession (NC_/NG_/NW_, ...) wedged into the gene-symbol
-# parenthetical slot of a transcript reference, e.g.
-# "NM_000059.4(NC_000013.11):c.68del". A genomic accession is not a gene symbol,
-# so the parser rejects it; dropping the parenthetical (the transcript alone is
-# a complete reference) makes it parse.
-# Only fires when the part *before* the parens is a transcript and the part
-# *inside* is genomic — this deliberately does NOT touch the valid HGVS form
-# "NC_000013.11(NM_000059.4):c.68del" (genomic reference, transcript selector),
-# where the parenthetical holds the transcript, not the genomic accession.
-_GENOMIC_REF_IN_GENE_PARENS = re.compile(
-    rf"^({_TRANSCRIPT_ACCESSION_PREFIX}[\w.]+)\({_GENOMIC_ACCESSION_PREFIX}\d[\w.]*\)(?=:)",
-    re.IGNORECASE,
-)
+# A transcript accession in the reference, with a genomic accession in its
+# gene-symbol parentheses (see _op_drop_genomic_ref_in_parens)
+_TRANSCRIPT_ACCESSION = re.compile(rf"{_TRANSCRIPT_ACCESSION_PREFIX}[\w.]+", re.IGNORECASE)
+_GENOMIC_ACCESSION = re.compile(rf"{_GENOMIC_ACCESSION_PREFIX}\d[\w.]*", re.IGNORECASE)
 
 
 # ---------------------------------------------------------------------------
@@ -460,92 +458,97 @@ def _fix_del_ins_bases(m: re.Match) -> str:
     return "".join(parts)
 
 
-def _reconstruct(m: re.Match) -> str:
-    """Rebuild a canonical HGVS string from a _HGVS_CLEAN_PATTERN match."""
-    kind = (m.group("letter") or m.group("upper_letter")).lower()
-    nomen = m.group("nomen")
-    c_nomen = f":{kind}.{nomen}"
+# ---------------------------------------------------------------------------
+# Parsed fields
+#
+# The structural ops work on an HGVS string split into its fields rather than
+# on the string itself. _parse() splits a string with a colon into _HGVSParts,
+# and str() serialises the fields back. Parsing is lossless, so a structural op
+# that changes nothing returns the string it was given.
+# ---------------------------------------------------------------------------
 
-    gene_symbol = m.group("gene_symbol")
-    transcript_prefix = m.group("transcript_prefix")
+@dataclass(frozen=True)
+class _HGVSParts:
+    """ The fields of "accession(gene_symbol):kind.nomen".
 
-    if transcript_prefix:
-        transcript_value = m.group("transcript_value")
-        text = f"{transcript_prefix.upper()}{transcript_value}"
-        if transcript_version := m.group("transcript_version"):
-            text += f".{transcript_version}"
-        if gene_symbol:
-            text += f"({gene_symbol})"
-        return text + c_nomen
-    elif gene_symbol:
-        return f"{gene_symbol}{c_nomen}"
-    return None  # can't reconstruct without transcript or gene
+        accession is the reference outside the parentheses and gene_symbol what is
+        inside them (None without parentheses). They hold whatever the input put
+        there, eg a gene symbol before its accession until the gene/transcript
+        fix swaps them. kind is the kind letter when the allele starts with one
+        and its dot, otherwise None and nomen is the whole allele. """
+    accession: str
+    gene_symbol: Optional[str]
+    kind: Optional[str]
+    nomen: str
+
+    @property
+    def reference(self) -> str:
+        if self.gene_symbol is None:
+            return self.accession
+        return f"{self.accession}({self.gene_symbol})"
+
+    @property
+    def allele(self) -> str:
+        if self.kind:
+            return f"{self.kind}.{self.nomen}"
+        return self.nomen
+
+    def __str__(self) -> str:
+        return f"{self.reference}:{self.allele}"
 
 
-def _fix_gene_transcript(hgvs_string: str) -> tuple[str, list[HGVSFix]]:
-    """
-    Fix the common clinical mistake of swapping gene symbol and transcript,
-    and fix lowercase transcript identifiers.
-
-    Ported from HGVSMatcher.fix_gene_transcript() in vg_code/hgvs/hgvs_matcher.py.
-    """
-    fixes = []
-
-    try:
-        prefix, allele = hgvs_string.split(":", 1)
-    except ValueError:
-        return hgvs_string, []
-
-    if m := _GENE_IN_PARENS.match(prefix):
-        transcript_accession, gene_symbol = m.groups()
+def _parse(s: str) -> Optional[_HGVSParts]:
+    """ s split into its fields at the first colon, or None if it has no colon.
+        str() of the result is s. """
+    reference, sep, allele = s.partition(":")
+    if not sep:
+        return None
+    if m := _GENE_IN_PARENS.fullmatch(reference):
+        accession, gene_symbol = m.groups()
     else:
-        transcript_accession, gene_symbol = prefix, None
+        accession, gene_symbol = reference, None
+    if _KIND_DOT.match(allele):
+        kind, nomen = allele[0], allele[2:]
+    else:
+        kind, nomen = None, allele
+    return _HGVSParts(accession, gene_symbol, kind, nomen)
 
-    transcript_ok = _looks_like_transcript(transcript_accession)
 
-    if not transcript_ok and gene_symbol:
-        uc_gene = gene_symbol.upper()
-        if _looks_like_transcript(uc_gene):
-            # Gene and transcript are swapped
-            transcript_accession, gene_symbol = gene_symbol, transcript_accession
-            fixes.append(HGVSFix(
-                severity=HGVSFixSeverity.WARNING,
-                code=HGVSFixCode.SWAPPED_GENE_TRANSCRIPT,
-                message="Swapped gene/transcript",
-                original=prefix,
-                fixed=f"{transcript_accession}({gene_symbol})" if gene_symbol else transcript_accession,
-            ))
-            transcript_ok = _looks_like_transcript(transcript_accession)
-        elif _looks_like_hgvs_prefix(uc_gene):
-            gene_symbol = uc_gene
-            fixes.append(HGVSFix(
-                severity=HGVSFixSeverity.WARNING,
-                code=HGVSFixCode.UPPERCASED_HGVS_PREFIX,
-                message="Upper cased HGVS prefix",
-                original=prefix,
-                fixed=f"{transcript_accession}({gene_symbol})",
-            ))
+def _parse_loose(s: str) -> Optional[tuple[_HGVSParts, bool]]:
+    """ The canonical fields of a string matching _LOOSE_HGVS_PATTERN, which may
+        lack the colon or the kind's dot, or have the kind letter or accession
+        prefix in the wrong case, and whether the accession prefix had to be
+        uppercased. None if it doesn't match, or has neither an accession nor a
+        gene symbol. """
+    if not (m := _LOOSE_HGVS_PATTERN.match(s)):
+        return None
+    kind = (m.group("letter") or m.group("upper_letter")).lower()
+    gene_symbol = m.group("gene_symbol")
+    if transcript_prefix := m.group("transcript_prefix"):
+        accession = f"{transcript_prefix.upper()}{m.group('transcript_value')}"
+        if transcript_version := m.group("transcript_version"):
+            accession += f".{transcript_version}"
+        parts = _HGVSParts(accession, gene_symbol, kind, m.group("nomen"))
+        return parts, transcript_prefix != transcript_prefix.upper()
+    if gene_symbol:
+        return _HGVSParts(gene_symbol, None, kind, m.group("nomen")), False
+    return None
 
-    if not transcript_ok and transcript_accession:
-        # Any known accession prefix, not only transcripts: a lowercase genomic or
-        # protein accession (eg "ng_012337.3", "np_000050.2") is uppercased too.
-        uc = _uppercase_accession_prefix(transcript_accession)
-        if uc != transcript_accession:
-            transcript_accession = uc
-            if _looks_like_transcript(uc):
-                code, message = HGVSFixCode.UPPERCASED_TRANSCRIPT, "Upper cased transcript"
-            else:
-                code, message = HGVSFixCode.UPPERCASED_HGVS_PREFIX, "Upper cased HGVS prefix"
-            fixes.append(HGVSFix(
-                severity=HGVSFixSeverity.WARNING,
-                code=code,
-                message=message,
-                original=prefix,
-                fixed=transcript_accession,
-            ))
 
-    new_prefix = f"{transcript_accession}({gene_symbol})" if gene_symbol else transcript_accession
-    return f"{new_prefix}:{allele}", fixes
+_StringOp = Callable[[str], tuple[str, list[HGVSFix]]]
+_StructuralOp = Callable[[_HGVSParts], tuple[_HGVSParts, list[HGVSFix]]]
+
+
+def _on_fields(fn: _StructuralOp) -> _StringOp:
+    """ A structural op (on _HGVSParts) as a string op: parse, run, serialise.
+        A string with no colon has no fields and is returned unchanged. """
+    @wraps(fn)
+    def string_op(s: str) -> tuple[str, list[HGVSFix]]:
+        if (parts := _parse(s)) is None:
+            return s, []
+        parts, fixes = fn(parts)
+        return str(parts), fixes
+    return string_op
 
 
 def _validate(s: str) -> list[HGVSFix]:
@@ -585,7 +588,9 @@ def _validate(s: str) -> list[HGVSFix]:
 # the (possibly unchanged) string and a list of HGVSFix describing what it did
 # (empty if it made no change), or an ERROR for a problem it found but could not
 # fix without guessing.  Ops are pure and order-dependent: _PIPELINE
-# fixes the canonical order; selection only filters which ops run.
+# fixes the canonical order; selection only filters which ops run. The ops here
+# are lexical (they work on the raw string); the structural ops further down
+# work on its parsed fields.
 # ---------------------------------------------------------------------------
 
 def _op_strip_protein_suffix(s: str) -> tuple[str, list[HGVSFix]]:
@@ -714,31 +719,6 @@ def _op_add_n_prefix(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
-def _op_lowercase_mutation_type(s: str) -> tuple[str, list[HGVSFix]]:
-    # Lowercase mutation types (DUP→dup, DEL→del, INS→ins, INV→inv)
-    # Also handles DELINS since it replaces substrings.
-    # Only operate on the allele (the part after the first ':'): gene symbols such
-    # as INSR, INVS, INSL3 or DELEC1 contain a mutation-type substring and must
-    # not be corrupted (e.g. "NM_000208.4(INSR):c.215A>G" must not become "insR").
-    if ":" not in s:
-        return s, []
-    prefix, allele = s.split(":", 1)
-    fixes = []
-    for mt in ["INS", "DEL", "DUP", "INV"]:
-        if mt in allele:
-            allele2 = allele.replace(mt, mt.lower())
-            new_s = f"{prefix}:{allele2}"
-            fixes.append(HGVSFix(
-                severity=HGVSFixSeverity.WARNING,
-                code=HGVSFixCode.LOWERCASED_MUTATION_TYPE,
-                message=f"Lowercased mutation type '{mt}'",
-                original=s, fixed=new_s,
-            ))
-            allele = allele2
-            s = new_s
-    return s, fixes
-
-
 def _split_reference_allele(s: str) -> tuple[str, str, str]:
     """ (reference, separator, allele): the allele is what follows the last ':',
         or, with no colon, starts at the kind letter and its dot ("c."). With
@@ -813,30 +793,6 @@ def _op_add_transcript_underscore(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
-def _op_reconstruct_structure(s: str) -> tuple[str, list[HGVSFix]]:
-    # Structural reconstruction: uppercase prefix, lowercase kind letter,
-    # insert ':' and '.' where missing, place gene symbol correctly
-    # The pattern's accession prefixes include their underscore, so a gene symbol
-    # that merely starts with prefix letters plus a digit (eg NR3C1, NC2) is
-    # matched as a gene symbol, never reconstructed into "NR3(C1)".
-    if m := _HGVS_CLEAN_PATTERN.match(s):
-        reconstructed = _reconstruct(m)
-        if reconstructed and reconstructed != s:
-            transcript_prefix = m.group("transcript_prefix")
-            if transcript_prefix and transcript_prefix != transcript_prefix.upper():
-                code = HGVSFixCode.UPPERCASED_TRANSCRIPT
-                message = "Uppercased transcript prefix"
-            else:
-                code = HGVSFixCode.RECONSTRUCTED_STRUCTURE
-                message = "Reconstructed HGVS with correct casing and structure"
-            return reconstructed, [HGVSFix(
-                severity=HGVSFixSeverity.WARNING,
-                code=code, message=message,
-                original=s, fixed=reconstructed,
-            )]
-    return s, []
-
-
 def _op_uppercase_bases(s: str) -> tuple[str, list[HGVSFix]]:
     fixes = []
     if _RNA_ALLELE.search(s):
@@ -865,24 +821,6 @@ def _op_uppercase_bases(s: str) -> tuple[str, list[HGVSFix]]:
         ))
         s = s2
     return s, fixes
-
-
-def _op_add_missing_kind(s: str) -> tuple[str, list[HGVSFix]]:
-    # Insert a missing kind letter + dot after the colon, choosing the kind from
-    # the reference-sequence type:
-    #   mRNA / Ensembl transcript (NM_, XM_, ENST) → "c."  eg "NM_001754.5:557T>A"
-    #   non-coding RNA           (NR_, XR_)        → "n."  eg "NR_002196.2:601A>G"
-    #   genomic                  (NC_, NG_, ...)   → "g."  eg "NC_000007.13:1G>T"
-    for pattern, kind in _HGVS_NO_KIND:
-        if pattern.match(s):
-            s2 = s.replace(":", f":{kind}.", 1)
-            return s2, [HGVSFix(
-                severity=HGVSFixSeverity.WARNING,
-                code=HGVSFixCode.ADDED_MISSING_KIND,
-                message=f"Added missing '{kind}.' kind prefix",
-                original=s, fixed=s2,
-            )]
-    return s, []
 
 
 def _op_strip_leading_junk(s: str) -> tuple[str, list[HGVSFix]]:
@@ -1008,21 +946,6 @@ def _op_fix_space_before_kind(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
-def _op_drop_empty_version(s: str) -> tuple[str, list[HGVSFix]]:
-    # An accession with a dot but no version digits, e.g. "NM_001754.:c.749G>A"
-    # -> "NM_001754:c.749G>A". The version was dropped; an unversioned accession
-    # is valid HGVS, so drop the dangling dot rather than invent a version.
-    s2 = _EMPTY_VERSION.sub(r"\1", s)
-    if s2 != s:
-        return s2, [HGVSFix(
-            severity=HGVSFixSeverity.WARNING,
-            code=HGVSFixCode.DROPPED_EMPTY_VERSION,
-            message="Dropped dangling dot of an empty transcript version",
-            original=s, fixed=s2,
-        )]
-    return s, []
-
-
 def _op_fix_separator_typo(s: str) -> tuple[str, list[HGVSFix]]:
     # Comma ("c,1811") or colon ("c:1811") in place of the kind dot, period
     # in place of the substitution '>' ("1030C.T" -> "1030C>T"), and semicolon
@@ -1073,68 +996,263 @@ def _op_drop_del_dup_count(s: str) -> tuple[str, list[HGVSFix]]:
     return s, []
 
 
-def _op_drop_genomic_ref_in_parens(s: str) -> tuple[str, list[HGVSFix]]:
-    # Drop a genomic accession sitting in the gene-symbol parenthetical slot,
-    # e.g. "NM_000059.4(NC_000013.11):c.68del" -> "NM_000059.4:c.68del". The
+def _op_reconstruct_structure(s: str) -> tuple[str, list[HGVSFix]]:
+    # Loose parse and serialise: uppercase the accession prefix, lowercase the
+    # kind letter, insert the ':' and '.' where missing, and put the gene symbol
+    # in its parentheses. The pattern's accession prefixes include their
+    # underscore, so a gene symbol that merely starts with prefix letters plus a
+    # digit (eg NR3C1, NC2) is read as a gene symbol, never as "NR3(C1)".
+    if (parsed := _parse_loose(s)) is None:
+        return s, []
+    parts, uppercased_prefix = parsed
+    s2 = str(parts)
+    if s2 == s:
+        return s, []
+    if uppercased_prefix:
+        code, message = HGVSFixCode.UPPERCASED_TRANSCRIPT, "Uppercased transcript prefix"
+    else:
+        code, message = (HGVSFixCode.RECONSTRUCTED_STRUCTURE,
+                         "Reconstructed HGVS with correct casing and structure")
+    return s2, [HGVSFix(
+        severity=HGVSFixSeverity.WARNING,
+        code=code, message=message,
+        original=s, fixed=s2,
+    )]
+
+
+# ---------------------------------------------------------------------------
+# Structural operations
+#
+# Each takes and returns _HGVSParts, and is wrapped by _on_fields into the
+# string-op signature above, so it only runs on a string with a colon.
+# ---------------------------------------------------------------------------
+
+@_on_fields
+def _op_drop_empty_version(parts: _HGVSParts) -> tuple[_HGVSParts, list[HGVSFix]]:
+    # An accession with a dot but no version digits, e.g. "NM_001754.:c.749G>A"
+    # -> "NM_001754:c.749G>A". The version was dropped; an unversioned accession
+    # is valid HGVS, so drop the dangling dot rather than invent a version.
+    if parts.gene_symbol is not None or not _EMPTY_VERSION_ACCESSION.fullmatch(parts.accession):
+        return parts, []
+    fixed = replace(parts, accession=parts.accession[:-1])
+    return fixed, [HGVSFix(
+        severity=HGVSFixSeverity.WARNING,
+        code=HGVSFixCode.DROPPED_EMPTY_VERSION,
+        message="Dropped dangling dot of an empty transcript version",
+        original=str(parts), fixed=str(fixed),
+    )]
+
+
+@_on_fields
+def _op_lowercase_mutation_type(parts: _HGVSParts) -> tuple[_HGVSParts, list[HGVSFix]]:
+    # Lowercase mutation types (DUP→dup, DEL→del, INS→ins, INV→inv), which also
+    # handles DELINS. Only the allele is changed: gene symbols such as INSR, INVS,
+    # INSL3 or DELEC1 contain a mutation-type substring and must not be corrupted
+    # (e.g. "NM_000208.4(INSR):c.215A>G" must not become "insR").
+    fixes = []
+    for mt in ["INS", "DEL", "DUP", "INV"]:
+        if mt in parts.nomen:
+            fixed = replace(parts, nomen=parts.nomen.replace(mt, mt.lower()))
+            fixes.append(HGVSFix(
+                severity=HGVSFixSeverity.WARNING,
+                code=HGVSFixCode.LOWERCASED_MUTATION_TYPE,
+                message=f"Lowercased mutation type '{mt}'",
+                original=str(parts), fixed=str(fixed),
+            ))
+            parts = fixed
+    return parts, fixes
+
+
+@_on_fields
+def _op_add_missing_kind(parts: _HGVSParts) -> tuple[_HGVSParts, list[HGVSFix]]:
+    # Insert a missing kind letter + dot after the colon, choosing the kind from
+    # the reference-sequence type:
+    #   mRNA / Ensembl transcript (NM_, XM_, ENST) → "c."  eg "NM_001754.5:557T>A"
+    #   non-coding RNA           (NR_, XR_)        → "n."  eg "NR_002196.2:601A>G"
+    #   genomic                  (NC_, NG_, ...)   → "g."  eg "NC_000007.13:1G>T"
+    # A reference spanning lines is not one reference, so it is left alone.
+    kind = _KIND_FOR_TYPE.get(_reference_type(parts.accession))
+    if not kind or "\n" in parts.reference or not _ALLELE_WITHOUT_KIND.match(parts.allele):
+        return parts, []
+    fixed = replace(parts, kind=kind, nomen=parts.allele)
+    return fixed, [HGVSFix(
+        severity=HGVSFixSeverity.WARNING,
+        code=HGVSFixCode.ADDED_MISSING_KIND,
+        message=f"Added missing '{kind}.' kind prefix",
+        original=str(parts), fixed=str(fixed),
+    )]
+
+
+@_on_fields
+def _op_fix_gene_transcript(parts: _HGVSParts) -> tuple[_HGVSParts, list[HGVSFix]]:
+    # Fix the common clinical mistake of swapping gene symbol and transcript, and
+    # uppercase a lowercase accession prefix. Empty parentheses are dropped.
+    # Ported from HGVSMatcher.fix_gene_transcript() in vg_code/hgvs/hgvs_matcher.py.
+    fixes = []
+    original = parts.reference
+    accession, gene_symbol = parts.accession, parts.gene_symbol or None
+
+    transcript_ok = _looks_like_transcript(accession)
+
+    if not transcript_ok and gene_symbol:
+        uc_gene = gene_symbol.upper()
+        if _looks_like_transcript(uc_gene):
+            accession, gene_symbol = gene_symbol, accession
+            fixes.append(HGVSFix(
+                severity=HGVSFixSeverity.WARNING,
+                code=HGVSFixCode.SWAPPED_GENE_TRANSCRIPT,
+                message="Swapped gene/transcript",
+                original=original,
+                fixed=f"{accession}({gene_symbol})",
+            ))
+            transcript_ok = _looks_like_transcript(accession)
+        elif _looks_like_hgvs_prefix(uc_gene):
+            gene_symbol = uc_gene
+            fixes.append(HGVSFix(
+                severity=HGVSFixSeverity.WARNING,
+                code=HGVSFixCode.UPPERCASED_HGVS_PREFIX,
+                message="Upper cased HGVS prefix",
+                original=original,
+                fixed=f"{accession}({gene_symbol})",
+            ))
+
+    if not transcript_ok:
+        # Any known accession prefix, not only transcripts: a lowercase genomic or
+        # protein accession (eg "ng_012337.3", "np_000050.2") is uppercased too.
+        uc = _uppercase_accession_prefix(accession)
+        if uc != accession:
+            accession = uc
+            if _looks_like_transcript(uc):
+                code, message = HGVSFixCode.UPPERCASED_TRANSCRIPT, "Upper cased transcript"
+            else:
+                code, message = HGVSFixCode.UPPERCASED_HGVS_PREFIX, "Upper cased HGVS prefix"
+            fixes.append(HGVSFix(
+                severity=HGVSFixSeverity.WARNING,
+                code=code,
+                message=message,
+                original=original,
+                fixed=accession,
+            ))
+
+    return replace(parts, accession=accession, gene_symbol=gene_symbol), fixes
+
+
+@_on_fields
+def _op_drop_genomic_ref_in_parens(parts: _HGVSParts) -> tuple[_HGVSParts, list[HGVSFix]]:
+    # Drop a genomic accession (NC_/NG_/NW_, ...) sitting in the gene-symbol
+    # parentheses of a transcript reference, e.g.
+    # "NM_000059.4(NC_000013.11):c.68del" -> "NM_000059.4:c.68del". The
     # transcript on its own is a complete reference, so the genomic accession is
     # redundant and (being neither a gene symbol nor a valid selector here) only
-    # blocks parsing.
-    s2 = _GENOMIC_REF_IN_GENE_PARENS.sub(r"\1", s)
-    if s2 != s:
-        return s2, [HGVSFix(
-            severity=HGVSFixSeverity.WARNING,
-            code=HGVSFixCode.DROPPED_GENOMIC_REF_IN_PARENS,
-            message="Dropped genomic accession from the gene-symbol parentheses",
-            original=s, fixed=s2,
-        )]
-    return s, []
+    # blocks parsing. The valid form "NC_000013.11(NM_000059.4):c.68del"
+    # (genomic reference, transcript selector) is not touched, as its accession
+    # is not a transcript.
+    if (parts.gene_symbol is None
+            or not _TRANSCRIPT_ACCESSION.fullmatch(parts.accession)
+            or not _GENOMIC_ACCESSION.fullmatch(parts.gene_symbol)):
+        return parts, []
+    fixed = replace(parts, gene_symbol=None)
+    return fixed, [HGVSFix(
+        severity=HGVSFixSeverity.WARNING,
+        code=HGVSFixCode.DROPPED_GENOMIC_REF_IN_PARENS,
+        message="Dropped genomic accession from the gene-symbol parentheses",
+        original=str(parts), fixed=str(fixed),
+    )]
 
 
-# Canonical pipeline: (op, function), in the order they must run.
-# clean_hgvs() filters this by the caller's `ops` set but never reorders it.
-_PIPELINE: list[tuple[HGVSCleanOp, "callable"]] = [
+# ---------------------------------------------------------------------------
+# Pipeline
+# ---------------------------------------------------------------------------
+
+class HGVSCleanOpWarning(UserWarning):
+    """ Warned by clean_hgvs() when the selected ops include one without an op
+        it relies on, so it will miss inputs it would otherwise fix. """
+
+
+@dataclass(frozen=True)
+class _PipelineStep:
+    """ One op of the pipeline. requires lists the earlier ops whose output this
+        op relies on: selecting it without them still runs it, but with a
+        HGVSCleanOpWarning. """
+    op: HGVSCleanOp
+    fn: _StringOp
+    requires: frozenset = frozenset()
+
+
+# Restore a dropped "N" or underscore in the accession prefix ("M_" -> "NM_",
+# "NM000059" -> "NM_000059"), needed by the ops that look for a full prefix
+_FULL_ACCESSION_PREFIX = frozenset({HGVSCleanOp.ADD_N_PREFIX, HGVSCleanOp.ADD_TRANSCRIPT_UNDERSCORE})
+
+# Canonical pipeline, in the order the ops must run: lexical ops on the string,
+# then the loose parse that reconstructs the structure, then structural ops on
+# the fields. The allele-level lexical fixes (del/dup counts, brackets, base
+# case) stay where they are, as moving them would change what the structural
+# ops are given. clean_hgvs() filters this by the caller's `ops` set but never
+# reorders it.
+_PIPELINE: list[_PipelineStep] = [
+    # Lexical ops
     # Wrapping quotes first: the ops below that are anchored to the start of the
-    # string ('^') can't see an accession or symbol behind a leading quote (#151).
-    (HGVSCleanOp.STRIP_SURROUNDING_PUNCTUATION, _op_strip_surrounding_punctuation),
-    (HGVSCleanOp.STRIP_PROTEIN_SUFFIX,      _op_strip_protein_suffix),
-    (HGVSCleanOp.STRIP_CONTIG_NAME,         _op_strip_contig_name),
-    # Before the symbol-before-accession op, which would otherwise take a build
-    # name for a gene symbol
-    (HGVSCleanOp.STRIP_BUILD_NAME,          _op_strip_build_name),
-    (HGVSCleanOp.STRIP_LEADING_JUNK,        _op_strip_leading_junk),
-    (HGVSCleanOp.FIX_SYMBOL_BEFORE_ACCESSION, _op_fix_symbol_before_accession),
-    (HGVSCleanOp.FIX_SPACE_BEFORE_KIND,     _op_fix_space_before_kind),
-    (HGVSCleanOp.STRIP_WHITESPACE,          _op_strip_whitespace),
-    # Restore the accession prefix ("M_" -> "NM_", "NM000059" -> "NM_000059")
-    # before the ops that look for a full prefix (#151)
-    (HGVSCleanOp.ADD_N_PREFIX,              _op_add_n_prefix),
-    (HGVSCleanOp.ADD_TRANSCRIPT_UNDERSCORE, _op_add_transcript_underscore),
-    (HGVSCleanOp.FIX_MULTIPLE_COLON,        _op_fix_multiple_colon),
-    (HGVSCleanOp.FIX_GENE_WRAPPER,          _op_fix_gene_wrapper),
-    (HGVSCleanOp.FIX_MULTIPLE_DOT,          _op_fix_multiple_dot),
-    (HGVSCleanOp.FIX_MULTIPLE_UNDERSCORE,   _op_fix_multiple_underscore),
-    (HGVSCleanOp.FIX_PREFIX_COLON,          _op_fix_prefix_colon),
-    (HGVSCleanOp.FIX_MULTIPLE_KIND,         _op_fix_multiple_kind),
-    (HGVSCleanOp.FIX_SEPARATOR_TYPO,        _op_fix_separator_typo),
-    (HGVSCleanOp.DROP_EMPTY_VERSION,        _op_drop_empty_version),
-    (HGVSCleanOp.DROP_DEL_DUP_COUNT,        _op_drop_del_dup_count),
-    (HGVSCleanOp.STRIP_UNBALANCED_BRACKETS, _op_strip_unbalanced_brackets),
-    (HGVSCleanOp.RECONSTRUCT_STRUCTURE,     _op_reconstruct_structure),
-    # Needs the ':' that reconstruction may have just inserted (#151)
-    (HGVSCleanOp.LOWERCASE_MUTATION_TYPE,   _op_lowercase_mutation_type),
-    (HGVSCleanOp.UPPERCASE_BASES,           _op_uppercase_bases),
-    (HGVSCleanOp.ADD_MISSING_KIND,          _op_add_missing_kind),
-    (HGVSCleanOp.FIX_GENE_TRANSCRIPT,       _fix_gene_transcript),
-    # Runs after the gene/transcript swap: an "NC_…(NM_…)" genomic-reference form
-    # is normalised to "NM_…(NC_…)" by that step, so dropping the genomic
-    # parenthetical here collapses both the broken and the swapped form to the
-    # same parseable transcript reference.
-    (HGVSCleanOp.DROP_GENOMIC_REF_IN_PARENS, _op_drop_genomic_ref_in_parens),
+    # string ('^') can't see an accession or symbol behind a leading quote.
+    _PipelineStep(HGVSCleanOp.STRIP_SURROUNDING_PUNCTUATION, _op_strip_surrounding_punctuation),
+    _PipelineStep(HGVSCleanOp.STRIP_PROTEIN_SUFFIX, _op_strip_protein_suffix),
+    _PipelineStep(HGVSCleanOp.STRIP_CONTIG_NAME, _op_strip_contig_name),
+    _PipelineStep(HGVSCleanOp.STRIP_BUILD_NAME, _op_strip_build_name),
+    _PipelineStep(HGVSCleanOp.STRIP_LEADING_JUNK, _op_strip_leading_junk),
+    # Would otherwise take a build name for a gene symbol
+    _PipelineStep(HGVSCleanOp.FIX_SYMBOL_BEFORE_ACCESSION, _op_fix_symbol_before_accession,
+                  requires=frozenset({HGVSCleanOp.STRIP_BUILD_NAME})),
+    # Before whitespace stripping, which would glue the symbol to the kind
+    _PipelineStep(HGVSCleanOp.FIX_SPACE_BEFORE_KIND, _op_fix_space_before_kind),
+    _PipelineStep(HGVSCleanOp.STRIP_WHITESPACE, _op_strip_whitespace),
+    _PipelineStep(HGVSCleanOp.ADD_N_PREFIX, _op_add_n_prefix),
+    _PipelineStep(HGVSCleanOp.ADD_TRANSCRIPT_UNDERSCORE, _op_add_transcript_underscore),
+    _PipelineStep(HGVSCleanOp.FIX_MULTIPLE_COLON, _op_fix_multiple_colon),
+    _PipelineStep(HGVSCleanOp.FIX_GENE_WRAPPER, _op_fix_gene_wrapper),
+    _PipelineStep(HGVSCleanOp.FIX_MULTIPLE_DOT, _op_fix_multiple_dot),
+    _PipelineStep(HGVSCleanOp.FIX_MULTIPLE_UNDERSCORE, _op_fix_multiple_underscore),
+    _PipelineStep(HGVSCleanOp.FIX_PREFIX_COLON, _op_fix_prefix_colon),
+    _PipelineStep(HGVSCleanOp.FIX_MULTIPLE_KIND, _op_fix_multiple_kind),
+    _PipelineStep(HGVSCleanOp.FIX_SEPARATOR_TYPO, _op_fix_separator_typo,
+                  requires=_FULL_ACCESSION_PREFIX),
+    _PipelineStep(HGVSCleanOp.DROP_EMPTY_VERSION, _op_drop_empty_version,
+                  requires=_FULL_ACCESSION_PREFIX),
+    _PipelineStep(HGVSCleanOp.DROP_DEL_DUP_COUNT, _op_drop_del_dup_count),
+    _PipelineStep(HGVSCleanOp.STRIP_UNBALANCED_BRACKETS, _op_strip_unbalanced_brackets),
+    # Parse
+    _PipelineStep(HGVSCleanOp.RECONSTRUCT_STRUCTURE, _op_reconstruct_structure,
+                  requires=_FULL_ACCESSION_PREFIX),
+    # Structural ops
+    # Needs the ':' that reconstruction may have just inserted
+    _PipelineStep(HGVSCleanOp.LOWERCASE_MUTATION_TYPE, _op_lowercase_mutation_type,
+                  requires=frozenset({HGVSCleanOp.RECONSTRUCT_STRUCTURE})),
+    _PipelineStep(HGVSCleanOp.UPPERCASE_BASES, _op_uppercase_bases),
+    _PipelineStep(HGVSCleanOp.ADD_MISSING_KIND, _op_add_missing_kind),
+    _PipelineStep(HGVSCleanOp.FIX_GENE_TRANSCRIPT, _op_fix_gene_transcript),
+    # An "NC_…(NM_…)" reference is swapped to "NM_…(NC_…)" by the gene/transcript
+    # fix, so dropping the genomic parenthetical after it collapses both the
+    # broken and the swapped form to the same parseable transcript reference.
+    _PipelineStep(HGVSCleanOp.DROP_GENOMIC_REF_IN_PARENS, _op_drop_genomic_ref_in_parens,
+                  requires=frozenset({HGVSCleanOp.FIX_GENE_TRANSCRIPT})),
 ]
 
-# All cleaning ops — the default for clean_hgvs(). Use set algebra for a
+# All cleaning ops, the default for clean_hgvs(). Use set algebra for a
 # blocklist, e.g. ALL_CLEAN_OPS - {HGVSCleanOp.STRIP_PROTEIN_SUFFIX}.
 ALL_CLEAN_OPS: frozenset = frozenset(HGVSCleanOp)
+
+
+def _warn_missing_prerequisites(ops) -> None:
+    """ Warn (HGVSCleanOpWarning) about each selected op whose prerequisites are
+        not all selected """
+    problems = []
+    for step in _PIPELINE:
+        if step.op in ops and (missing := step.requires - ops):
+            names = ", ".join(sorted(m.name for m in missing))
+            problems.append(f"{step.op.name} (needs {names})")
+    if problems:
+        warnings.warn(
+            "clean_hgvs ops selected without the ops they rely on, so some inputs they "
+            f"would fix are left alone: {'; '.join(problems)}",
+            HGVSCleanOpWarning, stacklevel=3)
 
 
 # ---------------------------------------------------------------------------
@@ -1156,7 +1274,9 @@ def clean_hgvs(
             (ALL_CLEAN_OPS). For an allowlist, pass just the ops you want, e.g.
             {HGVSCleanOp.STRIP_WHITESPACE}. For a blocklist, use set algebra,
             e.g. ALL_CLEAN_OPS - {HGVSCleanOp.STRIP_PROTEIN_SUFFIX}. Ops always
-            run in the canonical pipeline order regardless of set order.
+            run in the canonical pipeline order regardless of set order. Selecting
+            an op without an op it relies on (eg LOWERCASE_MUTATION_TYPE without
+            RECONSTRUCT_STRUCTURE) warns with HGVSCleanOpWarning.
         raise_on_errors: if True, raise HGVSInputError on the first ERROR-level
             fix instead of returning it in the list.
         validate: if True (default), run post-cleaning validation and include any
@@ -1183,13 +1303,15 @@ def clean_hgvs(
     """
     if ops is None:
         ops = ALL_CLEAN_OPS
+    else:
+        _warn_missing_prerequisites(ops)
 
     fixes: list[HGVSFix] = []
     s = hgvs_string
 
-    for op, fn in _PIPELINE:
-        if op in ops:
-            s, op_fixes = fn(s)
+    for step in _PIPELINE:
+        if step.op in ops:
+            s, op_fixes = step.fn(s)
             fixes.extend(op_fixes)
 
     # Validation — run after cleaning so both the fix and any remaining
