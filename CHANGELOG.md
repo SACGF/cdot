@@ -6,6 +6,10 @@
 - #148 - HGVS cleaning: a chromosome name before its own chromosomal accession is dropped (`chr13 NC_000013.11:g.32316528del` → `NC_000013.11:g.32316528del`), for GRCh37, GRCh38 and T2T-CHM13v2.0 accessions. Only exact `chr1`-`chr22`/`chrX`/`chrY`/`chrM`/`chrMT` names are recognised (gene symbols such as `CHRNA7` are not affected), and the name is only dropped when it matches the accession's chromosome, so `chr7 NC_000013.11:…` is left alone. New op `HGVSCleanOp.STRIP_CONTIG_NAME`, reported as a WARNING with the new fix code `STRIPPED_CONTIG_NAME`
 - #145 - `models.Transcript.fake`: `True` for the RefSeq mitochondrial fake transcripts (data schema >= 0.2.37), `None` for real ones
 
+### Fixed
+
+- #156 - `cdot.data_release.get_latest_combo_file_urls` now finds the all-builds files (`cdot-<version>.all-builds-refseq-grch37_grch38_t2t-chm13v2.0.json.gz`), which it previously never returned. Ask for them with the genome build `"all-builds"` (`cdot.data_release.ALL_BUILDS`), the full `"grch37_grch38_t2t-chm13v2.0"`, or an old style combination such as `"grch37_grch38"`. Per-build requests (eg `"GRCh38"`) and older release names still work. The GitHub API request now has a 30 second timeout
+
 ### Removed
 
 - #103 - The mouse (Mus musculus GRCm38/GRCm39) RefSeq bash scripts under `generate_transcript_data/Mus_musculus/`. They have been dead since the move to Snakemake (#92) removed the wrapper and gene_info download they depended on, and mouse data was never part of a data release. cdot does not currently support non-human species: `bioutils` has no mouse assemblies for contig name mapping, so the data provider can't load a mouse file. #103 tracks what adding it would take
