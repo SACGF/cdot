@@ -12,6 +12,7 @@ retain full control over HGVS compatibility.
 """
 
 import re
+import unicodedata
 import warnings
 from dataclasses import dataclass, replace
 from enum import Enum
@@ -47,6 +48,7 @@ class HGVSFixCode(Enum):
     LOWERCASED_MUTATION_TYPE     = "lowercased_mutation_type"
     STRIPPED_UNBALANCED_BRACKETS = "stripped_unbalanced_brackets"
     STRIPPED_SURROUNDING_PUNCTUATION = "stripped_surrounding_punctuation"
+    REPLACED_UNICODE_DASH        = "replaced_unicode_dash"
     FIXED_MULTIPLE_DOT           = "fixed_multiple_dot"
     FIXED_PREFIX_COLON           = "fixed_prefix_colon"
     STRIPPED_LEADING_JUNK        = "stripped_leading_junk"
@@ -121,6 +123,7 @@ class HGVSCleanOp(Enum):
     relies on warns with HGVSCleanOpWarning.
     """
     STRIP_SURROUNDING_PUNCTUATION = "strip_surrounding_punctuation"
+    REPLACE_UNICODE_DASH     = "replace_unicode_dash"
     STRIP_PROTEIN_SUFFIX     = "strip_protein_suffix"
     STRIP_CONTIG_NAME        = "strip_contig_name"
     STRIP_BUILD_NAME         = "strip_build_name"
@@ -297,11 +300,12 @@ _HAS_NUCLEOTIDE_ALLELE = re.compile(r":\s*(?!p\.)\S|[cgmnr]\.", re.IGNORECASE)
 # the type table, used to repair an accession missing its underscore. Requires
 # 6+ digits (every RefSeq accession has at least six) so a real gene symbol that
 # starts with these letters plus a stray digit (eg NR3C1, NS1, ZP3) is never
-# mistaken for an accession and mangled. A stray bracket typed in place of the
-# underscore ("NM)000059.4") is replaced by it.
+# mistaken for an accession and mangled. A stray bracket, dot or colon typed in
+# place of the underscore ("NM)000059.4", "NM.000059.4", "NM:000059.4") is
+# replaced by it.
 _TWO_LETTER_PREFIXES = sorted({p[:2] for p in _REFSEQ_PREFIX_TYPE})
 _TRANSCRIPT_NO_UNDERSCORE = re.compile(
-    rf"^({'|'.join(_TWO_LETTER_PREFIXES)})[()]?(\d{{6,}})", re.IGNORECASE)
+    rf"^({'|'.join(_TWO_LETTER_PREFIXES)})[().:]?(\d{{6,}})", re.IGNORECASE)
 
 # Second letters for which prepending "N" yields a real genomic/transcript prefix
 # (NM, NC, NR, NG, NT, NW, NS, NZ, NP) — used to restore a dropped leading "N".
@@ -366,15 +370,36 @@ _MISSING_REFERENCE = re.compile(rf"^(?:[:.]|{_KIND}(?:[.:]|{_COORD_START}))")
 _PREFIX_COLON_UNDERSCORE = re.compile(
     rf"^({'|'.join(_TWO_LETTER_PREFIXES)}):_", re.IGNORECASE)
 
-# Leading junk before an accession, e.g. "#", ":", "-", a literal
-# "\t", whitespace (": NM_..."), or a genome-build prefix like "GRCh38.p2 " /
-# "GRCh37.p12#". Only stripped when an accession actually follows.
-_LEADING_JUNK = re.compile(r"^(?:GRCh\d+(?:\.p\d+)?[#\s]*|\\t|[#:\-\s])+", re.IGNORECASE)
+# Leading junk before an accession: a literal "\t", whitespace, or a genome-build
+# prefix like "GRCh38.p2 " / "GRCh37.p12#". Stray punctuation and symbols ("#",
+# ":", "-", a bullet...) are stripped by _is_stray_mark. Only stripped when an
+# accession actually follows.
+_LEADING_JUNK = re.compile(r"GRCh\d+(?:\.p\d+)?[#\s]*|\\t|\s", re.IGNORECASE)
+
+# Characters that may end a valid HGVS string (eg "c.(?_-1)", "p.(=)", "c.*") or
+# be part of a truncated one, so are never stripped as a stray trailing mark
+_HGVS_END_CHARS = frozenset(")]=?*>+-_")
+
+
+def _is_stray_mark(c: str) -> bool:
+    """ Punctuation or a symbol (Unicode category P* or S*), eg a bullet, dagger,
+        backslash or full stop, as left by copy/paste around an HGVS string """
+    return unicodedata.category(c)[0] in "PS"
+
+
+def _rstrip_stray_marks(s: str) -> str:
+    """ Strip stray marks from the end, keeping any of _HGVS_END_CHARS """
+    end = len(s)
+    while end and s[end - 1] not in _HGVS_END_CHARS and _is_stray_mark(s[end - 1]):
+        end -= 1
+    return s[:end]
 
 # Gene symbol wedged between extra colons, e.g. "tx:(GENE):c." / "tx:(GENE)c." /
 # "tx:GENE:c." — should be "tx(GENE):c."
 _GENE_WRAPPER = re.compile(
     rf"^({_ANY_ACCESSION_PREFIX}[\w.]+):\(?([A-Za-z][A-Za-z0-9-]+)\)?:?({_KIND}[.,])", re.IGNORECASE)
+# Gene symbol repeated after its parens, e.g. "tx(GENE):GENE:c." -> "tx(GENE):c."
+_GENE_REPEATED_AFTER_PARENS = re.compile(rf"\(([A-Za-z][A-Za-z0-9-]*)\):\1:(?={_KIND}\.)", re.IGNORECASE)
 # Stray colon inside the gene parens, e.g. "(RAD51C:)" -> "(RAD51C)"
 _GENE_PARENS_COLON = re.compile(r"\(([A-Za-z][A-Za-z0-9-]*):\)")
 # Parens wrapping the whole accession, e.g. "(NM_000059.4):c." -> "NM_000059.4:c."
@@ -419,12 +444,13 @@ _CHROM_NAME = rf"chr(?:{'|'.join(_CHROMOSOMES)})"
 _CONTIG_NAME_BEFORE_ACCESSION = re.compile(
     rf"(?<![\w.])({_CHROM_NAME})\s+(?=(NC_\d+)(\.\d+)?(?![\w.]))", re.IGNORECASE)
 
-# A gene symbol, whitespace, then an accession, e.g.
-# "APC NM_001407446.1:c.-40G>A" -> "NM_001407446.1(APC):c.-40G>A". Runs before
+# A gene symbol, whitespace (or a ':' or '.'), then an accession, e.g.
+# "APC NM_001407446.1:c.-40G>A" or "APC:NM_001407446.1:c.-40G>A" ->
+# "NM_001407446.1(APC):c.-40G>A". Runs before
 # whitespace stripping, which would otherwise glue the symbol onto the accession
 # ("APCNM_001407446.1"), leaving something that parses as neither.
 _SYMBOL_BEFORE_ACCESSION = re.compile(
-    rf"^(?!{_CHROM_NAME}\s)([A-Za-z][A-Za-z0-9-]{{1,9}})\s+({_ANY_ACCESSION_PREFIX}[\w.]+)", re.IGNORECASE)
+    rf"^(?!{_CHROM_NAME}[\s:.])([A-Za-z][A-Za-z0-9-]{{1,9}})(?:\s*[:.]\s*|\s+)({_ANY_ACCESSION_PREFIX}[\w.]+)", re.IGNORECASE)
 
 # A genome build / assembly name at the start, e.g. "hg19 NM_000059.4:c.68del" or
 # "GRCh38 BRCA2 NM_000059.4:c.68del". Without this the symbol-before-accession
@@ -704,12 +730,13 @@ def _op_strip_whitespace(s: str) -> tuple[str, list[HGVSFix]]:
 
 
 def _op_strip_surrounding_punctuation(s: str) -> tuple[str, list[HGVSFix]]:
-    # Strip stray wrapping quotes/backticks and trailing separators left by
-    # copy/paste or search boxes, e.g. "NM_000059.4:c.123A>G'" or
-    # "NM_000059.4:c.123A>G;". No valid HGVS string starts/ends with these.
+    # Strip stray wrapping quotes/backticks and trailing punctuation or symbols
+    # left by copy/paste or search boxes, e.g. "NM_000059.4:c.123A>G'",
+    # "NM_000059.4:c.123A>G;", "NM_000059.4:c.123A>G." or a footnote mark
+    # ("NM_000059.4:c.123A>G†"). No valid HGVS string starts/ends with these.
     # Surrounding whitespace on its own is left for the whitespace step to strip
     # and report (this op runs first).
-    s2 = s.strip().strip("'\"`").rstrip("/;,").strip()
+    s2 = _rstrip_stray_marks(s.strip().strip("'\"`")).strip()
     if s2 != s.strip():
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
@@ -783,7 +810,33 @@ def _op_fix_multiple_kind(s: str) -> tuple[str, list[HGVSFix]]:
                 original=s, fixed=s2,
             ))
             s = s2
+        # The kind repeated on the second position of a range, eg
+        # "c.67+3_c.67+6del" -> "c.67+3_67+6del"
+        if f":{kind}." in s.lower():
+            s2 = re.sub(rf"(?<=[\d)])_{kind}\.(?=[\d*\-(])", "_", s, flags=re.IGNORECASE)
+            if s2 != s:
+                fixes.append(HGVSFix(
+                    severity=HGVSFixSeverity.WARNING,
+                    code=HGVSFixCode.FIXED_MULTIPLE_KIND,
+                    message=f"Removed kind notation '{kind}.' repeated inside a range",
+                    original=s, fixed=s2,
+                ))
+                s = s2
     return s, fixes
+
+
+def _op_replace_unicode_dash(s: str) -> tuple[str, list[HGVSFix]]:
+    # A typographic dash (Unicode dash punctuation, eg a hyphen or en dash) from a
+    # word processor in place of "-", eg "c.67–2A>G" -> "c.67-2A>G"
+    s2 = "".join("-" if unicodedata.category(c) == "Pd" else c for c in s)
+    if s2 != s:
+        return s2, [HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.REPLACED_UNICODE_DASH,
+            message="Replaced typographic dash with '-'",
+            original=s, fixed=s2,
+        )]
+    return s, []
 
 
 def _op_add_n_prefix(s: str) -> tuple[str, list[HGVSFix]]:
@@ -909,9 +962,17 @@ def _op_uppercase_bases(s: str) -> tuple[str, list[HGVSFix]]:
 
 def _op_strip_leading_junk(s: str) -> tuple[str, list[HGVSFix]]:
     # Strip junk before the transcript accession, e.g. "#NM_...", ":NM_...",
-    # "GRCh38.p2 NM_...". Only fires when a transcript prefix actually follows,
-    # so a leading gene symbol (e.g. "BRCA1(NM_...)") is never touched.
-    s2 = _LEADING_JUNK.sub("", s)
+    # "• NM_...", "GRCh38.p2 NM_...". Only fires when a transcript prefix actually
+    # follows, so a leading gene symbol (e.g. "BRCA1(NM_...)") is never touched.
+    i = 0
+    while i < len(s):
+        if m := _LEADING_JUNK.match(s, i):
+            i = m.end()
+        elif s[i] not in "([" and _is_stray_mark(s[i]):
+            i += 1
+        else:
+            break
+    s2 = s[i:]
     if s2 != s and re.match(_ANY_ACCESSION_PREFIX, s2, re.IGNORECASE):
         return s2, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
@@ -925,9 +986,11 @@ def _op_fix_gene_wrapper(s: str) -> tuple[str, list[HGVSFix]]:
     # Normalise a gene symbol wedged between extra colons / stray parens:
     #   "tx:(GENE):c."  "tx:(GENE)c."  "tx:GENE:c."  -> "tx(GENE):c."
     #   "tx(GENE:):c."                               -> "tx(GENE):c."
+    #   "tx(GENE):GENE:c."                           -> "tx(GENE):c."
     #   "(NM_000059.4):c."                           -> "NM_000059.4:c."
     #   "BRCA1(NM_000059.4)c."                       -> "BRCA1(NM_000059.4):c."
     s2 = _GENE_PARENS_COLON.sub(r"(\1)", s)
+    s2 = _GENE_REPEATED_AFTER_PARENS.sub(r"(\1):", s2)
     s2 = _GENE_WRAPPER.sub(r"\1(\2):\3", s2)
     s2 = _PARENS_WRAPPED_ACCESSION.sub(r"\1", s2)
     s2 = _MISSING_COLON_BEFORE_KIND.sub(r"\1:\2", s2)
@@ -999,8 +1062,9 @@ def _op_strip_build_name(s: str) -> tuple[str, list[HGVSFix]]:
 
 
 def _op_fix_symbol_before_accession(s: str) -> tuple[str, list[HGVSFix]]:
-    # Gene symbol written before the accession, separated by whitespace:
+    # Gene symbol written before the accession, separated by whitespace, ':' or '.':
     #   "APC NM_001407446.1:c.-40G>A"  -> "NM_001407446.1(APC):c.-40G>A"
+    #   "APC:NM_001407446.1:c.-40G>A"  -> "NM_001407446.1(APC):c.-40G>A"
     #   "BRCA2 NM_000059.4 c.68del"    -> "NM_000059.4(BRCA2) c.68del"
     # (the remaining space is stripped and the colon restored by later steps).
     # An accession that already has its gene symbol keeps it: a matching symbol
@@ -1307,6 +1371,7 @@ _PIPELINE: list[_PipelineStep] = [
     # Wrapping quotes first: the ops below that are anchored to the start of the
     # string ('^') can't see an accession or symbol behind a leading quote.
     _PipelineStep(HGVSCleanOp.STRIP_SURROUNDING_PUNCTUATION, _op_strip_surrounding_punctuation),
+    _PipelineStep(HGVSCleanOp.REPLACE_UNICODE_DASH, _op_replace_unicode_dash),
     _PipelineStep(HGVSCleanOp.STRIP_PROTEIN_SUFFIX, _op_strip_protein_suffix),
     _PipelineStep(HGVSCleanOp.STRIP_CONTIG_NAME, _op_strip_contig_name),
     _PipelineStep(HGVSCleanOp.STRIP_BUILD_NAME, _op_strip_build_name),

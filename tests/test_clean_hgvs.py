@@ -249,7 +249,27 @@ CLEAN_CASES = [
     # #225: bracket typed for the accession underscore
     ("NM)000059.4:c.68del",                      "NM_000059.4:c.68del",                        {C.ADDED_TRANSCRIPT_UNDERSCORE}),
     # #225: trailing stray "(" opens nothing
-    ("NM_000059.4:c.68del (",                    "NM_000059.4:c.68del",                        {C.STRIPPED_UNBALANCED_BRACKETS}),
+    ("NM_000059.4:c.68del (",                    "NM_000059.4:c.68del",                        {C.STRIPPED_SURROUNDING_PUNCTUATION}),
+    # #227: gene symbol before the accession separated by ':' or '.'
+    ("BRCA2:NM_000059.4:c.68del",                "NM_000059.4(BRCA2):c.68del",                 {C.WRAPPED_GENE_SYMBOL}),
+    ("BRCA2.NM_000059.4:c.68del",                "NM_000059.4(BRCA2):c.68del",                 {C.WRAPPED_GENE_SYMBOL}),
+    ("BRCA2: NM_000059.4:c.68del",               "NM_000059.4(BRCA2):c.68del",                 {C.WRAPPED_GENE_SYMBOL}),
+    # #227: dot or colon in place of the accession prefix underscore
+    ("NM.000059.4:c.68del",                      "NM_000059.4:c.68del",                        {C.ADDED_TRANSCRIPT_UNDERSCORE}),
+    ("NM:000059.4:c.68del",                      "NM_000059.4:c.68del",                        {C.ADDED_TRANSCRIPT_UNDERSCORE}),
+    # #227: stray leading bullet/asterisk, trailing dot/footnote mark/backslash
+    ("\u2022NM_000059.4:c.68del",                "NM_000059.4:c.68del",                        {C.STRIPPED_LEADING_JUNK}),
+    ("*NM_000059.4:c.68del",                     "NM_000059.4:c.68del",                        {C.STRIPPED_LEADING_JUNK}),
+    ("NM_000059.4:c.68del.",                     "NM_000059.4:c.68del",                        {C.STRIPPED_SURROUNDING_PUNCTUATION}),
+    ("NM_000059.4:c.68del\u2020",                "NM_000059.4:c.68del",                        {C.STRIPPED_SURROUNDING_PUNCTUATION}),
+    ("NM_000059.4:c.68del\\",                   "NM_000059.4:c.68del",                        {C.STRIPPED_SURROUNDING_PUNCTUATION}),
+    # #227: typographic dash in place of '-'
+    ("NM_000059.4:c.67\u20102A>G",               "NM_000059.4:c.67-2A>G",                      {C.REPLACED_UNICODE_DASH}),
+    ("NM_000059.4:c.\u201340G>A",                "NM_000059.4:c.-40G>A",                       {C.REPLACED_UNICODE_DASH}),
+    # #227: kind repeated on the second position of a range
+    ("NM_000059.4:c.67+3_c.67+6del",             "NM_000059.4:c.67+3_67+6del",                 {C.FIXED_MULTIPLE_KIND}),
+    # #227: gene symbol repeated after its parens
+    ("NM_000059.4(BRCA2):BRCA2:c.68del",         "NM_000059.4(BRCA2):c.68del",                 {C.FIXED_GENE_WRAPPER}),
 ]
 
 
