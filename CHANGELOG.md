@@ -6,6 +6,10 @@
 - #148 - HGVS cleaning: a chromosome name before its own chromosomal accession is dropped (`chr13 NC_000013.11:g.32316528del` → `NC_000013.11:g.32316528del`), for GRCh37, GRCh38 and T2T-CHM13v2.0 accessions. Only exact `chr1`-`chr22`/`chrX`/`chrY`/`chrM`/`chrMT` names are recognised (gene symbols such as `CHRNA7` are not affected), and the name is only dropped when it matches the accession's chromosome, so `chr7 NC_000013.11:…` is left alone. New op `HGVSCleanOp.STRIP_CONTIG_NAME`, reported as a WARNING with the new fix code `STRIPPED_CONTIG_NAME`
 - #145 - `models.Transcript.fake`: `True` for the RefSeq mitochondrial fake transcripts (data schema >= 0.2.37), `None` for real ones
 
+### Fixed
+
+- #158 - Transcript version fallback safety check (`is_version_substitution_safe` and the `cdot.hgvs.version_safety` helpers): a malformed record (exon transcript coordinates `None`) now gives "cannot verify" instead of raising `TypeError`. Non-coding transcripts (`NR_`) with both versions loaded are now checked on their exon structure (per-exon lengths, alignment gaps, genomic placement) instead of being refused as "requested version absent", and a coding/non-coding pair is refused. An uncertain range starting in the 5'UTR (eg `c.(-30_5)del`) is now treated as a 5'UTR position, and a strand change is reported as such
+
 ### Removed
 
 - #103 - The mouse (Mus musculus GRCm38/GRCm39) RefSeq bash scripts under `generate_transcript_data/Mus_musculus/`. They have been dead since the move to Snakemake (#92) removed the wrapper and gene_info download they depended on, and mouse data was never part of a data release. cdot does not currently support non-human species: `bioutils` has no mouse assemblies for contig name mapping, so the data provider can't load a mouse file. #103 tracks what adding it would take

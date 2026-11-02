@@ -141,6 +141,13 @@ class AbstractJSONDataProvider(Interface):
         Coding / CDS-intronic positions (and the default ``cited_position=None``) are
         covered by the CDS-structure check alone.
 
+        Non-coding transcripts (both versions without a CDS, eg ``NR_``) are compared
+        on their whole exon structure instead: the same strand and per-exon transcript
+        lengths, matching alignment gaps, and (when both are placed in
+        ``genome_build``) the same genomic exon spans. An n. coordinate depends only on
+        those, so this is exact. A version pair where one is coding and the other is
+        not is never safe.
+
         Fallback (only when the requested version exists in no build the provider can
         see, so there is no structure to compare): a position-specific *genomic
         bracket* — if the held versions immediately below and above the gap agree at
@@ -154,7 +161,8 @@ class AbstractJSONDataProvider(Interface):
         """
         from cdot.hgvs.version_safety import (
             intrinsic_cds_structure, describe_structure_change, cds_alignment_gaps,
-            cds_genomic_map, utr_lengths, utr_regions_touched,
+            cds_genomic_map, utr_lengths, utr_regions_touched, has_cds,
+            intrinsic_exon_structure, exon_alignment_gaps, exon_genomic_spans,
         )
 
         from cdot.hgvs._version_replacement_blocklist import KNOWN_REPLACEMENT_SUBSTITUTIONS
@@ -170,12 +178,44 @@ class AbstractJSONDataProvider(Interface):
 
         req = self._get_transcript(f"{accession}.{requested_version}")
         if req is not None:
+            req_coding, sub_coding = has_cds(req), has_cds(sub)
+            if req_coding != sub_coding:
+                coding = (f".{requested_version}" if req_coding else f".{substitute_version}")
+                return False, f"only {coding} is coding (c. and n. coordinates differ)"
+            if not req_coding:
+                # Non-coding (n.): an n. coordinate depends only on the exon lengths in
+                # transcript order, the alignment gaps and the genomic exon placement.
+                req_exons = intrinsic_exon_structure(req, genome_build)
+                sub_exons = intrinsic_exon_structure(sub, genome_build)
+                if req_exons is None or sub_exons is None:
+                    bad = requested_version if req_exons is None else substitute_version
+                    return False, f"version .{bad} has a malformed exon record; cannot verify"
+                if req_exons[0] != sub_exons[0]:
+                    return False, f"strand changed {req_exons[0]}→{sub_exons[0]}"
+                if req_exons != sub_exons:
+                    return False, "exon structure changed (n. coordinate would shift)"
+                if exon_alignment_gaps(req, genome_build) != exon_alignment_gaps(sub, genome_build):
+                    return False, "exon alignment gap differs (n. coordinate would shift)"
+                if genome_build:
+                    req_spans = exon_genomic_spans(req, genome_build)
+                    sub_spans = exon_genomic_spans(sub, genome_build)
+                    if req_spans is not None and sub_spans is not None and req_spans != sub_spans:
+                        return False, "exon genomic placement differs (coordinate would shift)"
+                return True, "identical exon structure (non-coding)"
+
             req_struct = intrinsic_cds_structure(req, genome_build)
             sub_struct = intrinsic_cds_structure(sub, genome_build)
-            if req_struct is None or sub_struct is None:
-                # One side has no usable CDS structure (non-coding / malformed) —
-                # fall through to the genomic bracket rather than guess.
-                return self._genomic_bracket_safe(accession, requested_version, genome_build)
+            if sub_struct is None:
+                # The substitute claims a CDS but it is unusable (malformed exons /
+                # zero-length CDS): nothing to compare against.
+                return False, (f"substitute version .{substitute_version} has no usable "
+                               "CDS structure; cannot verify")
+            if req_struct is None:
+                # The requested version is present but its CDS is unusable. Fall
+                # through to the genomic bracket rather than guess; its message says
+                # the version is present rather than absent.
+                return self._genomic_bracket_safe(accession, requested_version, genome_build,
+                                                  requested_present=True)
             if req_struct != sub_struct:
                 return False, describe_structure_change(req_struct, sub_struct)
             # Identical transcript structure is necessary but not sufficient: an
@@ -219,22 +259,31 @@ class AbstractJSONDataProvider(Interface):
         return self._genomic_bracket_safe(accession, requested_version, genome_build)
 
     def _genomic_bracket_safe(self, accession: str, requested_version: int,
-                              genome_build: str) -> tuple[bool, str]:
-        """Genomic-bracket fallback for a requested version present in no build.
+                              genome_build: str,
+                              requested_present: bool = False) -> tuple[bool, str]:
+        """Genomic-bracket fallback when the requested version's structure is unknown.
 
-        Brackets the absent version with the nearest held versions below and above
+        Normally the requested version is present in no build. It is also used when
+        the requested version is present but has no usable CDS structure (a
+        malformed record), with ``requested_present=True`` so the reason says so.
+
+        Brackets the requested version with the nearest held versions below and above
         it (that are placeable in ``genome_build``); if their genomic CDS maps agree
         everywhere, the gap is treated as coordinate-safe (probabilistic).
         """
         from cdot.hgvs.version_safety import cds_genomic_map, genomic_maps_fully_agree
 
+        if requested_present:
+            what = "requested version has no usable CDS structure"
+        else:
+            what = "requested version absent from all builds"
+
         if genome_build is None:
-            return False, ("requested version absent from all builds; "
-                           "cannot verify (no genome build for bracket fallback)")
+            return False, f"{what}; cannot verify (no genome build for bracket fallback)"
         try:
             versions = self.get_tx_versions(accession)
         except NotImplementedError:
-            return False, "requested version absent from all builds; cannot verify structure"
+            return False, f"{what}; cannot verify structure"
 
         def _map(v):
             t = self._get_transcript(f"{accession}.{v}")
@@ -245,8 +294,7 @@ class AbstractJSONDataProvider(Interface):
         lo_map = next((m for v in sorted(below, reverse=True) if (m := _map(v))), None)
         hi_map = next((m for v in sorted(above) if (m := _map(v))), None)
         if lo_map is None or hi_map is None:
-            return False, ("requested version absent and cannot bracket it in "
-                           f"{genome_build}; coordinate unverified")
+            return False, f"{what} and cannot bracket it in {genome_build}; coordinate unverified"
         if genomic_maps_fully_agree(lo_map, hi_map):
             return True, "flanking versions agree (genomic bracket; probabilistic)"
         return False, "flanking versions disagree; coordinate may have moved"
