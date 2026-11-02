@@ -39,7 +39,7 @@ A single transcript and its per-build coordinates.
 | `genome_builds` | object ([GenomeBuild](#genomebuild) values) | yes | Build name (`'GRCh37'` / `'GRCh38'` / `'T2T-CHM13v2.0'`) -> coordinates. |
 | `gene_name` | string or null | no |  |
 | `gene_version` | string or null | no |  |
-| `biotype` | array of string or null | no |  |
+| `biotype` | array of string or null | no | Transcript types, as a sorted list. From a GTF/GFF3 this has `'mRNA'` (coding) or `'ncRNA'` (non-coding), plus the source's own type for this transcript: the RefSeq GFF3 row type (eg `'mRNA'`, `'lnc_RNA'`, `'tRNA'`) or the Ensembl transcript biotype (eg `'protein_coding'`, `'retained_intron'`, `'nonsense_mediated_decay'`). Ensembl GFF3 data has both the row type and the biotype. Data before 0.2.37 had the Ensembl gene biotype here instead of the transcript one (issue #153). |
 | `protein` | string or null | no | Protein accession (coding transcripts only). |
 | `start_codon` | integer or null | no | 0-based transcript (cDNA) coordinate of the CDS start (coding only). Together with `stop_codon` this is a half-open interval, so `seq[start_codon:stop_codon]` is the CDS. Passed through unchanged as biocommons `cds_start_i`. |
 | `stop_codon` | integer or null | no | 0-based transcript (cDNA) coordinate of the CDS end, exclusive (coding only). Passed through unchanged as biocommons `cds_end_i`. |

@@ -101,7 +101,8 @@
  "transcripts": {
   "ENST00000361390.2": {
    "biotype": [
-    "mRNA"
+    "mRNA",
+    "protein_coding"
    ],
    "gene_name": "MT-ND1",
    "gene_version": "ENSG00000198888.2",
@@ -139,6 +140,7 @@
   },
   "ENST00000386347.1": {
    "biotype": [
+    "Mt_tRNA",
     "ncRNA",
     "tRNA"
    ],
@@ -169,6 +171,7 @@
   },
   "ENST00000387314.1": {
    "biotype": [
+    "Mt_tRNA",
     "ncRNA",
     "tRNA"
    ],
@@ -199,6 +202,7 @@
   },
   "ENST00000387342.1": {
    "biotype": [
+    "Mt_tRNA",
     "ncRNA",
     "tRNA"
    ],
@@ -229,6 +233,7 @@
   },
   "ENST00000387347.2": {
    "biotype": [
+    "Mt_rRNA",
     "ncRNA",
     "rRNA"
    ],
@@ -259,6 +264,7 @@
   },
   "ENST00000387365.1": {
    "biotype": [
+    "Mt_tRNA",
     "ncRNA",
     "tRNA"
    ],
@@ -289,6 +295,7 @@
   },
   "ENST00000389680.2": {
    "biotype": [
+    "Mt_rRNA",
     "ncRNA",
     "rRNA"
    ],
