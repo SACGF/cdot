@@ -1,7 +1,9 @@
-""" cdot_json.py merge_historical / combine_builds, run as the data release Snakefile does
+""" cdot_json.py gtf_to_json / gff3_to_json / merge_historical / combine_builds, run as the data release
+    Snakefile does
 
-    These stream their input with ijson, which by default reads non-integer numbers as Decimal, which
-    json can't write back out. RefSeq alignment stats (eg pct_identity_gap, #115) are floats.
+    merge_historical / combine_builds stream their input with ijson, which by default reads non-integer
+    numbers as Decimal, which json can't write back out. RefSeq alignment stats (eg pct_identity_gap, #115)
+    are floats.
 """
 import gzip
 import json
@@ -16,8 +18,9 @@ from inspect import getsourcefile
 THIS_FILE_DIR = os.path.dirname(os.path.abspath(getsourcefile(lambda: 0)))
 REPO_DIR = os.path.dirname(THIS_FILE_DIR)
 CDOT_JSON = os.path.join(REPO_DIR, "generate_transcript_data", "cdot_json.py")
-GOLDEN_JSON = os.path.join(THIS_FILE_DIR, "test_data", "gff_parser_golden",
-                           "refseq_test.historical_RS_2024_08.gff.json")
+TEST_DATA_DIR = os.path.join(THIS_FILE_DIR, "test_data")
+GOLDEN_DIR = os.path.join(TEST_DATA_DIR, "gff_parser_golden")
+GOLDEN_JSON = os.path.join(GOLDEN_DIR, "refseq_test.historical_RS_2024_08.gff.json")
 
 
 class TestCdotJsonMerge(unittest.TestCase):
@@ -48,6 +51,69 @@ class TestCdotJsonMerge(unittest.TestCase):
         elif isinstance(obj, dict):
             for key, value in obj.items():
                 yield from cls._floats(value, path + (key,))
+
+    def _gene_info(self, gene_info) -> str:
+        return self._write("gene_info.json.gz", {"api_retrieval_date": "2024-01-02T03:04:05", "gene_info": gene_info})
+
+    @staticmethod
+    def _golden(fixture) -> dict:
+        with open(os.path.join(GOLDEN_DIR, fixture + ".json")) as f:
+            return json.load(f)
+
+    def test_gff3_to_json(self):
+        """ The RefSeq parse (as the goldens check it), with gene info added by GeneID """
+        fixture = "refseq_test.transcript_coordinate_hole.gff"
+        gene_info_filename = self._gene_info({"99999": {"gene_symbol": "TEST", "summary": "A test gene"}})
+        output_filename = self._path("refseq.json.gz")
+        url = "http://example.com/refseq.gff"
+        stdout = self._run("gff3_to_json", os.path.join(TEST_DATA_DIR, fixture), "--url", url,
+                           "--genome-build=GRCh38", "--gene-info-json", gene_info_filename, "--output", output_filename)
+        self.assertIn("Using refseq annotation conventions", stdout)
+        data = self._load(output_filename)
+
+        golden = self._golden(fixture)
+        expected_transcripts = json.loads(json.dumps(golden["transcripts"]).replace("http://fake.url", url))
+        self.assertEqual(data["transcripts"], expected_transcripts)
+        self.assertEqual(data["genes"]["99999"]["summary"], "A test gene")
+        self.assertEqual(data["genes"]["99999"]["gene_symbol"], "TEST")
+        self.assertEqual(data["refseq_gene_summary_api_retrieval_date"], "2024-01-02T03:04:05")
+        self.assertEqual(data["genome_builds"], ["GRCh38"])
+        self.assertEqual(data["metadata"]["method"], "Single GFF3 file")
+        self.assertEqual(data["metadata"]["url_counts"], {url: 1})
+
+    def test_gtf_to_json(self):
+        """ The Ensembl GRCh37 parse with GENCODE HGNC and the canonical transcripts CSV, and
+            --keep-contigs-with-underscores / --no-contig-conversion passed through to the parser """
+        fixture = "ensembl_test.GRCh37.87.par.gtf"
+        gene_info_filename = self._gene_info({"90001": {"gene_symbol": "PARX", "summary": "A PAR gene"}})
+        gencode_filename = self._path("gencode.metadata.HGNC.gz")
+        with gzip.open(gencode_filename, "wt") as f:
+            f.write("ENST00000900001.1\tPARX\tHGNC:90001\n")
+        canonical_filename = self._path("canonical.csv")
+        with open(canonical_filename, "w") as f:
+            f.write("gene_id,canonical_transcript\nENSG00000900001.1,ENST00000900001.1\n")
+        output_filename = self._path("ensembl.json.gz")
+        url = "http://example.com/ensembl.gtf"
+        stdout = self._run("gtf_to_json", os.path.join(TEST_DATA_DIR, fixture), "--url", url,
+                           "--genome-build=GRCh37", "--gene-info-json", gene_info_filename,
+                           "--gencode-hgnc-metadata", gencode_filename,
+                           "--gene-canonical-transcripts-csv", canonical_filename,
+                           "--keep-contigs-with-underscores", "--no-contig-conversion",
+                           "--output", output_filename)
+        self.assertIn("Using ensembl annotation conventions", stdout)
+        data = self._load(output_filename)
+
+        transcript = data["transcripts"]["ENST00000900001.1"]
+        build_data = transcript["genome_builds"]["GRCh37"]
+        golden_build_data = self._golden(fixture)["transcripts"]["ENST00000900001.1"]["genome_builds"]["GRCh37"]
+        self.assertEqual(build_data["exons"], golden_build_data["exons"])
+        self.assertEqual(build_data["contig"], "X")  # --no-contig-conversion
+        self.assertEqual(build_data["tag"], "basic,Ensembl_canonical")
+        self.assertEqual(transcript["hgnc"], "90001")
+        gene = data["genes"]["ENSG00000900001.1"]
+        self.assertEqual(gene["hgnc"], "90001")
+        self.assertEqual(gene["summary"], "A PAR gene")  # By symbol, Ensembl accessions aren't in gene info
+        self.assertEqual(data["metadata"]["method"], "Single GTF file")
 
     def test_merge_and_combine_keep_floats(self):
         with open(GOLDEN_JSON) as f:

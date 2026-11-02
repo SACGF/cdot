@@ -124,6 +124,8 @@ class UTAToJSONTestCase(unittest.TestCase):
         self.assertEqual(data["cdot_version"], data["metadata"]["cdot_version"])
         self.assertEqual(data["metadata"]["method"], "Conversion of Universal Transcript Archive dump")
         self.assertEqual(data["metadata"]["url_counts"], {self.URL: 3})
+        self.assertEqual(data["metadata"]["skipped_rows"],
+                         {"multiple_contigs": 1, "accession_with_range": 1, "cds_outside_exons": 1})
 
         brca2 = data["transcripts"]["NM_000059.4"]
         self.assertEqual(brca2["gene_name"], "BRCA2")

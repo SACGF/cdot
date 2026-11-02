@@ -56,6 +56,17 @@ def source_urls(config, consortium, build) -> list[str]:
     return urls
 
 
+class NoSourcesConfigured(Exception):
+    """ cdot_transcripts.yaml has nothing for this check to compare against """
+
+
+def latest_configured(have: list):
+    """ The latest version among those in the yaml """
+    if not have:
+        raise NoSourcesConfigured()
+    return max(have)
+
+
 def report(label, have, latest, newer, notes=None):
     status = "NEW: " + ", ".join(newer) if newer else "up to date"
     print(f"{label:<28} yaml has {have:<14} upstream latest {latest:<14} {status}")
@@ -67,18 +78,19 @@ def report(label, have, latest, newer, notes=None):
 def check_ensembl_grch38(config):
     have = [int(m.group(1)) for u in source_urls(config, "ensembl", "GRCh38")
             if (m := re.search(r"/release-(\d+)/", u))]
+    have_latest = latest_configured(have)
     releases = sorted(int(d.split("-")[1]) for d in list_dirs(ENSEMBL_FTP + "/") if re.fullmatch(r"release-\d+", d))
     newer = []
     notes = []
     for r in releases:
-        if r <= max(have):
+        if r <= have_latest:
             continue
         gtf = f"Homo_sapiens.GRCh38.{r}.gtf.gz"
         if gtf in fetch(f"{ENSEMBL_FTP}/release-{r}/gtf/homo_sapiens/"):
             newer.append(str(r))
         else:
             notes.append(f"release-{r} directory exists but has no {gtf} yet")
-    return report("Ensembl GRCh38", str(max(have)), str(releases[-1]), newer, notes)
+    return report("Ensembl GRCh38", str(have_latest), str(releases[-1]), newer, notes)
 
 
 def check_ensembl_grch37(config):
@@ -86,19 +98,21 @@ def check_ensembl_grch37(config):
         geneset version in the GTF filename, not the directory number """
     have = [int(m.group(1)) for u in source_urls(config, "ensembl", "GRCh37")
             if (m := re.search(r"GRCh37\.(\d+)\.gtf", u))]
+    have_latest = latest_configured(have)
     latest_dir = max(int(d.split("-")[1]) for d in list_dirs(f"{ENSEMBL_FTP}/grch37/") if re.fullmatch(r"release-\d+", d))
     listing = fetch(f"{ENSEMBL_FTP}/grch37/release-{latest_dir}/gtf/homo_sapiens/")
     genesets = sorted({int(g) for g in re.findall(r"Homo_sapiens\.GRCh37\.(\d+)\.gtf\.gz", listing)})
-    newer = [str(g) for g in genesets if g > max(have)]
-    return report("Ensembl GRCh37 (geneset)", str(max(have)), str(genesets[-1]), newer)
+    newer = [str(g) for g in genesets if g > have_latest]
+    return report("Ensembl GRCh37 (geneset)", str(have_latest), str(genesets[-1]), newer)
 
 
 def check_ensembl_t2t(config):
     have = [m.group(1) for u in source_urls(config, "ensembl", "T2T-CHM13v2.0")
             if (m := re.search(r"/geneset/(\d{4}_\d{2})/", u))]
+    have_latest = latest_configured(have)
     genesets = [d for d in list_dirs(ENSEMBL_T2T_GENESETS) if re.fullmatch(r"\d{4}_\d{2}", d)]
-    newer = [g for g in genesets if g > max(have)]
-    return report("Ensembl T2T (rapid release)", max(have), genesets[-1], newer)
+    newer = [g for g in genesets if g > have_latest]
+    return report("Ensembl T2T (rapid release)", have_latest, genesets[-1], newer)
 
 
 def check_refseq(config):
@@ -125,19 +139,21 @@ def check_refseq_historical(config):
     """ NCBI historical transcript alignments (#51), published separately from annotation releases """
     have = [m.group(1) for u in source_urls(config, "refseq", "GRCh38")
             if (m := re.search(r"/GCF_000001405\.40-(RS_\d{4}_\d{2})_historical/", u))]
+    have_latest = latest_configured(have)
     upstream = sorted(m.group(1) for d in list_dirs(NCBI_HISTORICAL_GRCH38)
                       if (m := re.fullmatch(r"GCF_000001405\.40-(RS_\d{4}_\d{2})_historical", d)))
-    newer = [r for r in upstream if r > max(have)]
-    return report("RefSeq GRCh38 historical", max(have), upstream[-1], newer)
+    newer = [r for r in upstream if r > have_latest]
+    return report("RefSeq GRCh38 historical", have_latest, upstream[-1], newer)
 
 
 def check_uta(config):
     have = sorted({s["uta"]["schema"] for c in config.values() for b in c.values() if b
                    for s in b.values() if s and "uta" in s})
+    have_latest = latest_configured(have)
     tags = [t["name"] for t in json.loads(fetch(UTA_DOCKER_TAGS))["results"]]
     schemas = sorted(t for t in tags if re.fullmatch(r"uta_\d{8}[a-z]?", t))
-    newer = [s for s in schemas if s[:12] > max(have)[:12]]
-    return report("UTA", max(have), schemas[-1], newer)
+    newer = [s for s in schemas if s[:12] > have_latest[:12]]
+    return report("UTA", have_latest, schemas[-1], newer)
 
 
 def check_gencode_mapping(config):
@@ -165,6 +181,9 @@ def main():
     for check in checks:
         try:
             found_new |= check(config)
+        except NoSourcesConfigured:
+            found_new = True
+            print(f"{check.__name__:<28} no sources configured in cdot_transcripts.yaml")
         except Exception as e:
             found_new = True
             print(f"{check.__name__:<28} ERROR {e!r} (check the listing by hand)")
