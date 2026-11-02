@@ -7,13 +7,11 @@ import logging
 import os
 from argparse import ArgumentParser
 from datetime import datetime
-from typing import Iterable, Iterator, List, TypeVar
 
 from Bio import Entrez
 from generate_transcript_data.json_encoders import SortedSetEncoder
 from generate_transcript_data.json_schema_version import JSON_SCHEMA_VERSION
-
-T = TypeVar("T")
+from generate_transcript_data.utils import batch_iterator
 
 
 def handle_args():
@@ -24,17 +22,6 @@ def handle_args():
 
     args = parser.parse_args()
     return args
-
-
-def batch_iterator(iterable: Iterable[T], batch_size: int = 10) -> Iterator[List[T]]:
-    batch: List[T] = list()
-    for record in iterable:
-        batch.append(record)
-        if len(batch) >= batch_size:
-            yield batch
-            batch = list()
-    if batch:
-        yield batch
 
 
 def _get_entrez_gene_summary(id_list, attempts: int = 3):
@@ -62,6 +49,7 @@ def iter_entrez_ids(reader):
     for gi in reader:
         if gi["Symbol_from_nomenclature_authority"] != '-':
             yield gi['GeneID']
+
 
 def main():
     args = handle_args()

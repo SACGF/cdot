@@ -28,7 +28,9 @@ def _setup_arg_parser():
     parser = ArgumentParser(description='cdot JSON manipulation tools')
     parser.add_argument('--version', action='store_true', help='show version number')
 
-    subparsers = parser.add_subparsers(dest='subcommand', help='TODO sub-command help')
+    subparsers = parser.add_subparsers(dest='subcommand',
+                                       help="Convert an annotation source to cdot JSON, or merge/combine/describe "
+                                            "cdot JSON files. See '<sub-command> --help'")
     parser_gtf = subparsers.add_parser("gtf_to_json", help="Convert GTF to JSON")
     parser_gtf.add_argument("gtf_filename", help="GTF to convert to JSON")
 
@@ -188,43 +190,28 @@ def add_canonical_transcripts(gene_canonical_transcripts_csv: str, genome_build:
                                 build_data["tag"] = ",".join(tag_list)
 
 
-def _gff_arg_check(args):
-    if args.no_contig_conversion:
-        logging.warning(f"Skipping chrom/contig conversion. File won't work with Biocommons HGVS")
-
-
 def gtf_to_json(args):
-    _gff_arg_check(args)
-    parser = GTFParser(args.gtf_filename, args.genome_build, args.url,
-                       discard_contigs_with_underscores=not args.keep_contigs_with_underscores,
-                       no_contig_conversion=args.no_contig_conversion,
-                       skip_missing_parents=args.skip_missing_parents,
-                       annotation_consortium=args.annotation_consortium)
-    print(f"Using {parser.consortium.name} annotation conventions")
-    genes, transcripts = parser.get_genes_and_transcripts()
-    refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
-    add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
-    add_canonical_transcripts(args.gene_canonical_transcripts_csv, args.genome_build, transcripts)
-    method = "Single GTF file"
-    write_cdot_json(args.output, method, [args.gtf_filename],
-                    genes, transcripts, [args.genome_build],
-                    refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
+    _gff_to_json(args, GTFParser, args.gtf_filename, "Single GTF file")
 
 
 def gff3_to_json(args):
-    _gff_arg_check(args)
-    parser = GFF3Parser(args.gff3_filename, args.genome_build, args.url,
-                        discard_contigs_with_underscores=not args.keep_contigs_with_underscores,
-                        no_contig_conversion=args.no_contig_conversion,
-                        skip_missing_parents=args.skip_missing_parents,
-                       annotation_consortium=args.annotation_consortium)
+    _gff_to_json(args, GFF3Parser, args.gff3_filename, "Single GFF3 file")
+
+
+def _gff_to_json(args, parser_class, filename, method):
+    if args.no_contig_conversion:
+        logging.warning("Skipping chrom/contig conversion. File won't work with Biocommons HGVS")
+    parser = parser_class(filename, args.genome_build, args.url,
+                          discard_contigs_with_underscores=not args.keep_contigs_with_underscores,
+                          no_contig_conversion=args.no_contig_conversion,
+                          skip_missing_parents=args.skip_missing_parents,
+                          annotation_consortium=args.annotation_consortium)
     print(f"Using {parser.consortium.name} annotation conventions")
     genes, transcripts = parser.get_genes_and_transcripts()
     refseq_gene_summary_api_retrieval_date = add_gene_info(args.gene_info_json, genes)
     add_gencode_hgnc(args.gencode_hgnc_metadata, genes, transcripts)
     add_canonical_transcripts(args.gene_canonical_transcripts_csv, args.genome_build, transcripts)
-    method = "Single GFF3 file"
-    write_cdot_json(args.output, method, [args.gff3_filename],
+    write_cdot_json(args.output, method, [filename],
                     genes, transcripts, [args.genome_build],
                     refseq_gene_summary_api_retrieval_date=refseq_gene_summary_api_retrieval_date)
 

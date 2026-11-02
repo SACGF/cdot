@@ -5,11 +5,7 @@
 # This is not in GTF, in Gencode metadata
 # Also not in MySQL database (transcript column is_canonical or canonical attributes not present in GRCh37)
 # GRCh37 is not being updated so we can just do this once and store it.
-import csv
-import gzip
-import json
-import logging
-from argparse import ArgumentParser
+#
 # The best way I have found to get it is Ensembl REST
 # https://grch37.rest.ensembl.org/lookup/ENSG00000159216?content-type=application/json
 #
@@ -31,23 +27,18 @@ from argparse import ArgumentParser
 #   "logic_name": "ensembl_havana_gene_homo_sapiens_37",
 #   "description": "runt-related transcription factor 1 [Source:HGNC Symbol;Acc:10471]"
 # }
-
-
-from typing import Iterable, TypeVar, Iterator
-
-T = TypeVar("T")
-
-def batch_iterator(iterable: Iterable[T], batch_size: int = 100) -> Iterator[list[T]]:
-    batch: list[T] = []
-    for record in iterable:
-        batch.append(record)
-        if len(batch) >= batch_size:
-            yield batch
-            batch = []
-    if batch:
-        yield batch
+import csv
+import gzip
+import json
+import logging
+from argparse import ArgumentParser
 
 import requests
+
+from generate_transcript_data.utils import batch_iterator
+
+ENSEMBL_BATCH_SIZE = 100  # Gene IDs per REST request
+
 
 def fetch_canonical_transcripts(gene_list: list[str]) -> dict[str, str]:
     url = "https://grch37.rest.ensembl.org/lookup/id"
@@ -91,7 +82,7 @@ if __name__ == '__main__':
         writer = csv.writer(f)
         writer.writerow(["gene_id", "canonical_transcript"])
 
-        for gene_list in batch_iterator(genes):
+        for gene_list in batch_iterator(genes, batch_size=ENSEMBL_BATCH_SIZE):
             num_gene_requests += len(gene_list)
             canonical_map = fetch_canonical_transcripts(gene_list)
             for gene_id, transcript_id in canonical_map.items():
