@@ -13,6 +13,7 @@
 - #181 - `FastaSeqFetcher` without pysam gives a helpful `ImportError` on construction
 - #206 - Version fallback gives a versionless transcript a version (`NM_000059:c.36del` → `NM_000059.4:c.36del`) when all held versions agree at that position (`RESOLVED_VERSIONLESS_TRANSCRIPT`), otherwise refuses
 - #215 - HGVS cleaning reports a kind that doesn't fit the accession (`NC_000013.11:c.68del`, `NM_000059.4:n.…`) as an ERROR, `KIND_REFERENCE_MISMATCH`. With a data provider, `fix_hgvs` also checks `c.`/`n.` against whether the transcript is coding (Ensembl, and gene resolution)
+- #217 - Gene resolution handles `p.` (`BRCA2:p.Arg10Gly` → the MANE transcript's protein, `RESOLVED_GENE_TO_PROTEIN`) and `r.`. A gene symbol with `g.`/`m.` is a `KIND_REFERENCE_MISMATCH` ERROR
 
 ### Changed
 

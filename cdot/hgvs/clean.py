@@ -82,6 +82,7 @@ class HGVSFixCode(Enum):
     RESOLVED_VERSIONLESS_TRANSCRIPT = "resolved_versionless_transcript"
     # Gene → transcript resolution (WARNING on success, ERROR on failure)
     RESOLVED_GENE_TO_TRANSCRIPT  = "resolved_gene_to_transcript"
+    RESOLVED_GENE_TO_PROTEIN     = "resolved_gene_to_protein"  # gene-only p. HGVS
     NO_TRANSCRIPT_FOR_GENE       = "no_transcript_for_gene"
     SKIPPED_GENE_RESOLUTION      = "skipped_gene_resolution"  # WARNING: fix_hgvs got no genome_build
     # Accession prefix restoration for a bare-number accession, verified against
@@ -574,6 +575,16 @@ def _kinds_for_reference(accession: str) -> Optional[tuple[str, str]]:
 _N_ON_CODING = ": n. counts from the transcript start, not the start codon"
 
 
+_GENE_SYMBOL = re.compile(r"[A-Za-z][A-Za-z0-9-]*")
+
+
+def _looks_like_gene_symbol(reference: str) -> bool:
+    """ True if reference could be a gene symbol: not an accession and not a chromosome name
+        ("chr19"), which a g. position can sit on. """
+    return (bool(_GENE_SYMBOL.fullmatch(reference)) and not _looks_like_hgvs_prefix(reference.upper())
+            and not re.fullmatch(_CHROM_NAME, reference, re.IGNORECASE))
+
+
 def _or_list(items: list[str]) -> str:
     """ "a", "a or b", "a, b or c" """
     return " or ".join([", ".join(items[:-1]), items[-1]] if len(items) > 2 else items)
@@ -610,6 +621,13 @@ def _validate(s: str) -> list[HGVSFix]:
                          f"'{parts.kind}.' (use {_or_list([k + '.' for k in kinds])})"
                          + (_N_ON_CODING if parts.kind == "n" and "c" in kinds else "")),
             ))
+    elif parts and parts.kind in ("g", "m") and _looks_like_gene_symbol(parts.reference):
+        fixes.append(HGVSFix(
+            severity=HGVSFixSeverity.ERROR,
+            code=HGVSFixCode.KIND_REFERENCE_MISMATCH,
+            message=(f"{parts.reference} looks like a gene symbol, so it can't take '{parts.kind}.': "
+                     f"{parts.kind}. positions are on a genomic accession (eg NC_000013.11)"),
+        ))
     if _MISSING_REFERENCE.match(s):
         fixes.append(HGVSFix(
             severity=HGVSFixSeverity.ERROR,

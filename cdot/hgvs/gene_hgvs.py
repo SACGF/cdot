@@ -116,9 +116,9 @@ def _parse_gene_only_hgvs(hgvs_string: str) -> tuple[Optional[str], Optional[str
     Return (gene_symbol, allele) if hgvs_string is gene-only HGVS (no transcript),
     or (None, None) if it already contains a transcript accession.
 
-    Gene-only HGVS: a c. or n. allele, and the part before ':' is not an accession
-    and contains no parentheses (e.g. "BRCA2:c.36del"). Genomic and protein HGVS
-    ("NC_000013.11:g.32316528del") are not gene-only.
+    Gene-only HGVS: a c., n., r. or p. allele, and the part before ':' is not an
+    accession and contains no parentheses (e.g. "BRCA2:c.36del", "BRCA2:p.Arg10Gly").
+    Genomic HGVS ("NC_000013.11:g.32316528del", "BRCA2:g.…") is not gene-only.
     """
     if ":" not in hgvs_string:
         return None, None
@@ -126,7 +126,7 @@ def _parse_gene_only_hgvs(hgvs_string: str) -> tuple[Optional[str], Optional[str
     # Parentheses mean a transcript(gene) pair — already has a transcript
     if "(" in prefix or ")" in prefix:
         return None, None
-    if not allele.startswith(("c.", "n.")):
+    if not allele.startswith(("c.", "n.", "r.", "p.")):
         return None, None
     # _looks_like_hgvs_prefix is case-sensitive; uppercase so a lowercase accession
     # (e.g. "enst00000617537.5" / "nm_000059.4") is recognised and passed through
@@ -353,7 +353,8 @@ def resolve_gene_hgvs(
 ) -> tuple[str, list[HGVSFix]]:
     """
     If hgvs_string contains a gene symbol but no transcript (e.g. "BRCA2:c.36del"),
-    look up the best available transcript from data_provider and substitute it.
+    look up the best available transcript from data_provider and substitute it. For
+    a protein change ("BRCA2:p.Arg10Gly") the chosen transcript's protein is used.
 
     This is a thin wrapper over :func:`rank_transcripts_for_gene`: it takes the
     top-ranked transcript, applies the fallback_to_longest policy, and rewrites
@@ -436,6 +437,25 @@ def resolve_gene_hgvs(
         best_tx, length_verified = _longest_transcript(data_provider, ranked)
         tag_desc = (" (longest transcript, no canonical tag)" if length_verified
                     else " (first transcript returned by the data provider, no canonical tag)")
+    if allele.startswith("p."):
+        # A protein change goes on the chosen transcript's protein
+        if not (protein := data_provider.get_pro_ac_for_tx_ac(best_tx)):
+            fixes.append(HGVSFix(
+                severity=HGVSFixSeverity.ERROR,
+                code=HGVSFixCode.NO_TRANSCRIPT_FOR_GENE,
+                message=(f"Gene symbol '{gene_symbol}' resolved to {best_tx}{tag_desc}, which has no "
+                         f"protein, so a p. change can't be placed on it"),
+            ))
+            return hgvs_string, fixes
+        fixes.append(HGVSFix(
+            severity=HGVSFixSeverity.WARNING,
+            code=HGVSFixCode.RESOLVED_GENE_TO_PROTEIN,
+            message=f"Resolved gene symbol '{gene_symbol}' to {protein}, the protein of {best_tx}{tag_desc}",
+            original=gene_symbol,
+            fixed=protein,
+        ))
+        return f"{protein}:{allele}", fixes
+
     resolved = f"{best_tx}:{allele}"
     fixes.append(HGVSFix(
         severity=HGVSFixSeverity.WARNING,

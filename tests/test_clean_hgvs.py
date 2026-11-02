@@ -1363,3 +1363,18 @@ def test_kind_reference_mismatch(hgvs_string, message):
 def test_kind_reference_match(hgvs_string):
     _cleaned, fixes = clean_hgvs(hgvs_string)
     assert C.KIND_REFERENCE_MISMATCH not in codes(fixes)
+
+
+@pytest.mark.parametrize("hgvs_string", ["BRCA2:g.32316528del", "brca2:g.32316528del", "MT-ND1:m.3460G>A"])
+def test_gene_symbol_with_genomic_kind(hgvs_string):
+    gene, kind = hgvs_string.split(":")[0], hgvs_string.split(":")[1][0]
+    _cleaned, fixes = clean_hgvs(hgvs_string)
+    assert [(f.severity, f.code, f.message) for f in fixes] == [(
+        E, C.KIND_REFERENCE_MISMATCH,
+        f"{gene} looks like a gene symbol, so it can't take '{kind}.': {kind}. positions are on a "
+        f"genomic accession (eg NC_000013.11)")]
+
+
+def test_chromosome_name_with_genomic_kind_not_a_gene_symbol():
+    _cleaned, fixes = clean_hgvs("chr13:g.32316528del")
+    assert C.KIND_REFERENCE_MISMATCH not in codes(fixes)
