@@ -675,7 +675,7 @@ def _resolve_versionless_transcript(
         )]
 
     differ = (f"{len(disagreeing)} of the {len(records) - 1} other versions held{in_build} "
-              f"differ from .{best} at this position: {', '.join(disagreeing)}")
+              f"{'differs' if len(disagreeing) == 1 else 'differ'} from .{best} at this position: {', '.join(disagreeing)}")
     if on_unsafe_version == UnsafeVersionPolicy.SUBSTITUTE:
         return resolved, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
