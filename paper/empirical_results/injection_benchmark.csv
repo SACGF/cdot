@@ -12,9 +12,9 @@ Doubled version dot (`NM_000059..4:c.68del`),200,100%,0%,0%,0%
 Leading junk (`GRCh38.p2 NM_000059.4:c.68del`),200,100%,0%,0%,0%
 Doubled kind (`NM_000059.4:c.c.68del`),200,100%,0%,0%,0%
 Lowercased accession (`nm_000059.4:c.68del`),200,100%,52.0%,94.0%,35.5%
-Redundant del/dup count (`c.68_69del23`),77,100%,0%,0%,0%
+Redundant del/dup count (`c.68_69del2`),77,100%,27.3%,27.3%,26.0%
 Missing accession underscore (`NM000059.4:c.68del`),200,100%,0%,0%,0%
 Colon in accession prefix (`NM:_000059.4:c.68del`),200,100%,0%,0%,0%
 Uppercased mutation type (`c.68DEL`),142,100%,100%,94.4%,0%
 Dropped accession letter (`M_000059.4:c.68del`),200,100%,0%,0%,0%
-**Total**,"**3,419**",**100.0%**,**33.0%**,**37.7%**,**12.5%**
+**Total**,"**3,419**",**100.0%**,**33.6%**,**38.3%**,**13.1%**

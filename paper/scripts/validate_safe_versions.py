@@ -13,7 +13,9 @@ the safe-version-fallback feature.
 Consumes the per-variant table from resolve_clinvar_pass.py (paper infra A1): its
 `converted_g` IS the under-V resolution (so V is not re-resolved here), and `tx` /
 `version` give the candidate. For each safe W != V we resolve the same variant under
-W and compare to that stored V coordinate.
+W and compare to that stored V coordinate. A VCF-format pass table (``converted_g`` is
+``chrom-pos-ref-alt``) is compared as a VCF tuple via Babelfish, a g.HGVS-string table
+as a g.HGVS string.
 
 Headline fact: N safe substitutions tested, K coordinate changes (expect K = 0).
 Any K > 0 is a real bug in the safety check to chase. Written to
@@ -41,9 +43,10 @@ from pathlib import Path
 import pandas as pd
 import hgvs.parser
 from hgvs.assemblymapper import AssemblyMapper
+from hgvs.extras.babelfish import Babelfish
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from benchmark_resolution import build_provider, classify  # noqa: E402
+from benchmark_resolution import build_provider, classify, classify_vcf  # noqa: E402
 from cdot.hgvs.gene_hgvs import _cited_position  # noqa: E402
 from cdot.hgvs.version_safety import is_version_substitution_safe_by_accession  # noqa: E402
 
@@ -87,6 +90,8 @@ def main():
     am = AssemblyMapper(provider, assembly_name=args.build, alt_aln_method="splign",
                         replace_reference=False)
     hp = hgvs.parser.Parser()
+    vcf_table = not rows.empty and not rows["converted_g"].iloc[0].startswith("NC_")
+    bf = Babelfish(provider, args.build) if vcf_table else None
 
     versions_cache = {}
 
@@ -118,7 +123,11 @@ def main():
                 continue
             agg["safe_subs"] += 1
             # V side reused from the table; resolve only the W side and compare.
-            bucket, w_coord = classify(am, hp, v_coord, under_version(row["c_hgvs"], tx, w))
+            c_w = under_version(row["c_hgvs"], tx, w)
+            if bf:
+                bucket, w_coord = classify_vcf(am, hp, bf, v_coord.split("-", 3), c_w)
+            else:
+                bucket, w_coord = classify(am, hp, v_coord, c_w)
             if w_coord is None:
                 agg["unresolved_under_w"] += 1
                 continue

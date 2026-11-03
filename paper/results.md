@@ -166,7 +166,7 @@ At scale, a single local-JSON process resolved the full set of
 {{ benchmark_fullscale.n_pairs | commas }} unique ClinVar (g.HGVS, c.HGVS) pairs in
 ~{{ benchmark_fullscale.wall_min | int }} minutes,
 {{ benchmark_fullscale.resolved_pct | dp(1) }}% producing a genomic coordinate. A
-hot-cache repeat gave {{ benchmark_fullscale.hot_tps | int }} HGVS/s, within 1% of the
+hot-cache repeat gave {{ benchmark_fullscale.hot_tps | int }} HGVS/s, about 1% from the
 cold pass ({{ benchmark_fullscale.cold_tps | int }} HGVS/s), so the state of the
 sequence cache is not the bound either. The same exhaustive pass against the public
 remote UTA database extrapolates to close to a year.
@@ -206,15 +206,15 @@ share of the {{ cleaning_corpus.rescued | commas }} rescued queries. Categories 
 
 | Fix category | Example (→ repaired) | Rescued queries | % of rescued |
 |---|---|---|---|
-| Whitespace / non-printable removal | `NM_000059.4: c.1A>G` → `NM_000059.4:c.1A>G` | 664 | 38.6% |
-| Structural-punctuation repair | `NM_000059.4;c.1A>G` → `NM_000059.4:c.1A>G` | 640 | 37.2% |
-| Gene/transcript-wrapper repair | `BRCA2(NM_000059.4):c.1A>G` → `NM_000059.4(BRCA2):c.1A>G` | 260 | 15.1% |
-| Structure reconstruction | `NM_000059.4c.1A>G` → `NM_000059.4:c.1A>G` | 248 | 14.4% |
-| Protein-suffix stripping | `NM_000059.4:c.1A>G p.(Met1?)` → `NM_000059.4:c.1A>G` | 130 | 7.6% |
-| Genomic-ref-in-parens removal | `NM_000059.4(NC_000013.11):c.68del` → `NM_000059.4:c.68del` | 57 | 3.3% |
-| Base re-casing | `NM_000059.4:c.1delg` → `…delG` | 42 | 2.4% |
+| Structural-punctuation repair | `NM_000059.4;c.1A>G` → `NM_000059.4:c.1A>G` | 690 | 37.7% |
+| Whitespace / non-printable removal | `NM_000059.4: c.1A>G` → `NM_000059.4:c.1A>G` | 663 | 36.3% |
+| Gene/transcript-wrapper repair | `BRCA2(NM_000059.4):c.1A>G` → `NM_000059.4(BRCA2):c.1A>G` | 287 | 15.7% |
+| Structure reconstruction | `NM_000059.4c.1A>G` → `NM_000059.4:c.1A>G` | 243 | 13.3% |
+| Protein-suffix stripping | `NM_000059.4:c.1A>G p.(Met1?)` → `NM_000059.4:c.1A>G` | 139 | 7.6% |
+| Genomic-ref-in-parens removal | `NM_000059.4(NC_000013.11):c.68del` → `NM_000059.4:c.68del` | 57 | 3.1% |
+| Prefix / kind restoration | `NM.000059.4:c.1A>G` → `NM_000059.4:c.1A>G` | 47 | 2.6% |
+| Base re-casing | `NM_000059.4:c.1delg` → `…delG` | 42 | 2.3% |
 | Other (del/dup count, mutation-type case, …) | `NM_000059.4:c.1_2del2` → `…del` | 11 | 0.6% |
-| Prefix / kind restoration | `NM_000059.4:1A>G` → `NM_000059.4:c.1A>G` | 4 | 0.2% |
 | Accession prefix restoration (provider-verified) | `000059.4:c.68del` → `NM_000059.4:c.68del` | 1 | 0.1% |
 | **Total unique queries rescued** | | **{{ cleaning_corpus.rescued | commas }}** | **100%** |
 
@@ -235,8 +235,8 @@ data-collection artifact and is excluded from the corpus above. The remaining
 queries) of genuine HGVS-shaped input that still fails to parse after cleaning defines
 the ceiling of pure string repair. Classified under a fixed decision-tree taxonomy
 (Supplementary Table S6), well over half is incomplete or reference-less input that no
-string-level repair can invent, about a third is in principle fixable and marks the
-frontier for future cleaning rules, and the remaining ~8% is valid HGVS the biocommons
+string-level repair can invent, about a quarter is in principle fixable and marks the
+frontier for future cleaning rules, and the remaining ~9% is valid HGVS the biocommons
 grammar rejects.
 
 ## R5: Transcript version substitution and coordinate safety

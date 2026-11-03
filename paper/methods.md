@@ -158,7 +158,7 @@ two or more versions; the same run bins preserved coding bases by relative CDS p
 
 The submitted-string corpus (Results R2) is built by
 `build_clinvar_submitted_pairs.py` from the per-submission HGVS attributes of a ClinVar
-VCV XML release (ClinVarVCVRelease_2026-06): each SCV's first transcript c./n.
+VCV XML release (ClinVarVCVRelease_2026-10): each SCV's first transcript c./n.
 expression is joined verbatim to the variant's VCF coordinate via its AlleleID and
 collapsed to unique (AlleleID, string) pairs, each tagged with the earliest SCV
 submission date (Supplementary Methods). Scoring uses the VCF coordinate rather than
