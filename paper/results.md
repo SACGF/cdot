@@ -204,19 +204,9 @@ share of the {{ cleaning_corpus.rescued | commas }} rescued queries. Categories 
 (a single query may need several fixes), so the counts sum to more than the total.
 *(Private data; frozen constants.)*
 
-| Fix category | Example (→ repaired) | Rescued queries | % of rescued |
-|---|---|---|---|
-| Structural-punctuation repair | `NM_000059.4;c.1A>G` → `NM_000059.4:c.1A>G` | 690 | 37.7% |
-| Whitespace / non-printable removal | `NM_000059.4: c.1A>G` → `NM_000059.4:c.1A>G` | 663 | 36.3% |
-| Gene/transcript-wrapper repair | `BRCA2(NM_000059.4):c.1A>G` → `NM_000059.4(BRCA2):c.1A>G` | 287 | 15.7% |
-| Structure reconstruction | `NM_000059.4c.1A>G` → `NM_000059.4:c.1A>G` | 243 | 13.3% |
-| Protein-suffix stripping | `NM_000059.4:c.1A>G p.(Met1?)` → `NM_000059.4:c.1A>G` | 139 | 7.6% |
-| Genomic-ref-in-parens removal | `NM_000059.4(NC_000013.11):c.68del` → `NM_000059.4:c.68del` | 57 | 3.1% |
-| Prefix / kind restoration | `NM.000059.4:c.1A>G` → `NM_000059.4:c.1A>G` | 47 | 2.6% |
-| Base re-casing | `NM_000059.4:c.1delg` → `…delG` | 42 | 2.3% |
-| Other (del/dup count, mutation-type case, …) | `NM_000059.4:c.1_2del2` → `…del` | 11 | 0.6% |
-| Accession prefix restoration (provider-verified) | `000059.4:c.68del` → `NM_000059.4:c.68del` | 1 | 0.1% |
-| **Total unique queries rescued** | | **{{ cleaning_corpus.rescued | commas }}** | **100%** |
+<!-- include-csv: empirical_results/cleaning_fix_categories.csv
+  {align: left, na_rep: ""}
+-->
 
 As a control, `paper/scripts/inject_and_clean.py` injects each `clean_hgvs()` fix
 category into a seeded sample of clean, parseable ClinVar c.HGVS strings and confirms

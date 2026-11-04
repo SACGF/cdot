@@ -86,7 +86,9 @@ corpus instead uses the per-SCV HGVS attributes of the VCV XML (submitted string
 verbatim), joined to the ClinVar VCF coordinate via AlleleID, and tags each pair with
 the earliest SCV submission date so it can be sampled by era. The corpus (built from a
 ClinVar XML download) is not committed, but a 500-pair seed-42 random sample is
-(`tests/test_data/clinvar_hgvs/clinvar_submitted_500.tsv`).
+(`tests/test_data/clinvar_hgvs/clinvar_submitted_500.tsv`). Nothing reads it for a
+reported number, so it was drawn once (2026-08, ClinVarVCVRelease_2026-06) and is not redrawn with each ClinVar
+release.
 
 The cdot-vs-UTA head-to-head is run over the **whole** corpus (no sampling) and broken
 down by submission-year era (`era_*` columns); a committed 500-pair random sample
@@ -185,6 +187,12 @@ python paper/scripts/resolve_clinvar_pass.py clinvar_pairs.GRCh38.tsv \
     --json cdot-0.2.36.refseq.GRCh38.json.gz --out /dev/null   # x2 (discard 1st)
 ```
 
+Single timed passes vary by several percent between days on this VM (below), so the next
+measurement should use `paper/scripts/measure_fullscale.py`, which runs the same pass in
+fresh processes, one warm-up plus `--runs` timed (default 3), and writes this CSV with the
+mean `hot_tps` and its range (`hot_tps_min`, `hot_tps_max`, `n_runs`). The current values
+are from one warm-up and one timed pass.
+
 `n_pairs` 4,583,798; `resolved_pct` 99.4; `cold_tps` 606 HGVS/s (first pass, wall
 7570 s); `hot_tps` 603 HGVS/s (timed pass, wall 7603 s), under 1% apart, so full-scale
 local-JSON throughput is not sequence-cache-limited. The same protocol on cdot 0.2.35
@@ -193,10 +201,11 @@ client: 0.2.35 and 0.2.36 run alternately over the first 100,000 pairs gave 793 
 795 / 782 HGVS/s. The controlled backend comparison
 (local JSON vs prefetched REST) stays in Table 1 / `benchmark.csv`.
 
-## injection_benchmark.csv, residual_taxonomy.csv (table CSVs, not facts)
+## injection_benchmark.csv, residual_taxonomy.csv, cleaning_fix_categories.csv (table CSVs, not facts)
 
 Multi-row table CSVs rendered inline by the `<!-- include-csv: ... -->` directive in
-`supplementary.md` (Tables S5 and S6), so the numbers live in a CSV rather than hardcoded
+`supplementary.md` (Tables S5 and S6) and `results.md` (Table 2, frozen with
+`cleaning_corpus.csv`), so the numbers live in a CSV rather than hardcoded
 in the markdown. `vibepaper`'s fact loader skips multi-row CSVs, so these are not `{{ }}`
 facts; edit the CSV to change the table.
 
@@ -249,7 +258,8 @@ whitespace `STRIPPED_WHITESPACE`; structural punctuation `FIXED_SEPARATOR_TYPO`,
 `ADDED_TRANSCRIPT_UNDERSCORE`; plus the one provider-verified restoration. The Table S6
 taxonomy is an LLM classification, refreshed by delta re-rating only the residual
 queries a new release rescues (Supplementary Table S6). Refresh by re-running the
-procedure above and editing this CSV, `results.md` Table 2 and `residual_taxonomy.csv`.
+procedure above and editing this CSV, `cleaning_fix_categories.csv` (Table 2) and
+`residual_taxonomy.csv`.
 
 ## historical.csv (frozen, Tier 2)
 
@@ -299,6 +309,12 @@ coordinate exactly. `clinvar_vcf_residual.csv` breaks the 1,850 incorrect rows d
 cause with `paper/scripts/categorize_vcf_residual.py` (pairs TSV plus the pass table;
 first matching rule wins: identity or symbolic ALT, IUPAC ambiguity code at the same
 position, cdot allele over 10 bases longer than ClinVar's, ClinVar SNV, other indel). Analysis writeup: `paper/notes/clinvar_diff_coordinates.md`.
+`--examples-out` writes the first 20 rows of each category to
+`clinvar_vcf_residual_examples.csv` (public ClinVar data) for inspecting by hand. Of the 68
+`ambiguity_code_allele` rows, ClinVar's VCF writes the ALT as N in all of them, and 57 are
+on minus-strand transcripts where cdot's ALT also differs from ClinVar's g.HGVS: bioutils
+`reverse_complement` leaves IUPAC codes uncomplemented, so c.315G>Y maps to g.C>Y, not
+g.C>R.
 
 ## clinvar_residual_positions.csv (frozen)
 

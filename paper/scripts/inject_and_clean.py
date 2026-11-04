@@ -229,7 +229,8 @@ def inj_dropped_del_dup_count(orig, gene):
     if not _RANGED_DEL_DUP.search(orig):
         return None
     # Redundant base count after a ranged del/dup. clean_hgvs refuses a count that
-    # contradicts a checkable range, so use the range length where it is plain.
+    # contradicts a plain range, so use the range length there. An intronic or UTR
+    # range (c.100+1_100+5del) can't be checked, so any count is dropped; 23 is arbitrary.
     count = 23
     if m := re.search(r"(\d+)_(\d+)(?:del|dup)$", orig):
         count = int(m.group(2)) - int(m.group(1)) + 1
