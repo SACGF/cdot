@@ -1,5 +1,10 @@
 ## [unreleased]
 
+### Fixed
+
+- #230 - Positions on alignments whose first transcript bases don't align (eg `NM_000274.1`) resolved shifted by that many bases
+- #230 - `FastaSeqFetcher` placed alignment gaps mirrored within minus-strand exons
+
 ## [0.2.35] - 2026-11-02
 
 ### Added

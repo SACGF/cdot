@@ -154,8 +154,11 @@ class ExonsFromGenomeFastaSeqFetcher(AbstractTranscriptSeqFetcher):
 
             exon_seq_list = []
             start = 0
-            # We are using HGVS cigar
-            for (length_str, op) in self._CIGAR_PATTERN.findall(exon["cigar"]):
+            # HGVS CIGARs are in transcript order: walk them in genomic order along the exon
+            cigar_ops = self._CIGAR_PATTERN.findall(exon["cigar"])
+            if exon["alt_strand"] == -1:
+                cigar_ops.reverse()
+            for (length_str, op) in cigar_ops:
                 length = int(length_str)
                 if op == 'D':    # Deletion in reference vs transcript
                     exon_seq_list.append("N" * length)

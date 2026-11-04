@@ -287,6 +287,15 @@ class AbstractJSONDataProvider(Interface):
             }
             tx_exons.append(exon_data)
 
+        # A partial alignment can leave the first transcript bases unaligned, so the 5' exon starts
+        # after transcript position 0. biocommons builds transcript coordinates from the exon CIGARs
+        # starting at 0, so give those bases to the 5' exon as a leading transcript-only (D) op
+        # (CIGARs are in transcript order on both strands).
+        first_exon = min(tx_exons, key=lambda e: e["tx_start_i"])
+        if unaligned := first_exon["tx_start_i"]:
+            first_exon["cigar"] = f"{unaligned}D" + first_exon["cigar"]
+            first_exon["tx_start_i"] = 0
+
         self._tx_exons_cache[cache_key] = tx_exons
         if len(self._tx_exons_cache) > self.TX_EXONS_CACHE_SIZE:
             self._tx_exons_cache.popitem(last=False)
