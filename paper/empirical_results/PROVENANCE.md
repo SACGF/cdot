@@ -311,10 +311,11 @@ first matching rule wins: identity or symbolic ALT, IUPAC ambiguity code at the 
 position, cdot allele over 10 bases longer than ClinVar's, ClinVar SNV, other indel). Analysis writeup: `paper/notes/clinvar_diff_coordinates.md`.
 `--examples-out` writes the first 20 rows of each category to
 `clinvar_vcf_residual_examples.csv` (public ClinVar data) for inspecting by hand. Of the 68
-`ambiguity_code_allele` rows, ClinVar's VCF writes the ALT as N in all of them, and 57 are
-on minus-strand transcripts where cdot's ALT also differs from ClinVar's g.HGVS: bioutils
-`reverse_complement` leaves IUPAC codes uncomplemented, so c.315G>Y maps to g.C>Y, not
-g.C>R.
+`ambiguity_code_allele` rows, ClinVar's VCF writes the ALT with N in all of them. 27 cite an
+R/Y/K/M/B/V/D/H code in the c.HGVS; the 16 of those on minus-strand transcripts are also
+wrong against ClinVar's g.HGVS, because bioutils `reverse_complement` leaves ambiguity
+codes uncomplemented (c.315G>Y maps to g.C>Y, not g.C>R; biocommons/bioutils#121). The other 41 are long
+insertions holding N runs.
 
 ## clinvar_residual_positions.csv (frozen)
 
