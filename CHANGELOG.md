@@ -1,5 +1,7 @@
 ## [unreleased]
 
+## [0.2.36] - 2026-11-04
+
 ### Fixed
 
 - #230 - Positions on alignments whose first transcript bases don't align (eg `NM_000274.1`) resolved shifted by that many bases
