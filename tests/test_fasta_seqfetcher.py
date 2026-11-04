@@ -161,6 +161,7 @@ PADDED_TRANSCRIPTS = {
     "NM_000001.1": ("+", [[10, 30, 0, 1, 22, "M10 I2 M10"], [40, 60, 1, 23, 42, None]]),
     "NM_000002.1": ("-", [[10, 30, 0, 1, 22, "M5 I2 M15"]]),
     "NM_000003.1": ("+", [[10, 30, 0, 4, 23, None]]),
+    "NM_000004.1": ("-", [[10, 30, 0, 4, 23, None]]),
 }
 
 
@@ -187,7 +188,7 @@ def _assembly_mapper(hdp):
 
 
 @pytest.mark.parametrize("ac, positions", [
-    ("NM_000001.1", "n.11_12"), ("NM_000002.1", "n.16_17"), ("NM_000003.1", "n.1_3"),
+    ("NM_000001.1", "n.11_12"), ("NM_000002.1", "n.6_7"), ("NM_000003.1", "n.1_3"),
 ])
 def test_slice_with_padding_raises(padded_files, ac, positions):
     fasta_filename, json_filename = padded_files
@@ -239,3 +240,18 @@ def test_indel_normalized_into_padding_raises(padded_files):
     assert str(am.c_to_g(parser.parse("NM_000001.1:c.30G>A"))) == "NC_000011.9:g.48G>A"
     with pytest.raises(GenomeMismatchError):
         am.c_to_g(parser.parse("NM_000001.1:c.11A>G"))
+
+
+@pytest.mark.parametrize("ac, n_pos, g_pos", [
+    ("NM_000003.1", 4, 11), ("NM_000003.1", 23, 30),
+    ("NM_000004.1", 4, 30), ("NM_000004.1", 23, 11),
+])
+def test_unaligned_transcript_start_maps(padded_files, ac, n_pos, g_pos):
+    """ The first 3 transcript bases do not align, so n.4 is the first genomic base """
+    from hgvs.alignmentmapper import AlignmentMapper
+    from hgvs.parser import Parser
+    _, json_filename = padded_files
+    hdp = _hdp(json_filename, StaticSeqFetcher())
+    interval = Parser().parse_n_interval(str(n_pos))
+    g_interval = AlignmentMapper(hdp, ac, CONTIG, "splign").n_to_g(interval)
+    assert (g_interval.start.base, g_interval.end.base) == (g_pos, g_pos)
