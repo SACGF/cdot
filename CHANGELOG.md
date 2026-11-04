@@ -4,6 +4,7 @@
 
 - #230 - Positions on alignments whose first transcript bases don't align (eg `NM_000274.1`) resolved shifted by that many bases
 - #230 - `FastaSeqFetcher` placed alignment gaps mirrored within minus-strand exons
+- #232 - HGVS cleaning: a second variant after a protein annotation was dropped with it (`NM_001754.5:c.1A>G p.(Met1?) NM_000059.4:c.68del`)
 
 ## [0.2.35] - 2026-11-02
 

@@ -1029,6 +1029,22 @@ def test_pipeline_ordering(bad, expected, required_codes):
     assert E not in severities(fixes)
 
 
+@pytest.mark.parametrize("hgvs_string", [
+    "NM_001754.5:c.1A>G p.(Met1?) NM_000059.4:c.68del",
+    "RUNX1\tNM_001754.5:c.1A>G\tp.(Met1?) BRCA2\tNM_000059.4:c.68del\tp.(Asp23fs)",
+])
+def test_protein_suffix_not_stripped_before_second_variant(hgvs_string):
+    # Stripping would silently drop the second variant
+    _cleaned, fixes = clean_hgvs(hgvs_string)
+    assert C.STRIPPED_PROTEIN_SUFFIX not in codes(fixes)
+
+
+def test_protein_suffix_with_protein_accession_stripped():
+    cleaned, fixes = clean_hgvs("NM_000059.4:c.68del p.(Asp23fs) NP_000050.2:p.Asp23fs")
+    assert cleaned == "NM_000059.4:c.68del"
+    assert C.STRIPPED_PROTEIN_SUFFIX in codes(fixes)
+
+
 def test_protein_allele_not_stripped_as_suffix():
     # "p." is the allele itself here, not a trailing annotation to drop
     cleaned, fixes = clean_hgvs("NP_000050.2 p.Arg1Gly")

@@ -295,6 +295,10 @@ _P_HGVS_REMOVAL = re.compile(r"^(?P<main>.*?)(?:\s*[,;]\s*|\s+)(p\.|[(]p\.).*$")
 # non-protein kind, or something other than "p." after the colon). Otherwise the
 # "p." is the allele itself, eg "NP_000050.2 p.Arg1Gly", and must be kept.
 _HAS_NUCLEOTIDE_ALLELE = re.compile(r":\s*(?!p\.)\S|[cgmnr]\.", re.IGNORECASE)
+# A transcript or genomic accession in the text after the protein annotation means
+# another variant follows ("... p.(Met1?) NM_000059.4:c.68del"), so nothing is stripped.
+_NUCLEOTIDE_ACCESSION = re.compile(
+    rf"(?:{_TRANSCRIPT_ACCESSION_PREFIX}|{_GENOMIC_ACCESSION_PREFIX})\d", re.IGNORECASE)
 
 # Two-letter RefSeq accession prefixes (NM, NR, XM, XR, NC, NG, ...) taken from
 # the type table, used to repair an accession missing its underscore. Requires
@@ -705,7 +709,8 @@ def _validate(s: str) -> list[HGVSFix]:
 
 def _op_strip_protein_suffix(s: str) -> tuple[str, list[HGVSFix]]:
     # e.g. "NM_000059.4:c.316+5G>A p.Arg106*" → "NM_000059.4:c.316+5G>A"
-    if (m := _P_HGVS_REMOVAL.match(s)) and _HAS_NUCLEOTIDE_ALLELE.search(m.group("main")):
+    if ((m := _P_HGVS_REMOVAL.match(s)) and _HAS_NUCLEOTIDE_ALLELE.search(m.group("main"))
+            and not _NUCLEOTIDE_ACCESSION.search(s, m.end("main"))):
         new_s = m.group("main")
         return new_s, [HGVSFix(
             severity=HGVSFixSeverity.WARNING,
