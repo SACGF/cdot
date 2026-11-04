@@ -52,7 +52,8 @@ from a local genome FASTA), so no pair is dropped for a missing sequence: this c
 the Ensembl transcripts SeqRepo does not hold, and reproduces Ensembl transcript
 sequence exactly. The whole committed set is counted (500 RefSeq + 818 Ensembl).
 
-How the per-source columns were measured (GRCh38, cdot 0.2.34 / UTA uta_20241220):
+How the per-source columns were measured (GRCh38, cdot 0.2.34 / UTA uta_20241220; re-run
+2026-11-04 on PyPI cdot 0.2.36 with data_v0.2.36, identical rates):
 
 ```bash
 # cdot end-to-end resolution over the committed pairs, --fasta = FastaSeqFetcher:
@@ -93,9 +94,10 @@ supports quick checks. The full run supersedes the earlier two-sample approach (
 time-bucketed and a random draw); `build_clinvar_submitted_pairs.py` still emits those
 draws (`--sample-out` / `--time-bucketed-out`) but R2 now reports the full corpus.
 
-Measured 2026-11-02 (ClinVarVCVRelease_2026-10, cdot 0.2.35 from PyPI with the
-data_v0.2.36 RefSeq GRCh38 JSON, local uta_20241220; FastaSeqFetcher for cdot, SeqRepo
-for UTA sequence):
+Measured on ClinVarVCVRelease_2026-10 with the data_v0.2.36 RefSeq GRCh38 JSON and local
+uta_20241220 (FastaSeqFetcher for cdot, SeqRepo for UTA sequence). The cdot pass is cdot
+0.2.36 from PyPI, 2026-11-04. The UTA pass, version age and submitter attribution do not
+run cdot resolution code and come from the 2026-11-02 run:
 
 ```bash
 # corpus: 4,082,030 SCV transcript expressions -> 3,245,277 unique (AlleleID, string)
@@ -110,7 +112,7 @@ python paper/scripts/build_clinvar_submitted_pairs.py \
 python paper/scripts/compute_submitted_version_age.py clinvar_submitted_pairs.GRCh38.tsv \
     --refseq-grch38 cdot-0.2.36.refseq.GRCh38.json.gz --refseq-allbuilds ...
 
-# full-corpus resolution (VCF-coordinate scoring), cdot (1 h 25 min wall, 640 HGVS/s)
+# full-corpus resolution (VCF-coordinate scoring), cdot (1 h 25 min wall, 635 HGVS/s)
 # then UTA (3 h 19 min, 272 HGVS/s):
 F=GCF_000001405.39_GRCh38.p13_genomic.fna.gz
 python paper/scripts/resolve_clinvar_pass.py clinvar_submitted_pairs.GRCh38.tsv \
@@ -120,10 +122,18 @@ python paper/scripts/resolve_clinvar_pass.py clinvar_submitted_pairs.GRCh38.tsv 
     --uta --out submitted_full_uta.csv
 ```
 
-Full head-to-head over 3,245,277 pairs: cdot 99.0% vs UTA 81.9% matched; 554,257 resolve
-through cdot alone, 1,265 through UTA alone, and 0 pairs that resolve as written fail
-after `fix_hgvs`. Per-era: 2008-2015 cdot 97.3% / UTA 76.2%; 2016-2020 99.3% / 88.9%;
-2021-2026 99.0% / 81.1%.
+Full head-to-head over 3,245,277 pairs: cdot 99.2% vs UTA 81.9% matched; 560,821 resolve
+through cdot alone, 971 through UTA alone, and 0 pairs that resolve as written fail
+after `fix_hgvs`. Per-era: 2008-2015 cdot 97.9% / UTA 76.2%; 2016-2020 99.3% / 88.9%;
+2021-2026 99.2% / 81.1%.
+
+Against the cdot 0.2.35 pass, 6,859 pairs move to `correct`. 5,808 are `incorrect` rows
+citing one of the 4,788 GRCh38 versions whose first exon starts after transcript
+position 0, which 0.2.35 resolved shifted by the unaligned length (#230). The other 1,051
+(mostly `reference_mismatch` errors) are on minus-strand transcripts with alignment gaps,
+whose genome-built sequence `FastaSeqFetcher` assembled wrongly in 0.2.35 (fixed in the
+same release). 10 further pairs, all on minus-strand gapped transcripts, change between
+non-correct buckets or leave `correct` (1).
 
 The one-row CSV is aggregated from the two pass tables, joined row by row on the pairs
 file. A pair counts for cdot when its `fixed_bucket` (after `fix_hgvs`) is `correct` and
@@ -135,7 +145,7 @@ submission year (2008-2015, 2016-2020, 2021-2026). The version-age columns come 
 from the counts.
 
 `clinvar_submitted_residual.csv` is derived from the full cdot pass rows with
-`fixed_bucket != correct` (32,781 of 3,245,277); the `no_data` bucket is split into
+`fixed_bucket != correct` (25,923 of 3,245,277); the `no_data` bucket is split into
 `version_refused` (accession holds other versions, via `get_tx_versions`) vs
 `unknown_accession`, `incorrect` maps to `coordinate_drift`, and the `error` bucket is
 re-resolved to recover the exception class (`HGVSInvalidVariantError` reference_mismatch,
@@ -164,8 +174,8 @@ per-submitter table (`--top-out`, which names laboratories) is NOT checked in.
 ## benchmark_fullscale.csv (frozen)
 
 R3 full-scale throughput of a single local-JSON process over the whole current ClinVar
-(g.HGVS, c.HGVS) pair set (`clinvar_pairs.GRCh38.tsv` from ClinVar 2026-10, cdot 0.2.35
-from PyPI, data_v0.2.36 RefSeq GRCh38, local SeqRepo), measured 2026-11-02 with the
+(g.HGVS, c.HGVS) pair set (`clinvar_pairs.GRCh38.tsv` from ClinVar 2026-10, cdot 0.2.36
+from PyPI, data_v0.2.36 RefSeq GRCh38, local SeqRepo), measured 2026-11-04 with the
 hot-cache protocol: a first pass warms the OS sequence cache and is discarded, the next
 is timed. Nothing else ran on the machine during either pass.
 
@@ -175,9 +185,12 @@ python paper/scripts/resolve_clinvar_pass.py clinvar_pairs.GRCh38.tsv \
     --json cdot-0.2.36.refseq.GRCh38.json.gz --out /dev/null   # x2 (discard 1st)
 ```
 
-`n_pairs` 4,583,798; `resolved_pct` 99.4; `cold_tps` 646 HGVS/s (first pass, wall
-7094 s); `hot_tps` 640 HGVS/s (timed pass, wall 7168 s), ~1% apart, so full-scale
-local-JSON throughput is not sequence-cache-limited. The controlled backend comparison
+`n_pairs` 4,583,798; `resolved_pct` 99.4; `cold_tps` 606 HGVS/s (first pass, wall
+7570 s); `hot_tps` 603 HGVS/s (timed pass, wall 7603 s), under 1% apart, so full-scale
+local-JSON throughput is not sequence-cache-limited. The same protocol on cdot 0.2.35
+(2026-11-02) gave 646 / 640 HGVS/s. That gap is run-to-run variation on this VM, not the
+client: 0.2.35 and 0.2.36 run alternately over the first 100,000 pairs gave 793 / 790 and
+795 / 782 HGVS/s. The controlled backend comparison
 (local JSON vs prefetched REST) stays in Table 1 / `benchmark.csv`.
 
 ## injection_benchmark.csv, residual_taxonomy.csv (table CSVs, not facts)
@@ -211,14 +224,16 @@ collection regex and is a data-collection artifact, not something cleaning could
 1,828 = `rescued_share_pct` ~67% of the `failed_pp` 8.3 points that failed
 as-submitted), residual `residual_n` 887 (`residual_pct` 2.7%); `nonhgvs_n` 81.
 
-Measured 2026-11-02 with PyPI cdot 0.2.35 (`combined_search_hgvs.csv`, 32,752 rows):
-`clean_hgvs()` takes 29,956 parseable rows to 31,786 (1,830 rescued, 0 regressed, 966
+Measured 2026-11-04 with PyPI cdot 0.2.36 (`combined_search_hgvs.csv`, 32,752 rows):
+`clean_hgvs()` takes 29,956 parseable rows to 31,784 (1,828 rescued, 0 regressed, 968
 still failing), and provider-verified accession-prefix restoration
 (`resolve_missing_accession_prefix` against the 0.2.36 RefSeq GRCh38 JSON) rescues 1 more.
-Three of the 1,830 are non-HGVS report or prose strings (a pasted report row holding two
-variants, a sentence quoting one) from which 0.2.35 extracts the first variant; they stay
-in the excluded 81 and are not counted as rescues. So `rescued` = 1,830 - 3 + 1 and
-`residual_n` = 966 - 1 - (81 - 3). The same procedure on PyPI cdot 0.2.33 reproduces the
+Three rows of the excluded 81 are non-HGVS strings that cleaning changes: a pasted report
+row holding two variants (twice), which still fails to parse, and a sentence quoting one
+variant, from which 0.2.36 extracts it. That one is not counted as a rescue. So
+`rescued` = 1,828 - 1 + 1 and `residual_n` = 968 - 1 - (81 - 1). cdot 0.2.35 parsed the
+report row too, keeping only its first variant, and gives the same `rescued`,
+`residual_n` and Table 2 counts once all three are excluded. The same procedure on PyPI cdot 0.2.33 reproduces the
 previous snapshot (1,721 rescued, 994 residual) and the previous Table 2 row counts exactly.
 
 Table 2 groups the rescued rows by `HGVSFixCode` (a row counts once per category):
@@ -253,7 +268,8 @@ UTA_DB_URL=... HGVS_SEQREPO_DIR=... python paper/scripts/benchmark_historical.py
     --uta-uri postgresql://uta:uta@localhost:5432/uta/uta_20241220
 ```
 
-Measured 2026-08-14 (cdot data 0.2.34, refseq+ensembl GRCh38 JSON): cdot 99.6% vs UTA
+Measured 2026-08-14 (cdot data 0.2.34, refseq+ensembl GRCh38 JSON; re-run 2026-11-04 on
+PyPI cdot 0.2.36 with data_v0.2.36, identical): cdot 99.6% vs UTA
 93.7% over 36,010 strings; of the 2,141 (5.9%) cdot resolves and UTA does not, 98.6%
 are RefSeq historical versions UTA holds no GRCh38 alignment for, 1.3% Ensembl, 0.1%
 other. The jump from the previous measurement (97.5% on 0.2.33-era data, 2026-06-18)
@@ -271,15 +287,15 @@ Full-ClinVar cdot-only resolution accuracy scored against the ClinVar VCF coordi
 variant_summary c.HGVS to the VCF ground truth via AlleleID) and resolved by
 `paper/scripts/resolve_clinvar_pass.py` over the full pair set: a dedicated multi-hour
 run against a production RefSeq GRCh38 JSON.gz, which is why there is no rule.
-Measured 2026-11-02: ClinVar `variant_summary` and `clinvar_20261025.GRCh38.vcf.gz`,
-cdot 0.2.35 from PyPI, data_v0.2.36 RefSeq GRCh38, FastaSeqFetcher (1 h 50 min wall).
+Measured 2026-11-04: ClinVar `variant_summary` and `clinvar_20261025.GRCh38.vcf.gz`,
+cdot 0.2.36 from PyPI, data_v0.2.36 RefSeq GRCh38, FastaSeqFetcher (1 h 51 min wall).
 Comparing `c_to_g` output as a VCF tuple (via biocommons Babelfish) is
 representation-robust (3'-shift, equivalent del/dup spellings) and is defined even for
 the ClinVar variants whose CLNHGVS uses tandem-repeat `ref[N]` or identity `=`
 notation the HGVS parser cannot read.
 
 4,583,798 pairs: 99.40% resolved, and of those 99.959% match the ClinVar VCF
-coordinate exactly. `clinvar_vcf_residual.csv` breaks the 1,856 incorrect rows down by
+coordinate exactly. `clinvar_vcf_residual.csv` breaks the 1,850 incorrect rows down by
 cause with `paper/scripts/categorize_vcf_residual.py` (pairs TSV plus the pass table;
 first matching rule wins: identity or symbolic ALT, IUPAC ambiguity code at the same
 position, cdot allele over 10 bases longer than ClinVar's, ClinVar SNV, other indel). Analysis writeup: `paper/notes/clinvar_diff_coordinates.md`.
@@ -315,12 +331,21 @@ ClinVar variant where another version of its transcript exists and
 `is_version_substitution_safe` calls the V->W substitution safe, resolve under W, and
 confirm the genomic coordinate is identical to resolving under V. Produced by
 `paper/scripts/validate_safe_versions.py` from the full-ClinVar per-variant table
-above. 4,024,794 safe substitutions tested, 2 coordinate changes. These values were
-measured in August 2026 on data 0.2.33, which predates the NCBI historical alignments
-(data 0.2.34), and are not yet re-measured on the 2026-10 pass. A VCF-format pass
-table is compared as a VCF tuple (Babelfish). The structural
-Tier-1 claim of `version_stability.csv` becomes an observed near-zero error rate.
-Frozen because it consumes the same dedicated full-ClinVar run.
+above. A VCF-format pass table is compared as a VCF tuple (Babelfish). Measured
+2026-11-04 on the 2026-10 VCF pass (PyPI cdot 0.2.36, data_v0.2.36 RefSeq GRCh38,
+FastaSeqFetcher; 3 h 39 min wall):
+
+```bash
+python paper/scripts/validate_safe_versions.py vcf_pass_cdot.csv \
+    --json cdot-0.2.36.refseq.GRCh38.json.gz --fasta $F \
+    --out version_safety_validation.csv --show-changes
+```
+
+4,342,420 variants have another version of their transcript; 8,409,757 substitutions are
+called safe and tested, 8,403,420 resolve under the substitute (6,337 do not, which is not
+a coordinate change), and 0 move the coordinate. The structural Tier-1 claim of
+`version_stability.csv` becomes an observed zero error rate. Frozen because it consumes
+the same dedicated full-ClinVar run.
 
 ---
 
@@ -333,23 +358,26 @@ here.
 ### coverage.csv
 
 `paper/scripts/compute_coverage.py` over the release JSON.gz files (needs
-`--config data_dir=...`). Committed snapshot: cdot 0.2.36, measured 2026-10-13 (counts
-identical to 0.2.34, as no transcript sources were added between them).
+`--config data_dir=...`). Committed snapshot: data 0.2.36, measured 2026-10-13 (counts
+identical to 0.2.34, as no transcript sources were added between them); re-run
+2026-11-04 on PyPI cdot 0.2.36, identical.
 
 ### benchmark.csv
 
-`paper/scripts/compute_benchmark.py`. Committed snapshot measured 2026-11-03 (cdot
-0.2.35 from PyPI, data_v0.2.36 GRCh38 RefSeq, uta_20241220 local, public
+`paper/scripts/compute_benchmark.py`. Committed snapshot measured 2026-11-04 (cdot
+0.2.36 from PyPI, data_v0.2.36 GRCh38 RefSeq, uta_20241220 local, public
 uta.biocommons.org remote, cdotlib.org REST, biocommons engine, one shared local SeqRepo
 with fd caching), run alone on the machine with `UTA_DB_URL` unset, since
 `uta.connect()` with no URL reads that variable and would turn the remote row local:
 median (q1, q3) HGVS/s over 5 passes of the committed 500-pair set (remote UTA: first
-25 pairs). See R3 / Table 1.
+25 pairs). See R3 / Table 1. The remote UTA row does not depend on the cdot client and
+is kept from the 2026-11-03 run (`--skip-uta-remote` on 2026-11-04).
 
 ### version_stability.csv, positional_drift.csv
 
 `paper/scripts/compute_version_stability.py`. Committed snapshot: GRCh38,
-`--sample 12000 --seed 1`, cdot 0.2.36 (re-measured 2026-10-13). The only change from
+`--sample 12000 --seed 1`, data 0.2.36 (re-measured 2026-10-13; re-run 2026-11-04 on
+PyPI cdot 0.2.36, identical). The only change from
 0.2.34 is `refseq_struct_portable_pct` 99.3 -> 99.4; everything else, including
 positional_drift.csv, is identical. Relative to the pre-0.2.33 snapshot, the
 RefSeq drift increase comes from the #51 historical alignments (old versions drift
@@ -364,8 +392,8 @@ Fully reproducible, no inputs needed.
 
 ### lovd_comparison.csv
 
-`paper/scripts/lovd_head_to_head.py`. Committed snapshot measured 2026-11-02 (cdot
-0.2.35), LOVD HGVS syntax checker v1.2.2 (commit 4cd074ba9cbd), PHP 8.5.
+`paper/scripts/lovd_head_to_head.py`. Committed snapshot measured 2026-11-04 (PyPI cdot
+0.2.36), LOVD HGVS syntax checker v1.2.2 (commit 4cd074ba9cbd), PHP 8.5.
 
 ### vv_mutalyzer_comparison.csv
 
@@ -374,6 +402,7 @@ Mutalyzer services, with responses cached in `output/rest_cache/`. Most response
 from the 2026-08-18 run (`service_date`); the 218 VariantValidator and 21 Mutalyzer
 inputs that were new on 2026-11-02 (the redundant del/dup count cases, which now carry
 the true range length) were fetched then and report the same VariantValidator version.
+The cdot side was re-scored from that cache on PyPI cdot 0.2.36 (2026-11-04), identical.
 
 ### sources.csv
 

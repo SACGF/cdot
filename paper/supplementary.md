@@ -127,7 +127,7 @@ refused by default.
 ### Table S4: ClinVar benchmark details
 
 Full-scale resolution of every RefSeq and Ensembl c.HGVS in ClinVar through cdot alone
-(GRCh38, cdot 0.2.35 with data release 0.2.36; ClinVar 2026-10), scored as a VCF coordinate (CHROM/POS/REF/ALT) against ClinVar's
+(GRCh38, cdot 0.2.36 with data release 0.2.36; ClinVar 2026-10), scored as a VCF coordinate (CHROM/POS/REF/ALT) against ClinVar's
 own VCF, not as a g.HGVS string, so equivalent representations and ClinVar's
 tandem-repeat / identity notations are not miscounted.
 
@@ -249,7 +249,8 @@ Anthropic), which drops from 167 (14.9% of the previous 1,118-query residual) to
 the other classes are unchanged. They were refreshed again on 2026-11-02 for cdot 0.2.35,
 whose added cleaning rules rescue 107 more residual queries (delta re-rated by Claude
 Opus 5.5, Anthropic): 43 leave Bad accession, 15 Edit syntax and 49 Trailing /
-concatenated, and the other classes are unchanged. Synthesised examples (from public `NM_000059.4` /
+concatenated, and the other classes are unchanged. cdot 0.2.36 rescues the same
+queries. Synthesised examples (from public `NM_000059.4` /
 `NM_001754.5`) illustrate each class; no corpus string is reproduced.
 
 ### Figure S1: Positional drift along the CDS across version bumps

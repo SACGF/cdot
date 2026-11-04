@@ -166,7 +166,7 @@ At scale, a single local-JSON process resolved the full set of
 {{ benchmark_fullscale.n_pairs | commas }} unique ClinVar (g.HGVS, c.HGVS) pairs in
 ~{{ benchmark_fullscale.wall_min | int }} minutes,
 {{ benchmark_fullscale.resolved_pct | dp(1) }}% producing a genomic coordinate. A
-hot-cache repeat gave {{ benchmark_fullscale.hot_tps | int }} HGVS/s, about 1% from the
+hot-cache repeat gave {{ benchmark_fullscale.hot_tps | int }} HGVS/s, within 1% of the
 cold pass ({{ benchmark_fullscale.cold_tps | int }} HGVS/s), so the state of the
 sequence cache is not the bound either. The same exhaustive pass against the public
 remote UTA database extrapolates to close to a year.
@@ -277,10 +277,8 @@ aligned to the target build, because the structure is build-independent, identic
 across GRCh37/GRCh38/T2T for
 {{ version_stability.refseq_struct_portable_pct | dp(1) }}% of RefSeq and
 {{ version_stability.ensembl_struct_portable_pct | dp(1) }}% of Ensembl versions
-(predictor detail in Supplementary Methods). Validated against ClinVar: of the
+(predictor detail in Supplementary Methods). Validated against ClinVar: all
 {{ version_safety_validation.n_safe_substitutions | commas }} version substitutions the
-structure, gap, and UTR checks accept across the full RefSeq corpus, only
-{{ version_safety_validation.n_coordinate_changes }} still move the genomic coordinate,
-both a single transcript that re-aligns the same CDS structure to a different genomic
-locus. A genomic CDS-map comparison and a small precomputed blocklist catch these
-(Supplementary Methods); with them, no accepted substitution moves a coordinate.
+safety checks accept across the full RefSeq corpus resolve to the same genomic coordinate
+as the cited version ({{ version_safety_validation.n_coordinate_changes }} coordinate
+changes).

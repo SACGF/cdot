@@ -72,9 +72,9 @@ GENE_POOL = ["BRCA2", "RUNX1", "BRCA1", "TP53", "MSH2"]
 
 # ---------------------------------------------------------------------------
 # Injection weights — FROZEN CONSTANTS (Tier 2, cited not shipped)
-# Source: deterministic run of clean_hgvs() (PyPI cdot 0.2.35) plus the
+# Source: deterministic run of clean_hgvs() (PyPI cdot 0.2.36) plus the
 #   provider-aware accession-prefix restoration over the production corpus,
-#   2026-11-02 ("Which clean ops do the rescuing?"; rescued rows, WARNING ops
+#   2026-11-04 ("Which clean ops do the rescuing?"; rescued rows, WARNING ops
 #   counted; N=32,752). Used only to weight the reproducible per-class recovery
 #   into a single headline number that reflects the real-world mix of errors.
 #   No corpus string is read or copied.
