@@ -336,6 +336,9 @@ full run).
 Per-source resolution outcome breakdown of the full-ClinVar pass (Supplementary S4),
 produced by `paper/scripts/summarize_clinvar_pass.py` from the same per-variant table.
 Multi-row (one row per transcript source plus a total), unlike the one-row facts files.
+Not rendered by any template; it supports the Table S4 caveat that the Ensembl share of
+`variant_summary` is zero. Regenerated 2026-11-05 from the 2026-11-04 pass table (cdot
+0.2.36, data_v0.2.36, ClinVar 2026-10); its totals equal `clinvar_vcf.csv`.
 
 ## genomic_mismatch.csv (frozen)
 
