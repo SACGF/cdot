@@ -7,3 +7,5 @@ hot_tps_min,629
 hot_tps_max,633
 n_runs,3
 wall_min,121
+hot_vs_cold_diff_pct,0.15822784810126583
+uta_remote_days,408.1016737891738

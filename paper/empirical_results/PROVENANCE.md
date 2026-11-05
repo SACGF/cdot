@@ -209,6 +209,13 @@ single-pass differences are run-to-run variation on this VM, not the client: 0.2
 The 0.2.37 range across three runs is under 1%. The controlled backend comparison
 (local JSON vs prefetched REST) stays in Table 1 / `benchmark.csv`.
 
+Derived rows, which the R3 wording is generated from: `hot_vs_cold_diff_pct` (percent
+difference of `hot_tps` from `cold_tps`) and `uta_remote_days` (`n_pairs` divided by
+`benchmark.csv`'s `uta_remote_tps`, in days: the same pass against the public remote UTA).
+`measure_fullscale.py` writes them; for the current values they were computed from the
+rows above with `measure_fullscale.py --derive-only --out benchmark_fullscale.csv
+--benchmark-csv benchmark.csv`. Re-run that after either CSV changes.
+
 ## injection_benchmark.csv, residual_taxonomy.csv, cleaning_fix_categories.csv (table CSVs, not facts)
 
 Multi-row table CSVs rendered inline by the `<!-- include-csv: ... -->` directive in
@@ -437,6 +444,13 @@ committed file). Against the 0.2.36 snapshot every row moves by 3% or less (loca
 744 -> 741, REST 111 -> 108, prefetched REST 733 -> 746, local UTA 186 -> 187), within
 run-to-run variation; one local UTA repeat dropped to 107 HGVS/s, which the median
 absorbs.
+
+The derived columns `cdot_local_vs_uta_local_ratio`, `cdot_rest_vs_uta_remote_ratio` and
+`rest_prefetch_vs_local_diff_pct` feed the R3 and abstract wording ("about four times",
+"nearly three orders of magnitude", "within 2%"). A full run computes them from the
+unrounded medians; the committed values were computed from the rounded medians above with
+`compute_benchmark.py --derive-only benchmark.csv`, which is also the step to run after
+merging rows from separate runs.
 
 ### version_stability.csv, positional_drift.csv
 
