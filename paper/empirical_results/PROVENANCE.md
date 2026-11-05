@@ -53,7 +53,7 @@ the Ensembl transcripts SeqRepo does not hold, and reproduces Ensembl transcript
 sequence exactly. The whole committed set is counted (500 RefSeq + 818 Ensembl).
 
 How the per-source columns were measured (GRCh38, cdot 0.2.34 / UTA uta_20241220; re-run
-2026-11-04 on PyPI cdot 0.2.36 with data_v0.2.36, identical rates):
+2026-11-05 on PyPI cdot 0.2.37 with data_v0.2.36, identical rates):
 
 ```bash
 # cdot end-to-end resolution over the committed pairs, --fasta = FastaSeqFetcher:
@@ -287,8 +287,9 @@ UTA_DB_URL=... HGVS_SEQREPO_DIR=... python paper/scripts/benchmark_historical.py
     --uta-uri postgresql://uta:uta@localhost:5432/uta/uta_20241220
 ```
 
-Measured 2026-08-14 (cdot data 0.2.34, refseq+ensembl GRCh38 JSON; re-run 2026-11-04 on
-PyPI cdot 0.2.36 with data_v0.2.36, identical): cdot 99.6% vs UTA
+Measured 2026-08-14 (cdot data 0.2.34, refseq+ensembl GRCh38 JSON; re-run 2026-11-05 on
+PyPI cdot 0.2.37 with data_v0.2.36, identical after rounding: cdot resolves 16 more strings
+than on 0.2.36, the 16 that only UTA resolved before): cdot 99.6% vs UTA
 93.7% over 36,010 strings; of the 2,141 (5.9%) cdot resolves and UTA does not, 98.6%
 are RefSeq historical versions UTA holds no GRCh38 alignment for, 1.3% Ensembl, 0.1%
 other. The jump from the previous measurement (97.5% on 0.2.33-era data, 2026-06-18)
