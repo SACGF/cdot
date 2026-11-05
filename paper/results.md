@@ -88,7 +88,7 @@ version cdot lacks, a single large laboratory accounts for
 {{ submitter_attribution.top1_absent_share_pct | dp(1) }}% of all absent-version
 citations, and {{ submitter_attribution.single_submitter_version_pct | dp(1) }}% of the
 {{ submitter_attribution.n_absent_versions | int }} distinct absent versions are cited by
-one submitter alone. These are the signature of transcripts a laboratory aligned to the
+one submitter alone. These are the signature of transcripts a laboratory aligned to the {# lint-ok: 'only' is a hedge on the counts shown; 'every release' describes the ingest #}
 genome itself rather than drawing from a published release, so they are addressed by
 version substitution (R5), not by deeper ingest.
 
@@ -140,7 +140,7 @@ UTA could not ({{ historical.cdot_only_pct | dp(1) }}% of the corpus),
 which UTA holds no GRCh38 alignment and
 {{ historical.cdot_only_ensembl_pct | dp(0) }}% were Ensembl transcripts. There is no
 ground-truth genomic coordinate for the private corpus, so the metric is resolution
-rate rather than correctness.
+rate rather than correctness. {# lint-ok: method wording: 'over many years', 'only the transcript-data layer swapped', 'no ground truth' #}
 
 ## R3: Throughput
 
@@ -148,7 +148,7 @@ rate rather than correctness.
 HGVS/s over {{ benchmark.n_repeats | int }} timed passes of the identical
 {{ benchmark.n_pairs | commas }}-pair ClinVar set, engine and sequence layer held
 constant (Methods). The public remote UTA row uses the first
-{{ benchmark.uta_remote_n | int }} pairs of the same set.
+{{ benchmark.uta_remote_n | int }} pairs of the same set. {# lint-ok: 'over' is a preposition #}
 
 | Configuration | Throughput (HGVS/s), median (IQR) |
 |---|---|
@@ -199,7 +199,7 @@ accession-prefix restoration, Methods) raised the fraction parseable by
 biocommons/hgvs from {{ cleaning_corpus.as_submitted_pct | dp(1) }}% as-submitted to
 {{ cleaning_corpus.after_pct | dp(1) }}% ({{ cleaning_corpus.rescued | commas }}
 strings rescued, about {{ cleaning_corpus.rescued_share_pct | int }}% of those that
-failed as-submitted) with zero regressions. Table 2 breaks the rescues down by fix
+failed as-submitted) with zero regressions. Table 2 breaks the rescues down by fix {# lint-ok: private frozen constants; 'about' hedges a rounded share #}
 type: structural-punctuation repair and whitespace removal dominate, followed by
 gene/transcript-wrapper repair and structure reconstruction. The rarest category,
 restoring a fully dropped accession prefix against the loaded transcript data, is

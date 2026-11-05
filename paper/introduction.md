@@ -12,7 +12,7 @@ over five years of production logs, only
 ~{{ literature.mutalyzer_correct_pct | dp(0) }}% were correct as written,
 ~{{ literature.mutalyzer_error_pct | dp(0) }}% contained a syntactic or semantic error,
 and Mutalyzer could automatically correct only
-~{{ literature.mutalyzer_autocorrect_pct | dp(0) }}% [@Lefter2021].
+~{{ literature.mutalyzer_autocorrect_pct | dp(0) }}% [@Lefter2021]. {# lint-ok: Lefter 2021's figures, quoted #}
 
 The two dominant Python HGVS libraries are biocommons/hgvs [@Wang2018] and
 PyHGVS. biocommons/hgvs reads from a pluggable data provider behind a common interface,
@@ -41,6 +41,6 @@ malformed description still parses; and an opt-in, coordinate-safe version subst
 for the cases where the cited version is genuinely gone. For coverage, cdot generates
 compact JSON files from all available RefSeq GFF3 and Ensembl GTF annotation releases,
 covering {{ coverage.total_count | commas }} versioned transcript alignments across
-GRCh37, GRCh38, and T2T-CHM13v2.0 [@Nurk2022]. The files load locally in seconds and
+GRCh37, GRCh38, and T2T-CHM13v2.0 [@Nurk2022]. The files load locally in seconds and {# lint-ok: 'all available' describes what is ingested #}
 are also served through a REST API (cdotlib.org), so the same data backs both a fast
 in-memory provider and lightweight remote access.

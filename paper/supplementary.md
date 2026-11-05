@@ -203,7 +203,7 @@ Production ops with no string-level injector (structure reconstruction, empty-ve
 dropping, provider-verified accession-prefix restoration) are absent by design.
 Examples are synthesised from public `NM_000059.4` (BRCA2). Totals also appear in
 `paper/empirical_results/cleaning.csv`, `lovd_comparison.csv` and
-`vv_mutalyzer_comparison.csv`.
+`vv_mutalyzer_comparison.csv`. {# lint-ok: method wording: 'at most 200 cases', 'highest-confidence' suggestion, 'all under' one rule #}
 
 <!-- include-csv: empirical_results/injection_benchmark.csv
   align: left
@@ -237,7 +237,7 @@ uncorrupted originals: VariantValidator rejects
 {{ vv_mutalyzer_comparison.originals_n | commas }} valid originals (all recent Ensembl
 transcripts absent from its vvta_2025_02 database), and Mutalyzer rejects
 {{ vv_mutalyzer_comparison.mut_rejected_valid | int }} (`EINTRONIC`: intronic positions
-on a RefSeq transcript reference; it resolves intronic Ensembl descriptions).
+on a RefSeq transcript reference; it resolves intronic Ensembl descriptions). {# lint-ok: 'all recent Ensembl transcripts' characterises the rejected cases #}
 Mutalyzer's lowercased-accession rate is one-sided in the opposite direction to LOVD's
 (it re-cases `enst...` but not `nm_...`). VariantValidator's responses for input it
 could not parse embedded the LOVD syntax checker's ranked suggestions in
@@ -252,7 +252,7 @@ genuine-HGVS production queries that still fail to parse after cleaning (Results
 {{ cleaning_corpus.nonhgvs_n | int }} non-HGVS queries that slipped the corpus regex
 are excluded (Results). Counts and % below are of the
 {{ cleaning_corpus.residual_n | commas }} residual queries; examples are synthesised
-from public BRCA2 `NM_000059.4`.
+from public BRCA2 `NM_000059.4`. {# lint-ok: 'under a fixed decision-tree taxonomy' is method wording #}
 
 <!-- include-csv: empirical_results/residual_taxonomy.csv
   align: left
