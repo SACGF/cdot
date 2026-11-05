@@ -332,13 +332,14 @@ left out the unaligned bases in 0.2.36, so the cited reference base or position 
 validation. Re-resolving the 232 `incorrect` rows through local UTA (uta_20241220): 199
 give the same coordinate as UTA, 29 cite versions UTA has no alignment for, and 4
 differ from UTA, 3 of them matching ClinVar. Those 3 are SHANK3 intronic offsets from
-`c.1530` (eg `NM_001372044.2:c.1530-280dup`). cdot appends the 39 unaligned bases to the
-end of exon 10, so `c.1530` is one of them, while UTA's alignment (like ClinVar's
-numbering) starts exon 11 at `c.1530` and places most of them inside that exon. The same placement accounts for the
-new errors: 29 are intronic offsets anchored on an unaligned base, on which
-biocommons/hgvs raises `IndexError` (7 on SHANK3 `c.1530-N`, which UTA resolves
-correctly; 22 on versions UTA does not hold), and 1 is a deletion spanning the gap
-(`ValueError`). The 3 new `no_data` rows and 38 that stay `no_data` cite a position
+`c.1530` (eg `NM_001372044.2:c.1530-280dup`). In the RefSeq alignment cdot uses, the 39
+bases are unaligned and `c.1530` is one of them (cdot appends them to the end of exon
+10), while UTA's alignment (like ClinVar's numbering) aligns `c.1530` to the first base
+of exon 11 and leaves fewer bases unaligned. The new errors come from the same
+difference: 29 are intronic offsets anchored on an unaligned base, where biocommons/hgvs
+takes its alignment-gap path, drops the offset and raises `IndexError` (7 on SHANK3
+`c.1530-N`, which UTA resolves correctly; 22 on versions UTA does not hold), and 1 is a
+deletion spanning the gap (`ValueError`). The 3 new `no_data` rows and 38 that stay `no_data` cite a position
 inside the unaligned bases, which `FastaSeqFetcher` cannot read from the genome
 (`GenomeMismatchError`). Analysis writeup: `paper/notes/clinvar_diff_coordinates.md`.
 `--examples-out` writes the first 20 rows of each category to
