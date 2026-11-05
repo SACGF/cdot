@@ -17,6 +17,11 @@ public/private fact model.
   alignment dump (`ac` column of `Homo_sapiens_GRCh38_UTA_20241220.csv`). The cdot JSON
   converted from UTA (`cdot-*_uta.*.json.gz`) under-counts badly and is not a fair proxy.
 - Analysis write-ups that back a fact or a PROVENANCE entry go in `notes/`.
+- **Wording that depends on a fact is generated or checked**: a word filter (`approx`,
+  `within_pct`, `orders_of_magnitude`, ...), an `{% assert %}` on the line above the
+  sentence, or `{# lint-ok: reason #}` for a true hedge. A derived value a filter needs
+  (ratio, percent difference) is emitted by the script that owns the fact. Keep
+  `vibepaper lint` clean, and after a re-run read `vibepaper diff` before the paper.
 
 ## Before submission
 
