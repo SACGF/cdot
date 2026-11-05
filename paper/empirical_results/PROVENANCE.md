@@ -216,7 +216,7 @@ facts; edit the CSV to change the table.
   Refresh by re-running those scripts and re-transcribing.
 * `residual_taxonomy.csv` (Table S6): the seven repair-relevant residual classes of the
   private cleaning corpus (frozen LLM classification; see `cleaning_corpus.csv`). Percentages
-  are of the 994 genuine-HGVS residual queries.
+  are of the 887 genuine-HGVS residual queries.
 
 ## cleaning_corpus.csv (frozen, Tier 2)
 

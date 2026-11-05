@@ -2,8 +2,8 @@
 
 cdot is, first, a general-purpose source of versioned transcript-to-genome alignments:
 RefSeq and Ensembl together, across GRCh37, GRCh38, and T2T-CHM13v2.0, with the full
-release history, in a JSON format that parses far faster than the GTF/GFF files it is
-built from and can be read from any language, not only Python. The per-release JSON on
+release history, in a JSON format that loads in seconds and can be read from any
+language, not only Python. The per-release JSON on
 the GitHub releases page is a faster-loading drop-in for the corresponding GTF/GFF, and
 the REST API returns transcript coordinates on demand and in batches, so thin clients
 need not bundle large annotation downloads. For biocommons/hgvs users specifically, it
@@ -54,8 +54,8 @@ service does not apply them. The LOVD measurement above therefore also character
 the syntax-repair layer surfaced by a current VariantValidator pipeline.
 
 The general-purpose value of the format shows in reuse beyond Python and beyond
-biocommons/hgvs. Where Ensembl's public REST service covers only Ensembl transcripts at
-the latest version, cdot serves both consortia with history; and ferro-hgvs [@FerroHgvs],
+biocommons/hgvs. Where Ensembl's own REST service serves only Ensembl transcripts, cdot
+serves both consortia with history; and ferro-hgvs [@FerroHgvs],
 an independent HGVS parser and normaliser written in Rust, loads cdot JSON directly as
 its transcript-to-genome alignment source, needing only a JSON parser.
 
@@ -65,4 +65,10 @@ for a gene symbol), which are opt-in and always reported as an `HGVSFix` the cal
 inspect or reject. The main limitation is currency: a transcript version published
 after the most recent ingested release is not covered until the dataset is regenerated.
 Automating that regeneration so each new RefSeq and Ensembl release is ingested and
-published without manual intervention is a planned improvement.
+published without manual intervention is a planned improvement. Two further limits are
+visible in the results. A share of the residue in every corpus is valid HGVS the
+biocommons/hgvs grammar does not parse (repeat and allele notation; Supplementary
+Tables S6 and S8), a parser limitation cdot does not address. And the full-ClinVar
+scale check inherits ClinVar's submitter bias toward current RefSeq versions
+(Supplementary Table S4), so it is a reproducible check at scale rather than an
+unbiased sample of the transcripts clinical laboratories use.

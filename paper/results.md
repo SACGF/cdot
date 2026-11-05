@@ -1,23 +1,17 @@
 # Results
 
-> **Provenance flags.** Results are reproducible from public data committed to this repo
-> unless marked **[private data]**, which denotes aggregate statistics from a private
-> production corpus, published as frozen constants and not reproducible by a referee (see
-> Methods / data availability).
-
----
-
 ## R1: Transcript coverage
 
 The unit of coverage is the *transcript-version alignment*: a particular transcript
 version aligned to a particular genome build, counted separately per build. cdot covers
 {{ coverage.total_count | commas }} such alignments across all builds and sources,
-compared with ~{{ literature.uta_count | commas }} in UTA, an increase of
-{{ coverage.improvement_fold | fmt('.1f') }}×. The gain has two sources: historical
-depth (cdot ingests the complete run of archived RefSeq and Ensembl releases, so an NM_
-version cited in an older report or ClinVar submission still resolves after NCBI has
-retired it from the current annotation) and Ensembl itself, absent from UTA entirely
-({{ coverage.ensembl_unique_count | commas }} accessions present in cdot).
+compared with ~{{ literature.uta_count | commas }} in UTA's 2021 release [@Hart2020], an
+increase of {{ coverage.improvement_fold | fmt('.1f') }}×. The gain has two sources:
+historical depth (cdot ingests the complete run of archived RefSeq and Ensembl releases,
+so an NM_ version cited in an older report or ClinVar submission still resolves after
+NCBI has retired it from the current annotation) and Ensembl itself, absent from UTA
+entirely ({{ coverage.ensembl_unique_count | commas }} versioned Ensembl transcripts on
+GRCh38 alone).
 T2T-CHM13v2.0 adds a further {{ coverage.t2t_unique_count | commas }} alignments,
 making cdot the first transcript data source to bring that assembly to the Python HGVS
 libraries. The JSON format also stores per-exon alignment-gap information (indels of
@@ -32,27 +26,28 @@ Resolution rate is compared against a locally loaded UTA (release `uta_20241220`
 first on current-version descriptions and then on the historical submitted-string
 corpus that is the real test of transcript depth.
 
-For the current-version check, a seeded ClinVar [@Landrum2025] sample of
-preferred-transcript descriptions, deliberately including both RefSeq (NM_) and Ensembl
-(ENST) transcripts, was resolved against cdot and UTA through the identical
-biocommons/hgvs code path, with sequences from a shared local SeqRepo so only the
-transcript-data layer differs. On RefSeq the two backends are at parity (cdot
-{{ clinvar.cdot_refseq_pct | dp(1) }}%, UTA {{ clinvar.uta_refseq_pct | dp(1) }}%; cdot
-serving transcript sequence from a local genome FASTA so no pair is dropped for a
-sequence SeqRepo lacks). The remaining difference is capability, not accuracy: UTA stores
-no Ensembl alignments at all, so it resolves {{ clinvar.uta_ensembl_pct | dp(1) }}% of
-the Ensembl pairs against cdot's {{ clinvar.cdot_ensembl_pct | dp(1) }}% (Supplementary
-Table S4). Because the sample is Ensembl-enriched, its aggregate rate is not a
-like-for-like accuracy score and we do not report one.
+For the current-version check, the committed ClinVar [@Landrum2025] pair sets
+({{ clinvar.n_refseq | commas }} RefSeq NM_ and {{ clinvar.n_ensembl | commas }} Ensembl
+ENST preferred-transcript descriptions) were resolved through cdot, with transcript
+sequence spliced from a local genome FASTA so that no Ensembl pair is dropped for a
+sequence SeqRepo lacks. UTA's rate is membership of the exact cited accession.version
+in its GRCh38 alignment set, which is what resolution through UTA requires; the live
+database gives the same rates. On RefSeq the two backends are at parity (cdot
+{{ clinvar.cdot_refseq_pct | dp(1) }}%, UTA {{ clinvar.uta_refseq_pct | dp(1) }}%). The
+remaining difference is capability, not accuracy: UTA stores no Ensembl alignments at
+all, so it resolves {{ clinvar.uta_ensembl_pct | dp(1) }}% of the Ensembl pairs against
+cdot's {{ clinvar.cdot_ensembl_pct | dp(1) }}%. Because the pair sets are
+Ensembl-enriched, their aggregate rate is not a like-for-like accuracy score and we do
+not report one.
 
-At full scale, resolving every RefSeq and Ensembl c.HGVS in ClinVar through cdot alone
-({{ clinvar_vcf.n_pairs | commas }} (g., c.) pairs) reaches
+At full scale, resolving every c.HGVS in ClinVar's variant_summary through cdot alone
+({{ clinvar_vcf.n_pairs | commas }} (g., c.) pairs, effectively all RefSeq) reaches
 {{ clinvar_vcf.resolved_pct | dp(1) }}% resolution, and
-{{ clinvar_vcf.matched_of_resolved_pct | dp(1) }}% of resolved variants reproduce
+{{ clinvar_vcf.matched_of_resolved_pct | dp(2) }}% of resolved variants reproduce
 ClinVar's own VCF coordinate exactly (Methods). The residual
-{{ clinvar_vcf.incorrect_pct | dp(2) }}% is dominated by paralog and copy-number
-transcripts that map to more than one genomic locus and by indel-representation
-differences (Supplementary Table S4).
+{{ clinvar_vcf.incorrect_pct | dp(2) }}% is dominated by indel-representation
+differences and by paralog and copy-number transcripts that map to more than one
+genomic locus (Supplementary Table S4).
 
 ### ClinVar submissions as a historical record of transcripts used
 
@@ -100,11 +95,14 @@ RefSeq gap invisible at the current-version ceiling (both backends
 {{ clinvar_submitted.cdot_only | commas }} pairs resolve through cdot alone and
 {{ clinvar_submitted.uta_only | commas }} through UTA alone, because UTA holds no GRCh38
 alignment for {{ clinvar_submitted.uta_no_data_pct | dp(1) }}% of the cited versions.
-Splitting by submission era locates the gap: cdot stays near
-{{ clinvar_submitted.era_recent_cdot_pct | dp(1) }}% across all years, while UTA falls
-from {{ clinvar_submitted.era_recent_uta_pct | dp(1) }}% on recent (2021-2026)
-submissions to {{ clinvar_submitted.era_old_uta_pct | dp(1) }}% on the oldest
-(2008-2015), which cite the most superseded versions.
+Splitting by submission era locates the gap: cdot reproduces the coordinate for
+{{ clinvar_submitted.era_old_cdot_pct | dp(1) }}% of the oldest (2008-2015)
+submissions, {{ clinvar_submitted.era_mid_cdot_pct | dp(1) }}% of 2016-2020 and
+{{ clinvar_submitted.era_recent_cdot_pct | dp(1) }}% of 2021-2026, while UTA reaches
+{{ clinvar_submitted.era_old_uta_pct | dp(1) }}%,
+{{ clinvar_submitted.era_mid_uta_pct | dp(1) }}% and
+{{ clinvar_submitted.era_recent_uta_pct | dp(1) }}%: lowest on the oldest submissions,
+which cite the most superseded versions, and lower on the newest than on 2016-2020.
 
 The submitted strings are largely well-formed, so cleaning has little to rescue
 (`fix_hgvs()` repaired {{ clinvar_submitted.rescued_by_fix | commas }} strings, with
@@ -116,8 +114,8 @@ is dominated by historical-version effects:
 data where substitution declines to act because coordinate safety cannot be verified,
 and {{ clinvar_submitted_residual.coordinate_drift | commas }} resolve through the cited
 version to a coordinate that differs from ClinVar's current interpretation; the remainder
-cite a position or base that does not exist on the cited version, or notation the
-biocommons grammar rejects (Supplementary Table S8).
+cite a position or base that does not exist on the cited version, notation the
+biocommons grammar rejects, or an accession absent entirely (Supplementary Table S8).
 
 **[private data].** The same gap holds on the historical clinical data that motivated cdot:
 the complete set of {{ historical.n_lines | commas }} unique HGVS descriptions imported
@@ -153,13 +151,13 @@ constant (Methods). The public remote UTA row uses the first
 A GRCh38 RefSeq JSON file loads in ~{{ benchmark.grch38_load_time_s | dp(0) }} s.
 Batching the per-transcript REST lookups into one `prefetch()` request (all transcripts
 for the set, under a second, untimed) makes REST throughput equivalent to local JSON,
-the two differing by under 1%: with the transcript data in process memory, both are
+the two within 2% of each other: with the transcript data in process memory, both are
 bounded by the shared engine and sequence layer, not by the transcript backend.
 Comparing like with like: locally, a loaded UTA reached
 {{ benchmark.uta_local_tps | int }} HGVS/s, about a quarter of local-JSON throughput,
 each lookup resolving a set of SQL queries where cdot needs a single JSON object; and
-remote to remote, cdot's REST API (one request per transcript, no prefetch) is more
-than two orders of magnitude faster than the public UTA server, which pays wide-area
+remote to remote, cdot's REST API (one request per transcript, no prefetch) is nearly
+three orders of magnitude faster than the public UTA server, which pays wide-area
 round trips to a shared database on every lookup.
 
 At scale, a single local-JSON process resolved the full set of
@@ -169,7 +167,7 @@ At scale, a single local-JSON process resolved the full set of
 hot-cache repeat gave {{ benchmark_fullscale.hot_tps | int }} HGVS/s, within 1% of the
 cold pass ({{ benchmark_fullscale.cold_tps | int }} HGVS/s), so the state of the
 sequence cache is not the bound either. The same exhaustive pass against the public
-remote UTA database extrapolates to close to a year.
+remote UTA database extrapolates to over a year.
 
 ## R4: String cleaning recovers malformed real-world HGVS
 
@@ -187,7 +185,7 @@ biocommons/hgvs from {{ cleaning_corpus.as_submitted_pct | dp(1) }}% as-submitte
 {{ cleaning_corpus.after_pct | dp(1) }}% ({{ cleaning_corpus.rescued | commas }}
 strings rescued, about {{ cleaning_corpus.rescued_share_pct | int }}% of those that
 failed as-submitted) with zero regressions. Table 2 breaks the rescues down by fix
-type: whitespace removal and structural-punctuation repair dominate, followed by
+type: structural-punctuation repair and whitespace removal dominate, followed by
 gene/transcript-wrapper repair and structure reconstruction. The rarest category,
 restoring a fully dropped accession prefix against the loaded transcript data, is
 impossible for a purely string-level checker; having the transcript data locally is
@@ -211,7 +209,7 @@ share of the {{ cleaning_corpus.rescued | commas }} rescued queries. Categories 
 As a control, `paper/scripts/inject_and_clean.py` injects each `clean_hgvs()` fix
 category into a seeded sample of clean, parseable ClinVar c.HGVS strings and confirms
 the cleaner recovers the canonical target with
-**{{ cleaning.inject_regressions | int }} regressions** (Supplementary Table S5).
+{{ cleaning.inject_regressions | int }} regressions (Supplementary Table S5).
 Because this benchmark injects the very errors it then repairs, its recovery rate is
 reported in the supplement only; its purpose is the no-regression guarantee on which
 the production result depends.
@@ -232,10 +230,7 @@ grammar rejects.
 ## R5: Transcript version substitution and coordinate safety
 
 Adjacent-version substitution is a client-layer feature: biocommons/hgvs has none with
-any data provider. In an end-to-end ablation (`paper/scripts/benchmark_resolution.py`)
-that removes the requested version from each test variant, the substitution recovered
-the correct genomic coordinate with no false rescues (a false rescue being a
-substitution that resolves to a different coordinate).
+any data provider.
 
 Caution is warranted because substituting one version for another can change the
 coordinate a variant projects to. Across consecutive RefSeq version pairs
@@ -267,8 +262,9 @@ aligned to the target build, because the structure is build-independent, identic
 across GRCh37/GRCh38/T2T for
 {{ version_stability.refseq_struct_portable_pct | dp(1) }}% of RefSeq and
 {{ version_stability.ensembl_struct_portable_pct | dp(1) }}% of Ensembl versions
-(predictor detail in Supplementary Methods). Validated against ClinVar: all
+(predictor detail in Supplementary Methods). Validated against ClinVar: of the
 {{ version_safety_validation.n_safe_substitutions | commas }} version substitutions the
-safety checks accept across the full RefSeq corpus resolve to the same genomic coordinate
-as the cited version ({{ version_safety_validation.n_coordinate_changes }} coordinate
-changes).
+safety checks accept across the full RefSeq corpus, every one that resolves under the
+substitute ({{ version_safety_validation.n_resolved_under_w | commas }}) gives the same
+genomic coordinate as the cited version
+({{ version_safety_validation.n_coordinate_changes }} coordinate changes).

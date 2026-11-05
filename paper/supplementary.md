@@ -102,48 +102,53 @@ refused by default.
 
 | Genome build | Ensembl release | Transcript count |
 |-------------|-----------------|-----------------|
-| GRCh37 | 82–87 | ... |
-| GRCh38 | 76–116 | ... |
-| T2T-CHM13v2.0 | ... | ... |
+| GRCh37 | 82, 85, 87 | ... |
+| GRCh38 | 81–116 | ... |
+| T2T-CHM13v2.0 | rapid release 2022_06, 2022_07 | ... |
 
-### Table S3: JSON schema fields (v0.2.34)
+### Table S3: JSON schema fields (data release 0.2.36)
+
+A summary of the fields biocommons/hgvs resolution consumes; the full JSON Schema is
+`docs/cdot-json-schema.json` in the repository.
 
 | Field | Level | Description |
 |-------|-------|-------------|
-| `schema_version` | root | Schema compatibility version |
-| `transcripts` | root | Dict keyed by transcript accession |
-| `gene_name` | transcript | HGNC gene symbol |
-| `biotype` | transcript | e.g. `"protein_coding"` |
-| `genome_builds` | transcript | Dict keyed by build name |
-| `contig` | build | Chromosome/contig accession |
-| `strand` | build | `+1` or `-1` |
-| `exons` | build | List of `[alt_start, alt_end, exon_id, cds_start, cds_end, gap]` |
-| `cds_start` / `cds_end` | build | CDS coordinates |
-| `mane_select` | build | MANE Select accession if applicable |
-| `mane_plus_clinical` | build | MANE Plus Clinical accession if applicable |
-| `refseq_select` | build | RefSeq Select flag |
-| `ensembl_canonical` | build | Ensembl canonical flag |
+| `schema_version` | root | Schema compatibility version (major.minor checked on load) |
+| `transcripts` | root | Dict keyed by transcript accession.version |
+| `gene_name` | transcript | Gene symbol |
+| `hgnc` | transcript | HGNC ID |
+| `biotype` | transcript | Sorted list of transcript types, e.g. `["mRNA", "protein_coding"]` |
+| `protein` | transcript | Protein accession.version (coding only) |
+| `start_codon` / `stop_codon` | transcript | 0-based transcript (cDNA) CDS start and exclusive end (coding only) |
+| `genome_builds` | transcript | Dict keyed by build name (`GRCh37`, `GRCh38`, `T2T-CHM13v2.0`) |
+| `contig` | build | Chromosome/contig accession, e.g. `NC_000007.14` |
+| `strand` | build | `"+"` or `"-"` |
+| `exons` | build | List of `[alt_start, alt_end, exon_id, cds_start, cds_end, gap]`; `gap` records transcript-vs-genome indels, `null` when the exon aligns without one |
+| `cds_start` / `cds_end` | build | 0-based genomic CDS coordinates (coding only) |
+| `tag` | build | Comma-separated canonical tags from the source, e.g. `MANE_Select,Ensembl_canonical` (MANE Select, MANE Plus Clinical, RefSeq Select, Ensembl canonical) |
+| `url` | build | Source annotation file the alignment was taken from |
 
 ### Table S4: ClinVar benchmark details
 
-Full-scale resolution of every RefSeq and Ensembl c.HGVS in ClinVar through cdot alone
-(GRCh38, cdot 0.2.36 with data release 0.2.36; ClinVar 2026-10), scored as a VCF coordinate (CHROM/POS/REF/ALT) against ClinVar's
-own VCF, not as a g.HGVS string, so equivalent representations and ClinVar's
-tandem-repeat / identity notations are not miscounted.
+Full-scale resolution of every c.HGVS in ClinVar's variant_summary through cdot alone
+(GRCh38, cdot 0.2.36 with data release 0.2.36; ClinVar 2026-10), scored as a VCF
+coordinate (CHROM/POS/REF/ALT) against ClinVar's own VCF, not as a g.HGVS string, so
+equivalent representations and ClinVar's tandem-repeat / identity notations are not
+miscounted.
 
 **Caveat.** ClinVar submissions are dominated by a handful of large (largely US) clinical
 laboratories citing mostly current RefSeq versions, so this is a reproducible scale
 check, not an unbiased sample of the transcripts clinical labs use. ClinVar's
 `variant_summary` Name column is RefSeq-centric, so the Ensembl share at this scale is
 near zero; ClinVar's comprehensive Ensembl HGVS lives in `hgvs4variation.txt.gz`, which
-this pass does not ingest. The Ensembl resolution evidence is therefore the R2 sample
-(per-source split) and the Shariant corpus, not this table.
+this pass does not ingest. The Ensembl resolution evidence is therefore the R2
+per-source split, not this table.
 
 Total pairs: {{ clinvar_vcf.n_pairs | commas }}.
 
 | Outcome | Count | % |
 |---|---|---|
-| Resolved | {{ clinvar_vcf.n_resolved | commas }} | {{ clinvar_vcf.resolved_pct | dp(1) }} |
+| Resolved | {{ clinvar_vcf.n_resolved | commas }} | {{ clinvar_vcf.resolved_pct | dp(2) }} |
 | Matched (cdot coordinate = ClinVar VCF) | {{ clinvar_vcf.n_correct | commas }} | {{ clinvar_vcf.matched_pct | dp(2) }} |
 | Coordinate differs | {{ clinvar_vcf.incorrect | commas }} | {{ clinvar_vcf.incorrect_pct | dp(2) }} |
 | Unresolved (no data) | {{ clinvar_vcf.no_data | commas }} | |
@@ -153,11 +158,11 @@ Of the {{ clinvar_vcf.matched_of_resolved_pct | dp(2) }}% match rate among resol
 variants, the {{ clinvar_vcf_residual.n_incorrect | commas }} coordinate differences are
 overwhelmingly representation or multi-mapping, not cdot errors:
 {{ clinvar_vcf_residual.indel_mismatch | commas }} indel / left-alignment representation
-differences; {{ clinvar_vcf_residual.snv_diff_pos | commas }} SNVs concentrated in just
+differences; {{ clinvar_vcf_residual.snv_diff_pos | commas }} SNVs concentrated in
 {{ clinvar_vcf_residual.snv_diff_pos_transcripts }} transcripts (paralog and copy-number
 genes that map to more than one genomic locus, each with a constant per-transcript offset);
 {{ clinvar_vcf_residual.long_cdot_allele | commas }} alleles much longer than ClinVar's, almost
-all c. ranges whose two ends lie in different exons, which the biocommons HGVS engine maps to a
+all c. ranges whose two ends lie in different exons, which biocommons/hgvs maps to a
 genomic span that includes the intron; {{ clinvar_vcf_residual.ambiguity_code_allele }} IUPAC ambiguity-code
 alleles (position matches, only the degenerate base differs); and
 {{ clinvar_vcf_residual.identity_or_symbolic }} identity/symbolic alleles.
@@ -243,16 +248,12 @@ from public BRCA2 `NM_000059.4`.
 *Method and limitation:* classification was performed by a large language model (Claude
 Opus 4, Anthropic; 2026-06-17) applying the shared decision tree to each unique string,
 single-label and single-rater; no second-rater adjudication was done, so no inter-rater
-agreement (κ) is reported. The taxonomy is version `v1`. Counts were refreshed on
-2026-08-17 after the accession-repair cleaning rules landed: the 43 residual queries the
-new rules rescue all sat in the Bad accession class (delta re-rated by Claude Fable 5,
-Anthropic), which drops from 167 (14.9% of the previous 1,118-query residual) to 124;
-the other classes are unchanged. They were refreshed again on 2026-11-02 for cdot 0.2.35,
-whose added cleaning rules rescue 107 more residual queries (delta re-rated by Claude
-Opus 5.5, Anthropic): 43 leave Bad accession, 15 Edit syntax and 49 Trailing /
-concatenated, and the other classes are unchanged. cdot 0.2.36 rescues the same
-queries. Synthesised examples (from public `NM_000059.4` /
-`NM_001754.5`) illustrate each class; no corpus string is reproduced.
+agreement (κ) is reported. The taxonomy is version `v1`. When a later cdot release
+rescued further residual queries, only those queries were removed from the class the
+earlier rating had given them (delta re-rating by Claude Fable 5 and Claude Opus 5.5,
+Anthropic, on 2026-08-17 and 2026-11-02); no other class changed. Counts are for cdot
+0.2.36. Synthesised examples (from public `NM_000059.4` / `NM_001754.5`) illustrate
+each class; no corpus string is reproduced.
 
 ### Figure S1: Positional drift along the CDS across version bumps
 
@@ -327,11 +328,11 @@ applying the fix only when exactly one candidate accession exists in the loaded 
 
 The {{ clinvar_submitted.residual_n | commas }} of
 {{ clinvar_submitted.full_n | commas }} submitted-string pairs (Results R2)
-that remain unresolved after cleaning and version fallback, by cause.
+that remain unresolved after cleaning and version substitution, by cause.
 
 | Cause | n |
 |---|---|
-| Cited version absent from the data; the fallback declines to substitute because coordinate safety cannot be verified (no false rescues, by design) | {{ clinvar_submitted_residual.version_refused | commas }} |
+| Cited version absent from the data; substitution declines to act because coordinate safety cannot be verified (no false rescues, by design) | {{ clinvar_submitted_residual.version_refused | commas }} |
 | Resolves through the cited historical version to a coordinate that differs from ClinVar's current interpretation | {{ clinvar_submitted_residual.coordinate_drift | commas }} |
 | Cited position does not exist on the cited version | {{ clinvar_submitted_residual.position_out_of_bounds | commas }} |
 | Cited reference base does not exist on the cited version | {{ clinvar_submitted_residual.reference_mismatch | commas }} |

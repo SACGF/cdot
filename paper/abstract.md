@@ -11,8 +11,9 @@ shared history usable meant resolving as many real-world transcript-level HGVS
 descriptions as possible, including malformed strings and long-retired transcript
 versions. The standard transcript source for the Python HGVS libraries, UTA, forces a
 tradeoff between a locally installed PostgreSQL database and a slow public server that
-many clinical networks firewall; it covers only ~{{ literature.uta_count | commas }}
-RefSeq alignments, retains limited transcript history, and omits Ensembl.
+many clinical networks firewall; it covered ~{{ literature.uta_count | commas }}
+RefSeq alignments in its 2021 release, retains limited transcript history, and omits
+Ensembl.
 
 **Results:**
 
@@ -21,15 +22,15 @@ alignments from RefSeq and Ensembl across GRCh37, GRCh38, and, for the first tim
 the Python HGVS libraries, T2T-CHM13v2.0, as a single gzipped JSON file or a REST API
 (cdotlib.org), with no database required. On ClinVar's submitted variant descriptions,
 {{ clinvar_submitted.version_not_current_pct | dp(1) }}% of which cite a transcript
-version that is no longer current, cdot resolved
+version that is no longer current, cdot reproduced ClinVar's genomic coordinate for
 {{ clinvar_submitted.cdot_resolved_pct | dp(1) }}% versus
 {{ clinvar_submitted.uta_resolved_pct | dp(1) }}% for UTA. Loaded in memory, cdot
 resolves ~{{ benchmark.cdot_local_tps | commas }} HGVS/second, about four times a
-locally installed UTA, and its REST API is roughly two orders of magnitude faster than
+locally installed UTA, and its REST API is nearly three orders of magnitude faster than
 the public UTA server. A parser-independent cleaning step (`clean_hgvs()`) repairs
 common formatting errors before resolution, and an opt-in version-substitution step
-supplies a retired transcript version only when a coordinate-safety check confirms it
-does not change the variant's coordinate.
+supplies a retired transcript version only when a coordinate-safety check indicates
+the variant's coordinate is unchanged.
 
 **Availability and Implementation:**
 
