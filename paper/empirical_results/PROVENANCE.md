@@ -297,18 +297,40 @@ Full-ClinVar cdot-only resolution accuracy scored against the ClinVar VCF coordi
 variant_summary c.HGVS to the VCF ground truth via AlleleID) and resolved by
 `paper/scripts/resolve_clinvar_pass.py` over the full pair set: a dedicated multi-hour
 run against a production RefSeq GRCh38 JSON.gz, which is why there is no rule.
-Measured 2026-11-04: ClinVar `variant_summary` and `clinvar_20261025.GRCh38.vcf.gz`,
-cdot 0.2.36 from PyPI, data_v0.2.36 RefSeq GRCh38, FastaSeqFetcher (1 h 51 min wall).
+Measured 2026-11-05: ClinVar `variant_summary` and `clinvar_20261025.GRCh38.vcf.gz`,
+cdot 0.2.37 from PyPI, data_v0.2.36 RefSeq GRCh38, FastaSeqFetcher (1 h 53 min wall).
 Comparing `c_to_g` output as a VCF tuple (via biocommons Babelfish) is
 representation-robust (3'-shift, equivalent del/dup spellings) and is defined even for
 the ClinVar variants whose CLNHGVS uses tandem-repeat `ref[N]` or identity `=`
 notation the HGVS parser cannot read.
 
-4,583,798 pairs: 99.40% resolved, and of those 99.959% match the ClinVar VCF
-coordinate exactly. `clinvar_vcf_residual.csv` breaks the 1,850 incorrect rows down by
-cause with `paper/scripts/categorize_vcf_residual.py` (pairs TSV plus the pass table;
-first matching rule wins: identity or symbolic ALT, IUPAC ambiguity code at the same
-position, cdot allele over 10 bases longer than ClinVar's, ClinVar SNV, other indel). Analysis writeup: `paper/notes/clinvar_diff_coordinates.md`.
+4,583,798 pairs: 99.46% resolved, and of those 99.954% match the ClinVar VCF
+coordinate exactly. `clinvar_vcf_residual.csv` breaks the 2,082 incorrect rows down by
+cause with `paper/scripts/categorize_vcf_residual.py` (pairs TSV, the pass table and
+`--json` the release file; first matching rule wins: transcript with unaligned bases
+between two exons, identity or symbolic ALT, IUPAC ambiguity code at the same position,
+cdot allele over 10 bases longer than ClinVar's, ClinVar SNV, other indel).
+
+Against the cdot 0.2.36 pass, rows change only on the seven transcripts with transcript
+bases that align to neither of two adjacent exons (SHANK3 `NM_001372044.2`,
+`NM_001401501.2`, `NM_003890.3`, `NM_001137667.2`, `NM_001405666.3`, `NM_033517.1`,
+`NM_173600.2`), which 0.2.36 refused with "Exons X and Y are not adjacent" (#235).
+2,077 `no_data` rows move: 1,815 to `correct`, 232 to `incorrect`, 30 to `error`. A further
+708 `error` rows move, 705 to `correct` and 3 to `no_data`: these sit downstream of the
+gap, where `FastaSeqFetcher`, which builds the transcript from the same exon alignment,
+left out the unaligned bases in 0.2.36, so the cited reference base or position failed
+validation. Re-resolving the 232 `incorrect` rows through local UTA (uta_20241220): 199
+give the same coordinate as UTA, 29 cite versions UTA has no alignment for, and 4
+differ from UTA, 3 of them matching ClinVar. Those 3 are SHANK3 intronic offsets from
+`c.1530` (eg `NM_001372044.2:c.1530-280dup`). cdot appends the 39 unaligned bases to the
+end of exon 10, so `c.1530` is one of them, while UTA's alignment (like ClinVar's
+numbering) starts exon 11 at `c.1530` and places most of them inside that exon. The same placement accounts for the
+new errors: 29 are intronic offsets anchored on an unaligned base, on which
+biocommons/hgvs raises `IndexError` (7 on SHANK3 `c.1530-N`, which UTA resolves
+correctly; 22 on versions UTA does not hold), and 1 is a deletion spanning the gap
+(`ValueError`). The 3 new `no_data` rows and 38 that stay `no_data` cite a position
+inside the unaligned bases, which `FastaSeqFetcher` cannot read from the genome
+(`GenomeMismatchError`). Analysis writeup: `paper/notes/clinvar_diff_coordinates.md`.
 `--examples-out` writes the first 20 rows of each category to
 `clinvar_vcf_residual_examples.csv` (public ClinVar data) for inspecting by hand. Of the 68
 `ambiguity_code_allele` rows, ClinVar's VCF writes the ALT with N in all of them. 27 cite an
@@ -324,7 +346,7 @@ multi-base deletion to an SNV.
 ## clinvar_residual_positions.csv (frozen)
 
 Where along the CDS the residual `incorrect` projections of that same full-ClinVar VCF
-pass sit, binned into deciles (1 = 5'-most tenth) against the `correct` rows' baseline
+pass (cdot 0.2.37, 2026-11-05) sit, binned into deciles (1 = 5'-most tenth) against the `correct` rows' baseline
 distribution, with 5'UTR / 3'UTR / non-coding citations counted separately. Companion
 to the version-bump positional drift in `positional_drift.csv`. Produced by
 `paper/scripts/bin_residual_positions.py` from the per-variant table of the run above
@@ -337,8 +359,8 @@ Per-source resolution outcome breakdown of the full-ClinVar pass (Supplementary 
 produced by `paper/scripts/summarize_clinvar_pass.py` from the same per-variant table.
 Multi-row (one row per transcript source plus a total), unlike the one-row facts files.
 Not rendered by any template; it supports the Table S4 caveat that the Ensembl share of
-`variant_summary` is zero. Regenerated 2026-11-05 from the 2026-11-04 pass table (cdot
-0.2.36, data_v0.2.36, ClinVar 2026-10); its totals equal `clinvar_vcf.csv`.
+`variant_summary` is zero. Regenerated 2026-11-05 from the 2026-11-05 pass table (cdot
+0.2.37 from PyPI, data_v0.2.36, ClinVar 2026-10); its totals equal `clinvar_vcf.csv`.
 
 ## genomic_mismatch.csv (frozen)
 

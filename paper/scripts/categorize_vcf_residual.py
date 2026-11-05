@@ -6,6 +6,10 @@ g_hgvs, c_hgvs) and the per-variant table ``resolve_clinvar_pass.py`` wrote for 
 ``converted_g`` column holds cdot's normalised ``chrom-pos-ref-alt``. Each incorrect row
 gets the first matching category:
 
+    unaligned_between_exons  transcript (with ``--json``) has transcript bases that align to
+                           neither of two adjacent exons. Where those bases go is an
+                           alignment choice, and ClinVar's numbering can place them
+                           differently from cdot's (and UTA's)
     identity_or_symbolic   ClinVar identity (``=``) or symbolic allele, no comparable ALT
     ambiguity_code_allele  same position, ClinVar or cdot ALT holds an IUPAC ambiguity code.
                            ClinVar's VCF writes these as N; on a minus-strand transcript
@@ -22,15 +26,18 @@ Writes ``clinvar_vcf_residual.csv``, plus, with ``--examples-out``, up to
 ``--n-examples`` rows per category for inspecting the residual by hand.
 
     python paper/scripts/categorize_vcf_residual.py clinvar_pairs.GRCh38.tsv \\
-        vcf_pass_cdot.csv --out clinvar_vcf_residual.csv --examples-out vcf_residual_examples.csv
+        vcf_pass_cdot.csv --json cdot.refseq.grch38.json.gz --out clinvar_vcf_residual.csv --examples-out vcf_residual_examples.csv
 """
 import argparse
 import csv
+import gzip
+import json
 from collections import Counter
 
-CATEGORIES = ["indel_mismatch", "snv_diff_pos", "long_cdot_allele",
+CATEGORIES = ["unaligned_between_exons", "indel_mismatch", "snv_diff_pos", "long_cdot_allele",
               "identity_or_symbolic", "ambiguity_code_allele"]
-COLUMNS = ["n_incorrect", "indel_mismatch", "snv_diff_pos", "snv_diff_pos_transcripts",
+COLUMNS = ["n_incorrect", "unaligned_between_exons", "unaligned_between_exons_transcripts",
+           "indel_mismatch", "snv_diff_pos", "snv_diff_pos_transcripts",
            "long_cdot_allele", "identity_or_symbolic", "ambiguity_code_allele"]
 IUPAC_AMBIGUITY = set("RYSWKMBDHVN")
 LONG_ALLELE_EXTRA_BASES = 10
@@ -50,6 +57,20 @@ def categorize(g_hgvs, c_hgvs, gt, cdot):
     return "indel_mismatch"
 
 
+def unaligned_between_exons_transcripts(json_filename, build):
+    """ Accessions whose exons (cdot ``[alt_start, alt_end, exon_id, tx_start, tx_end, gap]``,
+        1-based transcript coordinates) leave transcript bases between two exons """
+    with gzip.open(json_filename) as f:
+        transcripts = json.load(f)["transcripts"]
+    accessions = set()
+    for ac, tx in transcripts.items():
+        if b := tx["genome_builds"].get(build):
+            exons = sorted(b["exons"], key=lambda e: e[3])
+            if any(e2[3] != e1[4] + 1 for e1, e2 in zip(exons, exons[1:])):
+                accessions.add(ac)
+    return accessions
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -58,8 +79,11 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--examples-out", help="CSV of example rows per category")
     ap.add_argument("--n-examples", type=int, default=20)
+    ap.add_argument("--json", help="cdot JSON.gz the pass used, for unaligned_between_exons")
+    ap.add_argument("--build", default="GRCh38")
     args = ap.parse_args()
     csv.field_size_limit(10**9)
+    gap_tx = unaligned_between_exons_transcripts(args.json, args.build) if args.json else set()
 
     incorrect = {}
     with open(args.pass_csv) as f:
@@ -69,6 +93,7 @@ def main():
 
     counts = Counter()
     snv_tx = set()
+    gap_cited_tx = set()
     examples = []
     with open(args.pairs_file) as f:
         for p in csv.DictReader(f, delimiter="\t"):
@@ -77,7 +102,12 @@ def main():
                 continue
             gt = (p["chrom"], int(p["pos"]), p["ref"], p["alt"])
             c_chrom, c_pos, c_ref, c_alt = r["converted_g"].split("-", 3)
-            category = categorize(p["g_hgvs"], p["c_hgvs"], gt, (c_chrom, int(c_pos), c_ref, c_alt))
+            accession = p["c_hgvs"].split(":", 1)[0]
+            if accession in gap_tx:
+                category = "unaligned_between_exons"
+                gap_cited_tx.add(accession)
+            else:
+                category = categorize(p["g_hgvs"], p["c_hgvs"], gt, (c_chrom, int(c_pos), c_ref, c_alt))
             counts[category] += 1
             if counts[category] <= args.n_examples:
                 examples.append({"category": category, **p, "tx": r["tx"],
@@ -89,6 +119,7 @@ def main():
 
     counts["n_incorrect"] = sum(counts[c] for c in CATEGORIES)
     counts["snv_diff_pos_transcripts"] = len(snv_tx)
+    counts["unaligned_between_exons_transcripts"] = len(gap_cited_tx)
     row = {c: counts[c] for c in COLUMNS}
     with open(args.out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(row))
