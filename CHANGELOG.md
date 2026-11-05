@@ -1,5 +1,9 @@
 ## [unreleased]
 
+### Fixed
+
+- #234 - `FastaSeqFetcher` / `GenomeFastaSeqFetcher` shared between threads, or used after a fork, broke on concurrent reads
+
 ## [0.2.36] - 2026-11-04
 
 ### Fixed
