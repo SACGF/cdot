@@ -388,8 +388,8 @@ ClinVar variant where another version of its transcript exists and
 confirm the genomic coordinate is identical to resolving under V. Produced by
 `paper/scripts/validate_safe_versions.py` from the full-ClinVar per-variant table
 above. A VCF-format pass table is compared as a VCF tuple (Babelfish). Measured
-2026-11-04 on the 2026-10 VCF pass (PyPI cdot 0.2.36, data_v0.2.36 RefSeq GRCh38,
-FastaSeqFetcher; 3 h 39 min wall):
+2026-11-05 on the 2026-10 VCF pass (PyPI cdot 0.2.37, data_v0.2.36 RefSeq GRCh38,
+FastaSeqFetcher; 3 h 40 min wall):
 
 ```bash
 python paper/scripts/validate_safe_versions.py vcf_pass_cdot.csv \
@@ -397,9 +397,13 @@ python paper/scripts/validate_safe_versions.py vcf_pass_cdot.csv \
     --out version_safety_validation.csv --show-changes
 ```
 
-4,342,420 variants have another version of their transcript; 8,409,757 substitutions are
-called safe and tested, 8,403,420 resolve under the substitute (6,337 do not, which is not
-a coordinate change), and 0 move the coordinate. The structural Tier-1 claim of
+4,345,081 variants have another version of their transcript; 8,411,749 substitutions are
+called safe and tested, 8,411,000 resolve under the substitute (749 do not, which is not
+a coordinate change), and 0 move the coordinate. Against the 0.2.36 run (4,342,420
+variants, 8,409,757 tested, 8,403,420 resolved, 6,337 unresolved, 0 moved), the only
+client change is #235, so both shifts come from transcripts with bases that align to
+neither of two adjacent exons: more VCF-pass rows on them resolve and so enter the test,
+and substitutes onto them now resolve. The structural Tier-1 claim of
 `version_stability.csv` becomes an observed zero error rate. Frozen because it consumes
 the same dedicated full-ClinVar run.
 
