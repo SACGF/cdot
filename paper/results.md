@@ -47,7 +47,9 @@ At full scale, resolving every c.HGVS in ClinVar's variant_summary through cdot 
 ClinVar's own VCF coordinate exactly (Methods). The residual
 {{ clinvar_vcf.incorrect_pct | dp(2) }}% is dominated by indel-representation
 differences and by paralog and copy-number transcripts that map to more than one
-genomic locus (Supplementary Table S4).
+genomic locus, plus a few transcripts with bases that align to neither of two adjacent
+exons, where cdot mostly gives the same coordinate as UTA and ClinVar places the
+unaligned bases differently (Supplementary Table S4).
 
 ### ClinVar submissions as a historical record of transcripts used
 

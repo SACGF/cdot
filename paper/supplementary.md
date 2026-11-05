@@ -131,7 +131,7 @@ A summary of the fields biocommons/hgvs resolution consumes; the full JSON Schem
 ### Table S4: ClinVar benchmark details
 
 Full-scale resolution of every c.HGVS in ClinVar's variant_summary through cdot alone
-(GRCh38, cdot 0.2.36 with data release 0.2.36; ClinVar 2026-10), scored as a VCF
+(GRCh38, cdot 0.2.37 with data release 0.2.36; ClinVar 2026-10), scored as a VCF
 coordinate (CHROM/POS/REF/ALT) against ClinVar's own VCF, not as a g.HGVS string, so
 equivalent representations and ClinVar's tandem-repeat / identity notations are not
 miscounted.
@@ -156,7 +156,12 @@ Total pairs: {{ clinvar_vcf.n_pairs | commas }}.
 
 Of the {{ clinvar_vcf.matched_of_resolved_pct | dp(2) }}% match rate among resolved
 variants, the {{ clinvar_vcf_residual.n_incorrect | commas }} coordinate differences are
-overwhelmingly representation or multi-mapping, not cdot errors:
+overwhelmingly representation, multi-mapping or alignment choice, not cdot errors:
+{{ clinvar_vcf_residual.unaligned_between_exons | commas }} on
+{{ clinvar_vcf_residual.unaligned_between_exons_transcripts | int }} transcripts with
+transcript bases that align to neither of two adjacent exons (SHANK3 `NM_001372044.2` and
+others), most of them the same coordinate UTA gives, where ClinVar's numbering
+distributes the unaligned bases differently;
 {{ clinvar_vcf_residual.indel_mismatch | commas }} indel / left-alignment representation
 differences; {{ clinvar_vcf_residual.snv_diff_pos | commas }} SNVs concentrated in
 {{ clinvar_vcf_residual.snv_diff_pos_transcripts }} transcripts (paralog and copy-number
@@ -165,7 +170,10 @@ genes that map to more than one genomic locus, each with a constant per-transcri
 all c. ranges whose two ends lie in different exons, which biocommons/hgvs maps to a
 genomic span that includes the intron; {{ clinvar_vcf_residual.ambiguity_code_allele }} IUPAC ambiguity-code
 alleles (position matches, only the degenerate base differs); and
-{{ clinvar_vcf_residual.identity_or_symbolic }} identity/symbolic alleles.
+{{ clinvar_vcf_residual.identity_or_symbolic }} identity/symbolic alleles. On the
+transcripts with unaligned bases, an intronic offset anchored on one of those bases stays
+unresolved, because biocommons/hgvs cannot project an offset from a base with no
+genomic position.
 
 Binning these coordinate differences by relative CDS position (the decile scheme of
 Figure S1, cited position over CDS length) shows no 3'-end concentration: correct projections
@@ -174,7 +182,7 @@ are nearly uniform across deciles
 and the {{ clinvar_residual_positions.incorrect_binned | commas }} binned differences
 track them with a mild mid-CDS excess and a depleted 3'-most decile
 ({{ clinvar_residual_positions.incorrect_decile10_pct | dp(1) }}%), consistent with
-their representation and multi-mapping origins rather than positional alignment drift
+their representation, multi-mapping and alignment-choice origins rather than positional alignment drift
 (`bin_residual_positions.py`).
 
 ### Table S5: Injection cleaning benchmark, per category
@@ -252,7 +260,7 @@ agreement (κ) is reported. The taxonomy is version `v1`. When a later cdot rele
 rescued further residual queries, only those queries were removed from the class the
 earlier rating had given them (delta re-rating by Claude Fable 5 and Claude Opus 5.5,
 Anthropic, on 2026-08-17 and 2026-11-02); no other class changed. Counts are for cdot
-0.2.36. Synthesised examples (from public `NM_000059.4` / `NM_001754.5`) illustrate
+0.2.37. Synthesised examples (from public `NM_000059.4` / `NM_001754.5`) illustrate
 each class; no corpus string is reproduced.
 
 ### Figure S1: Positional drift along the CDS across version bumps

@@ -38,7 +38,9 @@ same files drive both the in-memory provider and the REST API. Each transcript e
 stores shared metadata plus a `genome_builds` dict keyed by assembly name, so one entry
 carries a transcript's GRCh37, GRCh38, and T2T-CHM13v2.0 alignments and a single-build
 file is a drop-in GTF/GFF replacement. Per-build fields include a per-exon `gap` string
-recording transcript-vs-genome indels, converted to HGVS CIGAR format at query time, and
+recording transcript-vs-genome indels, converted to HGVS CIGAR format at query time
+(transcript bases that align to neither of two adjacent exons become a transcript-only
+run at the end of the first), and
 canonical tags (MANE Select and Plus Clinical, RefSeq Select, Ensembl canonical) where
 present; a root-level `schema_version` lets clients reject incompatible files on load.
 Supplementary Table S3 summarises the schema; the full JSON Schema ships in the
