@@ -127,7 +127,7 @@ refused by default.
 ### Table S4: ClinVar benchmark details
 
 Full-scale resolution of every RefSeq and Ensembl c.HGVS in ClinVar through cdot alone
-(GRCh38, cdot 0.2.33), scored as a VCF coordinate (CHROM/POS/REF/ALT) against ClinVar's
+(GRCh38, cdot 0.2.36 with data release 0.2.36; ClinVar 2026-10), scored as a VCF coordinate (CHROM/POS/REF/ALT) against ClinVar's
 own VCF, not as a g.HGVS string, so equivalent representations and ClinVar's
 tandem-repeat / identity notations are not miscounted.
 
@@ -156,14 +156,14 @@ overwhelmingly representation or multi-mapping, not cdot errors:
 differences; {{ clinvar_vcf_residual.snv_diff_pos | commas }} SNVs concentrated in just
 {{ clinvar_vcf_residual.snv_diff_pos_transcripts }} transcripts (paralog and copy-number
 genes that map to more than one genomic locus, each with a constant per-transcript offset);
-{{ clinvar_vcf_residual.babelfish_megaallele | commas }} insertions over-shuffled by the
-VCF normaliser; {{ clinvar_vcf_residual.ambiguity_code_allele }} IUPAC ambiguity-code
+{{ clinvar_vcf_residual.long_cdot_allele | commas }} alleles much longer than ClinVar's, almost
+all c. ranges whose two ends lie in different exons, which the biocommons HGVS engine maps to a
+genomic span that includes the intron; {{ clinvar_vcf_residual.ambiguity_code_allele }} IUPAC ambiguity-code
 alleles (position matches, only the degenerate base differs); and
 {{ clinvar_vcf_residual.identity_or_symbolic }} identity/symbolic alleles.
 
 Binning these coordinate differences by relative CDS position (the decile scheme of
-Figure S1, cited position over CDS length; a re-run of the pass, which reproduced the
-committed totals within six variants) shows no 3'-end concentration: correct projections
+Figure S1, cited position over CDS length) shows no 3'-end concentration: correct projections
 are nearly uniform across deciles
 ({{ clinvar_residual_positions.correct_decile10_pct | dp(1) }}% in the 3'-most decile)
 and the {{ clinvar_residual_positions.incorrect_binned | commas }} binned differences
@@ -247,7 +247,11 @@ agreement (κ) is reported. The taxonomy is version `v1`. Counts were refreshed 
 2026-08-17 after the accession-repair cleaning rules landed: the 43 residual queries the
 new rules rescue all sat in the Bad accession class (delta re-rated by Claude Fable 5,
 Anthropic), which drops from 167 (14.9% of the previous 1,118-query residual) to 124;
-the other classes are unchanged. Synthesised examples (from public `NM_000059.4` /
+the other classes are unchanged. They were refreshed again on 2026-11-02 for cdot 0.2.35,
+whose added cleaning rules rescue 107 more residual queries (delta re-rated by Claude
+Opus 5.5, Anthropic): 43 leave Bad accession, 15 Edit syntax and 49 Trailing /
+concatenated, and the other classes are unchanged. cdot 0.2.36 rescues the same
+queries. Synthesised examples (from public `NM_000059.4` /
 `NM_001754.5`) illustrate each class; no corpus string is reproduced.
 
 ### Figure S1: Positional drift along the CDS across version bumps

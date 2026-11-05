@@ -288,8 +288,9 @@ rule vv_mutalyzer_comparison:
     (rest.variantvalidator.org, mutalyzer.nl). Remote services cannot be
     version-pinned, so the facts record the service date and the version
     metadata the APIs report (measured 2026-08-18, VariantValidator 4.0.1).
-    The live run needs network access and about an hour (requests are cached
-    and resumable in output/rest_cache/); opt in with --config
+    The live run needs network access and about an hour. Responses, including
+    rejections, are cached in output/rest_cache/, so after a cdot change a rerun
+    over the same cases only re-scores cdot; opt in with --config
     vv_mutalyzer=true. Otherwise the frozen measured constants from
     paper/empirical_results/ are copied.
     """

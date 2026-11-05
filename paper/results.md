@@ -204,19 +204,9 @@ share of the {{ cleaning_corpus.rescued | commas }} rescued queries. Categories 
 (a single query may need several fixes), so the counts sum to more than the total.
 *(Private data; frozen constants.)*
 
-| Fix category | Example (→ repaired) | Rescued queries | % of rescued |
-|---|---|---|---|
-| Whitespace / non-printable removal | `NM_000059.4: c.1A>G` → `NM_000059.4:c.1A>G` | 664 | 38.6% |
-| Structural-punctuation repair | `NM_000059.4;c.1A>G` → `NM_000059.4:c.1A>G` | 640 | 37.2% |
-| Gene/transcript-wrapper repair | `BRCA2(NM_000059.4):c.1A>G` → `NM_000059.4(BRCA2):c.1A>G` | 260 | 15.1% |
-| Structure reconstruction | `NM_000059.4c.1A>G` → `NM_000059.4:c.1A>G` | 248 | 14.4% |
-| Protein-suffix stripping | `NM_000059.4:c.1A>G p.(Met1?)` → `NM_000059.4:c.1A>G` | 130 | 7.6% |
-| Genomic-ref-in-parens removal | `NM_000059.4(NC_000013.11):c.68del` → `NM_000059.4:c.68del` | 57 | 3.3% |
-| Base re-casing | `NM_000059.4:c.1delg` → `…delG` | 42 | 2.4% |
-| Other (del/dup count, mutation-type case, …) | `NM_000059.4:c.1_2del2` → `…del` | 11 | 0.6% |
-| Prefix / kind restoration | `NM_000059.4:1A>G` → `NM_000059.4:c.1A>G` | 4 | 0.2% |
-| Accession prefix restoration (provider-verified) | `000059.4:c.68del` → `NM_000059.4:c.68del` | 1 | 0.1% |
-| **Total unique queries rescued** | | **{{ cleaning_corpus.rescued | commas }}** | **100%** |
+<!-- include-csv: empirical_results/cleaning_fix_categories.csv
+  {align: left, na_rep: ""}
+-->
 
 As a control, `paper/scripts/inject_and_clean.py` injects each `clean_hgvs()` fix
 category into a seeded sample of clean, parseable ClinVar c.HGVS strings and confirms
@@ -235,8 +225,8 @@ data-collection artifact and is excluded from the corpus above. The remaining
 queries) of genuine HGVS-shaped input that still fails to parse after cleaning defines
 the ceiling of pure string repair. Classified under a fixed decision-tree taxonomy
 (Supplementary Table S6), well over half is incomplete or reference-less input that no
-string-level repair can invent, about a third is in principle fixable and marks the
-frontier for future cleaning rules, and the remaining ~8% is valid HGVS the biocommons
+string-level repair can invent, about a quarter is in principle fixable and marks the
+frontier for future cleaning rules, and the remaining ~9% is valid HGVS the biocommons
 grammar rejects.
 
 ## R5: Transcript version substitution and coordinate safety
@@ -277,10 +267,8 @@ aligned to the target build, because the structure is build-independent, identic
 across GRCh37/GRCh38/T2T for
 {{ version_stability.refseq_struct_portable_pct | dp(1) }}% of RefSeq and
 {{ version_stability.ensembl_struct_portable_pct | dp(1) }}% of Ensembl versions
-(predictor detail in Supplementary Methods). Validated against ClinVar: of the
+(predictor detail in Supplementary Methods). Validated against ClinVar: all
 {{ version_safety_validation.n_safe_substitutions | commas }} version substitutions the
-structure, gap, and UTR checks accept across the full RefSeq corpus, only
-{{ version_safety_validation.n_coordinate_changes }} still move the genomic coordinate,
-both a single transcript that re-aligns the same CDS structure to a different genomic
-locus. A genomic CDS-map comparison and a small precomputed blocklist catch these
-(Supplementary Methods); with them, no accepted substitution moves a coordinate.
+safety checks accept across the full RefSeq corpus resolve to the same genomic coordinate
+as the cited version ({{ version_safety_validation.n_coordinate_changes }} coordinate
+changes).

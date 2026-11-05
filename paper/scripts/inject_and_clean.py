@@ -72,37 +72,39 @@ GENE_POOL = ["BRCA2", "RUNX1", "BRCA1", "TP53", "MSH2"]
 
 # ---------------------------------------------------------------------------
 # Injection weights — FROZEN CONSTANTS (Tier 2, cited not shipped)
-# Source: deterministic run of clean_hgvs() plus the provider-aware
-#   accession-prefix restoration over the production corpus, 2026-08-17
-#   ("Which clean ops do the rescuing?"; rescued rows, WARNING ops counted;
-#   N=32,752). Used only to weight the reproducible per-class recovery into a
-#   single headline number that reflects the real-world mix of errors. No
-#   corpus string is read or copied.
-# Ops with no string-level injector are excluded: RECONSTRUCTED_STRUCTURE (248
+# Source: deterministic run of clean_hgvs() (PyPI cdot 0.2.36) plus the
+#   provider-aware accession-prefix restoration over the production corpus,
+#   2026-11-04 ("Which clean ops do the rescuing?"; rescued rows, WARNING ops
+#   counted; N=32,752). Used only to weight the reproducible per-class recovery
+#   into a single headline number that reflects the real-world mix of errors.
+#   No corpus string is read or copied.
+# Ops with no string-level injector are excluded: RECONSTRUCTED_STRUCTURE (243
 #   rescued rows; its perturbations are covered by the kind/colon injectors),
-#   DROPPED_EMPTY_VERSION (8; dropping the version is not round-trippable) and
-#   ADDED_ACCESSION_PREFIX (1; needs a data provider).
+#   DROPPED_GENOMIC_REF_IN_PARENS (57), WRAPPED_GENE_SYMBOL (25),
+#   REPLACED_UNICODE_DASH (11), DROPPED_EMPTY_VERSION (8; dropping the version
+#   is not round-trippable), STRIPPED_BUILD_NAME (7), FIXED_MULTIPLE_UNDERSCORE
+#   (4) and ADDED_ACCESSION_PREFIX (1; needs a data provider).
 # ---------------------------------------------------------------------------
 
 REAL_RESCUE_OP_COUNTS = {
-    "STRIPPED_WHITESPACE": 664,
-    "FIXED_SEPARATOR_TYPO": 349,
+    "STRIPPED_WHITESPACE": 663,
+    "FIXED_SEPARATOR_TYPO": 359,
     "SWAPPED_GENE_TRANSCRIPT": 156,
-    "STRIPPED_PROTEIN_SUFFIX": 130,
-    "FIXED_GENE_WRAPPER": 100,
-    "STRIPPED_SURROUNDING_PUNCTUATION": 84,
-    "FIXED_MULTIPLE_COLON": 63,
-    "STRIPPED_UNBALANCED_BRACKETS": 58,
+    "STRIPPED_PROTEIN_SUFFIX": 139,
+    "FIXED_GENE_WRAPPER": 102,
+    "STRIPPED_SURROUNDING_PUNCTUATION": 85,
+    "FIXED_MULTIPLE_COLON": 72,
+    "STRIPPED_UNBALANCED_BRACKETS": 55,
+    "FIXED_MULTIPLE_DOT": 55,
+    "ADDED_TRANSCRIPT_UNDERSCORE": 43,
     "UPPERCASED_BASES": 42,
-    "FIXED_MULTIPLE_DOT": 37,
     "STRIPPED_LEADING_JUNK": 32,
-    "FIXED_MULTIPLE_KIND": 13,
+    "FIXED_MULTIPLE_KIND": 19,
     "UPPERCASED_TRANSCRIPT": 10,
     "DROPPED_DEL_DUP_COUNT": 8,
+    "ADDED_N_PREFIX": 4,
     "FIXED_PREFIX_COLON": 3,
     "LOWERCASED_MUTATION_TYPE": 3,
-    "ADDED_N_PREFIX": 2,
-    "ADDED_TRANSCRIPT_UNDERSCORE": 2,
 }
 
 # ---------------------------------------------------------------------------
@@ -226,7 +228,13 @@ def inj_uppercased_transcript(orig, gene):
 def inj_dropped_del_dup_count(orig, gene):
     if not _RANGED_DEL_DUP.search(orig):
         return None
-    return orig + "23", orig  # redundant base count after a ranged del/dup
+    # Redundant base count after a ranged del/dup. clean_hgvs refuses a count that
+    # contradicts a plain range, so use the range length there. An intronic or UTR
+    # range (c.100+1_100+5del) can't be checked, so any count is dropped; 23 is arbitrary.
+    count = 23
+    if m := re.search(r"(\d+)_(\d+)(?:del|dup)$", orig):
+        count = int(m.group(2)) - int(m.group(1)) + 1
+    return orig + str(count), orig
 
 
 def inj_added_transcript_underscore(orig, gene):

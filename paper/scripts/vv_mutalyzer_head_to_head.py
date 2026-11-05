@@ -103,8 +103,10 @@ class Cache:
             for line in path.read_text().splitlines():
                 if line.strip():
                     rec = json.loads(line)
-                    if rec.get("error"):
-                        continue  # transient failure: refetch on resume
+                    # A 4xx is the service rejecting this input, so it is kept like
+                    # any other answer; a 5xx is a server failure, refetched.
+                    if rec.get("error", "").startswith("HTTP Error 5"):
+                        continue
                     self.data[rec["input"]] = rec
         path.parent.mkdir(parents=True, exist_ok=True)
         self.fh = open(path, "a")
