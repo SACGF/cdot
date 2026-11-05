@@ -98,7 +98,7 @@ draws (`--sample-out` / `--time-bucketed-out`) but R2 now reports the full corpu
 
 Measured on ClinVarVCVRelease_2026-10 with the data_v0.2.36 RefSeq GRCh38 JSON and local
 uta_20241220 (FastaSeqFetcher for cdot, SeqRepo for UTA sequence). The cdot pass is cdot
-0.2.36 from PyPI, 2026-11-04. The UTA pass, version age and submitter attribution do not
+0.2.37 from PyPI, 2026-11-05. The UTA pass, version age and submitter attribution do not
 run cdot resolution code and come from the 2026-11-02 run:
 
 ```bash
@@ -114,7 +114,7 @@ python paper/scripts/build_clinvar_submitted_pairs.py \
 python paper/scripts/compute_submitted_version_age.py clinvar_submitted_pairs.GRCh38.tsv \
     --refseq-grch38 cdot-0.2.36.refseq.GRCh38.json.gz --refseq-allbuilds ...
 
-# full-corpus resolution (VCF-coordinate scoring), cdot (1 h 25 min wall, 635 HGVS/s)
+# full-corpus resolution (VCF-coordinate scoring), cdot (1 h 25 min wall, 634 HGVS/s)
 # then UTA (3 h 19 min, 272 HGVS/s):
 F=GCF_000001405.39_GRCh38.p13_genomic.fna.gz
 python paper/scripts/resolve_clinvar_pass.py clinvar_submitted_pairs.GRCh38.tsv \
@@ -124,12 +124,21 @@ python paper/scripts/resolve_clinvar_pass.py clinvar_submitted_pairs.GRCh38.tsv 
     --uta --out submitted_full_uta.csv
 ```
 
-Full head-to-head over 3,245,277 pairs: cdot 99.2% vs UTA 81.9% matched; 560,821 resolve
-through cdot alone, 971 through UTA alone, and 0 pairs that resolve as written fail
-after `fix_hgvs`. Per-era: 2008-2015 cdot 97.9% / UTA 76.2%; 2016-2020 99.3% / 88.9%;
-2021-2026 99.2% / 81.1%.
+Full head-to-head over 3,245,277 pairs: cdot 99.3% vs UTA 81.9% matched; 562,173 resolve
+through cdot alone, 87 through UTA alone, and 0 pairs that resolve as written fail
+after `fix_hgvs`. Per-era: 2008-2015 cdot 98.9% / UTA 76.2%; 2016-2020 99.4% / 88.9%;
+2021-2026 99.3% / 81.1%.
 
-Against the cdot 0.2.35 pass, 6,859 pairs move to `correct`. 5,808 are `incorrect` rows
+Against the cdot 0.2.36 pass, 2,240 pairs change, all citing (or substituted to) one of
+the transcript versions with bases that align to neither of two adjacent exons (#235):
+1,404 `no_data` and 832 `error` pairs move to `correct`, 1 `no_data` to `incorrect` and 3
+`error` to `no_data` (positions inside the unaligned bases). Most are on versions absent
+from the VCF pass, led by VWF `NM_000552.2`, FCGBP `NM_003890.2` and SHANK3
+`NM_033517.1`. `uta_only` falls from 971 to 87 because UTA already resolved 884 of them.
+The `error` rows were reference or position mismatches downstream of the gap, from the
+same `FastaSeqFetcher` omission as in the VCF pass.
+
+Against the cdot 0.2.35 pass, the 0.2.36 pass moved 6,859 pairs to `correct`. 5,808 are `incorrect` rows
 citing one of the 4,788 GRCh38 versions whose first exon starts after transcript
 position 0, which 0.2.35 resolved shifted by the unaligned length (#230). The other 1,051
 (mostly `reference_mismatch` errors) are on minus-strand transcripts with alignment gaps,
@@ -147,7 +156,7 @@ submission year (2008-2015, 2016-2020, 2021-2026). The version-age columns come 
 from the counts.
 
 `clinvar_submitted_residual.csv` is derived from the full cdot pass rows with
-`fixed_bucket != correct` (25,923 of 3,245,277); the `no_data` bucket is split into
+`fixed_bucket != correct` (23,687 of 3,245,277); the `no_data` bucket is split into
 `version_refused` (accession holds other versions, via `get_tx_versions`) vs
 `unknown_accession`, `incorrect` maps to `coordinate_drift`, and the `error` bucket is
 re-resolved to recover the exception class (`HGVSInvalidVariantError` reference_mismatch,
