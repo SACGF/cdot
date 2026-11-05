@@ -172,7 +172,7 @@ genomic span that includes the intron; {{ clinvar_vcf_residual.ambiguity_code_al
 alleles (position matches, only the degenerate base differs); and
 {{ clinvar_vcf_residual.identity_or_symbolic }} identity/symbolic alleles. On the
 transcripts with unaligned bases, an intronic offset anchored on one of those bases stays
-unresolved, because biocommons/hgvs cannot project an offset from a base with no
+unresolved, because biocommons/hgvs drops the offset when its anchor base has no
 genomic position.
 
 Binning these coordinate differences by relative CDS position (the decile scheme of
