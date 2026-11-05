@@ -19,11 +19,13 @@ PyHGVS. biocommons/hgvs reads from a pluggable data provider behind a common int
 which other tools such as hgvs-weaver [@HgvsWeaver] also implement, so a single
 transcript backend serves multiple clients; PyHGVS loads transcripts from its own data
 structures. The standard backend for biocommons/hgvs is the Universal Transcript
-Archive (UTA), which stores transcript alignments in PostgreSQL. Accessing it means
-either installing that database locally or reaching a remote server over the PostgreSQL
-wire protocol, which many hospital and corporate networks block and which is slow over
-the network (~{{ literature.uta_remote_tps }} transcript/second). UTA is also limited
-in coverage (~{{ literature.uta_count | commas }} versioned alignments, RefSeq only):
+Archive (UTA) [@Hart2020], which stores transcript alignments in PostgreSQL. Accessing
+it means either installing that database locally or reaching a remote server over the
+PostgreSQL wire protocol, which many hospital and corporate networks block and which is
+slow over the network (about one transcript per second at best;
+{{ benchmark.uta_remote_tps | dp(2) }} HGVS/s in our measurement, Table 1). UTA is also
+limited in coverage (~{{ literature.uta_count | commas }} versioned alignments in the
+2021 release described by Hart and Prlić [@Hart2020], RefSeq only):
 it retains only a limited set of historical transcript versions, and Ensembl
 transcripts, widely used in research genomics and the predominant annotation source in
 Europe, are absent entirely.

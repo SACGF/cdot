@@ -6,14 +6,14 @@ cdot merges three transcript-annotation sources into a single dataset per build
 (Figure 1A), downloading the complete run of historical releases from the RefSeq and
 Ensembl FTP sites:
 
-1. **RefSeq GFF3**: {{ sources.refseq_grch37_releases | int }} GRCh37,
+1. **RefSeq GFF3** [@OLeary2016]: {{ sources.refseq_grch37_releases | int }} GRCh37,
    {{ sources.refseq_grch38_releases | int }} GRCh38, and
    {{ sources.refseq_t2t_releases | int }} T2T-CHM13v2.0 NCBI annotation releases
    through RS_2025_08 (Supplementary Table S1), plus NCBI's historical
    transcript-alignment file (RS_2024_08), covering GRCh38 versions replaced or
    suppressed before any archived release.
 
-2. **Ensembl GTF**: {{ sources.ensembl_grch37_releases | int }} GRCh37,
+2. **Ensembl GTF** [@Martin2023]: {{ sources.ensembl_grch37_releases | int }} GRCh37,
    {{ sources.ensembl_grch38_releases | int }} GRCh38, and
    {{ sources.ensembl_t2t_releases | int }} T2T-CHM13v2.0 releases, spanning Ensembl
    releases 81 to 116 (Supplementary Table S2); GTF is used because Ensembl's GFF3
@@ -41,7 +41,8 @@ file is a drop-in GTF/GFF replacement. Per-build fields include a per-exon `gap`
 recording transcript-vs-genome indels, converted to HGVS CIGAR format at query time, and
 canonical tags (MANE Select and Plus Clinical, RefSeq Select, Ensembl canonical) where
 present; a root-level `schema_version` lets clients reject incompatible files on load.
-The full schema is Supplementary Table S3.
+Supplementary Table S3 summarises the schema; the full JSON Schema ships in the
+repository (`docs/cdot-json-schema.json`).
 
 ## String cleaning (`clean_hgvs()`)
 
@@ -105,7 +106,7 @@ UTA in any biocommons/hgvs pipeline:
 
 ```python
 from cdot.hgvs.dataproviders import JSONDataProvider
-hdp = JSONDataProvider(["cdot.0.2.34.refseq.grch38.json.gz"])
+hdp = JSONDataProvider(["cdot-0.2.36.refseq.GRCh38.json.gz"])
 ```
 
 Sequence data comes from SeqRepo [@Hart2020] or cdot's `FastaSeqFetcher`, which
@@ -178,3 +179,7 @@ resolution only (exclusions in Supplementary Methods). The REST rows run against
 production server at cdotlib.org over the public internet; the public remote UTA row
 uses the first {{ benchmark.uta_remote_n | int }} pairs, a full-size pass being
 impractical at ~{{ benchmark.uta_remote_tps | dp(1) }} HGVS/s.
+
+Results marked **[private data]** are aggregate statistics from private production
+corpora, reported as frozen constants that a referee cannot regenerate; every other
+result is reproducible from public data with the scripts in the repository.
