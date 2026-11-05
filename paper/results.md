@@ -5,8 +5,8 @@
 The unit of coverage is the *transcript-version alignment*: a particular transcript
 version aligned to a particular genome build, counted separately per build. cdot covers
 {{ coverage.total_count | commas }} such alignments across all builds and sources,
-compared with ~{{ literature.uta_count | commas }} in UTA's 2021 release [@Hart2020], an
-increase of {{ coverage.improvement_fold | fmt('.1f') }}×. The gain has two sources:
+compared with ~{{ literature.uta_count | commas }} in UTA's 2021 release [@Hart2020],
+{{ coverage.improvement_fold | fold(1) | article }} increase. The gain has two sources:
 historical depth (cdot ingests the complete run of archived RefSeq and Ensembl releases,
 so an NM_ version cited in an older report or ClinVar submission still resolves after
 NCBI has retired it from the current annotation) and Ensembl itself, absent from UTA
@@ -153,25 +153,27 @@ constant (Methods). The public remote UTA row uses the first
 A GRCh38 RefSeq JSON file loads in ~{{ benchmark.grch38_load_time_s | dp(0) }} s.
 Batching the per-transcript REST lookups into one `prefetch()` request (all transcripts
 for the set, under a second, untimed) makes REST throughput equivalent to local JSON,
-the two within 2% of each other: with the transcript data in process memory, both are
+the two {{ benchmark.rest_prefetch_vs_local_diff_pct | within_pct }} of each other: with the transcript data in process memory, both are
 bounded by the shared engine and sequence layer, not by the transcript backend.
 Comparing like with like: locally, a loaded UTA reached
 {{ benchmark.uta_local_tps | int }} HGVS/s, about a quarter of local-JSON throughput,
 each lookup resolving a set of SQL queries where cdot needs a single JSON object; and
-remote to remote, cdot's REST API (one request per transcript, no prefetch) is nearly
-three orders of magnitude faster than the public UTA server, which pays wide-area
+remote to remote, cdot's REST API (one request per transcript, no prefetch) is
+{{ benchmark.cdot_rest_vs_uta_remote_ratio | orders_of_magnitude }} faster than the
+public UTA server, which pays wide-area
 round trips to a shared database on every lookup.
 
 At scale, a single local-JSON process resolved the full set of
 {{ benchmark_fullscale.n_pairs | commas }} unique ClinVar (g.HGVS, c.HGVS) pairs in
 ~{{ benchmark_fullscale.wall_min | int }} minutes,
 {{ benchmark_fullscale.resolved_pct | dp(1) }}% producing a genomic coordinate. Over
-{{ benchmark_fullscale.n_runs | int }} hot-cache repeats it averaged
+{{ benchmark_fullscale.n_runs | number_word }} hot-cache repeats it averaged
 {{ benchmark_fullscale.hot_tps | int }} HGVS/s
-({{ benchmark_fullscale.hot_tps_min | int }}–{{ benchmark_fullscale.hot_tps_max | int }}), within 1% of the
-cold pass ({{ benchmark_fullscale.cold_tps | int }} HGVS/s), so the state of the
+({{ benchmark_fullscale.hot_tps_min | int }}–{{ benchmark_fullscale.hot_tps_max | int }}),
+{{ benchmark_fullscale.hot_vs_cold_diff_pct | within_pct }} of the cold pass ({{ benchmark_fullscale.cold_tps | int }} HGVS/s), so the state of the
 sequence cache is not the bound either. The same exhaustive pass against the public
-remote UTA database extrapolates to over a year.
+remote UTA database extrapolates to
+{{ benchmark_fullscale.uta_remote_days | approx(per=365, noun='year') }}.
 
 ## R4: String cleaning recovers malformed real-world HGVS
 
