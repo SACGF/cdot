@@ -42,7 +42,7 @@ gt_chrom, gt_pos, gt_ref, gt_alt, clnhgvs, cdot_vcf). The 1,766 `incorrect`:
 |----------|-------|------------|
 | `indel_mismatch` | 1,116 | indel representation / left-alignment differences in repeat regions (471 transcripts; NM_000271 alone 100) |
 | `snv_diff_pos` | 406 | SNV whose position differs; concentrated in 42 transcripts (NM_001164277=177, NM_000854.3, NM_015691, ...) |
-| `babelfish_megaallele` | 178 | Babelfish left-shuffles an insertion through a repeat into a huge ref/alt; a normaliser artifact, not a cdot coordinate |
+| `long_cdot_allele` | 178 | cdot's allele is over 10 bases longer than ClinVar's. Rechecked on the 2026-10 pass (71 rows): 67 are c. ranges whose ends are in different exons, which biocommons HGVS maps to a genomic span including the intron; not a cdot coordinate error |
 | `identity_or_symbolic` | 39 | ClinVar identity (`=`) / symbolic alleles with no comparable VCF ALT |
 | `ambiguity_code_allele` | 27 | IUPAC ambiguity ALTs (G>H, G>Y, G>R); position matches, only the degenerate base differs |
 

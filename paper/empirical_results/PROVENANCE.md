@@ -315,7 +315,11 @@ position, cdot allele over 10 bases longer than ClinVar's, ClinVar SNV, other in
 R/Y/K/M/B/V/D/H code in the c.HGVS; the 16 of those on minus-strand transcripts are also
 wrong against ClinVar's g.HGVS, because bioutils `reverse_complement` leaves ambiguity
 codes uncomplemented (c.315G>Y maps to g.C>Y, not g.C>R; biocommons/bioutils#121). The other 41 are long
-insertions holding N runs.
+insertions holding N runs. Of the 71 `long_cdot_allele` rows, 67 are c. ranges whose two
+ends are in different exons (eg `NM_000059.4:c.8331_8332del`, c.8331 being the last base of
+an exon), which biocommons HGVS maps to a genomic deletion that includes the intron
+(`g.32363533_32370402del`); 2 have intronic offsets, and 2 are ClinVar joins of a
+multi-base deletion to an SNV.
 
 ## clinvar_residual_positions.csv (frozen)
 

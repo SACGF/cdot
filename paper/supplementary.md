@@ -156,8 +156,9 @@ overwhelmingly representation or multi-mapping, not cdot errors:
 differences; {{ clinvar_vcf_residual.snv_diff_pos | commas }} SNVs concentrated in just
 {{ clinvar_vcf_residual.snv_diff_pos_transcripts }} transcripts (paralog and copy-number
 genes that map to more than one genomic locus, each with a constant per-transcript offset);
-{{ clinvar_vcf_residual.babelfish_megaallele | commas }} insertions over-shuffled by the
-VCF normaliser; {{ clinvar_vcf_residual.ambiguity_code_allele }} IUPAC ambiguity-code
+{{ clinvar_vcf_residual.long_cdot_allele | commas }} alleles much longer than ClinVar's, almost
+all c. ranges whose two ends lie in different exons, which the biocommons HGVS engine maps to a
+genomic span that includes the intron; {{ clinvar_vcf_residual.ambiguity_code_allele }} IUPAC ambiguity-code
 alleles (position matches, only the degenerate base differs); and
 {{ clinvar_vcf_residual.identity_or_symbolic }} identity/symbolic alleles.
 

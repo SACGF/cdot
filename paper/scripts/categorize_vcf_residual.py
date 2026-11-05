@@ -11,8 +11,10 @@ gets the first matching category:
                            ClinVar's VCF writes these as N; on a minus-strand transcript
                            cdot's ALT is also left uncomplemented, because bioutils
                            ``reverse_complement`` passes ambiguity codes through unchanged
-    babelfish_megaallele   cdot's allele is over 10 bases longer than ClinVar's (the VCF
-                           normaliser shuffled an insertion through a repeat)
+    long_cdot_allele       cdot's allele is over 10 bases longer than ClinVar's. Mostly a
+                           c. range whose two ends are in different exons (eg c.8331_8332del
+                           with c.8331 the last base of an exon): biocommons HGVS maps it to
+                           a genomic span that includes the intron
     snv_diff_pos           ClinVar SNV at a different position (also counts transcripts)
     indel_mismatch         any other indel representation / left-alignment difference
 
@@ -26,12 +28,12 @@ import argparse
 import csv
 from collections import Counter
 
-CATEGORIES = ["indel_mismatch", "snv_diff_pos", "babelfish_megaallele",
+CATEGORIES = ["indel_mismatch", "snv_diff_pos", "long_cdot_allele",
               "identity_or_symbolic", "ambiguity_code_allele"]
 COLUMNS = ["n_incorrect", "indel_mismatch", "snv_diff_pos", "snv_diff_pos_transcripts",
-           "babelfish_megaallele", "identity_or_symbolic", "ambiguity_code_allele"]
+           "long_cdot_allele", "identity_or_symbolic", "ambiguity_code_allele"]
 IUPAC_AMBIGUITY = set("RYSWKMBDHVN")
-MEGAALLELE_EXTRA_BASES = 10
+LONG_ALLELE_EXTRA_BASES = 10
 
 
 def categorize(g_hgvs, c_hgvs, gt, cdot):
@@ -41,8 +43,8 @@ def categorize(g_hgvs, c_hgvs, gt, cdot):
         return "identity_or_symbolic"
     if c_pos == pos and (set(alt.upper()) | set(c_alt.upper())) & IUPAC_AMBIGUITY:
         return "ambiguity_code_allele"
-    if max(len(c_ref), len(c_alt)) > max(len(ref), len(alt)) + MEGAALLELE_EXTRA_BASES:
-        return "babelfish_megaallele"
+    if max(len(c_ref), len(c_alt)) > max(len(ref), len(alt)) + LONG_ALLELE_EXTRA_BASES:
+        return "long_cdot_allele"
     if len(ref) == 1 and len(alt) == 1:
         return "snv_diff_pos"
     return "indel_mismatch"
