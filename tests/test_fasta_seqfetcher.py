@@ -7,6 +7,7 @@ in #115: EGR2 NM_000399.3 (1 indel) and PTEN NM_000314.4 (1 substitution, 1 inde
 import json
 import warnings
 
+from bioutils.sequences import reverse_complement
 import pysam
 import pytest
 from hgvs.exceptions import HGVSDataNotAvailableError
@@ -162,6 +163,9 @@ PADDED_TRANSCRIPTS = {
     "NM_000002.1": ("-", [[10, 30, 0, 1, 22, "M5 I2 M15"]]),
     "NM_000003.1": ("+", [[10, 30, 0, 4, 23, None]]),
     "NM_000004.1": ("-", [[10, 30, 0, 4, 23, None]]),
+    # Transcript bases 21-23 align nowhere, between the two exons
+    "NM_000005.1": ("+", [[10, 30, 0, 1, 20, None], [40, 60, 1, 24, 43, None]]),
+    "NM_000006.1": ("-", [[10, 30, 1, 24, 43, None], [40, 60, 0, 1, 20, None]]),
 }
 
 
@@ -245,9 +249,11 @@ def test_indel_normalized_into_padding_raises(padded_files):
 @pytest.mark.parametrize("ac, n_pos, g_pos", [
     ("NM_000003.1", 4, 11), ("NM_000003.1", 23, 30),
     ("NM_000004.1", 4, 30), ("NM_000004.1", 23, 11),
+    ("NM_000005.1", 20, 30), ("NM_000005.1", 24, 41), ("NM_000005.1", 43, 60),
+    ("NM_000006.1", 20, 41), ("NM_000006.1", 24, 30), ("NM_000006.1", 43, 11),
 ])
-def test_unaligned_transcript_start_maps(padded_files, ac, n_pos, g_pos):
-    """ The first 3 transcript bases do not align, so n.4 is the first genomic base """
+def test_unaligned_transcript_bases_map(padded_files, ac, n_pos, g_pos):
+    """ Unaligned transcript bases (n.1_3 at the start, n.21_23 between exons) are skipped """
     from hgvs.alignmentmapper import AlignmentMapper
     from hgvs.parser import Parser
     _, json_filename = padded_files
@@ -255,3 +261,14 @@ def test_unaligned_transcript_start_maps(padded_files, ac, n_pos, g_pos):
     interval = Parser().parse_n_interval(str(n_pos))
     g_interval = AlignmentMapper(hdp, ac, CONTIG, "splign").n_to_g(interval)
     assert (g_interval.start.base, g_interval.end.base) == (g_pos, g_pos)
+
+
+@pytest.mark.parametrize("ac, seq", [
+    ("NM_000005.1", PADDED_GENOME[10:30] + "NNN" + PADDED_GENOME[40:60]),
+    ("NM_000006.1", reverse_complement(PADDED_GENOME[40:60]) + "NNN" + reverse_complement(PADDED_GENOME[10:30])),
+])
+def test_unaligned_bases_between_exons_padded(padded_files, ac, seq):
+    fasta_filename, json_filename = padded_files
+    hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename))
+    with pytest.warns(GenomeMismatchWarning, match=f"{ac} n.21_23"):
+        assert hdp.seqfetcher.fetch_seq(ac) == seq

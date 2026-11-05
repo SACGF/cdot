@@ -113,11 +113,11 @@ across a hole. Do not derive a transcript position by summing exon lengths.
 58 of the multi-exon GRCh38 RefSeq alignments have such a hole (issue
 [#123](https://github.com/SACGF/cdot/issues/123)).
 
-biocommons HGVS cannot project variants through one of these transcripts, from cdot or from UTA.
-It detects the discontinuity and raises `HGVSDataNotAvailableError: ... Exons N and N+1 are not
-adjacent` rather than return a silently wrong answer. See
-[biocommons/hgvs#385](https://github.com/biocommons/hgvs/issues/385) and
-[#386](https://github.com/biocommons/hgvs/issues/386).
+biocommons HGVS needs each exon to start in the transcript where the previous one ended, so the
+cdot data provider gives the unaligned bases to the exon before the hole as a trailing
+transcript-only `D` op in its CIGAR, as UTA does (unaligned bases before the first exon become a
+leading `D` op). Positions either side of the hole then map correctly. `FastaSeqFetcher` fills the
+unaligned bases with `N`, so a sequence slice over them raises `GenomeMismatchError`.
 
 ## The `start_codon` / `stop_codon` fields
 

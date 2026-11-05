@@ -1,5 +1,9 @@
 ## [unreleased]
 
+### Fixed
+
+- #235 - Transcripts with unaligned bases between two exons (eg SHANK3 `NM_001372044.2`) failed with "Exons X and Y are not adjacent"
+
 ## [0.2.36] - 2026-11-04
 
 ### Fixed
