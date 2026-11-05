@@ -2,6 +2,7 @@
 
 ### Fixed
 
+- #235 - Transcripts with unaligned bases between two exons (eg SHANK3 `NM_001372044.2`) failed with "Exons X and Y are not adjacent"
 - #234 - `FastaSeqFetcher` / `GenomeFastaSeqFetcher` shared between threads, or used after a fork, broke on concurrent reads
 
 ## [0.2.36] - 2026-11-04
