@@ -1,6 +1,6 @@
 field,value
-n_pairs,4423358
+n_pairs,4583798
 resolved_pct,99.4
-cold_tps,632
-hot_tps,640
-wall_min,115
+cold_tps,606
+hot_tps,603
+wall_min,127

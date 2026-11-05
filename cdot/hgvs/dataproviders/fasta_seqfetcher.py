@@ -2,7 +2,9 @@
 
     :class:`FastaSeqFetcher` is the one to use: genomic contigs straight from the FASTA, transcript
     sequences spliced together from their exons on it. See docs/fasta_seqfetcher.md. """
+import os
 import re
+import threading
 import warnings
 from enum import Enum
 
@@ -24,12 +26,38 @@ __all__ = [
 ]
 
 
+class _ThreadLocalFastaFile:
+    """ A pysam FastaFile opened once per thread and process. Reads through one shared handle from
+        several threads, or from both sides of a fork, corrupt it for every later read """
+
+    def __init__(self, fasta_filename):
+        self._local = threading.local()
+        fasta_file = self._open(fasta_filename)
+        self.filename = fasta_file.filename
+        self.references = fasta_file.references
+
+    def _open(self, fasta_filename):
+        self._local.fasta_file = FastaFile(fasta_filename)
+        self._local.pid = os.getpid()
+        return self._local.fasta_file
+
+    def fetch(self, *args, **kwargs):
+        if getattr(self._local, "pid", None) == os.getpid():
+            fasta_file = self._local.fasta_file
+        else:
+            fasta_file = self._open(self.filename)
+        return fasta_file.fetch(*args, **kwargs)
+
+
 class GenomeFastaSeqFetcher:
+    """ Values of ``contig_fastas`` have ``fetch()`` and ``filename`` like a pysam FastaFile, but are
+        safe to share between threads and across a fork """
+
     def __init__(self, *args):
         self.source = "Local Fasta file reference"
         self.contig_fastas = {}
         for fasta_filename in args:
-            fasta_file = FastaFile(fasta_filename)
+            fasta_file = _ThreadLocalFastaFile(fasta_filename)
             for contig in fasta_file.references:
                 self.contig_fastas[contig] = fasta_file
 

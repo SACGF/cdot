@@ -5,7 +5,11 @@ Uses a tiny synthetic genome and transcripts. The genome_mismatch values are fro
 in #115: EGR2 NM_000399.3 (1 indel) and PTEN NM_000314.4 (1 substitution, 1 indel)
 """
 import json
+import os
+import random
+import threading
 import warnings
+from unittest import mock
 
 from bioutils.sequences import reverse_complement
 import pysam
@@ -14,7 +18,7 @@ from hgvs.exceptions import HGVSDataNotAvailableError
 
 from cdot.hgvs.dataproviders import ChainedSeqFetcher, JSONDataProvider
 from cdot.hgvs.dataproviders.fasta_seqfetcher import FastaSeqFetcher, ExonsFromGenomeFastaSeqFetcher, \
-    GenomeMismatchError, GenomeMismatchPolicy, GenomeMismatchWarning
+    GenomeFastaSeqFetcher, GenomeMismatchError, GenomeMismatchPolicy, GenomeMismatchWarning
 
 CONTIG = "NC_000011.9"  # GRCh37 chr11
 GENOME = "ACGTTGCAAC" * 10
@@ -272,3 +276,50 @@ def test_unaligned_bases_between_exons_padded(padded_files, ac, seq):
     hdp = _hdp(json_filename, FastaSeqFetcher(fasta_filename))
     with pytest.warns(GenomeMismatchWarning, match=f"{ac} n.21_23"):
         assert hdp.seqfetcher.fetch_seq(ac) == seq
+
+
+@pytest.fixture(scope="module")
+def bgzipped_genome(tmp_path_factory):
+    """ 2 Mb, so reads land in many different bgzf blocks """
+    tmp_path = tmp_path_factory.mktemp("bgzip")
+    rng = random.Random(42)
+    genome = "".join(rng.choice("ACGT") for _ in range(2_000_000))
+    fasta_filename = str(tmp_path / "genome.fa")
+    with open(fasta_filename, "w") as f:
+        f.write(f">{CONTIG}\n{genome}\n")
+    pysam.tabix_compress(fasta_filename, fasta_filename + ".gz")
+    pysam.faidx(fasta_filename + ".gz")
+    return fasta_filename + ".gz", genome
+
+
+def test_fetch_from_several_threads(bgzipped_genome):
+    fasta_filename, genome = bgzipped_genome
+    seqfetcher = GenomeFastaSeqFetcher(fasta_filename)
+    errors = []
+
+    def fetch_random(seed):
+        rng = random.Random(seed)
+        for _ in range(300):
+            pos = rng.randrange(len(genome) - 10)
+            try:
+                assert seqfetcher.fetch_seq(CONTIG, pos, pos + 10) == genome[pos:pos + 10]
+            except Exception as e:
+                errors.append(e)
+
+    threads = [threading.Thread(target=fetch_random, args=(seed,)) for seed in range(4)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert not errors
+
+
+def test_forked_process_opens_own_handle(bgzipped_genome):
+    fasta_filename, genome = bgzipped_genome
+    seqfetcher = GenomeFastaSeqFetcher(fasta_filename)
+    fasta_file = seqfetcher.contig_fastas[CONTIG]
+    assert seqfetcher.fetch_seq(CONTIG, 0, 10) == genome[:10]
+    parent_handle = fasta_file._local.fasta_file
+    with mock.patch("os.getpid", return_value=os.getpid() + 1):
+        assert seqfetcher.fetch_seq(CONTIG, 0, 10) == genome[:10]
+    assert fasta_file._local.fasta_file is not parent_handle
