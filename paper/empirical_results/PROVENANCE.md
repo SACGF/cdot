@@ -185,29 +185,28 @@ per-submitter table (`--top-out`, which names laboratories) is NOT checked in.
 ## benchmark_fullscale.csv (frozen)
 
 R3 full-scale throughput of a single local-JSON process over the whole current ClinVar
-(g.HGVS, c.HGVS) pair set (`clinvar_pairs.GRCh38.tsv` from ClinVar 2026-10, cdot 0.2.36
-from PyPI, data_v0.2.36 RefSeq GRCh38, local SeqRepo), measured 2026-11-04 with the
-hot-cache protocol: a first pass warms the OS sequence cache and is discarded, the next
-is timed. Nothing else ran on the machine during either pass.
+(g.HGVS, c.HGVS) pair set (`clinvar_pairs.GRCh38.tsv` from ClinVar 2026-10, cdot 0.2.37
+from PyPI, data_v0.2.36 RefSeq GRCh38, local SeqRepo with fd caching), measured
+2026-11-05 with `paper/scripts/measure_fullscale.py`: each pass runs in a fresh process,
+a warm-up pass (reported as `cold_tps`) warms the OS sequence cache, then `--runs` timed
+passes give `hot_tps` (mean), `hot_tps_min`, `hot_tps_max` and `wall_min` (mean). Run
+alone on the machine with `UTA_DB_URL` unset (8 h 05 min wall for all four passes).
 
 ```bash
 HGVS_SEQREPO_DIR=... SEQREPO_FD_CACHE_MAXSIZE=128 \
-python paper/scripts/resolve_clinvar_pass.py clinvar_pairs.GRCh38.tsv \
-    --json cdot-0.2.36.refseq.GRCh38.json.gz --out /dev/null   # x2 (discard 1st)
+python paper/scripts/measure_fullscale.py clinvar_pairs.GRCh38.tsv \
+    --json cdot-0.2.36.refseq.GRCh38.json.gz --runs 3 --out benchmark_fullscale.csv
 ```
 
-Single timed passes vary by several percent between days on this VM (below), so the next
-measurement should use `paper/scripts/measure_fullscale.py`, which runs the same pass in
-fresh processes, one warm-up plus `--runs` timed (default 3), and writes this CSV with the
-mean `hot_tps` and its range (`hot_tps_min`, `hot_tps_max`, `n_runs`). The current values
-are from one warm-up and one timed pass.
-
-`n_pairs` 4,583,798; `resolved_pct` 99.4; `cold_tps` 606 HGVS/s (first pass, wall
-7570 s); `hot_tps` 603 HGVS/s (timed pass, wall 7603 s), under 1% apart, so full-scale
-local-JSON throughput is not sequence-cache-limited. The same protocol on cdot 0.2.35
-(2026-11-02) gave 646 / 640 HGVS/s. That gap is run-to-run variation on this VM, not the
-client: 0.2.35 and 0.2.36 run alternately over the first 100,000 pairs gave 793 / 790 and
-795 / 782 HGVS/s. The controlled backend comparison
+`n_pairs` 4,583,798; `resolved_pct` 99.5; `cold_tps` 632 HGVS/s; `hot_tps` 631 HGVS/s
+(629 to 633 over 3 runs, wall 121 min each), so full-scale local-JSON throughput is not
+sequence-cache-limited. This pass resolves 4,558,807 pairs with SeqRepo as the sequence
+source; the VCF pass, with `FastaSeqFetcher`, resolves 4,559,178. The previous snapshot (cdot
+0.2.36, 2026-11-04, one warm-up and one timed pass) gave 99.4% resolved, cold 606 / hot
+603 HGVS/s, 127 min; 0.2.35 on the same one-pass protocol gave 646 / 640. Those
+single-pass differences are run-to-run variation on this VM, not the client: 0.2.35 and
+0.2.36 run alternately over the first 100,000 pairs gave 793 / 790 and 795 / 782 HGVS/s.
+The 0.2.37 range across three runs is under 1%. The controlled backend comparison
 (local JSON vs prefetched REST) stays in Table 1 / `benchmark.csv`.
 
 ## injection_benchmark.csv, residual_taxonomy.csv, cleaning_fix_categories.csv (table CSVs, not facts)
@@ -425,14 +424,19 @@ identical to 0.2.34, as no transcript sources were added between them); re-run
 
 ### benchmark.csv
 
-`paper/scripts/compute_benchmark.py`. Committed snapshot measured 2026-11-04 (cdot
-0.2.36 from PyPI, data_v0.2.36 GRCh38 RefSeq, uta_20241220 local, public
+`paper/scripts/compute_benchmark.py`. Committed snapshot measured 2026-11-05 (cdot
+0.2.37 from PyPI, data_v0.2.36 GRCh38 RefSeq, uta_20241220 local, public
 uta.biocommons.org remote, cdotlib.org REST, biocommons engine, one shared local SeqRepo
 with fd caching), run alone on the machine with `UTA_DB_URL` unset, since
 `uta.connect()` with no URL reads that variable and would turn the remote row local:
 median (q1, q3) HGVS/s over 5 passes of the committed 500-pair set (remote UTA: first
 25 pairs). See R3 / Table 1. The remote UTA row does not depend on the cdot client and
-is kept from the 2026-11-03 run (`--skip-uta-remote` on 2026-11-04).
+is kept from the 2026-11-03 run (`--skip-uta-remote` on 2026-11-04 and 2026-11-05;
+the script writes the other columns and the remote ones are merged back from the
+committed file). Against the 0.2.36 snapshot every row moves by 3% or less (local JSON
+744 -> 741, REST 111 -> 108, prefetched REST 733 -> 746, local UTA 186 -> 187), within
+run-to-run variation; one local UTA repeat dropped to 107 HGVS/s, which the median
+absorbs.
 
 ### version_stability.csv, positional_drift.csv
 

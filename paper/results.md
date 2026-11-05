@@ -165,8 +165,10 @@ round trips to a shared database on every lookup.
 At scale, a single local-JSON process resolved the full set of
 {{ benchmark_fullscale.n_pairs | commas }} unique ClinVar (g.HGVS, c.HGVS) pairs in
 ~{{ benchmark_fullscale.wall_min | int }} minutes,
-{{ benchmark_fullscale.resolved_pct | dp(1) }}% producing a genomic coordinate. A
-hot-cache repeat gave {{ benchmark_fullscale.hot_tps | int }} HGVS/s, within 1% of the
+{{ benchmark_fullscale.resolved_pct | dp(1) }}% producing a genomic coordinate. Over
+{{ benchmark_fullscale.n_runs | int }} hot-cache repeats it averaged
+{{ benchmark_fullscale.hot_tps | int }} HGVS/s
+({{ benchmark_fullscale.hot_tps_min | int }}–{{ benchmark_fullscale.hot_tps_max | int }}), within 1% of the
 cold pass ({{ benchmark_fullscale.cold_tps | int }} HGVS/s), so the state of the
 sequence cache is not the bound either. The same exhaustive pass against the public
 remote UTA database extrapolates to over a year.
