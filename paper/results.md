@@ -32,8 +32,10 @@ ENST preferred-transcript descriptions) were resolved through cdot, with transcr
 sequence spliced from a local genome FASTA so that no Ensembl pair is dropped for a
 sequence SeqRepo lacks. UTA's rate is membership of the exact cited accession.version
 in its GRCh38 alignment set, which is what resolution through UTA requires; the live
+{% assert clinvar.cdot_refseq_pct == clinvar.uta_refseq_pct, "'On RefSeq the two backends are at parity'" %}
 database gives the same rates. On RefSeq the two backends are at parity (cdot
 {{ clinvar.cdot_refseq_pct | dp(1) }}%, UTA {{ clinvar.uta_refseq_pct | dp(1) }}%). The
+{% assert clinvar.uta_ensembl_pct == 0, "'UTA stores no Ensembl alignments at all'" %}
 remaining difference is capability, not accuracy: UTA stores no Ensembl alignments at
 all, so it resolves {{ clinvar.uta_ensembl_pct | dp(1) }}% of the Ensembl pairs against
 cdot's {{ clinvar.cdot_ensembl_pct | dp(1) }}%. Because the pair sets are
@@ -44,12 +46,14 @@ At full scale, resolving every c.HGVS in ClinVar's variant_summary through cdot 
 ({{ clinvar_vcf.n_pairs | commas }} (g., c.) pairs, effectively all RefSeq) reaches
 {{ clinvar_vcf.resolved_pct | dp(1) }}% resolution, and
 {{ clinvar_vcf.matched_of_resolved_pct | dp(2) }}% of resolved variants reproduce
+{% assert clinvar_vcf_residual.indel_mismatch * 2 > clinvar_vcf_residual.n_incorrect and clinvar_vcf_residual.snv_diff_pos > clinvar_vcf_residual.unaligned_between_exons, "'dominated by indel-representation differences and by paralog and copy-number transcripts ..., plus N transcripts with bases that align to neither'" %}
 ClinVar's own VCF coordinate exactly (Methods). The residual
 {{ clinvar_vcf.incorrect_pct | dp(2) }}% is dominated by indel-representation
 differences and by paralog and copy-number transcripts that map to more than one
-genomic locus, plus a few transcripts with bases that align to neither of two adjacent
-exons, where cdot mostly gives the same coordinate as UTA and ClinVar places the
-unaligned bases differently (Supplementary Table S4).
+genomic locus, plus
+{{ clinvar_vcf_residual.unaligned_between_exons_transcripts | number_word }} transcripts
+with bases that align to neither of two adjacent exons, where cdot mostly gives the same
+coordinate as UTA and ClinVar places the unaligned bases differently (Supplementary Table S4).
 
 ### ClinVar submissions as a historical record of transcripts used
 
@@ -62,6 +66,7 @@ each submitted string kept verbatim and joined to the variant's VCF coordinate a
 ground truth via its AlleleID
 ({{ clinvar_submitted.n_unique_pairs | commas }} unique submitted-string/variant pairs
 from {{ clinvar_submitted.n_scv_tx_strings | commas }} SCV transcript expressions;
+{% assert clinvar_submitted.ensembl_pct == 0, "'not one submitted string cites an Ensembl transcript'" %}
 Methods). This corpus reflects the natural submission mix, which is essentially all
 RefSeq (not one submitted string cites an Ensembl transcript; Ensembl accessions enter
 ClinVar through its recomputed names, not submitter descriptions). Its version profile
@@ -90,6 +95,7 @@ version substitution (R5), not by deeper ingest.
 cdot resolved the full set of {{ clinvar_submitted.full_n | commas }} submitted pairs,
 reproducing ClinVar's VCF coordinate for
 {{ clinvar_submitted.cdot_resolved_pct | dp(1) }}%, versus
+{% assert clinvar.cdot_refseq_pct == clinvar.uta_refseq_pct, "'The RefSeq gap invisible at the current-version ceiling (both backends ...)'" %}
 {{ clinvar_submitted.uta_resolved_pct | dp(1) }}% for the same locally loaded UTA. The
 RefSeq gap invisible at the current-version ceiling (both backends
 {{ clinvar.cdot_refseq_pct | dp(1) }}% above) opens to
@@ -97,6 +103,7 @@ RefSeq gap invisible at the current-version ceiling (both backends
 {{ clinvar_submitted.cdot_only | commas }} pairs resolve through cdot alone and
 {{ clinvar_submitted.uta_only | commas }} through UTA alone, because UTA holds no GRCh38
 alignment for {{ clinvar_submitted.uta_no_data_pct | dp(1) }}% of the cited versions.
+{% assert clinvar_submitted.era_old_uta_pct < clinvar_submitted.era_recent_uta_pct < clinvar_submitted.era_mid_uta_pct, "UTA by era: 'lowest on the oldest submissions ... and lower on the newest than on 2016-2020'" %}
 Splitting by submission era locates the gap: cdot reproduces the coordinate for
 {{ clinvar_submitted.era_old_cdot_pct | dp(1) }}% of the oldest (2008-2015)
 submissions, {{ clinvar_submitted.era_mid_cdot_pct | dp(1) }}% of 2016-2020 and
@@ -108,6 +115,7 @@ which cite the most superseded versions, and lower on the newest than on 2016-20
 
 The submitted strings are largely well-formed, so cleaning has little to rescue
 (`fix_hgvs()` repaired {{ clinvar_submitted.rescued_by_fix | commas }} strings, with
+{% assert clinvar_submitted_residual.version_refused + clinvar_submitted_residual.coordinate_drift > clinvar_submitted_residual.n_residual / 2, "'The residual ... is dominated by historical-version effects'" %}
 {{ clinvar_submitted.regressions | int }} regressions). The residual
 {{ clinvar_submitted.residual_pct | dp(1) }}% after cleaning and version substitution
 ({{ clinvar_submitted.residual_n | commas }} of {{ clinvar_submitted.full_n | commas }})
@@ -153,8 +161,9 @@ constant (Methods). The public remote UTA row uses the first
 A GRCh38 RefSeq JSON file loads in ~{{ benchmark.grch38_load_time_s | dp(0) }} s.
 Batching the per-transcript REST lookups into one `prefetch()` request (all transcripts
 for the set, under a second, untimed) makes REST throughput equivalent to local JSON,
-the two {{ benchmark.rest_prefetch_vs_local_diff_pct | within_pct }} of each other: with the transcript data in process memory, both are
-bounded by the shared engine and sequence layer, not by the transcript backend.
+the two {{ benchmark.rest_prefetch_vs_local_diff_pct | within_pct }} of each other:
+with the transcript data in process memory, both are bounded by the shared engine and sequence layer, not by the transcript backend.
+{% assert 3.6 <= benchmark.cdot_local_vs_uta_local_ratio <= 4.4, "local UTA 'about a quarter of local-JSON throughput'" %}
 Comparing like with like: locally, a loaded UTA reached
 {{ benchmark.uta_local_tps | int }} HGVS/s, about a quarter of local-JSON throughput,
 each lookup resolving a set of SQL queries where cdot needs a single JSON object; and
@@ -246,13 +255,17 @@ coordinate; for Ensembl ({{ version_stability.ensembl_pairs | commas }} pairs)
 {{ version_stability.ensembl_preserving_pct | dp(1) }}%. Weighted by coding base (the
 chance a *random* variant is unaffected), safety is
 {{ (version_stability.refseq_pervariant_safety * 100) | dp(1) }}% (RefSeq) and
-{{ (version_stability.ensembl_pervariant_safety * 100) | dp(1) }}% (Ensembl). When a
-coordinate does move it is almost always the whole CDS, driven by a re-annotation of
-the coding region; the most dangerous case, a *partial* substitution that mis-places some
-variants but not others, is rare
+{{ (version_stability.ensembl_pervariant_safety * 100) | dp(1) }}% (Ensembl).
+{% assert version_stability.refseq_full_drift_pct > 2 * version_stability.refseq_partial_drift_pct and version_stability.ensembl_full_drift_pct > 2 * version_stability.ensembl_partial_drift_pct, "'When a coordinate does move it is usually the whole CDS'" %}
+When a coordinate does move it is usually the whole CDS
+({{ version_stability.refseq_full_drift_pct | dp(1) }}% of RefSeq pairs,
+{{ version_stability.ensembl_full_drift_pct | dp(1) }}% Ensembl), driven by a
+re-annotation of the coding region; the most dangerous case, a *partial* substitution
+that mis-places some variants but not others, is rare
 ({{ version_stability.refseq_partial_drift_pct | dp(1) }}% of RefSeq pairs,
 {{ version_stability.ensembl_partial_drift_pct | dp(1) }}% Ensembl). Within that tail
 the risk is positional: a partial drift keeps a 5' prefix intact up to its first
+{% assert positional_drift.refseq_partial_decile1_pct > positional_drift.refseq_partial_decile10_pct and positional_drift.ensembl_partial_decile1_pct > positional_drift.ensembl_partial_decile10_pct, "'preservation falls from the 5'-most decile to the 3'-most'" %}
 alignment change and moves what lies downstream, so preservation falls from
 {{ positional_drift.refseq_partial_decile1_pct | dp(0) }}% of coding bases in the
 5'-most decile to {{ positional_drift.refseq_partial_decile10_pct | dp(0) }}% in the
@@ -268,6 +281,7 @@ aligned to the target build, because the structure is build-independent, identic
 across GRCh37/GRCh38/T2T for
 {{ version_stability.refseq_struct_portable_pct | dp(1) }}% of RefSeq and
 {{ version_stability.ensembl_struct_portable_pct | dp(1) }}% of Ensembl versions
+{% assert version_safety_validation.n_coordinate_changes == 0, "'every one that resolves under the substitute gives the same genomic coordinate'" %}
 (predictor detail in Supplementary Methods). Validated against ClinVar: of the
 {{ version_safety_validation.n_safe_substitutions | commas }} version substitutions the
 safety checks accept across the full RefSeq corpus, every one that resolves under the
