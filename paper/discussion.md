@@ -30,12 +30,14 @@ it head-to-head with `clean_hgvs()` on the injection corpus
 ({{ lovd_comparison.n_cases | commas }} corrupted strings, checker
 {{ lovd_comparison.lovd_version }}; scoring in Methods, per-category breakdown in
 Supplementary Table S5). The corpus injects the error classes `clean_hgvs()` targets,
+{% assert cleaning.inject_total_recovered == cleaning.inject_total_attempted, "'clean_hgvs() recovers every case by construction'" %}
 so `clean_hgvs()` recovers every case by construction and the comparison measures how
 much of that territory a general syntax checker also covers. Weighted by the production
 error mix, LOVD's top-ranked correction restored
 {{ lovd_comparison.lovd_top1_weighted_pct | dp(0) }}% of cases
 ({{ lovd_comparison.lovd_top1_pct | dp(0) }}% unweighted), matching `clean_hgvs()` on
 common single-token errors but not on free-text damage or cross-accession-family
+{% assert lovd_comparison.cdot_false_corrections == 0 and lovd_comparison.lovd_false_corrections == 0, "'neither tool altered any valid input'" %}
 repairs; neither tool altered any valid input.
 
 The same corpus puts the sequence-aware services in context. Run over their public REST
@@ -43,6 +45,7 @@ APIs ({{ vv_mutalyzer_comparison.service_date }}; Methods), VariantValidator's v
 description recovered {{ vv_mutalyzer_comparison.vv_weighted_pct | dp(0) }}% of cases
 weighted by the production error mix, and Mutalyzer
 {{ vv_mutalyzer_comparison.mut_weighted_pct | dp(0) }}% (Supplementary Table S5). Each
+{% assert vv_mutalyzer_comparison.vv_false_corrections == 0 and vv_mutalyzer_comparison.mut_false_corrections == 0, "'neither falsely corrected a valid input' (VariantValidator, Mutalyzer)" %}
 repairs the damage it can interpret and rejects the rest as invalid; neither falsely
 corrected a valid input. These services answer a different question from
 `clean_hgvs()`: they validate a description against the reference sequence, so a string

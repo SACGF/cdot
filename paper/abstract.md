@@ -25,9 +25,11 @@ the Python HGVS libraries, T2T-CHM13v2.0, as a single gzipped JSON file or a RES
 version that is no longer current, cdot reproduced ClinVar's genomic coordinate for
 {{ clinvar_submitted.cdot_resolved_pct | dp(1) }}% versus
 {{ clinvar_submitted.uta_resolved_pct | dp(1) }}% for UTA. Loaded in memory, cdot
-resolves ~{{ benchmark.cdot_local_tps | commas }} HGVS/second, about four times a
-locally installed UTA, and its REST API is nearly three orders of magnitude faster than
-the public UTA server. A parser-independent cleaning step (`clean_hgvs()`) repairs
+resolves ~{{ benchmark.cdot_local_tps | commas }} HGVS/second,
+{{ benchmark.cdot_local_vs_uta_local_ratio | approx }} times a locally installed UTA,
+and its REST API is
+{{ benchmark.cdot_rest_vs_uta_remote_ratio | orders_of_magnitude }} faster than the
+public UTA server. A parser-independent cleaning step (`clean_hgvs()`) repairs
 common formatting errors before resolution, and an opt-in version-substitution step
 supplies a retired transcript version only when a coordinate-safety check indicates
 the variant's coordinate is unchanged.
