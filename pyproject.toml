@@ -54,7 +54,7 @@ test = [
 # weasyprint provides the optional PDF toolchain (vibepaper --pdf / the `pdf` rule).
 paper = [
     "snakemake",
-    "vibepaper",
+    "vibepaper>=0.9",
     "weasyprint",
 ]
 

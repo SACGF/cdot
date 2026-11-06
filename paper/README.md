@@ -55,8 +55,7 @@ Use this for editing prose, checking layout, or any rebuild where the numbers
 haven't changed.
 
 The templates use vibepaper's word filters and `{% assert %}` tag, which need vibepaper
-from its main branch until 0.9 is on PyPI
-(`pip install git+https://github.com/SACGF/vibepaper@main`). A failed assert stops the
+0.9 or later (the `paper` extra pins it). A failed assert stops the
 build and prints the fact values. `vibepaper lint --config paper/paper.toml` lists
 wording beside a fact that nothing checks, and `vibepaper diff --config paper/paper.toml`
 (after a build) names the facts that changed since the last build.
