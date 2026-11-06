@@ -53,7 +53,7 @@ the Ensembl transcripts SeqRepo does not hold, and reproduces Ensembl transcript
 sequence exactly. The whole committed set is counted (500 RefSeq + 818 Ensembl).
 
 How the per-source columns were measured (GRCh38, cdot 0.2.34 / UTA uta_20241220; re-run
-2026-11-04 on PyPI cdot 0.2.36 with data_v0.2.36, identical rates):
+2026-11-05 on PyPI cdot 0.2.37 with data_v0.2.36, identical rates):
 
 ```bash
 # cdot end-to-end resolution over the committed pairs, --fasta = FastaSeqFetcher:
@@ -98,7 +98,7 @@ draws (`--sample-out` / `--time-bucketed-out`) but R2 now reports the full corpu
 
 Measured on ClinVarVCVRelease_2026-10 with the data_v0.2.36 RefSeq GRCh38 JSON and local
 uta_20241220 (FastaSeqFetcher for cdot, SeqRepo for UTA sequence). The cdot pass is cdot
-0.2.36 from PyPI, 2026-11-04. The UTA pass, version age and submitter attribution do not
+0.2.37 from PyPI, 2026-11-05. The UTA pass, version age and submitter attribution do not
 run cdot resolution code and come from the 2026-11-02 run:
 
 ```bash
@@ -114,7 +114,7 @@ python paper/scripts/build_clinvar_submitted_pairs.py \
 python paper/scripts/compute_submitted_version_age.py clinvar_submitted_pairs.GRCh38.tsv \
     --refseq-grch38 cdot-0.2.36.refseq.GRCh38.json.gz --refseq-allbuilds ...
 
-# full-corpus resolution (VCF-coordinate scoring), cdot (1 h 25 min wall, 635 HGVS/s)
+# full-corpus resolution (VCF-coordinate scoring), cdot (1 h 25 min wall, 634 HGVS/s)
 # then UTA (3 h 19 min, 272 HGVS/s):
 F=GCF_000001405.39_GRCh38.p13_genomic.fna.gz
 python paper/scripts/resolve_clinvar_pass.py clinvar_submitted_pairs.GRCh38.tsv \
@@ -124,12 +124,21 @@ python paper/scripts/resolve_clinvar_pass.py clinvar_submitted_pairs.GRCh38.tsv 
     --uta --out submitted_full_uta.csv
 ```
 
-Full head-to-head over 3,245,277 pairs: cdot 99.2% vs UTA 81.9% matched; 560,821 resolve
-through cdot alone, 971 through UTA alone, and 0 pairs that resolve as written fail
-after `fix_hgvs`. Per-era: 2008-2015 cdot 97.9% / UTA 76.2%; 2016-2020 99.3% / 88.9%;
-2021-2026 99.2% / 81.1%.
+Full head-to-head over 3,245,277 pairs: cdot 99.3% vs UTA 81.9% matched; 562,173 resolve
+through cdot alone, 87 through UTA alone, and 0 pairs that resolve as written fail
+after `fix_hgvs`. Per-era: 2008-2015 cdot 98.9% / UTA 76.2%; 2016-2020 99.4% / 88.9%;
+2021-2026 99.3% / 81.1%.
 
-Against the cdot 0.2.35 pass, 6,859 pairs move to `correct`. 5,808 are `incorrect` rows
+Against the cdot 0.2.36 pass, 2,240 pairs change, all citing (or substituted to) one of
+the transcript versions with bases that align to neither of two adjacent exons (#235):
+1,404 `no_data` and 832 `error` pairs move to `correct`, 1 `no_data` to `incorrect` and 3
+`error` to `no_data` (positions inside the unaligned bases). Most are on versions absent
+from the VCF pass, led by VWF `NM_000552.2`, FCGBP `NM_003890.2` and SHANK3
+`NM_033517.1`. `uta_only` falls from 971 to 87 because UTA already resolved 884 of them.
+The `error` rows were reference or position mismatches downstream of the gap, from the
+same `FastaSeqFetcher` omission as in the VCF pass.
+
+Against the cdot 0.2.35 pass, the 0.2.36 pass moved 6,859 pairs to `correct`. 5,808 are `incorrect` rows
 citing one of the 4,788 GRCh38 versions whose first exon starts after transcript
 position 0, which 0.2.35 resolved shifted by the unaligned length (#230). The other 1,051
 (mostly `reference_mismatch` errors) are on minus-strand transcripts with alignment gaps,
@@ -147,7 +156,7 @@ submission year (2008-2015, 2016-2020, 2021-2026). The version-age columns come 
 from the counts.
 
 `clinvar_submitted_residual.csv` is derived from the full cdot pass rows with
-`fixed_bucket != correct` (25,923 of 3,245,277); the `no_data` bucket is split into
+`fixed_bucket != correct` (23,687 of 3,245,277); the `no_data` bucket is split into
 `version_refused` (accession holds other versions, via `get_tx_versions`) vs
 `unknown_accession`, `incorrect` maps to `coordinate_drift`, and the `error` bucket is
 re-resolved to recover the exception class (`HGVSInvalidVariantError` reference_mismatch,
@@ -176,29 +185,28 @@ per-submitter table (`--top-out`, which names laboratories) is NOT checked in.
 ## benchmark_fullscale.csv (frozen)
 
 R3 full-scale throughput of a single local-JSON process over the whole current ClinVar
-(g.HGVS, c.HGVS) pair set (`clinvar_pairs.GRCh38.tsv` from ClinVar 2026-10, cdot 0.2.36
-from PyPI, data_v0.2.36 RefSeq GRCh38, local SeqRepo), measured 2026-11-04 with the
-hot-cache protocol: a first pass warms the OS sequence cache and is discarded, the next
-is timed. Nothing else ran on the machine during either pass.
+(g.HGVS, c.HGVS) pair set (`clinvar_pairs.GRCh38.tsv` from ClinVar 2026-10, cdot 0.2.37
+from PyPI, data_v0.2.36 RefSeq GRCh38, local SeqRepo with fd caching), measured
+2026-11-05 with `paper/scripts/measure_fullscale.py`: each pass runs in a fresh process,
+a warm-up pass (reported as `cold_tps`) warms the OS sequence cache, then `--runs` timed
+passes give `hot_tps` (mean), `hot_tps_min`, `hot_tps_max` and `wall_min` (mean). Run
+alone on the machine with `UTA_DB_URL` unset (8 h 05 min wall for all four passes).
 
 ```bash
 HGVS_SEQREPO_DIR=... SEQREPO_FD_CACHE_MAXSIZE=128 \
-python paper/scripts/resolve_clinvar_pass.py clinvar_pairs.GRCh38.tsv \
-    --json cdot-0.2.36.refseq.GRCh38.json.gz --out /dev/null   # x2 (discard 1st)
+python paper/scripts/measure_fullscale.py clinvar_pairs.GRCh38.tsv \
+    --json cdot-0.2.36.refseq.GRCh38.json.gz --runs 3 --out benchmark_fullscale.csv
 ```
 
-Single timed passes vary by several percent between days on this VM (below), so the next
-measurement should use `paper/scripts/measure_fullscale.py`, which runs the same pass in
-fresh processes, one warm-up plus `--runs` timed (default 3), and writes this CSV with the
-mean `hot_tps` and its range (`hot_tps_min`, `hot_tps_max`, `n_runs`). The current values
-are from one warm-up and one timed pass.
-
-`n_pairs` 4,583,798; `resolved_pct` 99.4; `cold_tps` 606 HGVS/s (first pass, wall
-7570 s); `hot_tps` 603 HGVS/s (timed pass, wall 7603 s), under 1% apart, so full-scale
-local-JSON throughput is not sequence-cache-limited. The same protocol on cdot 0.2.35
-(2026-11-02) gave 646 / 640 HGVS/s. That gap is run-to-run variation on this VM, not the
-client: 0.2.35 and 0.2.36 run alternately over the first 100,000 pairs gave 793 / 790 and
-795 / 782 HGVS/s. The controlled backend comparison
+`n_pairs` 4,583,798; `resolved_pct` 99.5; `cold_tps` 632 HGVS/s; `hot_tps` 631 HGVS/s
+(629 to 633 over 3 runs, wall 121 min each), so full-scale local-JSON throughput is not
+sequence-cache-limited. This pass resolves 4,558,807 pairs with SeqRepo as the sequence
+source; the VCF pass, with `FastaSeqFetcher`, resolves 4,559,178. The previous snapshot (cdot
+0.2.36, 2026-11-04, one warm-up and one timed pass) gave 99.4% resolved, cold 606 / hot
+603 HGVS/s, 127 min; 0.2.35 on the same one-pass protocol gave 646 / 640. Those
+single-pass differences are run-to-run variation on this VM, not the client: 0.2.35 and
+0.2.36 run alternately over the first 100,000 pairs gave 793 / 790 and 795 / 782 HGVS/s.
+The 0.2.37 range across three runs is under 1%. The controlled backend comparison
 (local JSON vs prefetched REST) stays in Table 1 / `benchmark.csv`.
 
 ## injection_benchmark.csv, residual_taxonomy.csv, cleaning_fix_categories.csv (table CSVs, not facts)
@@ -278,8 +286,9 @@ UTA_DB_URL=... HGVS_SEQREPO_DIR=... python paper/scripts/benchmark_historical.py
     --uta-uri postgresql://uta:uta@localhost:5432/uta/uta_20241220
 ```
 
-Measured 2026-08-14 (cdot data 0.2.34, refseq+ensembl GRCh38 JSON; re-run 2026-11-04 on
-PyPI cdot 0.2.36 with data_v0.2.36, identical): cdot 99.6% vs UTA
+Measured 2026-08-14 (cdot data 0.2.34, refseq+ensembl GRCh38 JSON; re-run 2026-11-05 on
+PyPI cdot 0.2.37 with data_v0.2.36, identical after rounding: cdot resolves 16 more strings
+than on 0.2.36, the 16 that only UTA resolved before): cdot 99.6% vs UTA
 93.7% over 36,010 strings; of the 2,141 (5.9%) cdot resolves and UTA does not, 98.6%
 are RefSeq historical versions UTA holds no GRCh38 alignment for, 1.3% Ensembl, 0.1%
 other. The jump from the previous measurement (97.5% on 0.2.33-era data, 2026-06-18)
@@ -297,18 +306,41 @@ Full-ClinVar cdot-only resolution accuracy scored against the ClinVar VCF coordi
 variant_summary c.HGVS to the VCF ground truth via AlleleID) and resolved by
 `paper/scripts/resolve_clinvar_pass.py` over the full pair set: a dedicated multi-hour
 run against a production RefSeq GRCh38 JSON.gz, which is why there is no rule.
-Measured 2026-11-04: ClinVar `variant_summary` and `clinvar_20261025.GRCh38.vcf.gz`,
-cdot 0.2.36 from PyPI, data_v0.2.36 RefSeq GRCh38, FastaSeqFetcher (1 h 51 min wall).
+Measured 2026-11-05: ClinVar `variant_summary` and `clinvar_20261025.GRCh38.vcf.gz`,
+cdot 0.2.37 from PyPI, data_v0.2.36 RefSeq GRCh38, FastaSeqFetcher (1 h 53 min wall).
 Comparing `c_to_g` output as a VCF tuple (via biocommons Babelfish) is
 representation-robust (3'-shift, equivalent del/dup spellings) and is defined even for
 the ClinVar variants whose CLNHGVS uses tandem-repeat `ref[N]` or identity `=`
 notation the HGVS parser cannot read.
 
-4,583,798 pairs: 99.40% resolved, and of those 99.959% match the ClinVar VCF
-coordinate exactly. `clinvar_vcf_residual.csv` breaks the 1,850 incorrect rows down by
-cause with `paper/scripts/categorize_vcf_residual.py` (pairs TSV plus the pass table;
-first matching rule wins: identity or symbolic ALT, IUPAC ambiguity code at the same
-position, cdot allele over 10 bases longer than ClinVar's, ClinVar SNV, other indel). Analysis writeup: `paper/notes/clinvar_diff_coordinates.md`.
+4,583,798 pairs: 99.46% resolved, and of those 99.954% match the ClinVar VCF
+coordinate exactly. `clinvar_vcf_residual.csv` breaks the 2,082 incorrect rows down by
+cause with `paper/scripts/categorize_vcf_residual.py` (pairs TSV, the pass table and
+`--json` the release file; first matching rule wins: transcript with unaligned bases
+between two exons, identity or symbolic ALT, IUPAC ambiguity code at the same position,
+cdot allele over 10 bases longer than ClinVar's, ClinVar SNV, other indel).
+
+Against the cdot 0.2.36 pass, rows change only on the seven transcripts with transcript
+bases that align to neither of two adjacent exons (SHANK3 `NM_001372044.2`,
+`NM_001401501.2`, `NM_003890.3`, `NM_001137667.2`, `NM_001405666.3`, `NM_033517.1`,
+`NM_173600.2`), which 0.2.36 refused with "Exons X and Y are not adjacent" (#235).
+2,077 `no_data` rows move: 1,815 to `correct`, 232 to `incorrect`, 30 to `error`. A further
+708 `error` rows move, 705 to `correct` and 3 to `no_data`: these sit downstream of the
+gap, where `FastaSeqFetcher`, which builds the transcript from the same exon alignment,
+left out the unaligned bases in 0.2.36, so the cited reference base or position failed
+validation. Re-resolving the 232 `incorrect` rows through local UTA (uta_20241220): 199
+give the same coordinate as UTA, 29 cite versions UTA has no alignment for, and 4
+differ from UTA, 3 of them matching ClinVar. Those 3 are SHANK3 intronic offsets from
+`c.1530` (eg `NM_001372044.2:c.1530-280dup`). In the RefSeq alignment cdot uses, the 39
+bases are unaligned and `c.1530` is one of them (cdot appends them to the end of exon
+10), while UTA's alignment (like ClinVar's numbering) aligns `c.1530` to the first base
+of exon 11 and leaves fewer bases unaligned. The new errors come from the same
+difference: 29 are intronic offsets anchored on an unaligned base, where biocommons/hgvs
+takes its alignment-gap path, drops the offset and raises `IndexError` (7 on SHANK3
+`c.1530-N`, which UTA resolves correctly; 22 on versions UTA does not hold), and 1 is a
+deletion spanning the gap (`ValueError`). The 3 new `no_data` rows and 38 that stay `no_data` cite a position
+inside the unaligned bases, which `FastaSeqFetcher` cannot read from the genome
+(`GenomeMismatchError`). Analysis writeup: `paper/notes/clinvar_diff_coordinates.md`.
 `--examples-out` writes the first 20 rows of each category to
 `clinvar_vcf_residual_examples.csv` (public ClinVar data) for inspecting by hand. Of the 68
 `ambiguity_code_allele` rows, ClinVar's VCF writes the ALT with N in all of them. 27 cite an
@@ -324,7 +356,7 @@ multi-base deletion to an SNV.
 ## clinvar_residual_positions.csv (frozen)
 
 Where along the CDS the residual `incorrect` projections of that same full-ClinVar VCF
-pass sit, binned into deciles (1 = 5'-most tenth) against the `correct` rows' baseline
+pass (cdot 0.2.37, 2026-11-05) sit, binned into deciles (1 = 5'-most tenth) against the `correct` rows' baseline
 distribution, with 5'UTR / 3'UTR / non-coding citations counted separately. Companion
 to the version-bump positional drift in `positional_drift.csv`. Produced by
 `paper/scripts/bin_residual_positions.py` from the per-variant table of the run above
@@ -337,8 +369,8 @@ Per-source resolution outcome breakdown of the full-ClinVar pass (Supplementary 
 produced by `paper/scripts/summarize_clinvar_pass.py` from the same per-variant table.
 Multi-row (one row per transcript source plus a total), unlike the one-row facts files.
 Not rendered by any template; it supports the Table S4 caveat that the Ensembl share of
-`variant_summary` is zero. Regenerated 2026-11-05 from the 2026-11-04 pass table (cdot
-0.2.36, data_v0.2.36, ClinVar 2026-10); its totals equal `clinvar_vcf.csv`.
+`variant_summary` is zero. Regenerated 2026-11-05 from the 2026-11-05 pass table (cdot
+0.2.37 from PyPI, data_v0.2.36, ClinVar 2026-10); its totals equal `clinvar_vcf.csv`.
 
 ## genomic_mismatch.csv (frozen)
 
@@ -356,8 +388,8 @@ ClinVar variant where another version of its transcript exists and
 confirm the genomic coordinate is identical to resolving under V. Produced by
 `paper/scripts/validate_safe_versions.py` from the full-ClinVar per-variant table
 above. A VCF-format pass table is compared as a VCF tuple (Babelfish). Measured
-2026-11-04 on the 2026-10 VCF pass (PyPI cdot 0.2.36, data_v0.2.36 RefSeq GRCh38,
-FastaSeqFetcher; 3 h 39 min wall):
+2026-11-05 on the 2026-10 VCF pass (PyPI cdot 0.2.37, data_v0.2.36 RefSeq GRCh38,
+FastaSeqFetcher; 3 h 40 min wall):
 
 ```bash
 python paper/scripts/validate_safe_versions.py vcf_pass_cdot.csv \
@@ -365,9 +397,13 @@ python paper/scripts/validate_safe_versions.py vcf_pass_cdot.csv \
     --out version_safety_validation.csv --show-changes
 ```
 
-4,342,420 variants have another version of their transcript; 8,409,757 substitutions are
-called safe and tested, 8,403,420 resolve under the substitute (6,337 do not, which is not
-a coordinate change), and 0 move the coordinate. The structural Tier-1 claim of
+4,345,081 variants have another version of their transcript; 8,411,749 substitutions are
+called safe and tested, 8,411,000 resolve under the substitute (749 do not, which is not
+a coordinate change), and 0 move the coordinate. Against the 0.2.36 run (4,342,420
+variants, 8,409,757 tested, 8,403,420 resolved, 6,337 unresolved, 0 moved), the only
+client change is #235, so both shifts come from transcripts with bases that align to
+neither of two adjacent exons: more VCF-pass rows on them resolve and so enter the test,
+and substitutes onto them now resolve. The structural Tier-1 claim of
 `version_stability.csv` becomes an observed zero error rate. Frozen because it consumes
 the same dedicated full-ClinVar run.
 
@@ -388,14 +424,19 @@ identical to 0.2.34, as no transcript sources were added between them); re-run
 
 ### benchmark.csv
 
-`paper/scripts/compute_benchmark.py`. Committed snapshot measured 2026-11-04 (cdot
-0.2.36 from PyPI, data_v0.2.36 GRCh38 RefSeq, uta_20241220 local, public
+`paper/scripts/compute_benchmark.py`. Committed snapshot measured 2026-11-05 (cdot
+0.2.37 from PyPI, data_v0.2.36 GRCh38 RefSeq, uta_20241220 local, public
 uta.biocommons.org remote, cdotlib.org REST, biocommons engine, one shared local SeqRepo
 with fd caching), run alone on the machine with `UTA_DB_URL` unset, since
 `uta.connect()` with no URL reads that variable and would turn the remote row local:
 median (q1, q3) HGVS/s over 5 passes of the committed 500-pair set (remote UTA: first
 25 pairs). See R3 / Table 1. The remote UTA row does not depend on the cdot client and
-is kept from the 2026-11-03 run (`--skip-uta-remote` on 2026-11-04).
+is kept from the 2026-11-03 run (`--skip-uta-remote` on 2026-11-04 and 2026-11-05;
+the script writes the other columns and the remote ones are merged back from the
+committed file). Against the 0.2.36 snapshot every row moves by 3% or less (local JSON
+744 -> 741, REST 111 -> 108, prefetched REST 733 -> 746, local UTA 186 -> 187), within
+run-to-run variation; one local UTA repeat dropped to 107 HGVS/s, which the median
+absorbs.
 
 ### version_stability.csv, positional_drift.csv
 
