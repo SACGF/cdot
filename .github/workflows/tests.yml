@@ -41,7 +41,7 @@ jobs:
         run: python -m pip install "vibepaper @ git+https://github.com/SACGF/vibepaper@45053ae"
 
       - name: Lint paper wording
-        run: vibepaper lint --config paper/paper.toml --facts-dir paper/empirical_results --numbers --check
+        run: vibepaper lint --config paper/paper.toml --facts-dir paper/empirical_results --numbers --unused --check
 
       - name: Check paper asserts
         run: vibepaper check --config paper/paper.toml --facts-dir paper/empirical_results --check

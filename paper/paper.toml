@@ -59,3 +59,9 @@ unused_ok = [
     "literature.mane_coverage_pct",
     "literature.seqrepo_speedup_fold",
 ]
+
+# Bioinformatics Original Paper: 7 pages, ~5,000 words (bioinformatics_submission_guide.md);
+# over 20% over the limit is returned without review. The page limit is what binds, so
+# this is a guide: figures and tables take page space the word count does not see.
+[limits]
+main = { files = ["abstract.md", "introduction.md", "methods.md", "results.md", "discussion.md", "figures.md"], max_words = 5000 }
