@@ -54,7 +54,8 @@ cp paper/empirical_results/*.csv paper/empirical_results/*.provenance.json outpu
 Use this for editing prose, checking layout, or any rebuild where the numbers
 haven't changed.
 
-The templates use vibepaper 0.11 (the `paper` extra pins it): word filters, the
+The templates use vibepaper from GitHub main at 45053ae (the `paper` extra pins it; switch
+to a PyPI release, `vibepaper>=0.13`, once one is out): word filters, the
 `{% assert %}` tag, `[claims]` tolerances in `paper.toml` (`x is essentially_flat(y)`),
 typed facts (`{{ x_pct | pct(1) }}`) and provenance sidecars. A failed assert stops the build, and the build reports every failed
 assert with its fact values. `vibepaper lint --config paper/paper.toml --numbers` lists

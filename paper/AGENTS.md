@@ -30,8 +30,10 @@ public/private fact model.
   runs both), and after a re-run read `vibepaper diff` before the paper.
   `lint --unused` lists facts the paper never cites; list ones kept on purpose under
   `[lint] unused_ok`.
-- **vibepaper 0.11** (`vibepaper~=0.11.0` in the `paper` extra and in CI). To move to a new
-  release, follow vibepaper's `UPGRADE_PROMPT.md`.
+- **vibepaper main at 45053ae** (`vibepaper @ git+https://github.com/SACGF/vibepaper@45053ae`
+  in the `paper` extra and in CI), for claims sidecars, which no PyPI release has yet. Switch
+  both pins to a PyPI release (`vibepaper>=0.13`) once one is out. To move to a new release,
+  follow vibepaper's `UPGRADE_PROMPT.md`.
 - **Facts are typed.** Every facts CSV is vertical (`field,value,type`). Scripts write
   them with `write_typed_facts()` from `scripts/facts_io.py`, which types each fact from
   its name (`*_pct` percent, `n_*` count, `*_ratio` ratio, ...), so name a new fact to

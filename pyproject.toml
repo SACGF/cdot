@@ -54,7 +54,10 @@ test = [
 # weasyprint provides the optional PDF toolchain (vibepaper --pdf / the `pdf` rule).
 paper = [
     "snakemake",
-    "vibepaper~=0.11.0",
+    # vibepaper main (claims sidecars, unreleased). Switch back to a PyPI release
+    # (vibepaper>=0.13) once one is out, and before uploading cdot to PyPI (which
+    # rejects direct URL dependencies); keep CI's pin in step.
+    "vibepaper @ git+https://github.com/SACGF/vibepaper@45053ae",
     "weasyprint",
 ]
 
