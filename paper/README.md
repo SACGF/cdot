@@ -17,6 +17,7 @@ Structure: Abstract · Introduction · Methods · Results · Discussion · Figur
 | `figures.md` | Figure descriptions (target: 2 main figures) |
 | `references.md` | Formatted reference list |
 | `supplementary.md` | Supplementary tables and figures |
+| `<section>.claims.toml` | The section's checks: `[[claim]]` asserts and `[[ok]]` non-claims, each quoting its wording (see Building the paper) |
 
 ## Building the paper
 
@@ -55,14 +56,24 @@ Use this for editing prose, checking layout, or any rebuild where the numbers
 haven't changed.
 
 The templates use vibepaper from GitHub main at 45053ae (the `paper` extra pins it; switch
-to a PyPI release, `vibepaper>=0.13`, once one is out): word filters, the
-`{% assert %}` tag, `[claims]` tolerances in `paper.toml` (`x is essentially_flat(y)`),
-typed facts (`{{ x_pct | pct(1) }}`) and provenance sidecars. A failed assert stops the build, and the build reports every failed
-assert with its fact values. `vibepaper lint --config paper/paper.toml --numbers` lists
-wording beside a fact that nothing checks and numbers typed by hand,
+to a PyPI release, `vibepaper>=0.13`, once one is out). The sections are plain Markdown
+plus `{{ fact }}` references with word filters and typed facts (`{{ x_pct | pct(1) }}`).
+The checks on the wording live beside each section in a **claims sidecar**
+(`results.md` → `results.claims.toml`): a `[[claim]]` quotes the wording it checks and
+holds the assert behind it, an `[[ok]]` quotes a non-claim (a hedge, a method term, a
+cited number) with its reason, and a `[[check]]` is an invariant tied to no wording.
+Judgement words use the `[claims]` tolerances in `paper.toml` (`x is essentially_flat(y)`).
+A failed assert stops the build and is reported with its fact values, the sidecar line and
+the sentence its quote matched. `vibepaper claims show` prints each section with its checks
+under the sentences they match.
+
+`vibepaper lint --config paper/paper.toml --numbers --unused` lists wording beside a fact
+that nothing checks, numbers typed by hand, facts the paper never cites, a sidecar quote
+whose wording has changed, and a section over the `[limits]` word limit;
 `vibepaper check --config paper/paper.toml` runs the asserts without a render (CI runs
-both), and `vibepaper diff --config paper/paper.toml`
-(after a build) names the facts that changed since the last build.
+both), `vibepaper wordcount --config paper/paper.toml` prints the word counts, and
+`vibepaper diff --config paper/paper.toml` (after a build) names the facts that changed
+since the last build.
 
 ### PDF output
 

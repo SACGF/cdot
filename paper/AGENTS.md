@@ -17,19 +17,29 @@ public/private fact model.
   alignment dump (`ac` column of `Homo_sapiens_GRCh38_UTA_20241220.csv`). The cdot JSON
   converted from UTA (`cdot-*_uta.*.json.gz`) under-counts badly and is not a fair proxy.
 - Analysis write-ups that back a fact or a PROVENANCE entry go in `notes/`.
-- **Wording that depends on a fact is generated or checked**: a word filter (`approx`,
-  `within_pct`, `orders_of_magnitude`, ...), an `{% assert %}` on the line above the
-  sentence, or `{# lint-ok: reason #}` for a true hedge. A lint-ok accepts only the
-  sentence it ends (put it straight after that sentence's full stop), or only the words
-  it names anywhere in the paragraph (`{# lint-ok(over): ... #}`, for a word several
-  sentences use). Lint reports a lint-ok that accepts nothing; delete it. A derived value
-  a filter needs (ratio, percent difference) is emitted by the script that owns the fact. A judgement
-  word ("essentially flat", "nearly uniform") gets one tolerance in `paper.toml`
-  `[claims]`, used as `{% assert x is essentially_flat(y) %}`. Keep
-  `vibepaper lint --config paper/paper.toml --numbers` and `vibepaper check` clean (CI
-  runs both), and after a re-run read `vibepaper diff` before the paper.
+- **Wording that depends on a fact is generated or checked**, and the checks live in the
+  section's **claims sidecar** (`results.md` → `results.claims.toml`), not in the prose.
+  The `.md` files hold only Markdown and `{{ fact }}` references; do not add inline
+  `{% assert %}` or `{# lint-ok #}` tags. Use, in order of preference:
+  - a word filter (`approx`, `within_pct`, `orders_of_magnitude`, `number_word`, ...);
+  - a `[[claim]]` (`quote` + `assert`, optional `message`) for wording that rests on a
+    condition. The `quote` is the wording it checks, at least three words, and must match
+    exactly one sentence of the section; `…` stands for a `{{ fact }}` or any run of words.
+    It covers every claim word inside its span;
+  - an `[[ok]]` (`quote` + `reason`) for a true hedge, a method term or a number quoted
+    from the literature (`paragraph = true` for a whole paragraph of citations);
+  - a `[[check]]` (`assert` + `message`) for an invariant no sentence states.
+  When you reword a sentence, lint reports each sidecar quote that no longer matches:
+  re-check the claim against the facts and update the quote. `vibepaper claims show`
+  prints the checks beside their sentences. A derived value a filter needs (ratio, percent
+  difference) is emitted by the script that owns the fact. A judgement word ("essentially
+  flat", "nearly uniform") gets one tolerance in `paper.toml` `[claims]`, used as
+  `x is essentially_flat(y)` in an assert. Keep
+  `vibepaper lint --config paper/paper.toml --numbers --unused` and `vibepaper check`
+  clean (CI runs both), and after a re-run read `vibepaper diff` before the paper.
   `lint --unused` lists facts the paper never cites; list ones kept on purpose under
-  `[lint] unused_ok`.
+  `[lint] unused_ok`. `[limits]` in `paper.toml` holds the journal's ~5,000-word main-text
+  limit; `vibepaper wordcount` prints the counts.
 - **vibepaper main at 45053ae** (`vibepaper @ git+https://github.com/SACGF/vibepaper@45053ae`
   in the `paper` extra and in CI), for claims sidecars, which no PyPI release has yet. Switch
   both pins to a PyPI release (`vibepaper>=0.13`) once one is out. To move to a new release,
@@ -37,7 +47,8 @@ public/private fact model.
 - **Facts are typed.** Every facts CSV is vertical (`field,value,type`). Scripts write
   them with `write_typed_facts()` from `scripts/facts_io.py`, which types each fact from
   its name (`*_pct` percent, `n_*` count, `*_ratio` ratio, ...), so name a new fact to
-  match. In templates use `{{ x_pct | pct(1) }}`, not `{{ x_pct | dp(1) }}%`; a value out of
+  match. Any other non-negative integer is a count unless its name marks a rate or a
+  duration (`*_tps*`, `*_s`, `*_min`, `*_days`, `*_pp`). In templates use `{{ x_pct | pct(1) }}`, not `{{ x_pct | dp(1) }}%`; a value out of
   its type's range fails the load.
 - **Tool and data versions behind a fact come from its provenance sidecar**
   (`empirical_results/<fact>.provenance.json`, `{{ clinvar_vcf._prov.tools.cdot }}`), not
