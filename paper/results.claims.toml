@@ -21,12 +21,17 @@ assert = "clinvar.uta_ensembl_pct == 0"
 message = "'UTA stores no Ensembl alignments at all'"
 
 [[ok]]
-quote = "every c.HGVS in ClinVar's variant_summary through cdot alone ( … (g., c.) pairs, effectively all"
+quote = "resolving every c.HGVS in ClinVar's variant_summary … effectively all RefSeq"
 reason = "'every c.HGVS' describes the corpus; clinvar_source_breakdown.csv has no Ensembl rows"
 
-[[check]]
-assert = "clinvar_vcf_residual.indel_mismatch * 2 > clinvar_vcf_residual.n_incorrect and clinvar_vcf_residual.snv_diff_pos > clinvar_vcf_residual.unaligned_between_exons"
-message = "'dominated by indel-representation differences and by paralog and copy-number transcripts ..., plus N transcripts with bases that align to neither'"
+[[claim]]
+quote = "is dominated by indel-representation differences and by paralog and copy-number transcripts"
+assert = "clinvar_vcf_residual.indel_mismatch * 2 > clinvar_vcf_residual.n_incorrect and clinvar_vcf_residual.snv_diff_pos > [clinvar_vcf_residual.unaligned_between_exons, clinvar_vcf_residual.long_cdot_allele, clinvar_vcf_residual.ambiguity_code_allele, clinvar_vcf_residual.identity_or_symbolic] | max"
+message = "residual 'dominated by' indels (over half of Table S4) and paralog SNVs (the next class)"
+
+[[ok]]
+quote = "map to more than one genomic locus"
+reason = "describes paralog and copy-number transcripts, not a result"
 
 [[claim]]
 quote = "not one submitted string cites an Ensembl transcript"
@@ -34,17 +39,17 @@ assert = "clinvar_submitted.ensembl_pct == 0"
 message = "'not one submitted string cites an Ensembl transcript'"
 
 [[claim]]
-quote = "versions; only …"
+quote = "only … of cited versions are absent from its GRCh38 data"
 assert = "clinvar_submitted.version_not_current_pct > 50 and clinvar_submitted.absent_cdot_pct < 1"
 message = "'submitted traffic is historical' (most cite a superseded version); 'only X% of cited versions are absent'"
 
 [[claim]]
-quote = "every RefSeq and Ensembl annotation release, a version absent from its data should be one that never appeared in an official release, and the absent citations bear that out: of … submitters only"
+quote = "Because cdot ingests every RefSeq and Ensembl annotation release, … submitters only"
 assert = "submitter_attribution.n_submitters_with_absent * 10 < submitter_attribution.n_submitters_total"
 message = "'only N submitters ever cite a version cdot lacks' (under a tenth)"
 
 [[claim]]
-quote = "… , versus …"
+quote = "reproducing ClinVar's VCF coordinate for … versus … for the same locally loaded UTA"
 assert = "clinvar_submitted.cdot_resolved_pct > clinvar_submitted.uta_resolved_pct"
 message = "cdot X% 'versus' UTA Y% on the submitted pairs"
 
@@ -59,12 +64,12 @@ assert = "clinvar_submitted.era_old_uta_pct < clinvar_submitted.era_recent_uta_p
 message = "UTA by era: 'lowest on the oldest submissions ... and lower on the newest than on 2016-2020'"
 
 [[claim]]
-quote = "dominated by historical-version effects: … cite a version absent from the data where substitution declines to act because coordinate safety cannot be verified, and … resolve through the cited version to a coordinate that differs from ClinVar's current interpretation; the remainder cite a position or base that does not exist on the cited version, notation the biocommons grammar rejects, or an accession absent entirely"
+quote = "dominated by historical-version effects: … or an accession absent entirely"
 assert = "clinvar_submitted_residual.version_refused + clinvar_submitted_residual.coordinate_drift > clinvar_submitted_residual.n_residual / 2"
 message = "'The residual ... is dominated by historical-version effects'"
 
 [[claim]]
-quote = "With only the"
+quote = "With only the transcript-data layer swapped … versus … for UTA"
 assert = "historical.cdot_resolved_pct > historical.uta_resolved_pct"
 message = "historical corpus: cdot X% 'versus' UTA Y%"
 
@@ -73,7 +78,7 @@ quote = ["over many years ( … of the … distinct transcripts are cited at mor
 reason = "method wording: 'over many years', 'more than one version', 'only the transcript-data layer swapped', 'holds no GRCh38 alignment', 'no ground truth'"
 
 [[ok]]
-quote = "HGVS/s over …"
+quote = "HGVS/s over … timed passes"
 reason = "'over' is a preposition"
 
 [[claim]]
@@ -81,12 +86,18 @@ quote = "about a quarter of local-JSON throughput"
 assert = "3.6 <= benchmark.cdot_local_vs_uta_local_ratio <= 4.4"
 message = "local UTA 'about a quarter of local-JSON throughput'"
 
-[[check]]
+[[claim]]
+quote = "failed as-submitted) with … regressions"
 assert = "cleaning_corpus.regressions == 0"
 message = "'with zero regressions'"
 
 [[claim]]
-quote = "under a fixed decision-tree taxonomy (Supplementary Table S6), well over half is incomplete or reference-less input that no string-level repair can invent, about"
+quote = "strings rescued, about … of those that failed as-submitted"
+assert = "(cleaning_corpus.rescued / (cleaning_corpus.corpus_n * cleaning_corpus.failed_pp / 100) * 100 - cleaning_corpus.rescued_share_pct) | abs < 1"
+message = "rescued 'about X% of those that failed as-submitted' (rescued / failed)"
+
+[[claim]]
+quote = "Classified under a fixed decision-tree taxonomy … about a quarter is in principle fixable"
 assert = "cleaning_corpus.residual_incomplete_pct > 55 and 20 < cleaning_corpus.residual_fixable_pct < 30 and (cleaning_corpus.residual_incomplete_pct + cleaning_corpus.residual_fixable_pct + cleaning_corpus.residual_grammar_gap_pct - 100) | abs < 0.5"
 message = "Table S6 residual: 'well over half' incomplete, 'about a quarter' fixable, 'the remaining' grammar gap"
 
@@ -95,17 +106,17 @@ quote = "preserved every coding"
 reason = "'preserved every coding coordinate' defines the preserving category"
 
 [[claim]]
-quote = "the most dangerous"
+quote = "the most dangerous case, a partial substitution … is rare"
 assert = "version_stability.refseq_full_drift_pct > 2 * version_stability.refseq_partial_drift_pct and version_stability.ensembl_full_drift_pct > 2 * version_stability.ensembl_partial_drift_pct"
 message = "'When a coordinate does move it is usually the whole CDS'"
 
 [[claim]]
-quote = "Within that tail the risk is positional: a partial drift keeps a 5' prefix intact up to its first alignment change and moves what lies downstream, so preservation falls"
+quote = "Within that tail the risk is positional: … so preservation falls"
 assert = "positional_drift.refseq_partial_decile1_pct > positional_drift.refseq_partial_decile10_pct and positional_drift.ensembl_partial_decile1_pct > positional_drift.ensembl_partial_decile10_pct"
 message = "'preservation falls from the 5'-most decile to the 3'-most'"
 
 [[claim]]
-quote = "concentrated: only …"
+quote = "Drift is also concentrated: only … so the risky transcripts form a short, identifiable list"
 assert = "version_stability.refseq_accessions_drift_pct < 10"
 message = "'only X% of RefSeq accessions ever drift ... a short, identifiable list'"
 
@@ -114,6 +125,16 @@ quote = "was never aligned"
 reason = "'never aligned' describes the case the check handles"
 
 [[claim]]
-quote = "every one that resolves under"
+quote = "every one that resolves under the substitute"
 assert = "version_safety_validation.n_coordinate_changes == 0"
 message = "'every one that resolves under the substitute gives the same genomic coordinate'"
+
+[[claim]]
+quote = "cdot covers … such alignments across all builds and sources"
+assert = "coverage.refseq_grch37_count + coverage.refseq_grch38_count + coverage.t2t_count + coverage.ensembl_grch37_count + coverage.ensembl_grch38_count == coverage.total_count"
+message = "'across all builds and sources': the per-build, per-source counts sum to the total"
+
+[[claim]]
+quote = "because UTA holds no GRCh38 alignment for"
+assert = "clinvar_submitted.uta_no_data_pct >= clinvar_submitted.cdot_only_pct"
+message = "the cdot-only gap is explained 'because UTA holds no GRCh38 alignment' (UTA's no-data share covers it)"

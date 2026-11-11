@@ -2,10 +2,10 @@
 # README's "Claims sidecars"). A quote must match one sentence.
 
 [[ok]]
-quote = "with no database"
+quote = "with no database required"
 reason = "'no database required' describes the distribution format"
 
 [[claim]]
-quote = "versus"
+quote = "cdot reproduced ClinVar's genomic coordinate for … versus … for UTA"
 assert = "clinvar_submitted.cdot_resolved_pct > clinvar_submitted.uta_resolved_pct"
 message = "abstract: cdot X% 'versus' UTA Y% on submitted descriptions"

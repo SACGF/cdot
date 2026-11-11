@@ -2,7 +2,7 @@
 # README's "Claims sidecars"). A quote must match one sentence.
 
 [[ok]]
-quote = "(offline, no reference"
+quote = "offline, no reference sequence"
 reason = "'no reference sequence' describes the checker"
 
 [[check]]
@@ -15,7 +15,7 @@ assert = "lovd_comparison.cdot_false_corrections == 0 and lovd_comparison.lovd_f
 message = "'neither tool altered any valid input'"
 
 [[ok]]
-quote = "Run over their"
+quote = "Run over their public REST"
 reason = "'over' is a preposition"
 
 [[claim]]
