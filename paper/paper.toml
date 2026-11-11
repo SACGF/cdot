@@ -52,4 +52,10 @@ unused_ok = [
     "clinvar.refseq_pct",
     "clinvar.ensembl_pct",
     "version_stability.build",
+    # literature values cited in earlier drafts, kept with their citations
+    # (PROVENANCE.md, literature/literature_review.md) in case the text cites them again
+    "literature.lof_agreement_pct",
+    "literature.brca2_accuracy_pct",
+    "literature.mane_coverage_pct",
+    "literature.seqrepo_speedup_fold",
 ]

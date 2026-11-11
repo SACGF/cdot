@@ -117,8 +117,8 @@ message = "'preservation falls from the 5'-most decile to the 3'-most'"
 
 [[claim]]
 quote = "Drift is also concentrated: only … so the risky transcripts form a short, identifiable list"
-assert = "version_stability.refseq_accessions_drift_pct < 10"
-message = "'only X% of RefSeq accessions ever drift ... a short, identifiable list'"
+assert = "version_stability.refseq_accessions_drift_pct < 10 and version_stability.ensembl_accessions_drift_pct < 10 and version_stability.refseq_top5_drift_share_pct > 90 and version_stability.ensembl_top5_drift_share_pct > 90"
+message = "'only X% of RefSeq accessions (Y% of Ensembl) ever drift', the top 5% hold over 90% of drifting pairs: 'a short, identifiable list'"
 
 [[ok]]
 quote = "was never aligned"
@@ -138,3 +138,7 @@ message = "'across all builds and sources': the per-build, per-source counts sum
 quote = "because UTA holds no GRCh38 alignment for"
 assert = "clinvar_submitted.uta_no_data_pct >= clinvar_submitted.cdot_only_pct"
 message = "the cdot-only gap is explained 'because UTA holds no GRCh38 alignment' (UTA's no-data share covers it)"
+
+[[ok]]
+quote = "the 5% of accessions with the most drifting pairs"
+reason = "5% is the top-accession cutoff compute_version_stability.py uses for top5_drift_share_pct"

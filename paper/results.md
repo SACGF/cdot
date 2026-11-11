@@ -266,9 +266,12 @@ alignment change and moves what lies downstream, so preservation falls from
 3'-most for RefSeq ({{ positional_drift.ensembl_partial_decile1_pct | pct(0) }} to
 {{ positional_drift.ensembl_partial_decile10_pct | pct(0) }} for Ensembl; Supplementary
 Figure S1). Drift is also concentrated: only
-{{ version_stability.refseq_accessions_drift_pct | pct(1) }} of RefSeq accessions ever
-drift, so the risky transcripts form a short, identifiable list that can be flagged or
-blocklisted.
+{{ version_stability.refseq_accessions_drift_pct | pct(1) }} of RefSeq accessions
+({{ version_stability.ensembl_accessions_drift_pct | pct(1) }} of Ensembl) ever drift,
+and the 5% of accessions with the most drifting pairs hold
+{{ version_stability.refseq_top5_drift_share_pct | pct(1) }} of them
+({{ version_stability.ensembl_top5_drift_share_pct | pct(1) }} for Ensembl), so the risky
+transcripts form a short, identifiable list that can be flagged or blocklisted.
 
 The intrinsic-structure check (Methods) works even when the requested version was never
 aligned to the target build, because the structure is build-independent, identical
