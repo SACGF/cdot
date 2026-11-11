@@ -55,7 +55,7 @@ cp paper/empirical_results/*.csv paper/empirical_results/*.provenance.json outpu
 Use this for editing prose, checking layout, or any rebuild where the numbers
 haven't changed.
 
-The templates use vibepaper from GitHub main at 363eb8a (the `paper` extra pins it; switch
+The templates use vibepaper from GitHub main at cec8979 (the `paper` extra pins it; switch
 to a PyPI release, `vibepaper>=0.13`, once one is out). The sections are plain Markdown
 plus `{{ fact }}` references with word filters and typed facts (`{{ x_pct | pct(1) }}`).
 The checks on the wording live beside each section in a **claims sidecar**
