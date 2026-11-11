@@ -1,0 +1,19 @@
+# Claims for introduction.md (vibepaper claims sidecar, see the
+# README's "Claims sidecars"). A quote must match one sentence.
+
+[[ok]]
+quote = "over five years of production logs, only ~ … were correct as written, ~ … contained a syntactic or semantic error, and Mutalyzer could automatically correct only"
+reason = "Lefter 2021's figures, quoted"
+
+[[claim]]
+quote = "over the PostgreSQL wire protocol, which many hospital and corporate networks block and which is slow over the network (about"
+assert = "benchmark.uta_remote_tps < literature.uta_remote_tps"
+message = "'about one transcript per second at best' (public remote UTA)"
+
+[[ok]]
+quote = "only): it retains only a limited set of historical transcript versions, and Ensembl transcripts, widely used in research genomics and the predominant annotation source in Europe, are absent entirely."
+reason = "'RefSeq only', 'absent entirely' describe UTA's contents; R2 asserts clinvar.uta_ensembl_pct == 0"
+
+[[ok]]
+quote = "from all available"
+reason = "'all available' describes what is ingested"

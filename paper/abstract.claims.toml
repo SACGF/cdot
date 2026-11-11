@@ -1,0 +1,11 @@
+# Claims for abstract.md (vibepaper claims sidecar, see the
+# README's "Claims sidecars"). A quote must match one sentence.
+
+[[ok]]
+quote = "with no database"
+reason = "'no database required' describes the distribution format"
+
+[[claim]]
+quote = "versus"
+assert = "clinvar_submitted.cdot_resolved_pct > clinvar_submitted.uta_resolved_pct"
+message = "abstract: cdot X% 'versus' UTA Y% on submitted descriptions"
