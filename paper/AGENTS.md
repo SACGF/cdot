@@ -61,20 +61,6 @@ public/private fact model.
   `vibepaper diff --config paper/paper.toml --facts-dir paper/empirical_results --against main --format md`
   into the PR description (`output/facts/` is not committed, so compare the snapshot).
 
-## Before submission
+## Open work
 
-- Author list and corresponding author. Core: Dave Lawrence and the Shariant team who helped
-  debug HGVS issues. Consider inviting a biocommons/hgvs maintainer and a clinical genomics
-  collaborator. Acknowledge the NCBI RefSeq, Ensembl and biocommons teams.
-- Fill the placeholders: `[Zenodo DOI]` and `[email]` in `abstract.md`, and the `...` rows of
-  Tables S1 and S2 in `supplementary.md`.
-- The UTA alignment count cited in the abstract, introduction and R1 is Hart 2020's figure
-  for the 2021 release; the comparison runs use `uta_20241220`, whose GRCh38 dump alone holds
-  148,275 accession versions. Decide whether to re-measure `literature.uta_count` (and so
-  `coverage.improvement_fold`) against that release.
-- The version-removal ablation of `get_best_transcript_version()` is not reported; if it
-  should be, run `benchmark_resolution.py`'s degraded mode and add the counts as a fact.
-- HTSeq, Snakemake and PyHGVS have no citation; UTA, RefSeq and Ensembl are cited.
-- `bioinformatics.csl` is author-date; the journal wants numbered citations in order of
-  appearance (formatting is only required at revision). `rsvg-convert` must be installed for
-  the docx to embed the SVG figures.
+Open work on the paper (before-submission items, things to review) is in `todo.md`.
