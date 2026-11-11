@@ -138,7 +138,7 @@ def main():
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(row))
+        w = csv.DictWriter(fh, fieldnames=list(row), lineterminator="\n")
         w.writeheader()
         w.writerow(row)
     for k, v in row.items():
@@ -147,7 +147,7 @@ def main():
 
     if args.top_out:
         with open(args.top_out, "w", newline="") as fh:
-            w = csv.writer(fh)
+            w = csv.writer(fh, lineterminator="\n")
             w.writerow(["submitter", "absent_citations", "total_citations", "absent_rate_pct"])
             for sub, a in subs_with_absent:
                 w.writerow([sub, a, total[sub], round(100 * a / total[sub], 1)])

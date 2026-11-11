@@ -472,7 +472,7 @@ def write_facts(facts):
         "inject_sample_size": facts["sample_size"],
     }
     with open(csv_path, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(row))
+        w = csv.DictWriter(fh, fieldnames=list(row), lineterminator="\n")
         w.writeheader()
         w.writerow(row)
     return json_path, csv_path

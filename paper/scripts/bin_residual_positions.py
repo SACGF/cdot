@@ -110,7 +110,7 @@ def main():
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(facts))
+        w = csv.DictWriter(fh, fieldnames=list(facts), lineterminator="\n")
         w.writeheader()
         w.writerow(facts)
     print(f"Written: {out}")

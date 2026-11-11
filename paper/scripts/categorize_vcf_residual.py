@@ -122,14 +122,14 @@ def main():
     counts["unaligned_between_exons_transcripts"] = len(gap_cited_tx)
     row = {c: counts[c] for c in COLUMNS}
     with open(args.out, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(row))
+        w = csv.DictWriter(f, fieldnames=list(row), lineterminator="\n")
         w.writeheader()
         w.writerow(row)
     print(row)
     if args.examples_out:
         examples.sort(key=lambda e: CATEGORIES.index(e["category"]))
         with open(args.examples_out, "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=list(examples[0]))
+            w = csv.DictWriter(f, fieldnames=list(examples[0]), lineterminator="\n")
             w.writeheader()
             w.writerows(examples)
 

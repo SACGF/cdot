@@ -511,7 +511,7 @@ def main():
         "mut_rejected_valid", "mut_representation_changes",
         "vv_lovd_suggestion_cases")}
     with open(csv_path, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(row))
+        w = csv.DictWriter(fh, fieldnames=list(row), lineterminator="\n")
         w.writeheader()
         w.writerow(row)
 

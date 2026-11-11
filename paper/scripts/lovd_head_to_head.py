@@ -277,7 +277,7 @@ def main():
         "lovd_flagged_invalid", "lovd_flagged_invalid_pct",
         "cdot_false_corrections")}
     with open(csv_path, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(row))
+        w = csv.DictWriter(fh, fieldnames=list(row), lineterminator="\n")
         w.writeheader()
         w.writerow(row)
 

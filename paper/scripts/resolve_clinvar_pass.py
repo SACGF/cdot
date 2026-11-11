@@ -147,7 +147,7 @@ def stream_to_csv(rows, out_path):
     out.parent.mkdir(parents=True, exist_ok=True)
     t0 = time.perf_counter()
     with open(out, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=FIELDNAMES)
+        w = csv.DictWriter(fh, fieldnames=FIELDNAMES, lineterminator="\n")
         w.writeheader()
         for row in rows:
             w.writerow(row)
