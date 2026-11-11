@@ -20,8 +20,25 @@ public/private fact model.
 - **Wording that depends on a fact is generated or checked**: a word filter (`approx`,
   `within_pct`, `orders_of_magnitude`, ...), an `{% assert %}` on the line above the
   sentence, or `{# lint-ok: reason #}` for a true hedge. A derived value a filter needs
-  (ratio, percent difference) is emitted by the script that owns the fact. Keep
-  `vibepaper lint` clean, and after a re-run read `vibepaper diff` before the paper.
+  (ratio, percent difference) is emitted by the script that owns the fact. A judgement
+  word ("essentially flat", "nearly uniform") gets one tolerance in `paper.toml`
+  `[claims]`, used as `{% assert x is essentially_flat(y) %}`. Keep
+  `vibepaper lint --config paper/paper.toml --numbers` and `vibepaper check` clean (CI
+  runs both), and after a re-run read `vibepaper diff` before the paper.
+  `lint --unused` lists facts the paper never cites; list ones kept on purpose under
+  `[lint] unused_ok`.
+- **vibepaper 0.10** (`vibepaper~=0.10.0` in the `paper` extra and in CI). To move to a new
+  release, follow vibepaper's `UPGRADE_PROMPT.md`.
+- **Tool and data versions behind a fact come from its provenance sidecar**
+  (`empirical_results/<fact>.provenance.json`, `{{ clinvar_vcf._prov.tools.cdot }}`), not
+  typed into the prose. A script that writes a facts CSV whose versions the prose cites
+  should call `vibepaper.provenance.write_provenance()`; for a frozen fact, rewrite the
+  sidecar with that function when the CSV is re-measured. Lint flags a paragraph that mixes
+  versions of one tool. Write facts CSVs with LF line endings
+  (`csv.writer(f, lineterminator="\n")`).
+- **Re-run PRs**: paste
+  `vibepaper diff --config paper/paper.toml --facts-dir paper/empirical_results --against main --format md`
+  into the PR description (`output/facts/` is not committed, so compare the snapshot).
 
 ## Before submission
 
