@@ -1,0 +1,57 @@
+# Claims for supplementary.md (vibepaper claims sidecar, see the
+# README's "Claims sidecars"). A quote must match one sentence.
+
+[[ok]]
+quote = "resolution of every c.HGVS"
+reason = "'every c.HGVS' describes the corpus"
+
+[[claim]]
+quote = "most of them the same coordinate UTA gives, … (position matches, only"
+assert = "clinvar_vcf_residual.unaligned_between_exons + clinvar_vcf_residual.indel_mismatch + clinvar_vcf_residual.snv_diff_pos + clinvar_vcf_residual.long_cdot_allele + clinvar_vcf_residual.ambiguity_code_allele + clinvar_vcf_residual.identity_or_symbolic == clinvar_vcf_residual.n_incorrect == clinvar_vcf.incorrect"
+message = "Table S4: each coordinate difference is in one of the listed classes ('overwhelmingly representation, multi-mapping or alignment choice')"
+
+[[claim]]
+quote = "over CDS length) shows no 3'-end concentration: … nearly uniform"
+assert = "([clinvar_residual_positions.correct_decile1_pct, clinvar_residual_positions.correct_decile2_pct, clinvar_residual_positions.correct_decile3_pct, clinvar_residual_positions.correct_decile4_pct, clinvar_residual_positions.correct_decile5_pct, clinvar_residual_positions.correct_decile6_pct, clinvar_residual_positions.correct_decile7_pct, clinvar_residual_positions.correct_decile8_pct, clinvar_residual_positions.correct_decile9_pct, clinvar_residual_positions.correct_decile10_pct] | max) is nearly_uniform(10) and ([clinvar_residual_positions.correct_decile1_pct, clinvar_residual_positions.correct_decile2_pct, clinvar_residual_positions.correct_decile3_pct, clinvar_residual_positions.correct_decile4_pct, clinvar_residual_positions.correct_decile5_pct, clinvar_residual_positions.correct_decile6_pct, clinvar_residual_positions.correct_decile7_pct, clinvar_residual_positions.correct_decile8_pct, clinvar_residual_positions.correct_decile9_pct, clinvar_residual_positions.correct_decile10_pct] | min) is nearly_uniform(10)"
+message = "'correct projections are nearly uniform across deciles' (each decile near 10%)"
+
+[[claim]]
+quote = "over CDS length) shows no 3'-end concentration: … nearly uniform"
+assert = "clinvar_residual_positions.incorrect_decile5_pct > clinvar_residual_positions.correct_decile5_pct and clinvar_residual_positions.incorrect_decile6_pct > clinvar_residual_positions.correct_decile6_pct and clinvar_residual_positions.incorrect_decile10_pct < clinvar_residual_positions.correct_decile10_pct"
+message = "'a mild mid-CDS excess and a depleted 3'-most decile' (no 3'-end concentration)"
+
+[[ok]]
+quote = ["at most 200", "all under the"]
+reason = "method wording: 'at most 200 cases', 'highest-confidence' suggestion, 'all under' one rule"
+
+[[claim]]
+quote = "accepting the target anywhere in LOVD's ranked correction list changes no case"
+assert = "lovd_comparison.lovd_anyrank_pct == lovd_comparison.lovd_top1_pct and lovd_comparison.lovd_anyrank_weighted_pct == lovd_comparison.lovd_top1_weighted_pct"
+message = "'accepting the target anywhere in LOVD's ranked correction list changes no case'"
+
+[[claim]]
+quote = "no tool falsely corrects any input"
+assert = "lovd_comparison.cdot_false_corrections == 0 and lovd_comparison.lovd_false_corrections == 0 and vv_mutalyzer_comparison.vv_false_corrections == 0 and vv_mutalyzer_comparison.mut_false_corrections == 0"
+message = "'no tool falsely corrects any input'"
+
+[[ok]]
+quote = "sub-100% ceilings in the categories they otherwise repair are service-level rejections independent of the injected error, measured on the same uncorrupted originals: VariantValidator rejects … of the … valid originals (all"
+reason = "'all recent Ensembl transcripts' characterises the rejected cases"
+
+[[ok]]
+quote = "under a fixed decision-tree taxonomy"
+reason = "'under a fixed decision-tree taxonomy' is method wording"
+
+[[claim]]
+quote = "preservation declines monotonically toward the 3' end"
+assert = "positional_drift.refseq_partial_decile1_pct > positional_drift.refseq_partial_decile2_pct > positional_drift.refseq_partial_decile3_pct > positional_drift.refseq_partial_decile4_pct > positional_drift.refseq_partial_decile5_pct > positional_drift.refseq_partial_decile6_pct > positional_drift.refseq_partial_decile7_pct > positional_drift.refseq_partial_decile8_pct > positional_drift.refseq_partial_decile9_pct > positional_drift.refseq_partial_decile10_pct and positional_drift.ensembl_partial_decile1_pct > positional_drift.ensembl_partial_decile2_pct > positional_drift.ensembl_partial_decile3_pct > positional_drift.ensembl_partial_decile4_pct > positional_drift.ensembl_partial_decile5_pct > positional_drift.ensembl_partial_decile6_pct > positional_drift.ensembl_partial_decile7_pct > positional_drift.ensembl_partial_decile8_pct > positional_drift.ensembl_partial_decile9_pct > positional_drift.ensembl_partial_decile10_pct"
+message = "Figure S1A: 'preservation declines monotonically toward the 3' end'"
+
+[[claim]]
+quote = "over every compared bump the curve is essentially flat (RefSeq … to … ; Ensembl … to … ): most"
+assert = "positional_drift.refseq_all_decile1_pct is essentially_flat(positional_drift.refseq_all_decile10_pct) and positional_drift.ensembl_all_decile1_pct is essentially_flat(positional_drift.ensembl_all_decile10_pct) and version_stability.refseq_full_drift_pct > version_stability.refseq_partial_drift_pct and version_stability.ensembl_full_drift_pct > version_stability.ensembl_partial_drift_pct"
+message = "Figure S1B: 'essentially flat' and 'most drift is a whole-CDS relocation'"
+
+[[ok]]
+quote = "Claude Fable 5 and Claude Opus 5.5"
+reason = "model names and versions of the re-rating LLMs, not results"

@@ -7,7 +7,6 @@ version aligned to a particular genome build, counted separately per build. cdot
 {{ coverage.total_count | commas }} such alignments across all builds and sources,
 compared with ~{{ literature.uta_count | commas }} in UTA's 2021 release [@Hart2020],
 {{ coverage.improvement_fold | fold(1) | article }} increase. The gain has two sources:
-{% assert clinvar.uta_ensembl_pct == 0 and coverage.ensembl_unique_count > 0, "'Ensembl itself, absent from UTA entirely'" %}
 historical depth (cdot ingests the complete run of archived RefSeq and Ensembl releases,
 so an NM_ version cited in an older report or ClinVar submission still resolves after
 NCBI has retired it from the current annotation) and Ensembl itself, absent from UTA
@@ -31,13 +30,11 @@ For the current-version check, the committed ClinVar [@Landrum2025] pair sets
 ({{ clinvar.n_refseq | commas }} RefSeq NM_ and {{ clinvar.n_ensembl | commas }} Ensembl
 ENST preferred-transcript descriptions) were resolved through cdot, with transcript
 sequence spliced from a local genome FASTA so that no Ensembl pair is dropped for a
-sequence SeqRepo lacks. {# lint-ok: 'no Ensembl pair is dropped' states why FastaSeqFetcher is used #}
+sequence SeqRepo lacks.
 UTA's rate is membership of the exact cited accession.version
 in its GRCh38 alignment set, which is what resolution through UTA requires; the live
-{% assert clinvar.cdot_refseq_pct == clinvar.uta_refseq_pct, "'On RefSeq the two backends are at parity'" %}
 database gives the same rates. On RefSeq the two backends are at parity (cdot
 {{ clinvar.cdot_refseq_pct | pct(1) }}, UTA {{ clinvar.uta_refseq_pct | pct(1) }}). The
-{% assert clinvar.uta_ensembl_pct == 0, "'UTA stores no Ensembl alignments at all'" %}
 remaining difference is capability, not accuracy: UTA stores no Ensembl alignments at
 all, so it resolves {{ clinvar.uta_ensembl_pct | pct(1) }} of the Ensembl pairs against
 cdot's {{ clinvar.cdot_ensembl_pct | pct(1) }}. Because the pair sets are
@@ -45,10 +42,9 @@ Ensembl-enriched, their aggregate rate is not a like-for-like accuracy score and
 not report one.
 
 At full scale, resolving every c.HGVS in ClinVar's variant_summary through cdot alone
-({{ clinvar_vcf.n_pairs | commas }} (g., c.) pairs, effectively all RefSeq) reaches {# lint-ok: 'every c.HGVS' describes the corpus; clinvar_source_breakdown.csv has no Ensembl rows #}
+({{ clinvar_vcf.n_pairs | commas }} (g., c.) pairs, effectively all RefSeq) reaches
 {{ clinvar_vcf.resolved_pct | pct(1) }} resolution, and
 {{ clinvar_vcf.matched_of_resolved_pct | pct(2) }} of resolved variants reproduce
-{% assert clinvar_vcf_residual.indel_mismatch * 2 > clinvar_vcf_residual.n_incorrect and clinvar_vcf_residual.snv_diff_pos > clinvar_vcf_residual.unaligned_between_exons, "'dominated by indel-representation differences and by paralog and copy-number transcripts ..., plus N transcripts with bases that align to neither'" %}
 ClinVar's own VCF coordinate exactly (Methods). The residual
 {{ clinvar_vcf.incorrect_pct | pct(2) }} is dominated by indel-representation
 differences and by paralog and copy-number transcripts that map to more than one
@@ -68,12 +64,10 @@ each submitted string kept verbatim and joined to the variant's VCF coordinate a
 ground truth via its AlleleID
 ({{ clinvar_submitted.n_unique_pairs | commas }} unique submitted-string/variant pairs
 from {{ clinvar_submitted.n_scv_tx_strings | commas }} SCV transcript expressions;
-{% assert clinvar_submitted.ensembl_pct == 0, "'not one submitted string cites an Ensembl transcript'" %}
 Methods). This corpus reflects the natural submission mix, which is essentially all
 RefSeq (not one submitted string cites an Ensembl transcript; Ensembl accessions enter
 ClinVar through its recomputed names, not submitter descriptions). Its version profile
 confirms that submitted traffic is historical:
-{% assert clinvar_submitted.version_not_current_pct > 50 and clinvar_submitted.absent_cdot_pct < 1, "'submitted traffic is historical' (most cite a superseded version); 'only X% of cited versions are absent'" %}
 {{ clinvar_submitted.version_not_current_pct | pct(1) }} of submitted strings cite a
 transcript version that is no longer the version in the current RefSeq annotation
 release ({{ clinvar_submitted.scv_weighted_not_current_pct | pct(1) }} weighted by
@@ -83,7 +77,6 @@ transcript no longer annotated at any version. cdot's merged release history hol
 only {{ clinvar_submitted.absent_cdot_pct | pct(1) }} of cited versions are absent from
 its GRCh38 data.
 
-{% assert submitter_attribution.n_submitters_with_absent * 10 < submitter_attribution.n_submitters_total, "'only N submitters ever cite a version cdot lacks' (under a tenth)" %}
 Because cdot ingests every RefSeq and Ensembl annotation release, a version absent from
 its data should be one that never appeared in an official release, and the absent
 citations bear that out: of {{ submitter_attribution.n_submitters_total | commas }}
@@ -99,9 +92,7 @@ version substitution (R5), not by deeper ingest.
 
 cdot resolved the full set of {{ clinvar_submitted.full_n | commas }} submitted pairs,
 reproducing ClinVar's VCF coordinate for
-{% assert clinvar_submitted.cdot_resolved_pct > clinvar_submitted.uta_resolved_pct, "cdot X% 'versus' UTA Y% on the submitted pairs" %}
 {{ clinvar_submitted.cdot_resolved_pct | pct(1) }}, versus
-{% assert clinvar.cdot_refseq_pct == clinvar.uta_refseq_pct, "'The RefSeq gap invisible at the current-version ceiling (both backends ...)'" %}
 {{ clinvar_submitted.uta_resolved_pct | pct(1) }} for the same locally loaded UTA. The
 RefSeq gap invisible at the current-version ceiling (both backends
 {{ clinvar.cdot_refseq_pct | pct(1) }} above) opens to
@@ -109,7 +100,6 @@ RefSeq gap invisible at the current-version ceiling (both backends
 {{ clinvar_submitted.cdot_only | commas }} pairs resolve through cdot alone and
 {{ clinvar_submitted.uta_only | commas }} through UTA alone, because UTA holds no GRCh38
 alignment for {{ clinvar_submitted.uta_no_data_pct | pct(1) }} of the cited versions.
-{% assert clinvar_submitted.era_old_uta_pct < clinvar_submitted.era_recent_uta_pct < clinvar_submitted.era_mid_uta_pct, "UTA by era: 'lowest on the oldest submissions ... and lower on the newest than on 2016-2020'" %}
 Splitting by submission era locates the gap: cdot reproduces the coordinate for
 {{ clinvar_submitted.era_old_cdot_pct | pct(1) }} of the oldest (2008-2015)
 submissions, {{ clinvar_submitted.era_mid_cdot_pct | pct(1) }} of 2016-2020 and
@@ -121,7 +111,6 @@ which cite the most superseded versions, and lower on the newest than on 2016-20
 
 The submitted strings are largely well-formed, so cleaning has little to rescue
 (`fix_hgvs()` repaired {{ clinvar_submitted.rescued_by_fix | commas }} strings, with
-{% assert clinvar_submitted_residual.version_refused + clinvar_submitted_residual.coordinate_drift > clinvar_submitted_residual.n_residual / 2, "'The residual ... is dominated by historical-version effects'" %}
 {{ clinvar_submitted.regressions | int }} regressions). The residual
 {{ clinvar_submitted.residual_pct | pct(1) }} after cleaning and version substitution
 ({{ clinvar_submitted.residual_n | commas }} of {{ clinvar_submitted.full_n | commas }})
@@ -139,7 +128,6 @@ into the Shariant platform [@Tudini2022], classifications submitted by clinical
 laboratories over many years ({{ historical.n_multi_version | commas }} of the
 {{ historical.n_unique_tx | commas }} distinct transcripts are cited at more than one
 version). With only the transcript-data layer swapped (Supplementary Methods), cdot
-{% assert historical.cdot_resolved_pct > historical.uta_resolved_pct, "historical corpus: cdot X% 'versus' UTA Y%" %}
 produced a genomic coordinate for {{ historical.cdot_resolved_pct | pct(1) }} versus
 {{ historical.uta_resolved_pct | pct(1) }} for UTA. Of the strings cdot resolved but
 UTA could not ({{ historical.cdot_only_pct | pct(1) }} of the corpus),
@@ -147,7 +135,7 @@ UTA could not ({{ historical.cdot_only_pct | pct(1) }} of the corpus),
 which UTA holds no GRCh38 alignment and
 {{ historical.cdot_only_ensembl_pct | pct(0) }} were Ensembl transcripts. There is no
 ground-truth genomic coordinate for the private corpus, so the metric is resolution
-rate rather than correctness. {# lint-ok(over, more than, only, no): method wording: 'over many years', 'more than one version', 'only the transcript-data layer swapped', 'holds no GRCh38 alignment', 'no ground truth' #}
+rate rather than correctness.
 
 ## R3: Throughput
 
@@ -155,7 +143,7 @@ rate rather than correctness. {# lint-ok(over, more than, only, no): method word
 HGVS/s over {{ benchmark.n_repeats | int }} timed passes of the identical
 {{ benchmark.n_pairs | commas }}-pair ClinVar set, engine and sequence layer held
 constant (Methods). The public remote UTA row uses the first
-{{ benchmark.uta_remote_n | int }} pairs of the same set. {# lint-ok(over): 'over' is a preposition #}
+{{ benchmark.uta_remote_n | int }} pairs of the same set.
 
 | Configuration | Throughput (HGVS/s), median (IQR) |
 |---|---|
@@ -170,7 +158,6 @@ Batching the per-transcript REST lookups into one `prefetch()` request (all tran
 for the set, under a second, untimed) makes REST throughput equivalent to local JSON,
 the two {{ benchmark.rest_prefetch_vs_local_diff_pct | within_pct }} of each other:
 with the transcript data in process memory, both are bounded by the shared engine and sequence layer, not by the transcript backend.
-{% assert 3.6 <= benchmark.cdot_local_vs_uta_local_ratio <= 4.4, "local UTA 'about a quarter of local-JSON throughput'" %}
 Comparing like with like: locally, a loaded UTA reached
 {{ benchmark.uta_local_tps | int }} HGVS/s, about a quarter of local-JSON throughput,
 each lookup resolving a set of SQL queries where cdot needs a single JSON object; and
@@ -206,7 +193,6 @@ accession-prefix restoration, Methods) raised the fraction parseable by
 biocommons/hgvs from {{ cleaning_corpus.as_submitted_pct | pct(1) }} as-submitted to
 {{ cleaning_corpus.after_pct | pct(1) }} ({{ cleaning_corpus.rescued | commas }}
 strings rescued, about {{ cleaning_corpus.rescued_share_pct | pct(0) }} of those that
-{% assert cleaning_corpus.regressions == 0, "'with zero regressions'" %}
 failed as-submitted) with {{ cleaning_corpus.regressions | number_word }} regressions.
 Table 2 breaks the rescues down by fix
 type: structural-punctuation repair and whitespace removal dominate, followed by
@@ -247,7 +233,6 @@ data-collection artifact and is excluded from the corpus above. The remaining
 queries) of genuine HGVS-shaped input that still fails to parse after cleaning defines
 the ceiling of pure string repair. Classified under a fixed decision-tree taxonomy
 (Supplementary Table S6), well over half is incomplete or reference-less input that no
-{% assert cleaning_corpus.residual_incomplete_pct > 55 and 20 < cleaning_corpus.residual_fixable_pct < 30 and (cleaning_corpus.residual_incomplete_pct + cleaning_corpus.residual_fixable_pct + cleaning_corpus.residual_grammar_gap_pct - 100) | abs < 0.5, "Table S6 residual: 'well over half' incomplete, 'about a quarter' fixable, 'the remaining' grammar gap" %}
 string-level repair can invent, about a quarter is in principle fixable and marks the
 frontier for future cleaning rules, and the remaining
 ~{{ cleaning_corpus.residual_grammar_gap_pct | pct(0) }} is valid HGVS the biocommons
@@ -261,13 +246,12 @@ any data provider.
 Caution is warranted because substituting one version for another can change the
 coordinate a variant projects to. Across consecutive RefSeq version pairs
 ({{ version_stability.refseq_pairs | commas }} pairs),
-{{ version_stability.refseq_preserving_pct | pct(1) }} preserved every coding {# lint-ok: 'preserved every coding coordinate' defines the preserving category #}
+{{ version_stability.refseq_preserving_pct | pct(1) }} preserved every coding
 coordinate; for Ensembl ({{ version_stability.ensembl_pairs | commas }} pairs)
 {{ version_stability.ensembl_preserving_pct | pct(1) }}. Weighted by coding base (the
 chance a *random* variant is unaffected), safety is
 {{ version_stability.refseq_pervariant_safety | pct(1) }} (RefSeq) and
 {{ version_stability.ensembl_pervariant_safety | pct(1) }} (Ensembl).
-{% assert version_stability.refseq_full_drift_pct > 2 * version_stability.refseq_partial_drift_pct and version_stability.ensembl_full_drift_pct > 2 * version_stability.ensembl_partial_drift_pct, "'When a coordinate does move it is usually the whole CDS'" %}
 When a coordinate does move it is usually the whole CDS
 ({{ version_stability.refseq_full_drift_pct | pct(1) }} of RefSeq pairs,
 {{ version_stability.ensembl_full_drift_pct | pct(1) }} Ensembl), driven by a
@@ -276,24 +260,24 @@ that mis-places some variants but not others, is rare
 ({{ version_stability.refseq_partial_drift_pct | pct(1) }} of RefSeq pairs,
 {{ version_stability.ensembl_partial_drift_pct | pct(1) }} Ensembl). Within that tail
 the risk is positional: a partial drift keeps a 5' prefix intact up to its first
-{% assert positional_drift.refseq_partial_decile1_pct > positional_drift.refseq_partial_decile10_pct and positional_drift.ensembl_partial_decile1_pct > positional_drift.ensembl_partial_decile10_pct, "'preservation falls from the 5'-most decile to the 3'-most'" %}
 alignment change and moves what lies downstream, so preservation falls from
 {{ positional_drift.refseq_partial_decile1_pct | pct(0) }} of coding bases in the
 5'-most decile to {{ positional_drift.refseq_partial_decile10_pct | pct(0) }} in the
 3'-most for RefSeq ({{ positional_drift.ensembl_partial_decile1_pct | pct(0) }} to
 {{ positional_drift.ensembl_partial_decile10_pct | pct(0) }} for Ensembl; Supplementary
 Figure S1). Drift is also concentrated: only
-{% assert version_stability.refseq_accessions_drift_pct < 10, "'only X% of RefSeq accessions ever drift ... a short, identifiable list'" %}
-{{ version_stability.refseq_accessions_drift_pct | pct(1) }} of RefSeq accessions ever
-drift, so the risky transcripts form a short, identifiable list that can be flagged or
-blocklisted.
+{{ version_stability.refseq_accessions_drift_pct | pct(1) }} of RefSeq accessions
+({{ version_stability.ensembl_accessions_drift_pct | pct(1) }} of Ensembl) ever drift,
+and the 5% of accessions with the most drifting pairs hold
+{{ version_stability.refseq_top5_drift_share_pct | pct(1) }} of them
+({{ version_stability.ensembl_top5_drift_share_pct | pct(1) }} for Ensembl), so the risky
+transcripts form a short, identifiable list that can be flagged or blocklisted.
 
-The intrinsic-structure check (Methods) works even when the requested version was never {# lint-ok: 'never aligned' describes the case the check handles #}
+The intrinsic-structure check (Methods) works even when the requested version was never
 aligned to the target build, because the structure is build-independent, identical
 across GRCh37/GRCh38/T2T for
 {{ version_stability.refseq_struct_portable_pct | pct(1) }} of RefSeq and
 {{ version_stability.ensembl_struct_portable_pct | pct(1) }} of Ensembl versions
-{% assert version_safety_validation.n_coordinate_changes == 0, "'every one that resolves under the substitute gives the same genomic coordinate'" %}
 (predictor detail in Supplementary Methods). Validated against ClinVar: of the
 {{ version_safety_validation.n_safe_substitutions | commas }} version substitutions the
 safety checks accept across the full RefSeq corpus, every one that resolves under the

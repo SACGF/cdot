@@ -1,8 +1,8 @@
 field,value,type
 n_residual,23687,count
-version_refused,17667,
-unknown_accession,199,
-coordinate_drift,546,
-position_out_of_bounds,3273,
-reference_mismatch,762,
-grammar_unsupported,1236,
+version_refused,17667,count
+unknown_accession,199,count
+coordinate_drift,546,count
+position_out_of_bounds,3273,count
+reference_mismatch,762,count
+grammar_unsupported,1236,count
