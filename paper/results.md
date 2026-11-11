@@ -31,7 +31,8 @@ For the current-version check, the committed ClinVar [@Landrum2025] pair sets
 ({{ clinvar.n_refseq | commas }} RefSeq NM_ and {{ clinvar.n_ensembl | commas }} Ensembl
 ENST preferred-transcript descriptions) were resolved through cdot, with transcript
 sequence spliced from a local genome FASTA so that no Ensembl pair is dropped for a
-sequence SeqRepo lacks. UTA's rate is membership of the exact cited accession.version {# lint-ok: 'no Ensembl pair is dropped' states why FastaSeqFetcher is used #}
+sequence SeqRepo lacks. {# lint-ok: 'no Ensembl pair is dropped' states why FastaSeqFetcher is used #}
+UTA's rate is membership of the exact cited accession.version
 in its GRCh38 alignment set, which is what resolution through UTA requires; the live
 {% assert clinvar.cdot_refseq_pct == clinvar.uta_refseq_pct, "'On RefSeq the two backends are at parity'" %}
 database gives the same rates. On RefSeq the two backends are at parity (cdot
@@ -82,6 +83,7 @@ transcript no longer annotated at any version. cdot's merged release history hol
 only {{ clinvar_submitted.absent_cdot_pct | pct(1) }} of cited versions are absent from
 its GRCh38 data.
 
+{% assert submitter_attribution.n_submitters_with_absent * 10 < submitter_attribution.n_submitters_total, "'only N submitters ever cite a version cdot lacks' (under a tenth)" %}
 Because cdot ingests every RefSeq and Ensembl annotation release, a version absent from
 its data should be one that never appeared in an official release, and the absent
 citations bear that out: of {{ submitter_attribution.n_submitters_total | commas }}
@@ -90,7 +92,8 @@ version cdot lacks, a single large laboratory accounts for
 {{ submitter_attribution.top1_absent_share_pct | pct(1) }} of all absent-version
 citations, and {{ submitter_attribution.single_submitter_version_pct | pct(1) }} of the
 {{ submitter_attribution.n_absent_versions | int }} distinct absent versions are cited by
-one submitter alone. These are the signature of transcripts a laboratory aligned to the {# lint-ok: 'only' is a hedge on the counts shown; 'every release' describes the ingest #}
+one submitter alone.
+These are the signature of transcripts a laboratory aligned to the
 genome itself rather than drawing from a published release, so they are addressed by
 version substitution (R5), not by deeper ingest.
 
@@ -136,6 +139,7 @@ into the Shariant platform [@Tudini2022], classifications submitted by clinical
 laboratories over many years ({{ historical.n_multi_version | commas }} of the
 {{ historical.n_unique_tx | commas }} distinct transcripts are cited at more than one
 version). With only the transcript-data layer swapped (Supplementary Methods), cdot
+{% assert historical.cdot_resolved_pct > historical.uta_resolved_pct, "historical corpus: cdot X% 'versus' UTA Y%" %}
 produced a genomic coordinate for {{ historical.cdot_resolved_pct | pct(1) }} versus
 {{ historical.uta_resolved_pct | pct(1) }} for UTA. Of the strings cdot resolved but
 UTA could not ({{ historical.cdot_only_pct | pct(1) }} of the corpus),
@@ -143,7 +147,7 @@ UTA could not ({{ historical.cdot_only_pct | pct(1) }} of the corpus),
 which UTA holds no GRCh38 alignment and
 {{ historical.cdot_only_ensembl_pct | pct(0) }} were Ensembl transcripts. There is no
 ground-truth genomic coordinate for the private corpus, so the metric is resolution
-rate rather than correctness. {# lint-ok: method wording: 'over many years', 'only the transcript-data layer swapped', 'no ground truth' #}
+rate rather than correctness. {# lint-ok(over, more than, only, no): method wording: 'over many years', 'more than one version', 'only the transcript-data layer swapped', 'holds no GRCh38 alignment', 'no ground truth' #}
 
 ## R3: Throughput
 
@@ -151,7 +155,7 @@ rate rather than correctness. {# lint-ok: method wording: 'over many years', 'on
 HGVS/s over {{ benchmark.n_repeats | int }} timed passes of the identical
 {{ benchmark.n_pairs | commas }}-pair ClinVar set, engine and sequence layer held
 constant (Methods). The public remote UTA row uses the first
-{{ benchmark.uta_remote_n | int }} pairs of the same set. {# lint-ok: 'over' is a preposition #}
+{{ benchmark.uta_remote_n | int }} pairs of the same set. {# lint-ok(over): 'over' is a preposition #}
 
 | Configuration | Throughput (HGVS/s), median (IQR) |
 |---|---|
@@ -201,8 +205,10 @@ annotations. The cleaning pipeline (`clean_hgvs()` plus the provider-verified
 accession-prefix restoration, Methods) raised the fraction parseable by
 biocommons/hgvs from {{ cleaning_corpus.as_submitted_pct | pct(1) }} as-submitted to
 {{ cleaning_corpus.after_pct | pct(1) }} ({{ cleaning_corpus.rescued | commas }}
-strings rescued, about {{ cleaning_corpus.rescued_share_pct | int }}% of those that
-failed as-submitted) with zero regressions. Table 2 breaks the rescues down by fix {# lint-ok: private frozen constants; 'about' hedges a rounded share #}
+strings rescued, about {{ cleaning_corpus.rescued_share_pct | pct(0) }} of those that
+{% assert cleaning_corpus.regressions == 0, "'with zero regressions'" %}
+failed as-submitted) with {{ cleaning_corpus.regressions | number_word }} regressions.
+Table 2 breaks the rescues down by fix
 type: structural-punctuation repair and whitespace removal dominate, followed by
 gene/transcript-wrapper repair and structure reconstruction. The rarest category,
 restoring a fully dropped accession prefix against the loaded transcript data, is

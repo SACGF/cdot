@@ -19,15 +19,18 @@ public/private fact model.
 - Analysis write-ups that back a fact or a PROVENANCE entry go in `notes/`.
 - **Wording that depends on a fact is generated or checked**: a word filter (`approx`,
   `within_pct`, `orders_of_magnitude`, ...), an `{% assert %}` on the line above the
-  sentence, or `{# lint-ok: reason #}` for a true hedge. A derived value a filter needs
-  (ratio, percent difference) is emitted by the script that owns the fact. A judgement
+  sentence, or `{# lint-ok: reason #}` for a true hedge. A lint-ok accepts only the
+  sentence it ends (put it straight after that sentence's full stop), or only the words
+  it names anywhere in the paragraph (`{# lint-ok(over): ... #}`, for a word several
+  sentences use). Lint reports a lint-ok that accepts nothing; delete it. A derived value
+  a filter needs (ratio, percent difference) is emitted by the script that owns the fact. A judgement
   word ("essentially flat", "nearly uniform") gets one tolerance in `paper.toml`
   `[claims]`, used as `{% assert x is essentially_flat(y) %}`. Keep
   `vibepaper lint --config paper/paper.toml --numbers` and `vibepaper check` clean (CI
   runs both), and after a re-run read `vibepaper diff` before the paper.
   `lint --unused` lists facts the paper never cites; list ones kept on purpose under
   `[lint] unused_ok`.
-- **vibepaper 0.10** (`vibepaper~=0.10.0` in the `paper` extra and in CI). To move to a new
+- **vibepaper 0.11** (`vibepaper~=0.11.0` in the `paper` extra and in CI). To move to a new
   release, follow vibepaper's `UPGRADE_PROMPT.md`.
 - **Facts are typed.** Every facts CSV is vertical (`field,value,type`). Scripts write
   them with `write_typed_facts()` from `scripts/facts_io.py`, which types each fact from

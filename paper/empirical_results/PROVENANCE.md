@@ -251,7 +251,7 @@ collection regex and is a data-collection artifact, not something cleaning could
 (issue #112 feedback). Removing it from the denominator: as-submitted parseable
 `as_submitted_pct` 91.7%, after-cleaning `after_pct` 97.3% (`gain_pct` +5.6%, `rescued`
 1,828 = `rescued_share_pct` ~67% of the `failed_pp` 8.3 points that failed
-as-submitted), residual `residual_n` 887 (`residual_pct` 2.7%); `nonhgvs_n` 81.
+as-submitted, `regressions` 0 parseable rows made unparseable), residual `residual_n` 887 (`residual_pct` 2.7%); `nonhgvs_n` 81.
 The three `residual_*_pct` shares are of the 887 residual queries, summed from the Table S6
 classes (`residual_taxonomy.csv`): incomplete = Truncated + No reference (561), fixable =
 Edit syntax + Bad accession + Trailing / concatenated + Insertion (length only) (245),

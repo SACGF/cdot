@@ -41,6 +41,7 @@ malformed description still parses; and an opt-in, coordinate-safe version subst
 for the cases where the cited version is genuinely gone. For coverage, cdot generates
 compact JSON files from all available RefSeq GFF3 and Ensembl GTF annotation releases,
 covering {{ coverage.total_count | commas }} versioned transcript alignments across
-GRCh37, GRCh38, and T2T-CHM13v2.0 [@Nurk2022]. The files load locally in seconds and {# lint-ok: 'all available' describes what is ingested #}
+GRCh37, GRCh38, and T2T-CHM13v2.0 [@Nurk2022]. {# lint-ok: 'all available' describes what is ingested #}
+The files load locally in seconds and
 are also served through a REST API (cdotlib.org), so the same data backs both a fast
 in-memory provider and lightweight remote access.

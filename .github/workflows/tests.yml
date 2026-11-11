@@ -37,7 +37,7 @@ jobs:
 
       # Same pin as the 'paper' extra in pyproject.toml
       - name: Install vibepaper
-        run: python -m pip install "vibepaper~=0.10.0"
+        run: python -m pip install "vibepaper~=0.11.0"
 
       - name: Lint paper wording
         run: vibepaper lint --config paper/paper.toml --facts-dir paper/empirical_results --numbers --check

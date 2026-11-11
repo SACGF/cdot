@@ -203,7 +203,7 @@ Production ops with no string-level injector (structure reconstruction, empty-ve
 dropping, provider-verified accession-prefix restoration) are absent by design.
 Examples are synthesised from public `NM_000059.4` (BRCA2). Totals also appear in
 `paper/empirical_results/cleaning.csv`, `lovd_comparison.csv` and
-`vv_mutalyzer_comparison.csv`. {# lint-ok: method wording: 'at most 200 cases', 'highest-confidence' suggestion, 'all under' one rule #}
+`vv_mutalyzer_comparison.csv`. {# lint-ok(most, highest, all, under): method wording: 'at most 200 cases', 'highest-confidence' suggestion, 'all under' one rule #}
 
 <!-- include-csv: empirical_results/injection_benchmark.csv
   align: left
@@ -252,7 +252,7 @@ genuine-HGVS production queries that still fail to parse after cleaning (Results
 {{ cleaning_corpus.nonhgvs_n | int }} non-HGVS queries that slipped the corpus regex
 are excluded (Results). Counts and % below are of the
 {{ cleaning_corpus.residual_n | commas }} residual queries; examples are synthesised
-from public BRCA2 `NM_000059.4`. {# lint-ok: 'under a fixed decision-tree taxonomy' is method wording #}
+from public BRCA2 `NM_000059.4`. {# lint-ok(under): 'under a fixed decision-tree taxonomy' is method wording #}
 
 <!-- include-csv: empirical_results/residual_taxonomy.csv
   align: left

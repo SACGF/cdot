@@ -4,6 +4,7 @@ as_submitted_pct,91.7,percent
 after_pct,97.3,percent
 gain_pct,5.6,percent
 rescued,1828,
+regressions,0,
 failed_pp,8.3,
 rescued_share_pct,67.0,percent
 residual_n,887,count
