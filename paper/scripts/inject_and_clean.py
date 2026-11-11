@@ -40,7 +40,6 @@ Usage::
 """
 
 import argparse
-import csv
 import json
 import random
 import re
@@ -49,6 +48,7 @@ from pathlib import Path
 import hgvs.parser
 
 from cdot.hgvs.clean import clean_hgvs
+from facts_io import write_typed_facts  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -456,11 +456,9 @@ def write_facts(facts):
     json_path = FACTS_DIR / "cleaning.json"
     json_path.write_text(json.dumps(facts, indent=2) + "\n")
 
-    # Single-row CSV for vibepaper {{ cleaning.* }} templating.
-    # TIER 1 ONLY — every value here is reproducible from public data committed
-    # to this repo. Tier-2 production-corpus numbers (91.5%->96.4%, the residual
-    # taxonomy) are deliberately NOT emitted as facts; they appear in the
-    # manuscript as flagged literal constants (plan §3).
+    # Facts for vibepaper {{ cleaning.* }} templating. Tier 1 only: every value here
+    # is reproducible from public data committed to this repo. The Tier-2
+    # production-corpus numbers are frozen in cleaning_corpus.csv instead.
     csv_path = FACTS_DIR / "cleaning.csv"
     row = {
         "inject_overall_pct": facts["overall_recovery_pct"],
@@ -471,10 +469,7 @@ def write_facts(facts):
         "inject_n_categories": facts["n_categories"],
         "inject_sample_size": facts["sample_size"],
     }
-    with open(csv_path, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(row))
-        w.writeheader()
-        w.writerow(row)
+    write_typed_facts(csv_path, row)
     return json_path, csv_path
 
 

@@ -141,7 +141,7 @@ def main():
           f"ensembl {comp_kept['ensembl']:,} ({ens_kept_pct:.2f}% Ensembl)", file=sys.stderr)
     if args.out_composition:
         with open(args.out_composition, "w", newline="") as ch:
-            w = csv.writer(ch)
+            w = csv.writer(ch, lineterminator="\n")
             w.writerow(["scope", "refseq", "ensembl", "ensembl_pct"])
             w.writerow(["names", comp_names["refseq"], comp_names["ensembl"],
                         round(ens_names_pct, 2)])

@@ -1,2 +1,15 @@
-n_versioned_citations,n_absent_citations,absent_pct,n_submitters_total,n_submitters_with_absent,top1_absent_share_pct,top3_absent_share_pct,top5_absent_share_pct,top10_absent_share_pct,n_absent_versions,n_absent_versions_single_submitter,single_submitter_version_pct,top_submitter_absent_n,top_submitter_absent_rate_pct
-4082030,18155,0.445,3028,88,94.8,98.0,98.6,99.1,287,238,82.9,17219,1.0
+field,value,type
+n_versioned_citations,4082030,count
+n_absent_citations,18155,count
+absent_pct,0.445,percent
+n_submitters_total,3028,count
+n_submitters_with_absent,88,count
+top1_absent_share_pct,94.8,percent
+top3_absent_share_pct,98.0,percent
+top5_absent_share_pct,98.6,percent
+top10_absent_share_pct,99.1,percent
+n_absent_versions,287,count
+n_absent_versions_single_submitter,238,count
+single_submitter_version_pct,82.9,percent
+top_submitter_absent_n,17219,count
+top_submitter_absent_rate_pct,1.0,percent

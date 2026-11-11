@@ -1,2 +1,11 @@
-n_pairs,n_resolved,n_correct,resolved_pct,matched_pct,matched_of_resolved_pct,incorrect,incorrect_pct,no_data,error
-4583798,4559178,4557096,99.46,99.42,99.954,2082,0.05,1051,23569
+field,value,type
+n_pairs,4583798,count
+n_resolved,4559178,count
+n_correct,4557096,count
+resolved_pct,99.46,percent
+matched_pct,99.42,percent
+matched_of_resolved_pct,99.954,percent
+incorrect,2082,
+incorrect_pct,0.05,percent
+no_data,1051,
+error,23569,

@@ -1,2 +1,14 @@
-lovd_version,n_cases,cdot_pct,lovd_top1_pct,lovd_anyrank_pct,cdot_weighted_pct,lovd_top1_weighted_pct,lovd_anyrank_weighted_pct,originals_n,lovd_false_corrections,lovd_flagged_invalid,lovd_flagged_invalid_pct,cdot_false_corrections
-v1.2.2,3419,100.0,33.6,33.6,100.0,69.1,69.1,998,0,266,26.7,0
+field,value,type
+lovd_version,v1.2.2,text
+n_cases,3419,count
+cdot_pct,100.0,percent
+lovd_top1_pct,33.6,percent
+lovd_anyrank_pct,33.6,percent
+cdot_weighted_pct,100.0,percent
+lovd_top1_weighted_pct,69.1,percent
+lovd_anyrank_weighted_pct,69.1,percent
+originals_n,998,count
+lovd_false_corrections,0,
+lovd_flagged_invalid,266,
+lovd_flagged_invalid_pct,26.7,percent
+cdot_false_corrections,0,

@@ -1,2 +1,10 @@
-n_incorrect,unaligned_between_exons,unaligned_between_exons_transcripts,indel_mismatch,snv_diff_pos,snv_diff_pos_transcripts,long_cdot_allele,identity_or_symbolic,ambiguity_code_allele
-2082,232,5,1248,418,43,71,45,68
+field,value,type
+n_incorrect,2082,count
+unaligned_between_exons,232,
+unaligned_between_exons_transcripts,5,
+indel_mismatch,1248,
+snv_diff_pos,418,
+snv_diff_pos_transcripts,43,
+long_cdot_allele,71,
+identity_or_symbolic,45,
+ambiguity_code_allele,68,

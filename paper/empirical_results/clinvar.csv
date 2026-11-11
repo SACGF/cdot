@@ -1,2 +1,12 @@
-n_variants,cdot_resolution_pct,uta_resolution_pct,n_refseq,n_ensembl,refseq_pct,ensembl_pct,cdot_refseq_pct,cdot_ensembl_pct,uta_refseq_pct,uta_ensembl_pct
-2818,99.0,70.3,500,818,37.9,62.1,100.0,99.8,100.0,0.0
+field,value,type
+n_variants,2818,count
+cdot_resolution_pct,99.0,percent
+uta_resolution_pct,70.3,percent
+n_refseq,500,count
+n_ensembl,818,count
+refseq_pct,37.9,percent
+ensembl_pct,62.1,percent
+cdot_refseq_pct,100.0,percent
+cdot_ensembl_pct,99.8,percent
+uta_refseq_pct,100.0,percent
+uta_ensembl_pct,0.0,percent

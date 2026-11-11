@@ -47,7 +47,6 @@ Usage::
 
 import argparse
 import concurrent.futures
-import csv
 import json
 import sys
 import time
@@ -63,6 +62,7 @@ from cdot.hgvs.clean import clean_hgvs
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import inject_and_clean as iac              # noqa: E402
 from lovd_head_to_head import build_cases, norm  # noqa: E402
+from facts_io import write_typed_facts  # noqa: E402
 
 FACTS_DIR = iac.FACTS_DIR
 CACHE_DIR = iac.REPO / "output/rest_cache"
@@ -510,10 +510,7 @@ def main():
         "vv_false_corrections", "vv_rejected_valid", "mut_false_corrections",
         "mut_rejected_valid", "mut_representation_changes",
         "vv_lovd_suggestion_cases")}
-    with open(csv_path, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(row))
-        w.writeheader()
-        w.writerow(row)
+    write_typed_facts(csv_path, row)
 
     def s(x):
         return "-" if x is None else str(x)

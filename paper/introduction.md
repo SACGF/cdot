@@ -9,10 +9,10 @@ determines where its exons fall. ClinVar alone provides HGVS descriptions for
 >{{ literature.clinvar_variants | commas }} variants [@Landrum2025]. Human-entered
 strings are often broken: of the ~26 million unique descriptions submitted to Mutalyzer
 over five years of production logs, only
-~{{ literature.mutalyzer_correct_pct | dp(0) }}% were correct as written,
-~{{ literature.mutalyzer_error_pct | dp(0) }}% contained a syntactic or semantic error,
+~{{ literature.mutalyzer_correct_pct | pct(0) }} were correct as written,
+~{{ literature.mutalyzer_error_pct | pct(0) }} contained a syntactic or semantic error,
 and Mutalyzer could automatically correct only
-~{{ literature.mutalyzer_autocorrect_pct | dp(0) }}% [@Lefter2021]. {# lint-ok: Lefter 2021's figures, quoted #}
+~{{ literature.mutalyzer_autocorrect_pct | pct(0) }} [@Lefter2021]. {# lint-ok: Lefter 2021's figures, quoted #}
 
 The two dominant Python HGVS libraries are biocommons/hgvs [@Wang2018] and
 PyHGVS. biocommons/hgvs reads from a pluggable data provider behind a common interface,
@@ -26,7 +26,7 @@ PostgreSQL wire protocol, which many hospital and corporate networks block and w
 slow over the network (about one transcript per second at best;
 {{ benchmark.uta_remote_tps | dp(2) }} HGVS/s in our measurement, Table 1). UTA is also
 limited in coverage (~{{ literature.uta_count | commas }} versioned alignments in the
-2021 release described by Hart and Prlić [@Hart2020], RefSeq only):
+2021 release described by Hart and Prlić [@Hart2020], RefSeq only): {# lint-ok: 'RefSeq only', 'absent entirely' describe UTA's contents; R2 asserts clinvar.uta_ensembl_pct == 0 #}
 it retains only a limited set of historical transcript versions, and Ensembl
 transcripts, widely used in research genomics and the predominant annotation source in
 Europe, are absent entirely.
@@ -41,6 +41,7 @@ malformed description still parses; and an opt-in, coordinate-safe version subst
 for the cases where the cited version is genuinely gone. For coverage, cdot generates
 compact JSON files from all available RefSeq GFF3 and Ensembl GTF annotation releases,
 covering {{ coverage.total_count | commas }} versioned transcript alignments across
-GRCh37, GRCh38, and T2T-CHM13v2.0 [@Nurk2022]. The files load locally in seconds and {# lint-ok: 'all available' describes what is ingested #}
+GRCh37, GRCh38, and T2T-CHM13v2.0 [@Nurk2022]. {# lint-ok: 'all available' describes what is ingested #}
+The files load locally in seconds and
 are also served through a REST API (cdotlib.org), so the same data backs both a fast
 in-memory provider and lightweight remote access.

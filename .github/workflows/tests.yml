@@ -23,6 +23,28 @@ jobs:
       - name: Run ruff
         run: ruff check .
 
+  # Paper wording checks against the committed facts (no render, so no pandoc):
+  # claim words beside facts are checked, and every {% assert %} holds.
+  paper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # Same pin as the 'paper' extra in pyproject.toml
+      - name: Install vibepaper
+        run: python -m pip install "vibepaper~=0.11.0"
+
+      - name: Lint paper wording
+        run: vibepaper lint --config paper/paper.toml --facts-dir paper/empirical_results --numbers --check
+
+      - name: Check paper asserts
+        run: vibepaper check --config paper/paper.toml --facts-dir paper/empirical_results --check
+
   build:
     runs-on: ubuntu-latest
     steps:

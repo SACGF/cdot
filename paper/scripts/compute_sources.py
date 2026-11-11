@@ -10,10 +10,10 @@ This is what Supplementary Tables S1/S2 enumerate, so the counts match the paper
 Usage:
     python paper/scripts/compute_sources.py
 """
-import csv
 from pathlib import Path
 
 import yaml
+from facts_io import write_typed_facts  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent.parent
 YAML = REPO / "generate_transcript_data" / "cdot_transcripts.yaml"
@@ -38,10 +38,7 @@ def main():
         row[f"{key}_releases"] = sum(1 for v in entries.values() if isinstance(v, dict))
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    with open(OUT, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(row))
-        w.writeheader()
-        w.writerow(row)
+    write_typed_facts(OUT, row)
     print(f"Written: {OUT}")
     for k, v in row.items():
         print(f"  {k}: {v}")

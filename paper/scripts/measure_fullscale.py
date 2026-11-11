@@ -20,12 +20,12 @@ difference between the hot and cold passes and, from the public remote UTA throu
         --benchmark-csv paper/empirical_results/benchmark.csv
 """
 import argparse
-import csv
 import re
 import subprocess
 import sys
 from pathlib import Path
 from statistics import mean
+from facts_io import read_facts, write_typed_facts  # noqa: E402
 
 PASS_SCRIPT = Path(__file__).with_name("resolve_clinvar_pass.py")
 
@@ -43,24 +43,15 @@ def run_pass(pairs_file, json_file):
 def derived(n_pairs, cold_tps, hot_tps, benchmark_csv):
     out = {"hot_vs_cold_diff_pct": 100 * abs(hot_tps - cold_tps) / cold_tps}
     if benchmark_csv and Path(benchmark_csv).exists():
-        with open(benchmark_csv, newline="") as f:
-            uta_remote_tps = float(next(csv.DictReader(f))["uta_remote_tps"])
+        uta_remote_tps = float(read_facts(benchmark_csv)["uta_remote_tps"])
         out["uta_remote_days"] = int(n_pairs) / uta_remote_tps / 86400
     return out
 
 
-def write_rows(path, row):
-    with open(path, "w", newline="") as f:
-        w = csv.writer(f, lineterminator="\n")
-        w.writerow(["field", "value"])
-        w.writerows(row.items())
-
-
 def derive_only(path, benchmark_csv):
-    with open(path, newline="") as f:
-        row = {r["field"]: r["value"] for r in csv.DictReader(f)}
+    row = read_facts(path)
     row.update(derived(row["n_pairs"], float(row["cold_tps"]), float(row["hot_tps"]), benchmark_csv))
-    write_rows(path, row)
+    write_typed_facts(path, row)
     print(row)
 
 
@@ -96,7 +87,7 @@ def main():
         "wall_min": round(mean(h["wall"] for h in hot) / 60),
     }
     row.update(derived(cold["n_pairs"], cold["tps"], mean(hot_tps), args.benchmark_csv))
-    write_rows(args.out, row)
+    write_typed_facts(args.out, row)
     print(row)
 
 

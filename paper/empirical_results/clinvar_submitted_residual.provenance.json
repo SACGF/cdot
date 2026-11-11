@@ -1,0 +1,9 @@
+{
+  "command": "non-correct rows of the full cdot pass over the ClinVarVCVRelease_2026-10 submitted pairs (see PROVENANCE.md)",
+  "date": "2026-11-05",
+  "tools": {
+    "cdot": "0.2.37",
+    "cdot_data": "0.2.36",
+    "clinvar": "2026-10"
+  }
+}

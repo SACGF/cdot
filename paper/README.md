@@ -26,7 +26,7 @@ install the tooling with `pip install -e '.[paper]'` (adds `vibepaper`, `snakema
 and `weasyprint` for the optional PDF output).
 
 Numbers in the text are not hard-coded — they are `{{ fact }}` templates filled from
-one-row CSVs ("facts", one per column). The render always reads facts from the
+facts CSVs (`field,value,type`, one row per fact). The render always reads facts from the
 **facts dir** (`output/facts/`, set by `facts_dir` in `paper.toml`). The two modes
 differ only in **how that dir gets populated**:
 
@@ -47,17 +47,20 @@ JSON, no private corpus, no network, no UTA.
 # from the repo root, with the venv set up; default target is the quick build
 snakemake -s paper/Snakefile --cores 1
 # equivalent by hand:
-cp paper/empirical_results/*.csv output/facts/ && \
+cp paper/empirical_results/*.csv paper/empirical_results/*.provenance.json output/facts/ && \
     .venv/bin/vibepaper build --config paper/paper.toml
 ```
 
 Use this for editing prose, checking layout, or any rebuild where the numbers
 haven't changed.
 
-The templates use vibepaper's word filters and `{% assert %}` tag, which need vibepaper
-0.9 or later (the `paper` extra pins it). A failed assert stops the
-build and prints the fact values. `vibepaper lint --config paper/paper.toml` lists
-wording beside a fact that nothing checks, and `vibepaper diff --config paper/paper.toml`
+The templates use vibepaper 0.11 (the `paper` extra pins it): word filters, the
+`{% assert %}` tag, `[claims]` tolerances in `paper.toml` (`x is essentially_flat(y)`),
+typed facts (`{{ x_pct | pct(1) }}`) and provenance sidecars. A failed assert stops the build, and the build reports every failed
+assert with its fact values. `vibepaper lint --config paper/paper.toml --numbers` lists
+wording beside a fact that nothing checks and numbers typed by hand,
+`vibepaper check --config paper/paper.toml` runs the asserts without a render (CI runs
+both), and `vibepaper diff --config paper/paper.toml`
 (after a build) names the facts that changed since the last build.
 
 ### PDF output
@@ -97,7 +100,7 @@ snakemake -s paper/Snakefile full --cores 1 \
              uta_uri=postgresql://uta:uta@localhost:5432/uta/uta_20241220
 ```
 
-Every fact lives as a one-row CSV in `paper/empirical_results/`. They split two ways:
+Every fact lives in a facts CSV in `paper/empirical_results/`. They split two ways:
 
 **Computed** — a rule in `paper/Snakefile` regenerates them. When the inputs that rule
 needs are absent, it copies the committed CSV instead, so a build always renders; a
@@ -130,11 +133,11 @@ The full-scale ClinVar throughput runs take ~1.5 h each.
   public data committed here.
 - **Private data (production validation, not reproducible):** the cleaning rescue rate
   (91.7% → 97.3%), the per-fix rescue distribution (Results Table 2), and the residual
-  error taxonomy come from the private `cdot_private` corpus and are written into
-  `results.md` as **literal frozen constants**, not regenerable facts. No corpus string
-  ever enters this repo. When the corpus is re-analysed (`cdot_private/analyze_cleaning.py`),
-  transcribe the new aggregate numbers into `results.md` by hand. These are flagged
-  `[private data]` in the text.
+  error taxonomy come from the private `cdot_private` corpus. They are frozen facts
+  (`cleaning_corpus.csv`) and table CSVs (`cleaning_fix_categories.csv`,
+  `residual_taxonomy.csv`), not regenerable here. No corpus string ever enters this repo.
+  When the corpus is re-analysed (`cdot_private/analyze_cleaning.py`), transcribe the new
+  aggregate numbers into those CSVs by hand. These are flagged `[private data]` in the text.
 
 To refresh the committed snapshot without a full data run (e.g. after editing one
 analysis script), regenerate that one CSV into `output/facts/` and copy it into

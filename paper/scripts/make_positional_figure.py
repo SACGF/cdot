@@ -21,8 +21,8 @@ Usage:
         [--out paper/figures/figure_s1_positional_drift.svg]
 """
 import argparse
-import csv
 from pathlib import Path
+from facts_io import read_facts  # noqa: E402
 
 # Chart tokens (reference dataviz palette, light mode, print surface)
 INK = "#0b0b0b"
@@ -45,8 +45,7 @@ HEIGHT = MARGIN_T + PLOT_H + 58
 
 
 def read_curves(path):
-    with open(path, newline="") as fh:
-        row = next(csv.DictReader(fh))
+    row = read_facts(path)
     curves = {}
     for label in SERIES:
         for cond in ("partial", "all"):

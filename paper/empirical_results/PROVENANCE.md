@@ -1,8 +1,10 @@
 # Stored results: provenance
 
 This directory is the checked-in snapshot of measured results for the paper. Each
-CSV is a one-row "facts" file (one column per fact) that the render reads via
-`output/facts/` (see `paper/README.md` for the two build modes).
+facts CSV is vertical (`field,value,type`, one row per fact) and is read by the render via
+`output/facts/` (see `paper/README.md` for the two build modes). The `type` column
+(`percent`, `count`, ...) comes from the field name (`paper/scripts/facts_io.py`); when
+editing a frozen file by hand, add a new fact with the type its name implies.
 
 Two kinds of file live here:
 
@@ -17,7 +19,10 @@ Two kinds of file live here:
 
 Refreshing a frozen result means re-running the command recorded below by hand and
 editing the CSV here, then updating the note in this file (date, data version, what
-changed).
+changed). A CSV whose tool versions the paper cites also has a `<name>.provenance.json`
+sidecar (cdot, data release, ClinVar and UTA versions, and the run date), which the
+templates read as `{{ <name>._prov.tools.cdot }}`; update it with
+`vibepaper.provenance.write_provenance()` when the CSV is re-measured.
 
 ---
 
@@ -146,7 +151,7 @@ whose genome-built sequence `FastaSeqFetcher` assembled wrongly in 0.2.35 (fixed
 same release). 10 further pairs, all on minus-strand gapped transcripts, change between
 non-correct buckets or leave `correct` (1).
 
-The one-row CSV is aggregated from the two pass tables, joined row by row on the pairs
+The facts CSV is aggregated from the two pass tables, joined row by row on the pairs
 file. A pair counts for cdot when its `fixed_bucket` (after `fix_hgvs`) is `correct` and
 for UTA when its `bucket` is `correct`; `rescued_by_fix` is cdot `bucket != correct`
 with `fixed_bucket == correct`, `regressions` the reverse. Eras use the earliest SCV
@@ -246,7 +251,11 @@ collection regex and is a data-collection artifact, not something cleaning could
 (issue #112 feedback). Removing it from the denominator: as-submitted parseable
 `as_submitted_pct` 91.7%, after-cleaning `after_pct` 97.3% (`gain_pct` +5.6%, `rescued`
 1,828 = `rescued_share_pct` ~67% of the `failed_pp` 8.3 points that failed
-as-submitted), residual `residual_n` 887 (`residual_pct` 2.7%); `nonhgvs_n` 81.
+as-submitted, `regressions` 0 parseable rows made unparseable), residual `residual_n` 887 (`residual_pct` 2.7%); `nonhgvs_n` 81.
+The three `residual_*_pct` shares are of the 887 residual queries, summed from the Table S6
+classes (`residual_taxonomy.csv`): incomplete = Truncated + No reference (561), fixable =
+Edit syntax + Bad accession + Trailing / concatenated + Insertion (length only) (245),
+grammar gap = Grammar gap (81).
 
 Measured 2026-11-04 with PyPI cdot 0.2.36 (`combined_search_hgvs.csv`, 32,752 rows):
 `clean_hgvs()` takes 29,956 parseable rows to 31,784 (1,828 rescued, 0 regressed, 968
@@ -374,7 +383,7 @@ full run).
 
 Per-source resolution outcome breakdown of the full-ClinVar pass (Supplementary S4),
 produced by `paper/scripts/summarize_clinvar_pass.py` from the same per-variant table.
-Multi-row (one row per transcript source plus a total), unlike the one-row facts files.
+A table (one row per transcript source plus a total), not a facts file.
 Not rendered by any template; it supports the Table S4 caveat that the Ensembl share of
 `variant_summary` is zero. Regenerated 2026-11-05 from the 2026-11-05 pass table (cdot
 0.2.37 from PyPI, data_v0.2.36, ClinVar 2026-10); its totals equal `clinvar_vcf.csv`.
@@ -439,13 +448,13 @@ with fd caching), run alone on the machine with `UTA_DB_URL` unset, since
 median (q1, q3) HGVS/s over 5 passes of the committed 500-pair set (remote UTA: first
 25 pairs). See R3 / Table 1. The remote UTA row does not depend on the cdot client and
 is kept from the 2026-11-03 run (`--skip-uta-remote` on 2026-11-04 and 2026-11-05;
-the script writes the other columns and the remote ones are merged back from the
+the script writes the other facts and the remote ones are merged back from the
 committed file). Against the 0.2.36 snapshot every row moves by 3% or less (local JSON
 744 -> 741, REST 111 -> 108, prefetched REST 733 -> 746, local UTA 186 -> 187), within
 run-to-run variation; one local UTA repeat dropped to 107 HGVS/s, which the median
 absorbs.
 
-The derived columns `cdot_local_vs_uta_local_ratio`, `cdot_rest_vs_uta_remote_ratio` and
+The derived facts `cdot_local_vs_uta_local_ratio`, `cdot_rest_vs_uta_remote_ratio` and
 `rest_prefetch_vs_local_diff_pct` feed the R3 and abstract wording ("about four times",
 "nearly three orders of magnitude", "within 2%"). A full run computes them from the
 unrounded medians; the committed values were computed from the rounded medians above with

@@ -1,2 +1,8 @@
-n_residual,version_refused,unknown_accession,coordinate_drift,position_out_of_bounds,reference_mismatch,grammar_unsupported
-23687,17667,199,546,3273,762,1236
+field,value,type
+n_residual,23687,count
+version_refused,17667,
+unknown_accession,199,
+coordinate_drift,546,
+position_out_of_bounds,3273,
+reference_mismatch,762,
+grammar_unsupported,1236,

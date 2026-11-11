@@ -18,3 +18,38 @@ facts_dir    = "../output/facts"
 output_dir   = "../output"
 bibliography = "references.bib"
 csl          = "bioinformatics.csl"
+
+# Tolerances for judgement words, used in asserts as `x is nearly_uniform(y)`.
+[claims]
+# 'nearly uniform across deciles': every decile's share within 1 point of the uniform
+# 10%, so no decile is more than ~10% over- or under-represented.
+nearly_uniform = { within = 1 }
+# 'essentially flat' (Figure S1B): the 5'-most and 3'-most deciles within 1 point of
+# each other, under a tenth of the 5'-to-3' fall the partial-drift curve shows.
+essentially_flat = { within = 1 }
+
+[lint]
+# Facts kept on purpose that `vibepaper lint --unused` should not list.
+unused_ok = [
+    # per-decile and UTR breakdowns behind Figure S1 and Supplementary S4; the text
+    # cites a few of them
+    "positional_drift.*",
+    "clinvar_residual_positions.*",
+    # per-service and per-source breakdowns of the head-to-heads (Table S5 holds them)
+    "vv_mutalyzer_comparison.*",
+    "lovd_comparison.*",
+    # bucket and era counts behind the percentages the text cites
+    "clinvar_submitted.*",
+    "submitter_attribution.*",
+    "version_safety_validation.*",
+    "cleaning_corpus.*",
+    # the older g.HGVS-string mismatch analysis, kept as supporting work (PROVENANCE.md)
+    "genomic_mismatch.*",
+    # headline rates of the seeded 2,818-variant sample (PROVENANCE.md, clinvar.csv)
+    "clinvar.n_variants",
+    "clinvar.cdot_resolution_pct",
+    "clinvar.uta_resolution_pct",
+    "clinvar.refseq_pct",
+    "clinvar.ensembl_pct",
+    "version_stability.build",
+]

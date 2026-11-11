@@ -49,6 +49,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from benchmark_resolution import build_provider, classify, classify_vcf  # noqa: E402
 from cdot.hgvs.gene_hgvs import _cited_position  # noqa: E402
 from cdot.hgvs.version_safety import is_version_substitution_safe_by_accession  # noqa: E402
+from facts_io import write_typed_facts  # noqa: E402
 
 
 def under_version(c_hgvs, tx, w):
@@ -139,16 +140,16 @@ def main():
                     print(f"  CHANGE {tx} .{v}->.{w}: V={v_coord}  W={w_coord}")
 
     facts = {
-        "n_variants_with_alt_version": [agg["variants_with_alt"]],
-        "n_safe_substitutions":        [agg["safe_subs"]],
-        "n_unsafe_substitutions":      [agg["unsafe_subs"]],
-        "n_resolved_under_w":          [agg["resolved_under_w"]],
-        "n_coordinate_changes":        [agg["coordinate_changes"]],
-        "n_unresolved_under_w":        [agg["unresolved_under_w"]],
+        "n_variants_with_alt_version": agg["variants_with_alt"],
+        "n_safe_substitutions":        agg["safe_subs"],
+        "n_unsafe_substitutions":      agg["unsafe_subs"],
+        "n_resolved_under_w":          agg["resolved_under_w"],
+        "n_coordinate_changes":        agg["coordinate_changes"],
+        "n_unresolved_under_w":        agg["unresolved_under_w"],
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(facts).to_csv(out, index=False)
+    write_typed_facts(out, facts)
 
     print(f"  provider              : {label}")
     print(f"  variants w/ alt version: {agg['variants_with_alt']}")

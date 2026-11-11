@@ -1,2 +1,7 @@
-refseq_grch37_releases,refseq_grch38_releases,refseq_t2t_releases,ensembl_grch37_releases,ensembl_grch38_releases,ensembl_t2t_releases
-9,22,5,3,36,2
+field,value,type
+refseq_grch37_releases,9,
+refseq_grch38_releases,22,
+refseq_t2t_releases,5,
+ensembl_grch37_releases,3,
+ensembl_grch38_releases,36,
+ensembl_t2t_releases,2,

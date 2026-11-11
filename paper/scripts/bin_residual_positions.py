@@ -15,7 +15,7 @@ CDS position (intronic offsets anchor to their exon boundary; ranges to their
 5'-most end) and binned into deciles (1 = 5'-most tenth, 10 = 3'-most); 5'UTR
 (c.-N) and 3'UTR (c.*N) citations are counted separately, as are n. transcripts.
 
-Writes a single-row facts CSV: per-decile *shares* (percent of that bucket's
+Writes a facts CSV: per-decile *shares* (percent of that bucket's
 binned coding rows) for the incorrect and correct buckets, plus the UTR /
 non-coding / unbinnable counts. The committed snapshot lives at
 paper/empirical_results/clinvar_residual_positions.csv (no Snakefile rule, like
@@ -37,6 +37,7 @@ import json
 import re
 from collections import Counter
 from pathlib import Path
+from facts_io import write_typed_facts  # noqa: E402
 
 N_BINS = 10
 
@@ -109,10 +110,7 @@ def main():
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    with open(out, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(facts))
-        w.writeheader()
-        w.writerow(facts)
+    write_typed_facts(out, facts)
     print(f"Written: {out}")
     for k, v in facts.items():
         print(f"  {k}: {v}")
