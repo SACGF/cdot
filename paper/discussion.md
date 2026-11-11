@@ -25,7 +25,7 @@ parsing, returns every change as an auditable `HGVSFix`, and never breaks a desc
 that already parsed. cdot is complementary to these services, supplying the
 transcript-coordinate layer, not validation.
 
-The LOVD checker is the closest comparator (offline, no reference sequence), so we ran
+The LOVD checker is the closest comparator (offline, no reference sequence), so we ran {# lint-ok: 'no reference sequence' describes the checker #}
 it head-to-head with `clean_hgvs()` on the injection corpus
 ({{ lovd_comparison.n_cases | commas }} corrupted strings, checker
 {{ lovd_comparison.lovd_version }}; scoring in Methods, per-category breakdown in
@@ -40,7 +40,7 @@ common single-token errors but not on free-text damage or cross-accession-family
 {% assert lovd_comparison.cdot_false_corrections == 0 and lovd_comparison.lovd_false_corrections == 0, "'neither tool altered any valid input'" %}
 repairs; neither tool altered any valid input.
 
-The same corpus puts the sequence-aware services in context. Run over their public REST
+The same corpus puts the sequence-aware services in context. Run over their public REST {# lint-ok: 'over' is a preposition #}
 APIs ({{ vv_mutalyzer_comparison.service_date }}; Methods), VariantValidator's validated
 description recovered {{ vv_mutalyzer_comparison.vv_weighted_pct | dp(0) }}% of cases
 weighted by the production error mix, and Mutalyzer

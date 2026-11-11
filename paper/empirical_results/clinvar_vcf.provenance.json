@@ -1,0 +1,9 @@
+{
+  "command": "paper/scripts/resolve_clinvar_pass.py clinvar_pairs.GRCh38.tsv --json cdot-0.2.36.refseq.GRCh38.json.gz --fasta GRCh38.fna.gz (see PROVENANCE.md)",
+  "date": "2026-11-05",
+  "tools": {
+    "cdot": "0.2.37",
+    "cdot_data": "0.2.36",
+    "clinvar": "2026-10"
+  }
+}

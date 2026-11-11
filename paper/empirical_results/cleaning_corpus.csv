@@ -1,2 +1,2 @@
-corpus_n,as_submitted_pct,after_pct,gain_pct,rescued,failed_pp,rescued_share_pct,residual_n,residual_pct,nonhgvs_n
-32671,91.7,97.3,5.6,1828,8.3,67,887,2.7,81
+corpus_n,as_submitted_pct,after_pct,gain_pct,rescued,failed_pp,rescued_share_pct,residual_n,residual_pct,nonhgvs_n,residual_incomplete_pct,residual_fixable_pct,residual_grammar_gap_pct
+32671,91.7,97.3,5.6,1828,8.3,67,887,2.7,81,63.2,27.6,9.1

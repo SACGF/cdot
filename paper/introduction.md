@@ -26,7 +26,7 @@ PostgreSQL wire protocol, which many hospital and corporate networks block and w
 slow over the network (about one transcript per second at best;
 {{ benchmark.uta_remote_tps | dp(2) }} HGVS/s in our measurement, Table 1). UTA is also
 limited in coverage (~{{ literature.uta_count | commas }} versioned alignments in the
-2021 release described by Hart and Prlić [@Hart2020], RefSeq only):
+2021 release described by Hart and Prlić [@Hart2020], RefSeq only): {# lint-ok: 'RefSeq only', 'absent entirely' describe UTA's contents; R2 asserts clinvar.uta_ensembl_pct == 0 #}
 it retains only a limited set of historical transcript versions, and Ensembl
 transcripts, widely used in research genomics and the predominant annotation source in
 Europe, are absent entirely.

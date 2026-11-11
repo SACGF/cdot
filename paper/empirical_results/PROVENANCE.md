@@ -17,7 +17,10 @@ Two kinds of file live here:
 
 Refreshing a frozen result means re-running the command recorded below by hand and
 editing the CSV here, then updating the note in this file (date, data version, what
-changed).
+changed). A CSV whose tool versions the paper cites also has a `<name>.provenance.json`
+sidecar (cdot, data release, ClinVar and UTA versions, and the run date), which the
+templates read as `{{ <name>._prov.tools.cdot }}`; update it with
+`vibepaper.provenance.write_provenance()` when the CSV is re-measured.
 
 ---
 
@@ -247,6 +250,10 @@ collection regex and is a data-collection artifact, not something cleaning could
 `as_submitted_pct` 91.7%, after-cleaning `after_pct` 97.3% (`gain_pct` +5.6%, `rescued`
 1,828 = `rescued_share_pct` ~67% of the `failed_pp` 8.3 points that failed
 as-submitted), residual `residual_n` 887 (`residual_pct` 2.7%); `nonhgvs_n` 81.
+The three `residual_*_pct` shares are of the 887 residual queries, summed from the Table S6
+classes (`residual_taxonomy.csv`): incomplete = Truncated + No reference (561), fixable =
+Edit syntax + Bad accession + Trailing / concatenated + Insertion (length only) (245),
+grammar gap = Grammar gap (81).
 
 Measured 2026-11-04 with PyPI cdot 0.2.36 (`combined_search_hgvs.csv`, 32,752 rows):
 `clean_hgvs()` takes 29,956 parseable rows to 31,784 (1,828 rescued, 0 regressed, 968

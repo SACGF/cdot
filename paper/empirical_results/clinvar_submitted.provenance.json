@@ -1,0 +1,10 @@
+{
+  "command": "paper/scripts/resolve_clinvar_pass.py over the ClinVarVCVRelease_2026-10 submitted pairs, cdot and UTA passes (see PROVENANCE.md)",
+  "date": "2026-11-05",
+  "tools": {
+    "cdot": "0.2.37",
+    "cdot_data": "0.2.36",
+    "clinvar": "2026-10",
+    "uta": "uta_20241220"
+  }
+}

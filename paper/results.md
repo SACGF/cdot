@@ -7,6 +7,7 @@ version aligned to a particular genome build, counted separately per build. cdot
 {{ coverage.total_count | commas }} such alignments across all builds and sources,
 compared with ~{{ literature.uta_count | commas }} in UTA's 2021 release [@Hart2020],
 {{ coverage.improvement_fold | fold(1) | article }} increase. The gain has two sources:
+{% assert clinvar.uta_ensembl_pct == 0 and coverage.ensembl_unique_count > 0, "'Ensembl itself, absent from UTA entirely'" %}
 historical depth (cdot ingests the complete run of archived RefSeq and Ensembl releases,
 so an NM_ version cited in an older report or ClinVar submission still resolves after
 NCBI has retired it from the current annotation) and Ensembl itself, absent from UTA
@@ -22,7 +23,7 @@ misplace variants downstream of an indel in a gapped RefSeq alignment.
 
 ## R2: ClinVar and clinical resolution accuracy
 
-Resolution rate is compared against a locally loaded UTA (release `uta_20241220`),
+Resolution rate is compared against a locally loaded UTA (release `{{ clinvar_submitted._prov.tools.uta }}`),
 first on current-version descriptions and then on the historical submitted-string
 corpus that is the real test of transcript depth.
 
@@ -30,7 +31,7 @@ For the current-version check, the committed ClinVar [@Landrum2025] pair sets
 ({{ clinvar.n_refseq | commas }} RefSeq NM_ and {{ clinvar.n_ensembl | commas }} Ensembl
 ENST preferred-transcript descriptions) were resolved through cdot, with transcript
 sequence spliced from a local genome FASTA so that no Ensembl pair is dropped for a
-sequence SeqRepo lacks. UTA's rate is membership of the exact cited accession.version
+sequence SeqRepo lacks. UTA's rate is membership of the exact cited accession.version {# lint-ok: 'no Ensembl pair is dropped' states why FastaSeqFetcher is used #}
 in its GRCh38 alignment set, which is what resolution through UTA requires; the live
 {% assert clinvar.cdot_refseq_pct == clinvar.uta_refseq_pct, "'On RefSeq the two backends are at parity'" %}
 database gives the same rates. On RefSeq the two backends are at parity (cdot
@@ -43,7 +44,7 @@ Ensembl-enriched, their aggregate rate is not a like-for-like accuracy score and
 not report one.
 
 At full scale, resolving every c.HGVS in ClinVar's variant_summary through cdot alone
-({{ clinvar_vcf.n_pairs | commas }} (g., c.) pairs, effectively all RefSeq) reaches
+({{ clinvar_vcf.n_pairs | commas }} (g., c.) pairs, effectively all RefSeq) reaches {# lint-ok: 'every c.HGVS' describes the corpus; clinvar_source_breakdown.csv has no Ensembl rows #}
 {{ clinvar_vcf.resolved_pct | dp(1) }}% resolution, and
 {{ clinvar_vcf.matched_of_resolved_pct | dp(2) }}% of resolved variants reproduce
 {% assert clinvar_vcf_residual.indel_mismatch * 2 > clinvar_vcf_residual.n_incorrect and clinvar_vcf_residual.snv_diff_pos > clinvar_vcf_residual.unaligned_between_exons, "'dominated by indel-representation differences and by paralog and copy-number transcripts ..., plus N transcripts with bases that align to neither'" %}
@@ -71,6 +72,7 @@ Methods). This corpus reflects the natural submission mix, which is essentially 
 RefSeq (not one submitted string cites an Ensembl transcript; Ensembl accessions enter
 ClinVar through its recomputed names, not submitter descriptions). Its version profile
 confirms that submitted traffic is historical:
+{% assert clinvar_submitted.version_not_current_pct > 50 and clinvar_submitted.absent_cdot_pct < 1, "'submitted traffic is historical' (most cite a superseded version); 'only X% of cited versions are absent'" %}
 {{ clinvar_submitted.version_not_current_pct | dp(1) }}% of submitted strings cite a
 transcript version that is no longer the version in the current RefSeq annotation
 release ({{ clinvar_submitted.scv_weighted_not_current_pct | dp(1) }}% weighted by
@@ -94,6 +96,7 @@ version substitution (R5), not by deeper ingest.
 
 cdot resolved the full set of {{ clinvar_submitted.full_n | commas }} submitted pairs,
 reproducing ClinVar's VCF coordinate for
+{% assert clinvar_submitted.cdot_resolved_pct > clinvar_submitted.uta_resolved_pct, "cdot X% 'versus' UTA Y% on the submitted pairs" %}
 {{ clinvar_submitted.cdot_resolved_pct | dp(1) }}%, versus
 {% assert clinvar.cdot_refseq_pct == clinvar.uta_refseq_pct, "'The RefSeq gap invisible at the current-version ceiling (both backends ...)'" %}
 {{ clinvar_submitted.uta_resolved_pct | dp(1) }}% for the same locally loaded UTA. The
@@ -238,8 +241,10 @@ data-collection artifact and is excluded from the corpus above. The remaining
 queries) of genuine HGVS-shaped input that still fails to parse after cleaning defines
 the ceiling of pure string repair. Classified under a fixed decision-tree taxonomy
 (Supplementary Table S6), well over half is incomplete or reference-less input that no
+{% assert cleaning_corpus.residual_incomplete_pct > 55 and 20 < cleaning_corpus.residual_fixable_pct < 30 and (cleaning_corpus.residual_incomplete_pct + cleaning_corpus.residual_fixable_pct + cleaning_corpus.residual_grammar_gap_pct - 100) | abs < 0.5, "Table S6 residual: 'well over half' incomplete, 'about a quarter' fixable, 'the remaining' grammar gap" %}
 string-level repair can invent, about a quarter is in principle fixable and marks the
-frontier for future cleaning rules, and the remaining ~9% is valid HGVS the biocommons
+frontier for future cleaning rules, and the remaining
+~{{ cleaning_corpus.residual_grammar_gap_pct | dp(0) }}% is valid HGVS the biocommons
 grammar rejects.
 
 ## R5: Transcript version substitution and coordinate safety
@@ -250,7 +255,7 @@ any data provider.
 Caution is warranted because substituting one version for another can change the
 coordinate a variant projects to. Across consecutive RefSeq version pairs
 ({{ version_stability.refseq_pairs | commas }} pairs),
-{{ version_stability.refseq_preserving_pct | dp(1) }}% preserved every coding
+{{ version_stability.refseq_preserving_pct | dp(1) }}% preserved every coding {# lint-ok: 'preserved every coding coordinate' defines the preserving category #}
 coordinate; for Ensembl ({{ version_stability.ensembl_pairs | commas }} pairs)
 {{ version_stability.ensembl_preserving_pct | dp(1) }}%. Weighted by coding base (the
 chance a *random* variant is unaffected), safety is
@@ -272,11 +277,12 @@ alignment change and moves what lies downstream, so preservation falls from
 3'-most for RefSeq ({{ positional_drift.ensembl_partial_decile1_pct | dp(0) }}% to
 {{ positional_drift.ensembl_partial_decile10_pct | dp(0) }}% for Ensembl; Supplementary
 Figure S1). Drift is also concentrated: only
+{% assert version_stability.refseq_accessions_drift_pct < 10, "'only X% of RefSeq accessions ever drift ... a short, identifiable list'" %}
 {{ version_stability.refseq_accessions_drift_pct | dp(1) }}% of RefSeq accessions ever
 drift, so the risky transcripts form a short, identifiable list that can be flagged or
 blocklisted.
 
-The intrinsic-structure check (Methods) works even when the requested version was never
+The intrinsic-structure check (Methods) works even when the requested version was never {# lint-ok: 'never aligned' describes the case the check handles #}
 aligned to the target build, because the structure is build-independent, identical
 across GRCh37/GRCh38/T2T for
 {{ version_stability.refseq_struct_portable_pct | dp(1) }}% of RefSeq and

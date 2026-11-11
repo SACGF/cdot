@@ -130,8 +130,8 @@ A summary of the fields biocommons/hgvs resolution consumes; the full JSON Schem
 
 ### Table S4: ClinVar benchmark details
 
-Full-scale resolution of every c.HGVS in ClinVar's variant_summary through cdot alone
-(GRCh38, cdot 0.2.37 with data release 0.2.36; ClinVar 2026-10), scored as a VCF
+Full-scale resolution of every c.HGVS in ClinVar's variant_summary through cdot alone {# lint-ok: 'every c.HGVS' describes the corpus #}
+(GRCh38, cdot {{ clinvar_vcf._prov.tools.cdot }} with data release {{ clinvar_vcf._prov.tools.cdot_data }}; ClinVar {{ clinvar_vcf._prov.tools.clinvar }}), scored as a VCF
 coordinate (CHROM/POS/REF/ALT) against ClinVar's own VCF, not as a g.HGVS string, so
 equivalent representations and ClinVar's tandem-repeat / identity notations are not
 miscounted.
@@ -176,7 +176,7 @@ transcripts with unaligned bases, an intronic offset anchored on one of those ba
 unresolved, because biocommons/hgvs drops the offset when its anchor base has no
 genomic position.
 
-{% assert ([clinvar_residual_positions.correct_decile1_pct, clinvar_residual_positions.correct_decile2_pct, clinvar_residual_positions.correct_decile3_pct, clinvar_residual_positions.correct_decile4_pct, clinvar_residual_positions.correct_decile5_pct, clinvar_residual_positions.correct_decile6_pct, clinvar_residual_positions.correct_decile7_pct, clinvar_residual_positions.correct_decile8_pct, clinvar_residual_positions.correct_decile9_pct, clinvar_residual_positions.correct_decile10_pct] | max) < 11 and ([clinvar_residual_positions.correct_decile1_pct, clinvar_residual_positions.correct_decile2_pct, clinvar_residual_positions.correct_decile3_pct, clinvar_residual_positions.correct_decile4_pct, clinvar_residual_positions.correct_decile5_pct, clinvar_residual_positions.correct_decile6_pct, clinvar_residual_positions.correct_decile7_pct, clinvar_residual_positions.correct_decile8_pct, clinvar_residual_positions.correct_decile9_pct, clinvar_residual_positions.correct_decile10_pct] | min) > 9, "'correct projections are nearly uniform across deciles'" %}
+{% assert ([clinvar_residual_positions.correct_decile1_pct, clinvar_residual_positions.correct_decile2_pct, clinvar_residual_positions.correct_decile3_pct, clinvar_residual_positions.correct_decile4_pct, clinvar_residual_positions.correct_decile5_pct, clinvar_residual_positions.correct_decile6_pct, clinvar_residual_positions.correct_decile7_pct, clinvar_residual_positions.correct_decile8_pct, clinvar_residual_positions.correct_decile9_pct, clinvar_residual_positions.correct_decile10_pct] | max) is nearly_uniform(10) and ([clinvar_residual_positions.correct_decile1_pct, clinvar_residual_positions.correct_decile2_pct, clinvar_residual_positions.correct_decile3_pct, clinvar_residual_positions.correct_decile4_pct, clinvar_residual_positions.correct_decile5_pct, clinvar_residual_positions.correct_decile6_pct, clinvar_residual_positions.correct_decile7_pct, clinvar_residual_positions.correct_decile8_pct, clinvar_residual_positions.correct_decile9_pct, clinvar_residual_positions.correct_decile10_pct] | min) is nearly_uniform(10), "'correct projections are nearly uniform across deciles' (each decile near 10%)" %}
 Binning these coordinate differences by relative CDS position (the decile scheme of
 Figure S1, cited position over CDS length) shows no 3'-end concentration: correct projections
 are nearly uniform across deciles
@@ -195,7 +195,7 @@ Reproducible injection benchmark (`paper/scripts/inject_and_clean.py`): each
 clean, parseable public ClinVar c.HGVS strings (committed to the repository, seed 112,
 at most 200 cases per category), and recovery is an exact string match to the known
 canonical target. The LOVD columns come from `paper/scripts/lovd_head_to_head.py`
-(LOVD HGVS syntax checker v1.2.2, local PHP CLI; "top-1" scores the checker's
+(LOVD HGVS syntax checker {{ lovd_comparison.lovd_version }}, local PHP CLI; "top-1" scores the checker's
 highest-confidence suggested correction) and the VariantValidator (VV) and Mutalyzer
 columns from `paper/scripts/vv_mutalyzer_head_to_head.py` (public REST APIs,
 {{ vv_mutalyzer_comparison.service_date }}), all under the scoring rule in Methods.
@@ -287,7 +287,7 @@ from {{ positional_drift.refseq_partial_decile1_pct | dp(1) }}% to
 and {{ positional_drift.ensembl_partial_decile1_pct | dp(1) }}% to
 {{ positional_drift.ensembl_partial_decile10_pct | dp(1) }}% for Ensembl, because a
 partial drift keeps a 5' prefix intact up to its first alignment change and shifts the
-{% assert positional_drift.refseq_all_decile1_pct - positional_drift.refseq_all_decile10_pct < 1 and positional_drift.ensembl_all_decile1_pct - positional_drift.ensembl_all_decile10_pct < 1 and version_stability.refseq_full_drift_pct > version_stability.refseq_partial_drift_pct and version_stability.ensembl_full_drift_pct > version_stability.ensembl_partial_drift_pct, "Figure S1B: 'essentially flat' and 'most drift is a whole-CDS relocation'" %}
+{% assert positional_drift.refseq_all_decile1_pct is essentially_flat(positional_drift.refseq_all_decile10_pct) and positional_drift.ensembl_all_decile1_pct is essentially_flat(positional_drift.ensembl_all_decile10_pct) and version_stability.refseq_full_drift_pct > version_stability.refseq_partial_drift_pct and version_stability.ensembl_full_drift_pct > version_stability.ensembl_partial_drift_pct, "Figure S1B: 'essentially flat' and 'most drift is a whole-CDS relocation'" %}
 bases downstream of it. **(B)** Unconditioned over every compared bump the curve is
 essentially flat (RefSeq {{ positional_drift.refseq_all_decile1_pct | dp(1) }}% to
 {{ positional_drift.refseq_all_decile10_pct | dp(1) }}%; Ensembl

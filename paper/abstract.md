@@ -20,8 +20,9 @@ Ensembl.
 cdot provides {{ coverage.total_count | commas }} versioned transcript/genome
 alignments from RefSeq and Ensembl across GRCh37, GRCh38, and, for the first time for
 the Python HGVS libraries, T2T-CHM13v2.0, as a single gzipped JSON file or a REST API
-(cdotlib.org), with no database required. On ClinVar's submitted variant descriptions,
+(cdotlib.org), with no database required. On ClinVar's submitted variant descriptions, {# lint-ok: 'no database required' describes the distribution format #}
 {{ clinvar_submitted.version_not_current_pct | dp(1) }}% of which cite a transcript
+{% assert clinvar_submitted.cdot_resolved_pct > clinvar_submitted.uta_resolved_pct, "abstract: cdot X% 'versus' UTA Y% on submitted descriptions" %}
 version that is no longer current, cdot reproduced ClinVar's genomic coordinate for
 {{ clinvar_submitted.cdot_resolved_pct | dp(1) }}% versus
 {{ clinvar_submitted.uta_resolved_pct | dp(1) }}% for UTA. Loaded in memory, cdot

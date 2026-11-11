@@ -94,6 +94,10 @@ FROZEN_FACTS = ["literature.csv",
 
 FACT_FILES = COMPUTED_FACTS + FROZEN_FACTS
 
+# Provenance sidecars (<fact>.provenance.json: tool versions and date behind a fact
+# CSV, read in templates as {{ <fact>._prov.tools.cdot }}). Copied next to their CSV.
+PROV_FILES = sorted(str(p) for p in Path(EMPIRICAL).glob("*.provenance.json"))
+
 PAPER_SOURCES = [
     "paper/abstract.md",
     "paper/introduction.md",
@@ -125,11 +129,11 @@ rule quick:
     private corpus, no network. Seconds. This is the default."""
     input:
         sources  = PAPER_SOURCES,
-        stored   = [f"{EMPIRICAL}/{f}" for f in FACT_FILES],
+        stored   = [f"{EMPIRICAL}/{f}" for f in FACT_FILES] + PROV_FILES,
     output:
         touch("output/.paper_built_quick"),
     shell:
-        "mkdir -p {GEN_FACTS} && cp {EMPIRICAL}/*.csv {GEN_FACTS}/ && {VIBE} {PDF_FLAG}"
+        "mkdir -p {GEN_FACTS} && cp {EMPIRICAL}/*.csv {EMPIRICAL}/*.provenance.json {GEN_FACTS}/ && {VIBE} {PDF_FLAG}"
 
 
 rule pdf:
@@ -141,11 +145,11 @@ rule pdf:
     For a full-build PDF instead, run: snakemake -s paper/Snakefile full --config pdf=true ..."""
     input:
         sources = PAPER_SOURCES,
-        stored  = [f"{EMPIRICAL}/{f}" for f in FACT_FILES],
+        stored  = [f"{EMPIRICAL}/{f}" for f in FACT_FILES] + PROV_FILES,
     output:
         touch("output/.paper_built_pdf"),
     shell:
-        "mkdir -p {GEN_FACTS} && cp {EMPIRICAL}/*.csv {GEN_FACTS}/ && {VIBE} --pdf"
+        "mkdir -p {GEN_FACTS} && cp {EMPIRICAL}/*.csv {EMPIRICAL}/*.provenance.json {GEN_FACTS}/ && {VIBE} --pdf"
 
 
 rule full:
@@ -189,6 +193,9 @@ rule frozen_fact:
         import os, shutil
         os.makedirs(GEN_FACTS, exist_ok=True)
         shutil.copy(input[0], output[0])
+        prov = Path(input[0]).with_suffix(".provenance.json")
+        if prov.exists():
+            shutil.copy(prov, GEN_FACTS)
         print(f"Written: {output[0]} (frozen, copied from {input[0]})")
 
 
