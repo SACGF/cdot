@@ -50,6 +50,7 @@ from hgvs.exceptions import HGVSError
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from benchmark_resolution import build_provider  # noqa: E402
+from facts_io import write_typed_facts  # noqa: E402
 
 CATEGORIES = ["normalization_equivalent", "ref_base", "build",
               "gap_related", "genuine_disagreement", "unparseable"]
@@ -164,15 +165,15 @@ def main():
     genuine_error_pct = round(100 * genuine / total_resolved, 3) if total_resolved else 0.0
 
     facts = {
-        "n_resolved":          [total_resolved],
-        "n_incorrect":         [n_incorrect],
-        "raw_error_pct":       [raw_error_pct],
-        "genuine_error_pct":   [genuine_error_pct],
-        **{f"n_{c}": [counts[c]] for c in CATEGORIES},
+        "n_resolved":          total_resolved,
+        "n_incorrect":         n_incorrect,
+        "raw_error_pct":       raw_error_pct,
+        "genuine_error_pct":   genuine_error_pct,
+        **{f"n_{c}": counts[c] for c in CATEGORIES},
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(facts).to_csv(out, index=False)
+    write_typed_facts(out, facts)
 
     print(f"  provider          : {label}")
     for c in CATEGORIES:

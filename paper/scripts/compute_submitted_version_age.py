@@ -53,6 +53,7 @@ from pathlib import Path
 _KEY_URL = re.compile(
     r'"((?:NM|NR|XM|XR)_\d+\.\d+)": \{"biotype"|"url": "([^"]+)"'
 )
+from facts_io import write_typed_facts  # noqa: E402
 _RS_TAG = re.compile(r"RS_\d{4}_\d{2}")
 _CORPUS_TX = re.compile(r"^((?:NM|NR|XM|XR)_\d+)(?:\.(\d+))?:")
 
@@ -190,10 +191,7 @@ def main():
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    with open(out, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(row), lineterminator="\n")
-        w.writeheader()
-        w.writerow(row)
+    write_typed_facts(out, row)
     for k, v in row.items():
         print(f"  {k:<32} {v}")
     print(f"Written: {out}")

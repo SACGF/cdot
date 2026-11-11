@@ -27,7 +27,7 @@ Usage:
         [--uta-uri postgresql://postgres@127.0.0.1:5433/uta/uta_20241220] \
         [--skip-uta-remote]
 
-    # recompute only the derived columns of an existing benchmark.csv (no benchmarking)
+    # recompute only the derived facts of an existing benchmark.csv (no benchmarking)
     python paper/scripts/compute_benchmark.py --derive-only paper/empirical_results/benchmark.csv
 
 Requires: hgvs, cdot, a local SeqRepo (HGVS_SEQREPO_DIR).
@@ -46,7 +46,7 @@ from pathlib import Path
 # layer, dominates every row.
 os.environ.setdefault("SEQREPO_FD_CACHE_MAXSIZE", "128")
 
-import pandas as pd
+from facts_io import read_facts, write_typed_facts  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PAIRS = REPO_ROOT / "tests/test_data/clinvar_hgvs/clinvar_hgvs_500.tsv"
@@ -72,12 +72,11 @@ def derived(tps):
 
 
 def derive_only(csv_path):
-    """Rewrite csv_path with its derived columns recomputed from the (rounded) medians
+    """Rewrite csv_path with its derived facts recomputed from the (rounded) medians
     it holds. A full run derives them from the unrounded medians instead."""
-    df = pd.read_csv(csv_path)
-    facts = df.to_dict("records")[0]
-    facts.update(derived(facts))
-    pd.DataFrame([facts]).to_csv(csv_path, index=False)
+    facts = read_facts(csv_path)
+    facts.update(derived({k: float(v) for k, v in facts.items() if k.endswith("_tps")}))
+    write_typed_facts(csv_path, facts)
     print(f"Written: {csv_path}")
 
 
@@ -150,7 +149,7 @@ def main():
                         help="skip the (slow, ~25 min) public remote UTA rows")
     parser.add_argument("--skip-rest", action="store_true", help="skip the REST configurations")
     parser.add_argument("--derive-only", metavar="CSV",
-                        help="only recompute the derived columns of an existing benchmark.csv")
+                        help="only recompute the derived facts of an existing benchmark.csv")
     args = parser.parse_args()
     if args.derive_only:
         derive_only(args.derive_only)
@@ -250,7 +249,7 @@ def main():
     out = Path("output/facts/benchmark.csv")
     out.parent.mkdir(parents=True, exist_ok=True)
     facts.update(derived(medians))
-    pd.DataFrame([facts]).to_csv(out, index=False)
+    write_typed_facts(out, facts)
     print(f"Written: {out}")
 
 

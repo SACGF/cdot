@@ -1,2 +1,8 @@
-inject_overall_pct,inject_weighted_pct,inject_total_attempted,inject_total_recovered,inject_regressions,inject_n_categories,inject_sample_size
-100.0,100.0,3419,3419,0,18,998
+field,value,type
+inject_overall_pct,100.0,percent
+inject_weighted_pct,100.0,percent
+inject_total_attempted,3419,
+inject_total_recovered,3419,
+inject_regressions,0,
+inject_n_categories,18,
+inject_sample_size,998,

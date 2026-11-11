@@ -9,10 +9,10 @@ determines where its exons fall. ClinVar alone provides HGVS descriptions for
 >{{ literature.clinvar_variants | commas }} variants [@Landrum2025]. Human-entered
 strings are often broken: of the ~26 million unique descriptions submitted to Mutalyzer
 over five years of production logs, only
-~{{ literature.mutalyzer_correct_pct | dp(0) }}% were correct as written,
-~{{ literature.mutalyzer_error_pct | dp(0) }}% contained a syntactic or semantic error,
+~{{ literature.mutalyzer_correct_pct | pct(0) }} were correct as written,
+~{{ literature.mutalyzer_error_pct | pct(0) }} contained a syntactic or semantic error,
 and Mutalyzer could automatically correct only
-~{{ literature.mutalyzer_autocorrect_pct | dp(0) }}% [@Lefter2021]. {# lint-ok: Lefter 2021's figures, quoted #}
+~{{ literature.mutalyzer_autocorrect_pct | pct(0) }} [@Lefter2021]. {# lint-ok: Lefter 2021's figures, quoted #}
 
 The two dominant Python HGVS libraries are biocommons/hgvs [@Wang2018] and
 PyHGVS. biocommons/hgvs reads from a pluggable data provider behind a common interface,

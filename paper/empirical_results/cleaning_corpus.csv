@@ -1,2 +1,14 @@
-corpus_n,as_submitted_pct,after_pct,gain_pct,rescued,failed_pp,rescued_share_pct,residual_n,residual_pct,nonhgvs_n,residual_incomplete_pct,residual_fixable_pct,residual_grammar_gap_pct
-32671,91.7,97.3,5.6,1828,8.3,67,887,2.7,81,63.2,27.6,9.1
+field,value,type
+corpus_n,32671,count
+as_submitted_pct,91.7,percent
+after_pct,97.3,percent
+gain_pct,5.6,percent
+rescued,1828,
+failed_pp,8.3,
+rescued_share_pct,67.0,percent
+residual_n,887,count
+residual_pct,2.7,percent
+nonhgvs_n,81,count
+residual_incomplete_pct,63.2,percent
+residual_fixable_pct,27.6,percent
+residual_grammar_gap_pct,9.1,percent

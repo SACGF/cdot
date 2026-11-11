@@ -33,6 +33,7 @@ import csv
 import gzip
 import json
 from collections import Counter
+from facts_io import write_typed_facts  # noqa: E402
 
 CATEGORIES = ["unaligned_between_exons", "indel_mismatch", "snv_diff_pos", "long_cdot_allele",
               "identity_or_symbolic", "ambiguity_code_allele"]
@@ -121,10 +122,7 @@ def main():
     counts["snv_diff_pos_transcripts"] = len(snv_tx)
     counts["unaligned_between_exons_transcripts"] = len(gap_cited_tx)
     row = {c: counts[c] for c in COLUMNS}
-    with open(args.out, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(row), lineterminator="\n")
-        w.writeheader()
-        w.writerow(row)
+    write_typed_facts(args.out, row)
     print(row)
     if args.examples_out:
         examples.sort(key=lambda e: CATEGORIES.index(e["category"]))

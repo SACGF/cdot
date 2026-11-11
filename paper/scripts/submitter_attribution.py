@@ -38,6 +38,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from compute_submitted_version_age import scan_transcript_urls  # noqa: E402
+from facts_io import write_typed_facts  # noqa: E402
 
 _TX = re.compile(r"^((?:NM|NR|XM|XR)_\d+)\.(\d+):[cn]\.")
 
@@ -137,10 +138,7 @@ def main():
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    with open(out, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(row), lineterminator="\n")
-        w.writeheader()
-        w.writerow(row)
+    write_typed_facts(out, row)
     for k, v in row.items():
         print(f"  {k:<36} {v}")
     print(f"Written: {out}")

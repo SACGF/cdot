@@ -26,7 +26,7 @@ install the tooling with `pip install -e '.[paper]'` (adds `vibepaper`, `snakema
 and `weasyprint` for the optional PDF output).
 
 Numbers in the text are not hard-coded — they are `{{ fact }}` templates filled from
-one-row CSVs ("facts", one per column). The render always reads facts from the
+facts CSVs (`field,value,type`, one row per fact). The render always reads facts from the
 **facts dir** (`output/facts/`, set by `facts_dir` in `paper.toml`). The two modes
 differ only in **how that dir gets populated**:
 
@@ -55,8 +55,8 @@ Use this for editing prose, checking layout, or any rebuild where the numbers
 haven't changed.
 
 The templates use vibepaper 0.10 (the `paper` extra pins it): word filters, the
-`{% assert %}` tag, `[claims]` tolerances in `paper.toml` (`x is essentially_flat(y)`) and
-provenance sidecars. A failed assert stops the build, and the build reports every failed
+`{% assert %}` tag, `[claims]` tolerances in `paper.toml` (`x is essentially_flat(y)`),
+typed facts (`{{ x_pct | pct(1) }}`) and provenance sidecars. A failed assert stops the build, and the build reports every failed
 assert with its fact values. `vibepaper lint --config paper/paper.toml --numbers` lists
 wording beside a fact that nothing checks and numbers typed by hand,
 `vibepaper check --config paper/paper.toml` runs the asserts without a render (CI runs
@@ -100,7 +100,7 @@ snakemake -s paper/Snakefile full --cores 1 \
              uta_uri=postgresql://uta:uta@localhost:5432/uta/uta_20241220
 ```
 
-Every fact lives as a one-row CSV in `paper/empirical_results/`. They split two ways:
+Every fact lives in a facts CSV in `paper/empirical_results/`. They split two ways:
 
 **Computed** — a rule in `paper/Snakefile` regenerates them. When the inputs that rule
 needs are absent, it copies the committed CSV instead, so a build always renders; a

@@ -1,2 +1,11 @@
-n_resolved,n_incorrect,raw_error_pct,genuine_error_pct,n_normalization_equivalent,n_ref_base,n_build,n_gap_related,n_genuine_disagreement,n_unparseable
-3636439,18651,0.513,0.025,1,0,1,253,912,17484
+field,value,type
+n_resolved,3636439,count
+n_incorrect,18651,count
+raw_error_pct,0.513,percent
+genuine_error_pct,0.025,percent
+n_normalization_equivalent,1,count
+n_ref_base,0,count
+n_build,1,count
+n_gap_related,253,count
+n_genuine_disagreement,912,count
+n_unparseable,17484,count

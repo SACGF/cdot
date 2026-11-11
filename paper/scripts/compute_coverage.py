@@ -21,7 +21,7 @@ import gzip
 import json
 from pathlib import Path
 
-import pandas as pd
+from facts_io import write_typed_facts  # noqa: E402
 
 
 UTA_COUNT = 141000  # uta_20210129, from Hart 2020
@@ -76,20 +76,20 @@ def main():
     improvement_fold = round(total_count / uta_count, 1) if uta_count else 0
 
     facts = {
-        "total_count":          [total_count],
-        "refseq_grch37_count":  [refseq_grch37_count],
-        "refseq_grch38_count":  [refseq_grch38_count],
-        "t2t_count":            [t2t_count],
-        "ensembl_grch37_count": [ensembl_grch37_count],
-        "ensembl_grch38_count": [ensembl_grch38_count],
-        "ensembl_unique_count": [ensembl_unique_count],
-        "t2t_unique_count":     [t2t_unique_count],
-        "improvement_fold":     [improvement_fold],
+        "total_count":          total_count,
+        "refseq_grch37_count":  refseq_grch37_count,
+        "refseq_grch38_count":  refseq_grch38_count,
+        "t2t_count":            t2t_count,
+        "ensembl_grch37_count": ensembl_grch37_count,
+        "ensembl_grch38_count": ensembl_grch38_count,
+        "ensembl_unique_count": ensembl_unique_count,
+        "t2t_unique_count":     t2t_unique_count,
+        "improvement_fold":     improvement_fold,
     }
 
     out = Path("output/facts/coverage.csv")
     out.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(facts).to_csv(out, index=False)
+    write_typed_facts(out, facts)
     print(f"Written: {out}")
     print(f"  Total alignments:     {total_count:,}")
     print(f"  UTA count:            {uta_count:,}")

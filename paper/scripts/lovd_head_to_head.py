@@ -52,7 +52,6 @@ Usage::
 """
 
 import argparse
-import csv
 import json
 import random
 import re
@@ -67,6 +66,7 @@ from cdot.hgvs.clean import clean_hgvs
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import inject_and_clean as iac  # noqa: E402  (injectors, seed, sample, weights)
+from facts_io import write_typed_facts  # noqa: E402
 
 FACTS_DIR = iac.FACTS_DIR
 LOVD_VERSION = "v1.2.2"
@@ -276,10 +276,7 @@ def main():
         "lovd_anyrank_weighted_pct", "originals_n", "lovd_false_corrections",
         "lovd_flagged_invalid", "lovd_flagged_invalid_pct",
         "cdot_false_corrections")}
-    with open(csv_path, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(row), lineterminator="\n")
-        w.writeheader()
-        w.writerow(row)
+    write_typed_facts(csv_path, row)
 
     print(f"\nLOVD head-to-head ({LOVD_VERSION}, {n} injected cases, "
           f"LOVD wall time {lovd_seconds}s)")

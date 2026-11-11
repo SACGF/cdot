@@ -1,2 +1,7 @@
-n_variants_with_alt_version,n_safe_substitutions,n_unsafe_substitutions,n_resolved_under_w,n_coordinate_changes,n_unresolved_under_w
-4345081,8411749,2571471,8411000,0,749
+field,value,type
+n_variants_with_alt_version,4345081,count
+n_safe_substitutions,8411749,count
+n_unsafe_substitutions,2571471,count
+n_resolved_under_w,8411000,count
+n_coordinate_changes,0,count
+n_unresolved_under_w,749,count

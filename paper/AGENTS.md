@@ -29,12 +29,17 @@ public/private fact model.
   `[lint] unused_ok`.
 - **vibepaper 0.10** (`vibepaper~=0.10.0` in the `paper` extra and in CI). To move to a new
   release, follow vibepaper's `UPGRADE_PROMPT.md`.
+- **Facts are typed.** Every facts CSV is vertical (`field,value,type`). Scripts write
+  them with `write_typed_facts()` from `scripts/facts_io.py`, which types each fact from
+  its name (`*_pct` percent, `n_*` count, `*_ratio` ratio, ...), so name a new fact to
+  match. In templates use `{{ x_pct | pct(1) }}`, not `{{ x_pct | dp(1) }}%`; a value out of
+  its type's range fails the load.
 - **Tool and data versions behind a fact come from its provenance sidecar**
   (`empirical_results/<fact>.provenance.json`, `{{ clinvar_vcf._prov.tools.cdot }}`), not
   typed into the prose. A script that writes a facts CSV whose versions the prose cites
   should call `vibepaper.provenance.write_provenance()`; for a frozen fact, rewrite the
   sidecar with that function when the CSV is re-measured. Lint flags a paragraph that mixes
-  versions of one tool. Write facts CSVs with LF line endings
+  versions of one tool. Write any other CSV with LF line endings
   (`csv.writer(f, lineterminator="\n")`).
 - **Re-run PRs**: paste
   `vibepaper diff --config paper/paper.toml --facts-dir paper/empirical_results --against main --format md`

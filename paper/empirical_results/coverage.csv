@@ -1,2 +1,10 @@
-total_count,refseq_grch37_count,refseq_grch38_count,t2t_count,ensembl_grch37_count,ensembl_grch38_count,ensembl_unique_count,t2t_unique_count,improvement_fold
-1954742,197847,518810,186644,196501,854940,854940,186644,13.9
+field,value,type
+total_count,1954742,count
+refseq_grch37_count,197847,count
+refseq_grch38_count,518810,count
+t2t_count,186644,count
+ensembl_grch37_count,196501,count
+ensembl_grch38_count,854940,count
+ensembl_unique_count,854940,count
+t2t_unique_count,186644,count
+improvement_fold,13.9,ratio

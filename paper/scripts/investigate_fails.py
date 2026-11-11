@@ -7,6 +7,7 @@ import pandas as pd
 from pysam.libcfaidx import FastaFile
 import pyhgvs
 from cdot.pyhgvs.pyhgvs_transcript import JSONPyHGVSTranscriptFactory
+from facts_io import write_typed_facts  # noqa: E402
 
 
 def write_clinvar_facts(df: pd.DataFrame):
@@ -24,14 +25,14 @@ def write_clinvar_facts(df: pd.DataFrame):
         n_resolved_uta = df["can_resolve_uta"].sum()
         uta_resolution_pct = round(100 * n_resolved_uta / n_variants, 1)
 
-    facts = pd.DataFrame({
-        "n_variants":          [n_variants],
-        "cdot_resolution_pct": [cdot_resolution_pct],
-        "uta_resolution_pct":  [uta_resolution_pct],
-    })
+    facts = {
+        "n_variants":          n_variants,
+        "cdot_resolution_pct": cdot_resolution_pct,
+        "uta_resolution_pct":  uta_resolution_pct,
+    }
     out = "output/facts/clinvar.csv"
     os.makedirs("output/facts", exist_ok=True)
-    facts.to_csv(out, index=False)
+    write_typed_facts(out, facts)
     print(f"Written: {out}")
     print(f"  N variants:    {n_variants:,}")
     print(f"  cdot resolved: {cdot_resolution_pct}%")
