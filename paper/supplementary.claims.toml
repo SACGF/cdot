@@ -25,7 +25,7 @@ quote = ["at most 200", "all under the"]
 reason = "method wording: 'at most 200 cases', 'highest-confidence' suggestion, 'all under' one rule"
 
 [[claim]]
-quote = "ranked correction list changes no case"
+quote = "accepting the target anywhere in LOVD's ranked correction list changes no case"
 assert = "lovd_comparison.lovd_anyrank_pct == lovd_comparison.lovd_top1_pct and lovd_comparison.lovd_anyrank_weighted_pct == lovd_comparison.lovd_top1_weighted_pct"
 message = "'accepting the target anywhere in LOVD's ranked correction list changes no case'"
 

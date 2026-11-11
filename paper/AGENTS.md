@@ -40,7 +40,7 @@ public/private fact model.
   `lint --unused` lists facts the paper never cites; list ones kept on purpose under
   `[lint] unused_ok`. `[limits]` in `paper.toml` holds the journal's ~5,000-word main-text
   limit; `vibepaper wordcount` prints the counts.
-- **vibepaper main at 45053ae** (`vibepaper @ git+https://github.com/SACGF/vibepaper@45053ae`
+- **vibepaper main at 363eb8a** (`vibepaper @ git+https://github.com/SACGF/vibepaper@363eb8a`
   in the `paper` extra and in CI), for claims sidecars, which no PyPI release has yet. Switch
   both pins to a PyPI release (`vibepaper>=0.13`) once one is out. To move to a new release,
   follow vibepaper's `UPGRADE_PROMPT.md`.

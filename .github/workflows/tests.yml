@@ -38,7 +38,7 @@ jobs:
       # Same pin as the 'paper' extra in pyproject.toml. Switch to a PyPI release
       # (vibepaper>=0.13) once one is out.
       - name: Install vibepaper
-        run: python -m pip install "vibepaper @ git+https://github.com/SACGF/vibepaper@45053ae"
+        run: python -m pip install "vibepaper @ git+https://github.com/SACGF/vibepaper@363eb8a"
 
       - name: Lint paper wording
         run: vibepaper lint --config paper/paper.toml --facts-dir paper/empirical_results --numbers --unused --check
