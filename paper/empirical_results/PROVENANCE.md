@@ -423,6 +423,16 @@ and substitutes onto them now resolve. The structural Tier-1 claim of
 `version_stability.csv` becomes an observed zero error rate. Frozen because it consumes
 the same dedicated full-ClinVar run.
 
+## adoption.csv (frozen)
+
+Count of public GitHub projects outside SACGF whose own code imports the cdot Python
+package or loads cdot JSON, split by language. Counted by hand on 2026-11-20 from GitHub
+code search, the SACGF/cdot dependents page and deps.dev, with each repository read to
+confirm the use. The rule, the queries, every counted project with the file that shows
+the use, and the ones excluded (and why) are in `paper/notes/cdot_adoption_census.md`.
+Public GitHub only, so a lower bound. To refresh, repeat the searches in that note,
+re-check each project, and update the CSV, the note and `census_date`.
+
 ---
 
 ## Computed results
