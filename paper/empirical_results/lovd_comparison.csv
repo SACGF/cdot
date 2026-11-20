@@ -8,7 +8,7 @@ cdot_weighted_pct,100.0,percent
 lovd_top1_weighted_pct,69.1,percent
 lovd_anyrank_weighted_pct,69.1,percent
 originals_n,998,count
-lovd_false_corrections,0,
-lovd_flagged_invalid,266,
+lovd_false_corrections,0,count
+lovd_flagged_invalid,266,count
 lovd_flagged_invalid_pct,26.7,percent
-cdot_false_corrections,0,
+cdot_false_corrections,0,count

@@ -1,0 +1,14 @@
+# Claims for methods.md (vibepaper claims sidecar, see the
+# README's "Claims sidecars"). A quote must match one sentence.
+
+[[ok]]
+quote = "runs over the"
+reason = "'over' is a preposition, not a qualifier"
+
+[[ok]]
+quote = ["[@Lefter2021], over their", "GRCh38, over a"]
+reason = "'over' is a preposition, not a qualifier"
+
+[[ok]]
+quote = ["every configuration resolves the identical committed set … so only the transcript-data layer", "over … passes and reported as median (IQR), steady-state resolution only", "cdotlib.org over the"]
+reason = "protocol description: 'every configuration', 'only the transcript-data layer', 'only' steady state, 'over' passes"

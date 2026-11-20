@@ -1,5 +1,5 @@
 field,value,type
-correct_binned,4443449,
+correct_binned,4443449,count
 correct_decile1_pct,10.4,percent
 correct_decile2_pct,10.1,percent
 correct_decile3_pct,9.9,percent
@@ -10,12 +10,12 @@ correct_decile7_pct,10.0,percent
 correct_decile8_pct,10.1,percent
 correct_decile9_pct,10.1,percent
 correct_decile10_pct,9.5,percent
-correct_5putr,38200,
-correct_3putr,70623,
+correct_5putr,38200,count
+correct_3putr,70623,count
 correct_noncoding_n,4824,count
-correct_no_cds_len,0,
-correct_unparsed,0,
-incorrect_binned,2028,
+correct_no_cds_len,0,count
+correct_unparsed,0,count
+incorrect_binned,2028,count
 incorrect_decile1_pct,9.9,percent
 incorrect_decile2_pct,9.8,percent
 incorrect_decile3_pct,8.6,percent
@@ -26,8 +26,8 @@ incorrect_decile7_pct,9.4,percent
 incorrect_decile8_pct,11.7,percent
 incorrect_decile9_pct,9.3,percent
 incorrect_decile10_pct,6.1,percent
-incorrect_5putr,29,
-incorrect_3putr,25,
+incorrect_5putr,29,count
+incorrect_3putr,25,count
 incorrect_noncoding_n,0,count
-incorrect_no_cds_len,0,
-incorrect_unparsed,0,
+incorrect_no_cds_len,0,count
+incorrect_unparsed,0,count

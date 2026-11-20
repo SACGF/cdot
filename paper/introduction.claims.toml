@@ -1,0 +1,19 @@
+# Claims for introduction.md (vibepaper claims sidecar, see the
+# README's "Claims sidecars"). A quote must match one sentence.
+
+[[ok]]
+quote = "over five years of production logs, only … could automatically correct only"
+reason = "Lefter 2021's figures, quoted"
+
+[[claim]]
+quote = "over the PostgreSQL wire protocol, … (about one transcript per second at best"
+assert = "benchmark.uta_remote_tps < literature.uta_remote_tps"
+message = "'about one transcript per second at best' (public remote UTA)"
+
+[[ok]]
+quote = "RefSeq only): it retains only … are absent entirely"
+reason = "'RefSeq only', 'absent entirely' describe UTA's contents; R2 asserts clinvar.uta_ensembl_pct == 0"
+
+[[ok]]
+quote = "from all available RefSeq GFF3"
+reason = "'all available' describes what is ingested"

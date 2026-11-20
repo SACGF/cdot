@@ -1,5 +1,5 @@
 field,value,type
-clinvar_variants,3000000,
+clinvar_variants,3000000,count
 mutalyzer_correct_pct,50.4,percent
 mutalyzer_error_pct,41.2,percent
 mutalyzer_autocorrect_pct,7.1,percent

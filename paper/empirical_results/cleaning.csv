@@ -1,8 +1,8 @@
 field,value,type
 inject_overall_pct,100.0,percent
 inject_weighted_pct,100.0,percent
-inject_total_attempted,3419,
-inject_total_recovered,3419,
-inject_regressions,0,
-inject_n_categories,18,
-inject_sample_size,998,
+inject_total_attempted,3419,count
+inject_total_recovered,3419,count
+inject_regressions,0,count
+inject_n_categories,18,count
+inject_sample_size,998,count

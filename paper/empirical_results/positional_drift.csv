@@ -2,7 +2,7 @@ field,value,type
 sample_n,12000,count
 build,GRCh38,text
 refseq_partial_pairs,138,count
-refseq_partial_bases,306855,
+refseq_partial_bases,306855,count
 refseq_partial_decile1_pct,98.9,percent
 refseq_partial_decile2_pct,87.9,percent
 refseq_partial_decile3_pct,77.5,percent
@@ -28,7 +28,7 @@ refseq_all_decile10_pct,96.6,percent
 refseq_all_5p_half_pct,96.9,percent
 refseq_all_3p_half_pct,96.7,percent
 ensembl_partial_pairs,49,count
-ensembl_partial_bases,92270,
+ensembl_partial_bases,92270,count
 ensembl_partial_decile1_pct,93.2,percent
 ensembl_partial_decile2_pct,75.3,percent
 ensembl_partial_decile3_pct,66.0,percent

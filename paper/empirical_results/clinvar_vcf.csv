@@ -5,7 +5,7 @@ n_correct,4557096,count
 resolved_pct,99.46,percent
 matched_pct,99.42,percent
 matched_of_resolved_pct,99.954,percent
-incorrect,2082,
+incorrect,2082,count
 incorrect_pct,0.05,percent
-no_data,1051,
-error,23569,
+no_data,1051,count
+error,23569,count

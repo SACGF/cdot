@@ -2,7 +2,7 @@ field,value,type
 service_date,2026-08-18,text
 vv_version,4.0.1.dev7+gbdab9c72f,text
 n_cases,3419,count
-vv_scored_cases,3419,
+vv_scored_cases,3419,count
 vv_coverage_pct,100.0,percent
 cdot_pct,100.0,percent
 vv_pct,38.3,percent
@@ -19,10 +19,10 @@ cdot_nonintronic_pct,100.0,percent
 vv_nonintronic_pct,37.7,percent
 mut_nonintronic_pct,16.3,percent
 originals_n,998,count
-vv_originals_scored,998,
-vv_false_corrections,0,
-vv_rejected_valid,37,
-mut_false_corrections,0,
-mut_rejected_valid,112,
-mut_representation_changes,2,
-vv_lovd_suggestion_cases,1509,
+vv_originals_scored,998,count
+vv_false_corrections,0,count
+vv_rejected_valid,37,count
+mut_false_corrections,0,count
+mut_rejected_valid,112,count
+mut_representation_changes,2,count
+vv_lovd_suggestion_cases,1509,count

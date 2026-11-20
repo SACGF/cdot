@@ -144,7 +144,7 @@ clean ClinVar strings. `lovd_head_to_head.py` runs the same injected cases throu
 `clean_hgvs()` and the LOVD HGVS syntax checker [@LovdHgvsChecker]
 ({{ lovd_comparison.lovd_version }}, run locally as a PHP CLI), scoring a case as
 recovered when the tool's output (for LOVD, its top-ranked correction) exactly matches
-the canonical target; the same false-correction check runs over the uncorrupted {# lint-ok: 'over' is a preposition, not a qualifier #}
+the canonical target; the same false-correction check runs over the uncorrupted
 originals.
 
 `vv_mutalyzer_head_to_head.py` extends the same cases and scoring rule to the two
@@ -157,7 +157,7 @@ it *rejects* is counted separately as a validity or coverage position. Version-s
 safety is measured by `compute_version_stability.py` on GRCh38, over a seeded
 {{ version_stability.sample_n | commas }}-accession sample of accessions cdot holds at
 two or more versions; the same run bins preserved coding bases by relative CDS position
-(Supplementary Figure S1). {# lint-ok(over): 'over' is a preposition, not a qualifier #}
+(Supplementary Figure S1).
 
 The submitted-string corpus (Results R2) is built by
 `build_clinvar_submitted_pairs.py` from the per-submission HGVS attributes of a ClinVar
@@ -180,7 +180,7 @@ varies between rows. Each configuration is timed over
 resolution only (exclusions in Supplementary Methods). The REST rows run against the
 production server at cdotlib.org over the public internet; the public remote UTA row
 uses the first {{ benchmark.uta_remote_n | int }} pairs, a full-size pass being
-impractical at ~{{ benchmark.uta_remote_tps | dp(1) }} HGVS/s. {# lint-ok(every, only, over): protocol description: 'every configuration', 'only the transcript-data layer', 'only' steady state, 'over' passes #}
+impractical at ~{{ benchmark.uta_remote_tps | dp(1) }} HGVS/s.
 
 Results marked **[private data]** are aggregate statistics from private production
 corpora, reported as frozen constants that a referee cannot regenerate; every other
