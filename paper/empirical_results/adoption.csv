@@ -1,0 +1,5 @@
+field,value,type
+census_date,2026-11-20,text
+n_projects,12,count
+n_python_projects,9,count
+n_rust_projects,3,count

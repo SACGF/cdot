@@ -22,3 +22,8 @@ reason = "'over' is a preposition"
 quote = "neither falsely corrected a valid input"
 assert = "vv_mutalyzer_comparison.vv_false_corrections == 0 and vv_mutalyzer_comparison.mut_false_corrections == 0"
 message = "'neither falsely corrected a valid input' (VariantValidator, Mutalyzer)"
+
+[[claim]]
+quote = "The other … are written in Rust"
+assert = "adoption.n_python_projects + adoption.n_rust_projects == adoption.n_projects and adoption.n_rust_projects == 3"
+message = "'the other N' Rust projects complete the count, and three are named (mehari, hgvs-rs, ferro-hgvs)"

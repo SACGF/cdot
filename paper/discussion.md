@@ -55,9 +55,15 @@ the syntax-repair layer surfaced by a current VariantValidator pipeline.
 
 The general-purpose value of the format shows in reuse beyond Python and beyond
 biocommons/hgvs. Where Ensembl's own REST service serves only Ensembl transcripts, cdot
-serves both consortia with history; and ferro-hgvs [@FerroHgvs],
-an independent HGVS parser and normaliser written in Rust, loads cdot JSON directly as
-its transcript-to-genome alignment source, needing only a JSON parser.
+serves both consortia with history. A search of public GitHub
+({{ adoption.census_date }}) found {{ adoption.n_projects | number_word }} projects
+outside our group whose code uses cdot, a lower bound since private use is not visible.
+{{ adoption.n_python_projects | number_word | capitalize }} use its Python data
+providers, among them the MaveDB variant-effect database [@Rubin2025]. The other
+{{ adoption.n_rust_projects | number_word }} are written in Rust and load cdot JSON
+directly as their transcript-to-genome alignment source, needing only a JSON parser: the
+mehari variant-effect annotator [@Hartmann2026], hgvs-rs, a port of biocommons/hgvs
+[@HgvsRs], and ferro-hgvs, an independent HGVS parser and normaliser [@FerroHgvs].
 
 cdot separates unambiguous string cleaning, safe to apply automatically, from
 heuristics that can be wrong (an adjacent transcript version, a canonical transcript
