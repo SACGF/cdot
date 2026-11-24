@@ -696,7 +696,25 @@ Facts and claims checks travel with their text (`sources.*`, `benchmark.n_*`,
   `coverage.ensembl_unique_count`, `coverage.t2t_unique_count`; `[@Hart2020]`. *Checked:* "cdot
   covers … such alignments across all builds and sources", "Ensembl itself, absent from UTA
   entirely".
-- **Your version:**
+- **Your version (as dictated):** The following counts refer to a transcript version aligned to
+  a particular genome build. C.Dot has 1.9 million alignments compared to 300,000 in the 2024
+  UTA release, 6.5 times as many.
+
+  This gain comes from ingesting every archived refseq release, and also from bringing in
+  ensemble transcripts which UTA lacks. Bringing in Ensemble GRCH30 alone accounts for 850,000
+  transcript versions. adding T to T brings in 186,000.
+
+  *Corrections (as dictated):* The following counts are of a transcript version aligned to a
+  particular genome build.
+- **Accepted (your words, cut and joined only):**
+
+  The following counts are of a transcript version aligned to a particular genome build.
+  cdot has {{ coverage.total_count | commas }} alignments compared to
+  {{ coverage.uta_count | commas }} in the 2024 UTA release [@Hart2020],
+  {{ coverage.improvement_fold | dp(1) }} times as many. This gain comes from ingesting every
+  archived RefSeq release, and also from bringing in Ensembl transcripts which UTA lacks.
+  Ensembl GRCh38 alone accounts for {{ coverage.ensembl_unique_count | commas }} transcript
+  versions. Adding T2T brings in {{ coverage.t2t_unique_count | commas }}.
 
 ### R1b. Alignment gaps
 

@@ -90,8 +90,10 @@ The detail of Methods was moved to Supplementary Methods for the same reason.
   Supplementary Methods, as "... (detail)" subsections, which stay AI text for now, to be
   lightly edited later. Some of it overlaps the older supplementary subsections, which needs
   tidying.
-  **Next: present R1a and R1b** (transcript coverage, alignment gaps).
-- **Results, Discussion, Abstract: not started.** Their outline entries describe the target
+  **Results in progress.** R1a is accepted in `outline.md` (not yet copied into
+  `results.md`; that happens when all of Results is done). **Next: present R1b** (alignment
+  gaps, VEP), then R2.1 onwards.
+- **Rest of Results, Discussion, Abstract: not started.** Their outline entries describe the target
   structure, including moves not yet made in the files. The biggest is that the
   LOVD/VariantValidator/Mutalyzer numbers move from the Discussion into Results R4.6. Make
   each move when that section's accepted text goes in. Do the Abstract last.
