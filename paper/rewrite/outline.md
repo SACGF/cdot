@@ -157,6 +157,10 @@ three-part answer (I3) → what the paper provides and tests (I4).
   the Universal Transcript Archive. And this works by performing its own transcript to genome
   alignments and storing it in a Postgres database.
 
+  *Informality pass (as dictated, 2026-11-24):* Biocommons abstracts transcript data retrieval
+  inside the data provider interface, which has become a standard being adopted by a number of
+  other tools, including Variant Validator and MaveDB.
+
 ### I2b. UTA's limits: access and coverage
 
 - **Job:** The gap cdot fills.
@@ -201,6 +205,54 @@ three-part answer (I3) → what the paper provides and tests (I4).
   The protocol for communication with UTA requires several round trips to perform the
   conversion, which means the performance is {{ benchmark.uta_remote_tps | dp(2) }} HGVS/s
   (Table 1).
+
+  *Informality pass (as dictated, 2026-11-24):* UTA's popularity demonstrates it is an excellent
+  resource, though the Postgres implementation has a number of drawbacks.
+
+  Performing their own alignments means that the process is lengthy and complex, and  Ensemble
+  is not supported, and many historical refseq transcripts are missing.
+
+  *Mechanical fixes he approved:* deleted "Postgres" from "the Postgres implementation",
+  "their" → "its", dropped the first "and" before "Ensembl", and cut "RefSeq only, and it
+  provides a limited amount of historical support" from the UTA count sentence (repeated).
+
+  *Informality pass (as dictated):* A drawback of Postgres database is that setting up a local
+  instance requires systems administration capability.
+
+  *Informality pass, I3 (as dictated):* These often went back many years.
+
+   One of the most critical problems in Sharint was how to resolve historical Hgvs that were
+  often many years old.
+
+  *Informality pass, I3 search box and three problems (as dictated):* People were searching
+  using HTVSs with many subtle and different problems, and we tried to resolve these to what
+  the users actually intended.
+
+  We had to solve a number of problems. Cleaning invalid HTTPSs, collecting as many historical
+  transcript versions as possible, and conversion between different genome builds.
+
+  As not all transcript versions were available in all builds, we attempted to find the nearest
+  transcript version available for that build that had the same exonic structure and was safe
+  to substitute. Brackets opt-in and flagged.
+
+  *Cut:* "There were often no official releases of a transcript version against a particular
+  genome build." (now said by "As not all transcript versions were available in all builds").
+
+  *Informality pass, I4 (as dictated):* Almost all languages have JSON libraries that have been
+  highly optimized.
+
+  JSON is also the standard protocol for transferring data across the internet via a REST
+  server, which means it was easy to provide a web server which can be accessed through most
+  workplace Firewalls.
+
+  We provide our cleaning library, which fixes many common mistakes and returns a record of
+  what fixes were made.
+
+  *Approved fix:* "standard protocol" → "standard format" (JSON is a format; HTTP is the protocol).
+
+  *Informality pass, I4 last paragraph (as dictated):* We validate and benchmark CDOT by
+  comparing it against UTA on ClinVar VCV XML, which records the original transcript version
+  that was submitted by the lab at the time, giving a historical test record.
 
 ### I3. Shariant, and cdot's three-part approach
 
@@ -489,6 +541,38 @@ Facts and claims checks travel with their text (`sources.*`, `benchmark.n_*`,
   changed or present them to the user. What it can't fix is flagged as an error-level fix. We
   also have `clean_hgvs()`, which is called by `fix_hgvs()`, but it is a pure string
   conversion function and doesn't load any data.
+
+  *Informality pass, M3 (as dictated):* You call the function with an HGVS string and it returns
+  the repaired string plus a list of fixes applied.
+
+  For the last one, change if you Pass to passing a [applied to both "If you pass" and "If you
+  also pass"]
+
+  Change you Call the function to calling the function. [Cut "and it" to make it grammatical;
+  cut ", it" from both "Passing a ..., it" sentences to fix the dangling modifier.]
+
+  What cannot be fixed is flagged as an error
+
+  The pure string conversion function is exposed as clean HTTPS, which doesn't load any data.
+  It is called by fixHTTPS. ["doesn't" → "does not"]
+
+  When the requested transcript version is not available, fix HTTPS can substitute another
+  version.
+
+  The function accepts a parameter version fallback, where the caller sets the resolution
+  strategy, such as trying higher versions then lower, closest or the latest.
+
+  It is returned as an HGVS fix, so the user has visibility on what operations were performed.
+
+  Checks are made to ensure the substituted transcript version has an identical CDS structure,
+  the CDs length plus the length of coding exons.
+
+  All string modifications return an accompanying HGVS fix, so the user has visibility on what
+  operations were performed.
+
+  [Cut from M4 at his request, as it repeats M3's "Every change is recorded as an `HGVSFix`".]
+  [Then, at his request, M3's sentence was replaced by joining the two: his newer wording plus
+  M3's "which has severity, code, and before/after".]
 
 ### M4. Version substitution
 

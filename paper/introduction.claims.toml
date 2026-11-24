@@ -7,9 +7,9 @@ assert = "49 < literature.mutalyzer_correct_pct < 52"
 message = "Lefter 2021's figures, quoted: 'only half were correct'"
 
 [[claim]]
-quote = "RefSeq only, and it provides a limited amount"
+quote = "Ensembl is not supported, and many historical RefSeq transcripts are missing"
 assert = "clinvar.uta_ensembl_pct == 0"
-message = "'RefSeq only' (UTA holds no Ensembl alignments; R2)"
+message = "'Ensembl is not supported' (UTA holds no Ensembl alignments; R2)"
 
 [[claim]]
 quote = "allows us to collect all of the"

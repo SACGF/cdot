@@ -25,34 +25,34 @@ can be parsed by older clients (Supplementary Table S3).
 
 ## String cleaning
 
-For cleaning HGVS strings, we provide a function `fix_hgvs()`. You pass in an HGVS string
-and get back the repaired string plus a list of the fixes applied. Some examples include
+For cleaning HGVS strings, we provide a function `fix_hgvs()`. Calling the function with an
+HGVS string returns the repaired string plus a list of fixes applied. Some examples include
 whitespace, quoting, double dots (`NM_000059..4`), uppercase, lowercase (`c.123delg`), and
-the swapped gene and transcript (`BRCA2(NM_000059.4)` → `NM_000059.4(BRCA2)`)
-(Supplementary Table S7). If you pass a data provider to `fix_hgvs()`, it can also fix
-some transcript errors, such as a dropped accession prefix (`000059.4:c.68del` →
-`NM_000059.4:c.68del`). It only does this when exactly one candidate is possible. If you
-also pass a genome build, it resolves a gene-only string, such as `BRCA2:c.68_69del`, by
-looking up the MANE transcript [@Morales2022; @Wright2023]. Every change is recorded as an
-`HGVSFix`, which has severity, code, and before/after, so a caller can audit what was
-changed or present them to the user. What it can't fix is flagged as an error-level fix.
-We also have `clean_hgvs()`, which is called by `fix_hgvs()`, but it is a pure string
-conversion function and doesn't load any data.
+the swapped gene and transcript (`BRCA2(NM_000059.4)` → `NM_000059.4(BRCA2)`) (Supplementary
+Table S7). Passing a data provider to `fix_hgvs()` can also fix some transcript errors, such
+as a dropped accession prefix (`000059.4:c.68del` → `NM_000059.4:c.68del`). It only does
+this when exactly one candidate is possible. Passing a genome build also resolves a
+gene-only string, such as `BRCA2:c.68_69del`, by looking up the MANE transcript
+[@Morales2022; @Wright2023]. All string modifications return an accompanying `HGVSFix`,
+which has severity, code, and before/after, so the user has visibility on what operations
+were performed. What cannot be fixed is flagged as an error. The pure string conversion
+function is exposed as `clean_hgvs()`, which does not load any data. It is called by
+`fix_hgvs()`.
 
 ## Version substitution
 
-When the requested transcript version isn't available, `fix_hgvs()` can substitute in
-another version. This is off by default because it can be wrong. You can pass in a
-strategy, `version_fallback`, which you can set to try higher versions then lower,
-closest, or the latest. It's reported back as an `HGVSFix`, so the user can see what
-happened. We have a check that each transcript version has an identical CDS structure: the
-CDS length plus the length of coding exons. This is the same on every genome build, so the
-two versions can be compared even when one of them is not aligned or not available for the
-genome build you request. It's safe to swap only if the structures match. The alignment
-gaps must also match, and for a UTR variant, the UTR lengths must be the same
-(Supplementary Methods). If the version substitution doesn't match, by default we just
-leave the string unchanged and it returns an error `HGVSFix`. You can override this to
-change the string and return a warning that the coordinates may have moved.
+When the requested transcript version is not available, `fix_hgvs()` can substitute another
+version. This is off by default because it can be wrong. The function accepts a parameter
+`version_fallback`, where the caller sets the resolution strategy, such as trying higher
+versions then lower, closest or the latest. Checks are made to ensure the substituted
+transcript version has an identical CDS structure: the CDS length plus the length of coding
+exons. This is the same on every genome build, so the two versions can be compared even when
+one of them is not aligned or not available for the genome build you request. It's safe to
+swap only if the structures match. The alignment gaps must also match, and for a UTR
+variant, the UTR lengths must be the same (Supplementary Methods). If the version
+substitution doesn't match, by default we just leave the string unchanged and it returns an
+error `HGVSFix`. You can override this to change the string and return a warning that the
+coordinates may have moved.
 
 ## Access and client libraries
 

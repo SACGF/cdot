@@ -93,17 +93,27 @@ The detail of Methods was moved to Supplementary Methods for the same reason.
   **Results in progress.** R1a is accepted in `outline.md` (not yet copied into
   `results.md`; that happens when all of Results is done). **Next: present R1b** (alignment
   gaps, VEP), then R2.1 onwards.
-- **Informality pass: started, more to do later.** The written text keeps spoken register
-  ("you", contractions, "So"/"And"/"But" openers, "a bit of", "many, many"). Claude lists the
-  informal sentences with the reason, he re-dictates them, and they are swapped in by cutting
-  only. Done so far: the four informal I1a sentences (2026-11-24). He wants to keep the conversational
-  I1b opener ("One of the surprising things we've seen"). Still to do: the rest of the
-  Introduction (I2a "a bit of a standard"; I2b "great resource", "Firstly", "quite a bit of";
-  I3 "many, many years", "So one of the great problems", "all kinds of", the spoken
-  three-problem list, "So what we did then"; I4 "you can load it very rapidly", "a lot of")
-  and Methods ("you" throughout M3 to M5, contractions, "seq fetcher", "some troubles",
-  "things"). Do another pass over Results and the Discussion once they are written. After the
-  passes he prints the paper and edits it by hand.
+- **Informality pass: in progress.** The written text keeps spoken register ("you",
+  contractions, "So"/"And"/"But" openers, "a bit of", "many, many"). Claude gives three
+  informal sentences at a time with the reason, he re-dictates them, and they are swapped in
+  by cutting only. He has approved small mechanical fixes on top (deleting a word, "their" →
+  "its", expanding a contraction, cutting a repeated sentence, cutting ", it" to fix a
+  dangling modifier). Dictations are recorded in `outline.md` under each entry.
+  - **Done:** the whole Introduction, and Methods M3 (string cleaning) and the first half of
+    M4. He keeps the conversational I1b opener ("One of the surprising things we've seen").
+  - **Next, M4:** "…for the genome build you request."; "It's safe to swap only if the
+    structures match." (also repeats the "Checks are made…" sentence, so it could be cut);
+    "If the version substitution doesn't match, by default we just leave the string
+    unchanged…"; "You can override this…".
+  - **Then M5:** "(it also has a prefetch, which batches things…)"; "we also make a seq
+    fetcher"; "might have some troubles with RefSeq"; "We've also made a chained seq
+    fetcher"; "You can use this to take the SeqRepo sequences…". M1, M2 and M6 are already
+    fairly formal; skim them.
+  - **Left for his paper edit (noted, not fixed):** I1a "convert them" after the singular
+    "The c. form"; I3 "went back many years" then "many years old"; I3 list not parallel
+    ("cleaning … collecting … and conversion"); I4 "server" twice.
+  - Do another pass over Results and the Discussion once they are written. After the passes
+    he prints the paper and edits it by hand.
 - **Rest of Results, Discussion, Abstract: not started.** Their outline entries describe the target
   structure, including moves not yet made in the files. The biggest is that the
   LOVD/VariantValidator/Mutalyzer numbers move from the Discussion into Results R4.6. Make
