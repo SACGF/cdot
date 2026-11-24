@@ -48,6 +48,8 @@ FILES = {
     "refseq_t2t":     data_file("cdot.refseq.t2t.json.gz"),
     "ensembl_grch37": data_file("cdot.ensembl.grch37.json.gz"),
     "ensembl_grch38": data_file("cdot.ensembl.grch38.json.gz"),
+    "uta_grch37":     data_file("Homo_sapiens_GRCh37_UTA_20241220.csv"),
+    "uta_grch38":     data_file("Homo_sapiens_GRCh38_UTA_20241220.csv"),
 }
 
 HAVE_DATA    = any(p and Path(p).exists() for p in FILES.values())
@@ -202,7 +204,9 @@ rule frozen_fact:
 rule coverage:
     """Compute transcript coverage from production JSON.gz files.
 
-    Requires --config data_dir=/path/to/data (or individual file paths).
+    Requires --config data_dir=/path/to/data (or individual file paths), holding the
+    release JSON.gz files and the uta_20241220 GRCh37/GRCh38 alignment dumps (the UTA
+    count the coverage is compared with).
     Without data, the committed measurement in paper/empirical_results/ is copied
     so the paper build still runs.
     """

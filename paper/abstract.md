@@ -11,9 +11,9 @@ shared history usable meant resolving as many real-world transcript-level HGVS
 descriptions as possible, including malformed strings and long-retired transcript
 versions. The standard transcript source for the Python HGVS libraries, UTA, forces a
 tradeoff between a locally installed PostgreSQL database and a slow public server that
-many clinical networks firewall; it covered ~{{ literature.uta_count | commas }}
-RefSeq alignments in its 2021 release, retains limited transcript history, and omits
-Ensembl.
+many clinical networks firewall; its December 2024 release holds
+{{ coverage.uta_count | commas }} RefSeq alignments, and it retains limited transcript
+history and omits Ensembl.
 
 **Results:**
 

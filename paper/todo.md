@@ -17,10 +17,6 @@ Open work on the paper. Delete an item when it is done. How to work on the paper
   collaborator. Acknowledge the NCBI RefSeq, Ensembl and biocommons teams.
 - Fill the placeholders: `[Zenodo DOI]` and `[email]` in `abstract.md`, and the `...` rows of
   Tables S1 and S2 in `supplementary.md`.
-- The UTA alignment count cited in the abstract, introduction and R1 is Hart 2020's figure
-  for the 2021 release; the comparison runs use `uta_20241220`, whose GRCh38 dump alone holds
-  148,275 accession versions. Decide whether to re-measure `literature.uta_count` (and so
-  `coverage.improvement_fold`) against that release.
 - The version-removal ablation of `get_best_transcript_version()` is not reported; if it
   should be, run `benchmark_resolution.py`'s degraded mode and add the counts as a fact.
 - HTSeq, Snakemake and PyHGVS have no citation; UTA, RefSeq and Ensembl are cited.

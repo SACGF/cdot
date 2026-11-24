@@ -35,7 +35,7 @@ Static constants transcribed from published papers, not measured here.
   from five years of production logs (per unique description, not per submission).
   The error figure is 15.8% syntactic plus 25.4% semantic failures of the Name
   Checker.
-* `clinvar_variants`, `lof_agreement_pct`, `brca2_accuracy_pct`, `uta_count`,
+* `clinvar_variants`, `lof_agreement_pct`, `brca2_accuracy_pct`,
   `uta_remote_tps`, `mane_coverage_pct`, `seqrepo_speedup_fold`: see the citations
   in `paper/references.bib` and `paper/literature/literature_review.md`.
 
@@ -433,6 +433,12 @@ the use, and the ones excluded (and why) are in `paper/notes/cdot_adoption_censu
 Public GitHub only, so a lower bound. To refresh, repeat the searches in that note,
 re-check each project, and update the CSV, the note and `census_date`.
 
+`n_interface_projects` and `n_interface_implementers` count public projects that use
+biocommons/hgvs's data-provider layer (implement, subclass, wrap or consume it) and the
+subset that implement or subclass a provider. They come from the survey in
+biocommons/hgvs#958 (same 2026-11-20 snapshot, public GitHub only, so a lower bound), and
+include SACGF and biocommons projects, unlike `n_projects`.
+
 ---
 
 ## Computed results
@@ -446,7 +452,10 @@ here.
 `paper/scripts/compute_coverage.py` over the release JSON.gz files (needs
 `--config data_dir=...`). Committed snapshot: data 0.2.36, measured 2026-10-13 (counts
 identical to 0.2.34, as no transcript sources were added between them); re-run
-2026-11-04 on PyPI cdot 0.2.36, identical.
+2026-11-04 on PyPI cdot 0.2.36, identical. `uta_count` (and so `improvement_fold`) is
+measured from the uta_20241220 GRCh37 and GRCh38 alignment dumps
+(`Homo_sapiens_GRCh3?_UTA_20241220.csv`, the release the comparison runs use), measured
+2026-11-24: 152,996 + 148,275 distinct accession versions.
 
 ### benchmark.csv
 

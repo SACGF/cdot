@@ -5,7 +5,8 @@
 The unit of coverage is the *transcript-version alignment*: a particular transcript
 version aligned to a particular genome build, counted separately per build. cdot covers
 {{ coverage.total_count | commas }} such alignments across all builds and sources,
-compared with ~{{ literature.uta_count | commas }} in UTA's 2021 release [@Hart2020],
+compared with {{ coverage.uta_count | commas }} in UTA's December 2024 release (the one
+benchmarked below) [@Hart2020],
 {{ coverage.improvement_fold | fold(1) | article }} increase. The gain has two sources:
 historical depth (cdot ingests the complete run of archived RefSeq and Ensembl releases,
 so an NM_ version cited in an older report or ClinVar submission still resolves after
