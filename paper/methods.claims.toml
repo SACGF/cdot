@@ -1,2 +1,7 @@
 # Claims for methods.md (vibepaper claims sidecar, see the
 # README's "Claims sidecars"). A quote must match one sentence.
+
+[[claim]]
+quote = "For the UTA remote, we run only … pairs because it is slow."
+assert = "benchmark.uta_remote_n < benchmark.n_pairs and benchmark.uta_remote_tps < benchmark.uta_local_tps"
+message = "remote UTA ran a smaller subset than the other backends, and is the slower UTA"

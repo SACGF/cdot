@@ -73,22 +73,24 @@ measured by `paper/scripts/compute_coverage.py` from the uta_20241220 dumps, as
 
 ## Word budget
 
-Bioinformatics allows about 5,000 words of main text. After the Introduction rewrite and the
-Methods cut, the main text is 4,441 words. The Introduction grew from about 440 words to
-about 780. Keep an eye on `vibepaper wordcount` as Results and the Discussion are rewritten.
+Bioinformatics allows about 5,000 words of main text. After the Introduction and Methods
+rewrites, the main text is 4,898 words (Methods grew from about 500 to 966). The Introduction grew from about 440 words to
+about 780. Results and the Discussion must come down as they are rewritten: keep an eye on
+`vibepaper wordcount`.
 The detail of Methods was moved to Supplementary Methods for the same reason.
 
 ## Current state
 
 - **Introduction: done.** All 11 paragraphs are accepted and in `introduction.md`, with
   claims updated.
-- **Methods: cut to 6 short paragraphs, not yet rewritten.** `methods.md` now holds cut-down
-  versions of the old AI text, as placeholders. The full old Methods is in
-  `supplementary.md` under Supplementary Methods, as "... (detail)" subsections, and its
-  claims moved to `supplementary.claims.toml`. The supplement stays AI text for now, to be
-  lightly edited later rather than rewritten. Some of it overlaps the older supplementary
-  subsections, which needs tidying.
-  **Next: present M1 and M2** (data sources, JSON format). The outline entries are M1 to M6.
+- **Methods: done.** All 6 paragraphs (M1 to M6) are accepted and in `methods.md`. M3 now
+  leads with `fix_hgvs()` (the recommended entry point) and ends on `clean_hgvs()` (the pure
+  string function); the MANE gene lookup moved from M5 into M3. `methods.claims.toml` has one
+  claim (the remote UTA subset). The old Methods detail is in `supplementary.md` under
+  Supplementary Methods, as "... (detail)" subsections, which stay AI text for now, to be
+  lightly edited later. Some of it overlaps the older supplementary subsections, which needs
+  tidying.
+  **Next: present R1a and R1b** (transcript coverage, alignment gaps).
 - **Results, Discussion, Abstract: not started.** Their outline entries describe the target
   structure, including moves not yet made in the files. The biggest is that the
   LOVD/VariantValidator/Mutalyzer numbers move from the Discussion into Results R4.6. Make
