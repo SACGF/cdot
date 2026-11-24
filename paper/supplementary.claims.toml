@@ -55,3 +55,17 @@ message = "Figure S1B: 'essentially flat' and 'most drift is a whole-CDS relocat
 [[ok]]
 quote = "Claude Fable 5 and Claude Opus 5.5"
 reason = "model names and versions of the re-rating LLMs, not results"
+
+# Moved with the Methods detail from methods.md.
+
+[[ok]]
+quote = "runs over the"
+reason = "'over' is a preposition, not a qualifier"
+
+[[ok]]
+quote = ["[@Lefter2021], over their", "GRCh38, over a"]
+reason = "'over' is a preposition, not a qualifier"
+
+[[ok]]
+quote = ["every configuration resolves the identical committed set … so only the transcript-data layer", "over … passes and reported as median (IQR), steady-state resolution only", "cdotlib.org over the"]
+reason = "protocol description: 'every configuration', 'only the transcript-data layer', 'only' steady state, 'over' passes"
