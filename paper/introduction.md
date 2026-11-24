@@ -1,11 +1,11 @@
 # Introduction
 
-HGVS is the clinical standard for describing variants [@DenDunnen2016]. People often like
-using c. forms because they find them easier to reason about. But in genomics, we have to
-convert them to genomic coordinates. So in order to do this, you need to have the reference
-transcript at a specific version. These versions of the transcript are aligned to the genome
-by RefSeq and Ensembl. You can take those alignments and do the calculations to convert them
-to genomic coordinates.
+HGVS is the clinical standard for describing variants [@DenDunnen2016]. The c. form is
+typically preferred in clinical genetics because medical scientists find it easier to reason
+about. In genomics, we need to convert them to genomic coordinates. To do this, we require the
+reference transcript to be at a specific version. These versions of the transcript are aligned
+to the genome by RefSeq and Ensembl. The exon coordinates from the transcript genome
+alignments can be used to convert them to genomic coordinates.
 
 One of the surprising things we've seen is that HGVS strings are often broken in a way that
 suggests that humans have either just typed them out by hand or copy-pasted them

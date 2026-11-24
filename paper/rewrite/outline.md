@@ -101,6 +101,17 @@ three-part answer (I3) → what the paper provides and tests (I4).
   versions of the transcript are aligned to the genome by RefSeq and Ensembl. You can take
   those alignments and do the calculations to convert them to genomic coordinates.
 
+  *Informality pass (as dictated, 2026-11-24):* The C. form is typically preferred in clinical
+  genetics because medical scientists find it easier to reason about
+
+  In genomics, we need to convert them to genomic coordinates.
+
+  To do this, we require the reference transcript to be at a specific version.
+
+  The exon coordinates from the transcript genome alignments can be used to convert them to
+  genomic coordinates.
+- **Accepted after informality pass:** HGVS is the clinical standard for describing variants [@DenDunnen2016]. The c. form is typically preferred in clinical genetics because medical scientists find it easier to reason about. In genomics, we need to convert them to genomic coordinates. To do this, we require the reference transcript to be at a specific version. These versions of the transcript are aligned to the genome by RefSeq and Ensembl. The exon coordinates from the transcript genome alignments can be used to convert them to genomic coordinates.
+
 ### I1b. Human-entered HGVS is often broken
 
 - **Job:** The second problem, the strings themselves. This sets up cleaning.

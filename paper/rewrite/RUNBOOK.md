@@ -93,6 +93,17 @@ The detail of Methods was moved to Supplementary Methods for the same reason.
   **Results in progress.** R1a is accepted in `outline.md` (not yet copied into
   `results.md`; that happens when all of Results is done). **Next: present R1b** (alignment
   gaps, VEP), then R2.1 onwards.
+- **Informality pass: started, more to do later.** The written text keeps spoken register
+  ("you", contractions, "So"/"And"/"But" openers, "a bit of", "many, many"). Claude lists the
+  informal sentences with the reason, he re-dictates them, and they are swapped in by cutting
+  only. Done so far: the four informal I1a sentences (2026-11-24). He wants to keep the conversational
+  I1b opener ("One of the surprising things we've seen"). Still to do: the rest of the
+  Introduction (I2a "a bit of a standard"; I2b "great resource", "Firstly", "quite a bit of";
+  I3 "many, many years", "So one of the great problems", "all kinds of", the spoken
+  three-problem list, "So what we did then"; I4 "you can load it very rapidly", "a lot of")
+  and Methods ("you" throughout M3 to M5, contractions, "seq fetcher", "some troubles",
+  "things"). Do another pass over Results and the Discussion once they are written. After the
+  passes he prints the paper and edits it by hand.
 - **Rest of Results, Discussion, Abstract: not started.** Their outline entries describe the target
   structure, including moves not yet made in the files. The biggest is that the
   LOVD/VariantValidator/Mutalyzer numbers move from the Discussion into Results R4.6. Make
