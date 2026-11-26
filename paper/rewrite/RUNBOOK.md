@@ -100,10 +100,12 @@ The detail of Methods was moved to Supplementary Methods for the same reason.
   Supplementary Methods, as "... (detail)" subsections, which stay AI text for now, to be
   lightly edited later. Some of it overlaps the older supplementary subsections, which needs
   tidying.
-  **Results in progress.** R1a is accepted in `outline.md` (not yet copied into
-  `results.md`; that happens when all of Results is done). **Next: present R1b** (alignment
-  gaps, VEP), then R2.1 onwards.
-- **Informality pass: in progress.** The written text keeps spoken register ("you",
+  **Results in progress.** Restructured on 2026-11-26 to 7 paragraphs, each with one central
+  result about cdot (see "Restructure" under Results in `outline.md`, which also lists what
+  moves to a new Supplementary Results section). R1 (coverage, the old R1a) is accepted but
+  not yet copied into `results.md`; that happens when all of Results is done. R1b was cut.
+  **Next: present R2** (ClinVar correctness), then R3 to R7.
+- **Informality pass: Introduction and Methods done.** The written text keeps spoken register ("you",
   contractions, "So"/"And"/"But" openers, "a bit of", "many, many"). Claude gives three
   informal sentences at a time with the reason, he re-dictates them, and they are swapped in
   by cutting only. He has approved small mechanical fixes on top (deleting a word, "their" →
@@ -117,9 +119,9 @@ The detail of Methods was moved to Supplementary Methods for the same reason.
     ("cleaning … collecting … and conversion"); I4 "server" twice.
   - Do another pass over Results and the Discussion once they are written. After the passes
     he prints the paper and edits it by hand.
-- **Rest of Results, Discussion, Abstract: not started.** Their outline entries describe the target
+- **Discussion, Abstract: not started.** Their outline entries describe the target
   structure, including moves not yet made in the files. The biggest is that the
-  LOVD/VariantValidator/Mutalyzer numbers move from the Discussion into Results R4.6. Make
+  LOVD/VariantValidator/Mutalyzer numbers move from the Discussion into Results R6. Make
   each move when that section's accepted text goes in. Do the Abstract last.
 - **Figure caption, table captions, supplement:** optional, later.
 

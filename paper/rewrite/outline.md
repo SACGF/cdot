@@ -67,6 +67,9 @@ Listed so you can veto any of them.
     ends on the design principle (safe cleaning automatic, heuristics opt-in) rather than on a
     caveat. The Ensembl REST and TARK asides are dropped, since TARK is already in Methods.
 11. **Abstract.** Add a cleaning result.
+12. **Results restructure (2026-11-26).** Results cut from 20 paragraphs to 7, one central
+    result about cdot each. R1b cut. Details not about cdot move to a new Supplementary
+    Results section. See "Restructure" under Results.
 
 ---
 
@@ -805,9 +808,9 @@ Facts and claims checks travel with their text (`sources.*`, `benchmark.n_*`,
 
 # Results
 
-**Flow:** coverage (R1) → accuracy on current and historical ClinVar strings, plus Shariant
-(R2) → speed (R3) → cleaning, and how other tools compare (R4) → is version substitution safe
-(R5).
+**Flow:** coverage (R1) → correctness on ClinVar (R2) → old transcript versions in submitted
+strings and Shariant (R3) → speed (R4) → cleaning (R5) → other tools (R6) → version
+substitution, risk and check (R7).
 
 ### R1a. Transcript coverage
 
@@ -856,312 +859,173 @@ Facts and claims checks travel with their text (`sources.*`, `benchmark.n_*`,
   sentence from R1 in `results.md`. The `VepHgvsGaps` bib entry can stay (unused entries do
   not render).
 
-### R2.1. Current-version ClinVar: parity on RefSeq, Ensembl only in cdot
+### Restructure (agreed 2026-11-26)
 
-- **Job:** On current versions, cdot equals UTA for RefSeq, and only cdot does Ensembl.
-- **Opens with:** compared against a local UTA (release N), current versions first.
-- **Lands on:** UTA can't resolve Ensembl at all (X% vs X%). Note that the aggregate isn't
-  reported because the sets are Ensembl-enriched; put that mid-paragraph or as a clause.
+Each paragraph has one central result about cdot (see the runbook). Results goes from 20
+paragraphs to 7: R1 (coverage, accepted above as R1a), then R2 to R7 below. The "interesting
+things we found" that are not about cdot move to a new **Supplementary Results** section in
+`supplementary.md`, and the main text points to it. Make each move when Results goes in.
+
+**Moving to Supplementary Results** (old entry → what moves; the old wording is in
+`results.md` until then):
+
+- Old R2.1: the current-version check method (UTA rate is membership of the exact
+  accession.version in its GRCh38 set, the live database agrees; the pair sets are
+  Ensembl-enriched so no aggregate is reported) and RefSeq parity on 500 pairs (100% vs
+  100%). Its Ensembl number stays in R2.
+- Old R2.2: the residual breakdown (indel representation, paralog/copy-number transcripts,
+  five transcripts with bases unaligned between exons). Already Table S4, so just a pointer.
+- Old R2.3: weighted-by-submission (69.3%), retired transcripts (0.7%), absent from cdot
+  (0.6%), and "no submitted string cites Ensembl".
+- Old R2.4: submitter attribution (88 of 3,028 submitters; one lab has 94.8% of absent
+  citations; 82.9% of absent versions cited by one submitter only; looks like in-house
+  alignments).
+- Old R2.5: the era split (2008-15 / 2016-20 / 2021-26) and the cdot-only / UTA-only counts
+  (562,173 / 87). The era split tracks submission date, not transcript-version age, and most
+  of the gain is in 2021-26 submissions that cite old versions.
+- Old R2.6: the submitted-corpus residual (0.7%; 17,667 refused substitutions, 546 drift).
+  Already Table S8.
+- Old R2.7: the Shariant breakdown (1,654 of 3,731 transcripts cited at more than one version;
+  cdot-only 98.6% old RefSeq versions, 1.3% Ensembl; no ground truth). The headline stays in
+  R3 as one sentence.
+- Old R3.2: the hot/cold cache comparison. **Delete** rather than move.
+- Old R4.2: the fix-type walkthrough. Table 2 stays in the main text; only the dropped-prefix
+  sentence stays in R5.
+- Old R4.3: the cleaning ceiling (887 queries, 2.7%: 63% incomplete, 28% fixable, 9% grammar
+  gap; 81 non-HGVS excluded). Already Table S6, so just a pointer.
+- Old R4.4: "database submissions fail by version age, typed input by formatting" (1,468
+  repaired on the submitted corpus, 0 regressions). Moves to **Discussion D1**, not the
+  supplement.
+- Old R4.5: the injection control as a no-regression check. Already Table S5. R6 introduces
+  the injected corpus.
+- Old R5.2: whole-CDS vs partial drift, and the 5'→3' decline. Already Figure S1.
+- Old R5.3: drift is concentrated (5.5% of RefSeq accessions ever drift; the top 5% hold 92.7%
+  of drifting pairs).
+
+### R2. cdot reproduces ClinVar's coordinates
+
+- **One-line result:** across every c.HGVS in ClinVar, cdot reproduces ClinVar's own genomic
+  coordinate for 99.95% of the variants it resolves.
+- **Opens with:** every c.HGVS in ClinVar's variant_summary ({{ clinvar_vcf.n_pairs }} =
+  4,583,798 pairs, essentially all RefSeq), scored against ClinVar's VCF coordinate.
+- **Lands on:** the residual is small and listed in Table S4 (one clause), or the Ensembl
+  clause.
 - **Beats:**
-  1. Local UTA release N. Current-version check first, historical next.
-  2. N NM_ + N ENST pairs [@Landrum2025], FASTA sequence so no Ensembl pair is lost to
-     SeqRepo.
-  3. UTA rate = membership of the exact accession.version in its GRCh38 set (the live database
-     agrees).
-  4. RefSeq: parity, X% vs X%.
-  5. Ensembl: UTA X% vs cdot X%.
-- **Must keep:** `clinvar_submitted._prov.tools.uta`, `clinvar.n_refseq`, `clinvar.n_ensembl`,
-  `clinvar.cdot_refseq_pct`, `clinvar.uta_refseq_pct`, `clinvar.uta_ensembl_pct`,
-  `clinvar.cdot_ensembl_pct`; `[@Landrum2025]`. *Checked:* "no Ensembl pair is dropped", "On
-  RefSeq the two backends are at parity", "UTA stores no Ensembl alignments at all".
+  1. 99.46% resolve (`clinvar_vcf.resolved_pct`), 99.954% of those match
+     (`clinvar_vcf.matched_of_resolved_pct`). Residual 0.05% (`clinvar_vcf.incorrect_pct`),
+     Table S4.
+  2. Ensembl, which UTA can't do at all: of 818 Ensembl pairs (`clinvar.n_ensembl`), cdot
+     resolves 99.8% (`clinvar.cdot_ensembl_pct`), UTA 0% (`clinvar.uta_ensembl_pct`).
+     [@Landrum2025].
+- **Must keep:** the facts above; `[@Landrum2025]`. *Checked:* "effectively all RefSeq" (an
+  [[ok]]), "UTA stores no Ensembl alignments" (`clinvar.uta_ensembl_pct == 0`).
 - **Your version:**
 
-### R2.2. Full-scale ClinVar: almost every resolved variant matches
+### R3. Labs cite old transcript versions, which cdot has and UTA doesn't
 
-- **Job:** Correctness at scale.
-- **Opens with:** every c.HGVS in variant_summary (N pairs, essentially all RefSeq).
-- **Lands on:** what the small residual is (Table S4).
-- **Beats:** X% resolve, and X% of those match ClinVar's VCF coordinate. Residual X%: mostly
-  indel representation and paralog/copy-number transcripts. Plus N transcripts with unaligned
-  bases between exons (Table S3), where cdot usually agrees with UTA and ClinVar differs.
-- **Must keep:** `clinvar_vcf.n_pairs`, `clinvar_vcf.resolved_pct`,
-  `clinvar_vcf.matched_of_resolved_pct`, `clinvar_vcf.incorrect_pct`,
-  `clinvar_vcf_residual.unaligned_between_exons_transcripts`. *Checked:* "resolving every
-  c.HGVS in ClinVar's variant_summary … effectively all RefSeq", "is dominated by
-  indel-representation differences and by paralog and copy-number transcripts", "map to more
-  than one genomic locus".
-- **Your version:**
-
-### R2.3. What labs actually submitted is mostly old
-
-- **Job:** Those checks only test current versions. Submitted strings are the real record, and
-  they're historical.
-- **Opens with:** both corpora so far use ClinVar's recomputed names at the current version,
-  so they are a ceiling.
-- **Lands on:** cdot holds X% of the superseded versions, and only X% of cited versions are
-  missing.
+- **One-line result:** most transcript versions labs submitted to ClinVar are superseded, so
+  cdot resolves 99.3% of submitted strings against 81.9% for UTA. The same holds on Shariant's
+  clinical data.
+- **Opens with:** the corpus in R2 uses ClinVar's recomputed names, always at the current
+  version. The strings labs actually submitted (from the VCV XML, Methods) are the historical
+  record: 3,245,277 pairs (`clinvar_submitted.full_n`).
+- **Lands on:** Shariant, one sentence: 36,010 strings (`historical.n_lines`) from clinical
+  labs [@Tudini2022], cdot 99.6% vs UTA 93.7% (`historical.cdot_resolved_pct`,
+  `historical.uta_resolved_pct`). Details in the supplement.
 - **Beats:**
-  1. Ceiling problem.
-  2. Second corpus: submitted (SCV) strings joined to the VCF coordinate (N pairs from N
-     expressions; Methods).
-  3. All RefSeq: no submitted string cites Ensembl.
-  4. X% cite a no-longer-current version (X% weighted by submission). X% cite a transcript no
-     longer annotated at any version.
-  5. cdot holds X% of those. Only X% of cited versions are absent.
-- **Must keep:** `clinvar_submitted.n_unique_pairs`, `clinvar_submitted.n_scv_tx_strings`,
-  `clinvar_submitted.version_not_current_pct`,
-  `clinvar_submitted.scv_weighted_not_current_pct`, `clinvar_submitted.base_retired_pct`,
-  `clinvar_submitted.not_current_in_cdot_pct`, `clinvar_submitted.absent_cdot_pct`.
-  *Checked:* "not one submitted string cites an Ensembl transcript", "only … of cited versions
-  are absent from its GRCh38 data".
+  1. 74.7% cite a version that is no longer current (`clinvar_submitted.version_not_current_pct`),
+     and cdot holds 99.3% of those (`clinvar_submitted.not_current_in_cdot_pct`).
+  2. cdot 99.3% vs UTA 81.9% against a local UTA release
+     (`clinvar_submitted._prov.tools.uta`), because UTA has no alignment for 17.9% of the cited
+     versions (`clinvar_submitted.uta_no_data_pct`).
+  3. Shariant sentence.
+- **Must keep:** the facts above; `[@Tudini2022]`. *Checked:* cdot "versus" UTA on submitted
+  pairs, and on Shariant.
+- **Watch:** 99.3% appears twice (versions held, and strings resolved). Say them so they
+  aren't confused.
 - **Your version:**
 
-### R2.4. The missing versions come from a few labs
+### R4. cdot is faster than UTA
 
-- **Job:** The missing versions were never publicly released, which points to substitution as
-  the fix.
-- **Opens with:** cdot ingests every release, so a missing version should be one never
-  released.
-- **Lands on:** these are what version substitution (R5) is for.
-- **Beats:** only N of N submitters ever cite one. One lab has X% of the absent citations. X%
-  of the N absent versions are cited by one submitter alone. This looks like labs aligning
-  their own transcripts.
-- **Must keep:** the five `submitter_attribution.*` facts. *Checked:* "Because cdot ingests
-  every RefSeq and Ensembl annotation release, … submitters only".
-- **Your version:**
-
-### R2.5. On submitted strings, cdot beats UTA, mostly on old submissions
-
-- **Job:** The headline accuracy result.
-- **Opens with:** cdot X% vs UTA X% on all N submitted pairs.
-- **Lands on:** the era pattern: the gap is largest on the oldest submissions.
+- **One-line result:** cdot is about 4× faster than UTA locally and about 830× faster
+  remotely; all of ClinVar takes 2 hours, where the public UTA would take over a year.
+- **Opens with:** Table 1, same 500 pairs, engine and sequence layer held constant.
+- **Lands on:** all of ClinVar: 4,583,798 pairs in about 121 minutes
+  (`benchmark_fullscale.wall_min`); public UTA extrapolates to over a year
+  (`benchmark_fullscale.uta_remote_days` = 408 days).
 - **Beats:**
-  1. cdot X% vs UTA X%.
-  2. The RefSeq gap that was zero on current versions opens to N points: N cdot-only, N
-     UTA-only, because UTA lacks X% of the cited versions.
-  3. By era (2008-15 / 2016-20 / 2021-26): cdot X/X/X, UTA X/X/X. UTA is lowest on the oldest,
-     and lower on the newest than the middle.
-- **Must keep:** `clinvar_submitted.full_n`, `clinvar_submitted.cdot_resolved_pct`,
-  `clinvar_submitted.uta_resolved_pct`, `clinvar.cdot_refseq_pct`,
-  `clinvar_submitted.cdot_only_pct`, `clinvar_submitted.cdot_only`,
-  `clinvar_submitted.uta_only`, `clinvar_submitted.uta_no_data_pct`, the six
-  `clinvar_submitted.era_*`. *Checked:* "reproducing ClinVar's VCF coordinate for … versus …
-  for the same locally loaded UTA", "The RefSeq gap invisible at the current-version ceiling
-  (both backends ...)", "because UTA holds no GRCh38 alignment for", "lowest on the oldest
-  submissions ... and lower on the newest than on 2016-2020".
-- **Note:** six era numbers in one sentence is heavy. Consider giving only the oldest and
-  newest in the text.
+  1. Local: cdot JSON 741 HGVS/s vs UTA 187 (`benchmark.uta_local_tps`, about a quarter).
+  2. Remote: cdot REST 108 vs public UTA 0.13, about 830× (`benchmark.cdot_rest_vs_uta_remote_ratio`).
+  3. After one `prefetch()`, REST is within 0.7% of local JSON
+     (`benchmark.rest_prefetch_vs_local_diff_pct`).
+  4. GRCh38 file loads in about 5 s (`benchmark.grch38_load_time_s`), then all of ClinVar.
+- **Must keep:** the facts above. *Checked:* "about a quarter of local-JSON throughput".
+- **Overlap:** I2b already gives UTA remote at 0.13 HGVS/s. Don't repeat it, use the ratio.
 - **Your version:**
 
-### R2.6. What is left on the submitted corpus
+### R5. Cleaning makes most failing real-world queries usable [private data]
 
-- **Job:** The residual is about version history.
-- **Opens with:** X% (N of N) still fail after cleaning and substitution.
-- **Lands on:** the rest (bad position or base, grammar, accession absent; Table S8).
-- **Beats:** N cite a missing version where substitution declines (safety can't be verified).
-  N resolve via the cited version to a coordinate that differs from ClinVar's current one.
-  Then the rest.
-- **Must keep:** `clinvar_submitted.residual_pct`, `clinvar_submitted.residual_n`,
-  `clinvar_submitted.full_n`, `clinvar_submitted_residual.version_refused`,
-  `clinvar_submitted_residual.coordinate_drift`. *Checked:* "dominated by historical-version
-  effects: … or an accession absent entirely".
-- **Your version:**
-
-### R2.7. Shariant [private data]
-
-- **Job:** The same gap on the clinical data that motivated cdot.
-- **Opens with:** the same gap holds on Shariant.
-- **Lands on:** what the cdot-only strings are (X% old RefSeq versions, X% Ensembl).
+- **One-line result:** on real search-box queries, cleaning makes 67% of the failing strings
+  parseable (91.7% → 97.3%) with no regressions.
+- **Opens with:** 32,671 real queries (`cleaning_corpus.corpus_n`) from VariantGrid-based
+  platforms [@VariantGrid], whatever people pasted or typed.
+- **Lands on:** the rarest fix, restoring a dropped accession prefix, needs the transcript
+  data, which a string-only checker doesn't have (Table 2). Or the Table S6 pointer for what's
+  left.
 - **Beats:**
-  1. N unique strings imported into Shariant [@Tudini2022] (N of N transcripts cited at more
-     than one version).
-  2. Only the transcript layer swapped: cdot X% vs UTA X%.
-  3. No ground truth, so this is resolution rate only.
-  4. Cdot-only X%: X% RefSeq versions UTA lacks, X% Ensembl.
-- **Must keep:** the eight `historical.*` facts; `[@Tudini2022]`. *Checked:* "With only the
-  transcript-data layer swapped … versus … for UTA", "over many years ( … of the … distinct
-  transcripts are cited at more than", "UTA holds no GRCh38 alignment and".
+  1. The corpus, and briefly what the damage looks like (Word/PDF whitespace, casing,
+     punctuation).
+  2. 91.7% → 97.3% (`cleaning_corpus.as_submitted_pct`, `after_pct`), 1,828 rescued
+     (`rescued`), 67% of failures (`rescued_share_pct`), 0 regressions (`regressions`).
+  3. Table 2: punctuation and whitespace dominate. The dropped-prefix point.
+  4. Optional clause: what still fails is mostly incomplete input (Table S6).
+- **Must keep:** the facts above; `[@VariantGrid]`. *Checked:* "rescued, about … of those that
+  failed".
 - **Your version:**
 
-### R3.0. Table 1 caption (optional)
+### R6. Other tools repair only part of the same errors
 
-- **Must keep:** all `benchmark.*` in table and caption. *Checked:* "HGVS/s over … timed
-  passes".
-
-### R3.1. cdot is faster than UTA, locally and remotely
-
-- **Job:** Interpret Table 1.
-- **Opens with:** in both like-for-like comparisons cdot is faster.
-- **Lands on:** after one prefetch, REST is as fast as local JSON, because both are then
-  limited by the engine and sequence layer.
-- **Beats:**
-  1. Local: UTA N HGVS/s, about a quarter of local JSON (several SQL queries per lookup vs one
-     JSON object).
-  2. Remote: cdot REST (no prefetch) is orders of magnitude faster than public UTA, which pays
-     wide-area round trips on every lookup.
-  3. One `prefetch()` batch (under a second, untimed) brings REST within X% of local JSON.
-     Both are then limited by the shared engine and sequence layer.
-- **Must keep:** `benchmark.uta_local_tps`, `benchmark.cdot_rest_vs_uta_remote_ratio`,
-  `benchmark.rest_prefetch_vs_local_diff_pct`. *Checked:* "about a quarter of local-JSON
-  throughput".
-- **Your version:**
-
-### R3.2. All of ClinVar in minutes
-
-- **Job:** It scales.
-- **Opens with:** a GRCh38 file loads in ~N s, and one process then resolves all of ClinVar.
-- **Lands on:** remote UTA would take about N years.
-- **Beats:** N pairs in ~N min, X% resolved. N hot repeats: N HGVS/s (range), within X% of
-  cold (N), so the cache isn't the limit. Remote UTA extrapolates to ~N years.
-- **Must keep:** `benchmark.grch38_load_time_s`, all `benchmark_fullscale.*`.
-- **Your version:**
-
-### R4.1. Cleaning rescues a large share of real queries [private data]
-
-- **Job:** The main cleaning result.
-- **Opens with:** production search-box queries (N) from VariantGrid-based platforms.
-- **Lands on:** parseable rose from X% to X%, N rescued (~X% of failures), zero regressions.
-- **Beats:**
-  1. N real queries [@VariantGrid] matching a broad HGVS regex.
-  2. What people pasted or typed, with damage from the route: Word/PDF whitespace and odd
-     characters, casing, punctuation, trailing protein.
-  3. The headline numbers.
-- **Must keep:** `cleaning_corpus.corpus_n`, `cleaning_corpus.as_submitted_pct`,
-  `cleaning_corpus.after_pct`, `cleaning_corpus.rescued`,
-  `cleaning_corpus.rescued_share_pct`, `cleaning_corpus.regressions`; `[@VariantGrid]`.
-  *Checked:* "failed as-submitted) with … regressions", "strings rescued, about … of those
-  that failed as-submitted".
-- **Your version:**
-
-### R4.2. Which fixes did the work (Table 2)
-
-- **Job:** Breakdown by fix type.
-- **Opens with:** punctuation and whitespace dominate (Table 2).
-- **Lands on:** the rarest fix, restoring a dropped prefix, needs local transcript data, which
-  is something a string-only checker can't do.
-- **Beats:** then gene/transcript wrapper and structure rebuilds, then the prefix point.
-- **Must keep:** nothing fact-bound.
-- **Your version:**
-
-### R4.2t. Table 2 caption (optional)
-
-- **Must keep:** `cleaning_corpus.corpus_n`, `cleaning_corpus.rescued`, the include-csv block.
-
-### R4.3. The ceiling of string repair [private data]
-
-- **Job:** What cleaning can't fix.
-- **Opens with:** X% (N) of genuine HGVS-shaped queries still fail, which is the ceiling.
-- **Lands on:** ~X% is valid HGVS the biocommons grammar rejects.
-- **Beats:** N non-HGVS queries (URLs, templates, prose) excluded, as a clause. Of the rest
-  (Table S6): well over half incomplete or missing a reference (can't be invented), about a
-  quarter fixable in principle (future rules), then the grammar gap.
-- **Must keep:** `cleaning_corpus.nonhgvs_n`, `cleaning_corpus.residual_pct`,
-  `cleaning_corpus.residual_n`, `cleaning_corpus.residual_grammar_gap_pct`. *Checked:*
-  "Classified under a fixed decision-tree taxonomy … about a quarter is in principle
-  fixable".
-- **Your version:**
-
-### R4.4. Two corpora, two ways to fail
-
-- **Job:** Tie R2 and R4 together.
-- **Opens with:** the public submitted corpus behaves quite differently.
-- **Lands on:** database submissions fail by version age, typed input fails by formatting.
-- **Beats:** On submitted strings, `fix_hgvs()` repaired only N (N regressions), because they
-  are mostly well-formed. Their failures are old versions (R2.5, R2.6).
-- **Must keep:** `clinvar_submitted.rescued_by_fix`, `clinvar_submitted.regressions`.
-- **Your version:**
-
-### R4.5. Injection control
-
-- **Job:** A reproducible no-regression check.
-- **Opens with:** `inject_and_clean.py` injects each fix category into clean ClinVar strings.
-- **Lands on:** its purpose is the no-regression guarantee. Recovery is in the supplement only,
-  since the test injects the very errors it fixes.
-- **Must keep:** `cleaning.inject_regressions`.
-- **Your version:**
-
-### R4.6. How other tools do on the same cases
-
-- **Job:** Comparison numbers (moved from the Discussion).
-- **Opens with:** the same injected cases were run through LOVD, VariantValidator and
-  Mutalyzer (Methods).
+- **One-line result:** on the same injected errors, LOVD repairs 69%, VariantValidator 54%
+  and Mutalyzer 34% (weighted by the production error mix), and none of them changes a valid
+  input.
+- **Opens with:** the injected corpus: 998 clean ClinVar strings with each cleaning error
+  injected, 3,419 cases (`lovd_comparison.n_cases`), run through LOVD
+  (`lovd_comparison.lovd_version`), VariantValidator and Mutalyzer
+  (`vv_mutalyzer_comparison.service_date`).
 - **Lands on:** no tool falsely corrected a valid input.
 - **Beats:**
-  1. Caveat first: the corpus is `clean_hgvs()`'s own targets, so it recovers all of them by
-     construction. The test is how much of that ground each tool also covers.
-  2. LOVD top-1 (N cases): X% weighted by production error mix (X% unweighted). It matches on
-     single-token errors, not free-text damage or cross-family repairs.
-  3. VariantValidator X%, Mutalyzer X% weighted (Table S5). Each repairs what it can interpret
-     and rejects the rest.
-  4. No tool altered a valid input.
+  1. Caveat early: these are `clean_hgvs()`'s own targets, so it gets 100% by construction.
+     The question is how much of that ground each tool also covers.
+  2. LOVD 69% weighted (34% unweighted), VariantValidator 54%, Mutalyzer 34% (Table S5).
+  3. No false corrections (`lovd_false_corrections`, `vv_false_corrections`,
+     `mut_false_corrections` all 0).
 - **Must keep:** `lovd_comparison.n_cases`, `lovd_comparison.lovd_version`,
   `lovd_comparison.lovd_top1_weighted_pct`, `lovd_comparison.lovd_top1_pct`,
-  `vv_mutalyzer_comparison.vv_weighted_pct`, `vv_mutalyzer_comparison.mut_weighted_pct`.
-  *Checked:* "neither tool altered any valid input", "neither falsely corrected a valid
-  input" (these can merge into one claim).
+  `vv_mutalyzer_comparison.vv_weighted_pct`, `vv_mutalyzer_comparison.mut_weighted_pct`;
+  `[@LovdHgvsChecker]`, `[@Freeman2018]`, `[@Lefter2021]`. *Checked:* "no tool falsely
+  corrected a valid input".
+- **Moves from:** the Discussion (D3/D4 keep only what the numbers mean).
 - **Your version:**
 
-### R5.1. How often version substitution is safe
+### R7. Version substitution: risky without a check, safe with cdot's
 
-- **Job:** Quantify the risk.
-- **Opens with:** substituting a version can move a variant's coordinate, and biocommons/hgvs
-  has no substitution with any provider.
-- **Lands on:** per coding base, a random variant is safe X% (RefSeq) / X% (Ensembl) of the
-  time.
-- **Beats:** consecutive pairs: RefSeq N, X% preserve every coding coordinate. Ensembl N, X%.
-  Then the per-base figures.
-- **Must keep:** `version_stability.refseq_pairs`, `version_stability.refseq_preserving_pct`,
-  `version_stability.ensembl_pairs`, `version_stability.ensembl_preserving_pct`,
-  `version_stability.refseq_pervariant_safety`,
-  `version_stability.ensembl_pervariant_safety`. *Checked:* "preserved every coding".
-- **Your version:**
-
-### R5.2. What kind of drift
-
-- **Job:** When it moves, it's usually all or nothing. The partial case is rare but
-  positional.
-- **Opens with:** when a coordinate moves, it's usually the whole CDS.
-- **Lands on:** in partial drift, risk grows toward the 3' end (Fig S1).
-- **Beats:** whole-CDS drift X%/X% (re-annotation of the coding region). Partial drift, the
-  dangerous case, is rare (X%/X%). It keeps a 5' prefix up to the first change, so preservation
-  falls from X% (5' decile) to X% (3') for RefSeq (X% to X% Ensembl).
-- **Must keep:** `version_stability.refseq_full_drift_pct`,
-  `version_stability.ensembl_full_drift_pct`,
-  `version_stability.refseq_partial_drift_pct`,
-  `version_stability.ensembl_partial_drift_pct`, the four `positional_drift.*_decile*_pct`.
-  *Checked:* "the most dangerous case, a partial substitution … is rare", "Within that tail the
-  risk is positional: … so preservation falls".
-- **Your version:**
-
-### R5.3. Drift is concentrated
-
-- **Job:** The risky transcripts are a short list.
-- **Opens with:** few accessions ever drift.
-- **Lands on:** short and identifiable enough to flag or blocklist.
-- **Beats:** only X% of RefSeq (X% Ensembl) accessions ever drift. The top 5% hold X% (X%) of
-  drifting pairs.
-- **Must keep:** `version_stability.refseq_accessions_drift_pct`,
-  `version_stability.ensembl_accessions_drift_pct`,
-  `version_stability.refseq_top5_drift_share_pct`,
-  `version_stability.ensembl_top5_drift_share_pct`. *Checked:* "Drift is also concentrated:
-  only … so the risky transcripts form a short, identifiable list", "the 5% of accessions with
-  the most drifting pairs".
-- **Your version:**
-
-### R5.4. The safety check works across builds and makes no errors on ClinVar
-
-- **Job:** Validate the check from M4.
-- **Opens with:** the check works even when the version was never aligned to the target build.
-- **Lands on:** every accepted substitution that resolves gives the same coordinate (0
-  changes).
-- **Beats:** structure is identical across builds for X% RefSeq, X% Ensembl versions. On
-  ClinVar: N accepted substitutions, N resolve, N coordinate changes.
-- **Must keep:** `version_stability.refseq_struct_portable_pct`,
-  `version_stability.ensembl_struct_portable_pct`,
-  `version_safety_validation.n_safe_substitutions`,
-  `version_safety_validation.n_resolved_under_w`,
-  `version_safety_validation.n_coordinate_changes`. *Checked:* "was never aligned", "every one
-  that resolves under the substitute".
+- **One-line result:** swapping to a neighbouring version moves coordinates for about 4% of
+  RefSeq version pairs, and cdot's structure check accepted 8.4 million ClinVar substitutions
+  with no coordinate changes.
+- **Opens with:** the risk: of 19,393 consecutive RefSeq version pairs
+  (`version_stability.refseq_pairs`), 96.0% keep every coding coordinate
+  (`refseq_preserving_pct`); Ensembl 98.0% of 12,377.
+- **Lands on:** 8,411,749 accepted substitutions (`version_safety_validation.n_safe_substitutions`),
+  0 coordinate changes (`n_coordinate_changes`).
+- **Beats:**
+  1. The risk (one measure, per pair; the per-base figures go to the supplement).
+  2. The check works across builds: structure identical on GRCh37/GRCh38/T2T for 99.4% of
+     RefSeq and 100% of Ensembl versions (`refseq_struct_portable_pct`,
+     `ensembl_struct_portable_pct`).
+  3. On ClinVar: 8,411,749 accepted, 8,411,000 resolve under the substitute
+     (`n_resolved_under_w`), 0 coordinate changes. Figure S1 pointer for how drift happens.
+- **Must keep:** the facts above. *Checked:* "every one that resolves under the substitute",
+  "was never aligned".
 - **Your version:**
 
 ---
@@ -1180,9 +1044,13 @@ design principle to take away (D6).
 - **Lands on:** it is a general source of versioned alignments, not tied to Python or
   biocommons/hgvs. This leads into D2.
 - **Beats:**
-  1. Historical strings: the gain is in old versions (R2).
-  2. Speed: fast enough locally and over REST that no database is needed (R3).
-  3. Cleaning: rescues typed input without breaking valid input (R4).
+  1. Historical strings: the gain is in old transcript versions (R3).
+  2. Speed: fast enough locally and over REST that no database is needed (R4).
+  3. Cleaning: rescues typed input without breaking valid input (R5). Moved in from old R4.4:
+     the two corpora fail differently. Database submissions are well-formed and fail on old
+     transcript versions (cleaning repaired only 1,468 submitted strings, 0 regressions,
+     `clinvar_submitted.rescued_by_fix`, `clinvar_submitted.regressions`); typed input fails
+     on formatting.
   4. The data itself: RefSeq + Ensembl, three builds, full history, JSON readable from any
      language. The per-release JSON can replace a GTF/GFF, and REST serves thin clients.
 - **Must keep:** no facts needed. Refer back to results rather than repeating numbers.
