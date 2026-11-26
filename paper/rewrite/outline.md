@@ -673,6 +673,17 @@ Facts and claims checks travel with their text (`sources.*`, `benchmark.n_*`,
   *Corrections (as dictated):* Just cut what you think we can.
 
   *Edits after acceptance:* cut "We also need to be able to load the sequences."
+
+  *Informality pass, M5 (as dictated, 2026-11-26):* "batches them into" [replaces "batches
+  things into"]
+
+  biocommons uses the SeqFetcher interface for sequence retrieval and provides a SeqRepo
+  implementation [@Hart2020]. cdot implement a SeqFetcher (FastaSeqFetcher) that can load a
+  local FASTA file, which pulls out the exon sequences and pastes them together to make a
+  transcript. ["implement" → "implements"]
+
+  genome, but is not guaranteed to be safe for RefSeq [replaces "genome, but might have some
+  troubles with RefSeq"]
 - **Accepted (your words, cut and joined only):**
 
   cdot implements a biocommons HGVS data provider, so it can be swapped in to load the cdot

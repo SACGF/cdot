@@ -58,13 +58,14 @@ changed string and a warning that the coordinates may have moved.
 cdot implements a biocommons HGVS data provider, so it can be swapped in to load the cdot
 transcript versions (Figure 1B). We provide three providers: `JSONDataProvider`, which
 loads the gzipped JSON into memory; `RESTDataProvider`, which makes network calls to
-cdotlib.org (it also has a prefetch, which batches things into more efficient calls); and
+cdotlib.org (it also has a prefetch, which batches them into more efficient calls); and
 `EnsemblTarkDataProvider`, which reads from Ensembl's official transcript archive, TARK.
-biocommons provides SeqRepo [@Hart2020], but we also make a seq fetcher
-(`FastaSeqFetcher`) that can load a local FASTA file, which pulls out the exon sequences
-and pastes them together to make a transcript. This works perfectly for Ensembl
-transcripts, which exactly match the genome, but might have some troubles with RefSeq,
-where the transcript reference and the genome reference can have gaps and mismatches.
+biocommons uses the `SeqFetcher` interface for sequence retrieval and provides a SeqRepo
+implementation [@Hart2020]. cdot implements a `SeqFetcher` (`FastaSeqFetcher`) that can
+load a local FASTA file, which pulls out the exon sequences and pastes them together to
+make a transcript. This works perfectly for Ensembl transcripts, which exactly match the
+genome, but is not guaranteed to be safe for RefSeq, where the transcript reference and the
+genome reference can have gaps and mismatches.
 We've also made a chained seq fetcher (`ChainedSeqFetcher`), which can try several data
 sources and then fall back on others. You can use this to take the SeqRepo sequences when
 available and then fall back on the other sources.
