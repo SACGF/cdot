@@ -53,9 +53,9 @@ Read it, then `outline.md` in this directory, before doing anything.
    rewrite its claims sidecar to match the new sentences, and make the checks pass:
    ```
    .venv/bin/snakemake -s paper/Snakefile --cores 1        # refresh output/facts
-   .venv/bin/vibepaper lint --config paper/paper.toml --numbers --unused
-   .venv/bin/vibepaper check --config paper/paper.toml
-   .venv/bin/vibepaper wordcount --config paper/paper.toml
+   ~/.local/bin/vibepaper lint --config paper/paper.toml --numbers --unused
+   ~/.local/bin/vibepaper check --config paper/paper.toml
+   ~/.local/bin/vibepaper wordcount --config paper/paper.toml
    ```
    A fact that is no longer cited either goes under `[lint] unused_ok` in `paper.toml` or is
    removed. Keep facts that are used elsewhere.
@@ -74,7 +74,7 @@ measured by `paper/scripts/compute_coverage.py` from the uta_20241220 dumps, as
 ## Word budget
 
 Bioinformatics allows about 5,000 words of main text. After the Introduction and Methods
-rewrites, the main text is 4,898 words (Methods grew from about 500 to 966). The Introduction grew from about 440 words to
+rewrites, the main text was 4,898 words (4,815 after the Methods informality pass) (Methods grew from about 500 to 966). The Introduction grew from about 440 words to
 about 780. Results and the Discussion must come down as they are rewritten: keep an eye on
 `vibepaper wordcount`.
 The detail of Methods was moved to Supplementary Methods for the same reason.
@@ -99,16 +99,9 @@ The detail of Methods was moved to Supplementary Methods for the same reason.
   by cutting only. He has approved small mechanical fixes on top (deleting a word, "their" →
   "its", expanding a contraction, cutting a repeated sentence, cutting ", it" to fix a
   dangling modifier). Dictations are recorded in `outline.md` under each entry.
-  - **Done:** the whole Introduction, and Methods M3 (string cleaning) and the first half of
-    M4. He keeps the conversational I1b opener ("One of the surprising things we've seen").
-  - **Next, M4:** "…for the genome build you request."; "It's safe to swap only if the
-    structures match." (also repeats the "Checks are made…" sentence, so it could be cut);
-    "If the version substitution doesn't match, by default we just leave the string
-    unchanged…"; "You can override this…".
-  - **Then M5:** "(it also has a prefetch, which batches things…)"; "we also make a seq
-    fetcher"; "might have some troubles with RefSeq"; "We've also made a chained seq
-    fetcher"; "You can use this to take the SeqRepo sequences…". M1, M2 and M6 are already
-    fairly formal; skim them.
+  - **Done:** the whole Introduction and the whole of Methods (M3 to M6; M1 and M2 were
+    already formal). He keeps the conversational I1b opener ("One of the surprising things
+    we've seen").
   - **Left for his paper edit (noted, not fixed):** I1a "convert them" after the singular
     "The c. form"; I3 "went back many years" then "many years old"; I3 list not parallel
     ("cleaning … collecting … and conversion"); I4 "server" twice.
@@ -119,6 +112,15 @@ The detail of Methods was moved to Supplementary Methods for the same reason.
   LOVD/VariantValidator/Mutalyzer numbers move from the Discussion into Results R4.6. Make
   each move when that section's accepted text goes in. Do the Abstract last.
 - **Figure caption, table captions, supplement:** optional, later.
+
+## Tooling notes
+
+- `.venv/bin/vibepaper` is a stale 0.8.0 with no `lint`/`check`/`wordcount`, so the
+  Snakefile `quick` rule copies the facts and then fails at its build step. Run the checks
+  with `~/.local/bin/vibepaper` (0.12.0) until the venv is reinstalled at the version
+  `pyproject.toml` pins.
+- Don't run `vibepaper wrap` on a section: it splits long lines without rejoining short
+  ones, which leaves ragged one-word lines. Wrap edits by hand.
 
 ## Open questions for the author
 

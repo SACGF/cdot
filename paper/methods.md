@@ -66,9 +66,9 @@ load a local FASTA file, which pulls out the exon sequences and pastes them toge
 make a transcript. This works perfectly for Ensembl transcripts, which exactly match the
 genome, but is not guaranteed to be safe for RefSeq, where the transcript reference and the
 genome reference can have gaps and mismatches.
-We've also made a chained seq fetcher (`ChainedSeqFetcher`), which can try several data
-sources and then fall back on others. You can use this to take the SeqRepo sequences when
-available and then fall back on the other sources.
+We also provide `ChainedSeqFetcher`, which can be configured with other
+`SeqFetcher`s and take the first that succeeds. This can be used to prefer SeqRepo sequences
+when available, and fall back on the FASTA file.
 
 ## Evaluation
 
@@ -79,9 +79,9 @@ data, which contain the original c.HGVS with the transcript versions provided by
 submission time. We score converting c.HGVS to genomic coordinates against ClinVar's own
 VCF coordinate (CHROM/POS/REF/ALT). For a performance benchmark, we run
 {{ benchmark.n_pairs | int }} ClinVar pairs through the cdot local JSON, REST and the UTA
-local. For the UTA remote, we run only {{ benchmark.uta_remote_n | int }} pairs because it
-is slow. The HGVS engine and sequence source are held consistent between runs. We use two
-data sets to test cleaning functionality: our own production search bar collection, which
+local. We ran only {{ benchmark.uta_remote_n | int }} pairs on the public UTA instance
+for performance reasons. The HGVS engine and sequence source are held consistent between
+runs. We use two data sets to test cleaning functionality: our own production search bar collection, which
 is {{ cleaning_corpus.corpus_n | commas }} queries and private data, and the
 {{ cleaning.inject_sample_size | commas }} clean public ClinVar strings with synthetically
 injected errors, {{ lovd_comparison.n_cases | commas }} cases in total. The synthetic data

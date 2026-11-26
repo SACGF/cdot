@@ -684,6 +684,15 @@ Facts and claims checks travel with their text (`sources.*`, `benchmark.n_*`,
 
   genome, but is not guaranteed to be safe for RefSeq [replaces "genome, but might have some
   troubles with RefSeq"]
+
+  We also provide ChainedSeqFetcher which can configured with other SeqFetchers and take the
+  first that succeeds. This can be used to prefer SeqRepo sequences when available, and fall
+  back on the Fasta file. ["can configured" → "can be configured"; replaces the last two
+  sentences]
+
+  *Informality pass, M6 (as dictated, 2026-11-26):* We ran only { benchmark } pairs on the
+  public UTA instance for performance reasons [replaces "For the UTA remote, we run only N
+  pairs because it is slow."]
 - **Accepted (your words, cut and joined only):**
 
   cdot implements a biocommons HGVS data provider, so it can be swapped in to load the cdot
