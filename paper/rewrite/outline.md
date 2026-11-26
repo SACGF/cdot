@@ -614,6 +614,18 @@ Facts and claims checks travel with their text (`sources.*`, `benchmark.n_*`,
   have moves
 
   *Edits after acceptance (author: "Feel free to chop words when you think it makes sense"):* cut "either", the GRCh37/GRCh38 example sentence, and the "two extra conditions" sentence (Supplementary Methods reference moved onto the next sentence).
+
+  *Informality pass, M4 (as dictated, 2026-11-26):* for the requested genome build [replaces
+  "for the genome build you request"]
+
+  The string is left unchanged if the version substitution is unsafe, and a HGVSFix error is
+  returned
+
+  It is possible to override this to return a changed string and a warning that the
+  coordinates may have moved. Feel free to cut repetition if you think it is unecessary
+
+  [Cut, at his go-ahead: "It's safe to swap only if the structures match." (repeats the CDS
+  structure check sentence).]
 - **Accepted (your words, cut and joined only):**
 
   When the requested transcript version isn't available, `fix_hgvs()` can substitute in

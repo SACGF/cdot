@@ -47,12 +47,11 @@ version. This is off by default because it can be wrong. The function accepts a 
 versions then lower, closest or the latest. Checks are made to ensure the substituted
 transcript version has an identical CDS structure: the CDS length plus the length of coding
 exons. This is the same on every genome build, so the two versions can be compared even when
-one of them is not aligned or not available for the genome build you request. It's safe to
-swap only if the structures match. The alignment gaps must also match, and for a UTR
-variant, the UTR lengths must be the same (Supplementary Methods). If the version
-substitution doesn't match, by default we just leave the string unchanged and it returns an
-error `HGVSFix`. You can override this to change the string and return a warning that the
-coordinates may have moved.
+one of them is not aligned or not available for the requested genome build. The alignment
+gaps must also match, and for a UTR variant, the UTR lengths must be the same
+(Supplementary Methods). The string is left unchanged if the version substitution is
+unsafe, and a `HGVSFix` error is returned. It is possible to override this to return a
+changed string and a warning that the coordinates may have moved.
 
 ## Access and client libraries
 
