@@ -1,8 +1,8 @@
-"""Write and read the paper's facts CSVs.
+"""The paper's facts convention: which type each field name implies.
 
-A facts file is vertical (``field,value,type``), so vibepaper checks each value against
-its type when it loads it, and ``pct`` knows a percent from a fraction. The type comes
-from the field name, a convention every script here follows:
+Every script writes its facts with ``FACTS.write(path, facts)``, which writes a vertical
+(``field,value,type``) CSV, so vibepaper checks each value against its type when it loads
+it, and ``pct`` knows a percent from a fraction. The type comes from the field name:
 
     *_pct                       percent (already multiplied by 100)
     *_ratio, *_fold             ratio
@@ -12,17 +12,25 @@ from the field name, a convention every script here follows:
 
 Any other field holding a non-negative integer is a count too (``indel_mismatch``,
 ``refseq_grch38_releases``), unless its name marks a rate or a duration (``*_tps*``,
-``*_s``, ``*_min``, ``*_days``, ``*_pp``). Everything else is written untyped.
+``*_s``, ``*_min``, ``*_max``, ``*_days``, ``*_pp``). Everything else is written untyped.
+A None or NaN value is an error. Read another script's facts with
+``vibepaper.facts.read_facts``.
 """
 
-import csv
 import numbers
 
-from vibepaper.facts import Count, Fraction, Percent, Ratio, Text, write_facts
-
+from vibepaper.facts import Count, FactsWriter, Fraction, Percent, Ratio, Text
 
 # Name parts that mark a measurement rather than a count, so an integer value stays untyped.
 NOT_COUNT_SUFFIXES = ("_s", "_min", "_max", "_days", "_pp")
+
+
+class PaperFactsWriter(FactsWriter):
+    def type_for(self, field, value=None):
+        cls = super().type_for(field, value)
+        if cls is None and is_count_value(field, value):
+            return Count
+        return cls
 
 
 def is_count_value(field, value):
@@ -32,33 +40,10 @@ def is_count_value(field, value):
     return "_tps" not in field and not field.endswith(NOT_COUNT_SUFFIXES)
 
 
-def fact_type(field, value=None):
-    """The vibepaper type for ``field`` (holding ``value``), or None for an untyped fact."""
-    if field.endswith("_pct"):
-        return Percent
-    if field.endswith(("_ratio", "_fold")):
-        return Ratio
-    if field.endswith("_safety"):
-        return Fraction
-    if field.startswith("n_") or field.endswith(("_n", "_count", "_pairs")):
-        return Count
-    if field == "build" or field.endswith(("_version", "_date")):
-        return Text
-    if is_count_value(field, value):
-        return Count
-    return None
-
-
-def write_typed_facts(path, facts):
-    """Write ``facts`` ({field: value}) to ``path`` as a vertical facts CSV."""
-    typed = {}
-    for field, value in facts.items():
-        cls = fact_type(field, value)
-        typed[field] = cls(value) if cls else value
-    return write_facts(path, typed)
-
-
-def read_facts(path):
-    """A vertical facts CSV as {field: value}, with the values as written in the file."""
-    with open(path, newline="") as fh:
-        return {row["field"]: row["value"] for row in csv.DictReader(fh)}
+FACTS = PaperFactsWriter({
+    "*_pct": Percent,
+    "*_ratio": Ratio, "*_fold": Ratio,
+    "*_safety": Fraction,
+    "n_*": Count, "*_n": Count, "*_count": Count, "*_pairs": Count,
+    "build": Text, "*_version": Text, "*_date": Text,
+})

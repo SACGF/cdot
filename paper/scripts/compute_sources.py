@@ -13,7 +13,7 @@ Usage:
 from pathlib import Path
 
 import yaml
-from facts_io import write_typed_facts  # noqa: E402
+from facts_io import FACTS  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent.parent
 YAML = REPO / "generate_transcript_data" / "cdot_transcripts.yaml"
@@ -38,7 +38,7 @@ def main():
         row[f"{key}_releases"] = sum(1 for v in entries.values() if isinstance(v, dict))
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    write_typed_facts(OUT, row)
+    FACTS.write(OUT, row)
     print(f"Written: {OUT}")
     for k, v in row.items():
         print(f"  {k}: {v}")

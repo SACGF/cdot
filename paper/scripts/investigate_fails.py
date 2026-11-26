@@ -7,7 +7,7 @@ import pandas as pd
 from pysam.libcfaidx import FastaFile
 import pyhgvs
 from cdot.pyhgvs.pyhgvs_transcript import JSONPyHGVSTranscriptFactory
-from facts_io import write_typed_facts  # noqa: E402
+from facts_io import FACTS  # noqa: E402
 
 
 def write_clinvar_facts(df: pd.DataFrame):
@@ -32,7 +32,7 @@ def write_clinvar_facts(df: pd.DataFrame):
     }
     out = "output/facts/clinvar.csv"
     os.makedirs("output/facts", exist_ok=True)
-    write_typed_facts(out, facts)
+    FACTS.write(out, facts)
     print(f"Written: {out}")
     print(f"  N variants:    {n_variants:,}")
     print(f"  cdot resolved: {cdot_resolution_pct}%")

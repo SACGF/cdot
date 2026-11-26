@@ -37,7 +37,7 @@ import json
 import re
 from collections import Counter
 from pathlib import Path
-from facts_io import write_typed_facts  # noqa: E402
+from facts_io import FACTS  # noqa: E402
 
 N_BINS = 10
 
@@ -110,7 +110,7 @@ def main():
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    write_typed_facts(out, facts)
+    FACTS.write(out, facts)
     print(f"Written: {out}")
     for k, v in facts.items():
         print(f"  {k}: {v}")

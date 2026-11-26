@@ -25,7 +25,8 @@ import subprocess
 import sys
 from pathlib import Path
 from statistics import mean
-from facts_io import read_facts, write_typed_facts  # noqa: E402
+from facts_io import FACTS  # noqa: E402
+from vibepaper.facts import read_facts  # noqa: E402
 
 PASS_SCRIPT = Path(__file__).with_name("resolve_clinvar_pass.py")
 
@@ -51,7 +52,7 @@ def derived(n_pairs, cold_tps, hot_tps, benchmark_csv):
 def derive_only(path, benchmark_csv):
     row = read_facts(path)
     row.update(derived(row["n_pairs"], float(row["cold_tps"]), float(row["hot_tps"]), benchmark_csv))
-    write_typed_facts(path, row)
+    FACTS.write(path, row)
     print(row)
 
 
@@ -87,7 +88,7 @@ def main():
         "wall_min": round(mean(h["wall"] for h in hot) / 60),
     }
     row.update(derived(cold["n_pairs"], cold["tps"], mean(hot_tps), args.benchmark_csv))
-    write_typed_facts(args.out, row)
+    FACTS.write(args.out, row)
     print(row)
 
 

@@ -26,7 +26,7 @@ import gzip
 import json
 from pathlib import Path
 
-from facts_io import write_typed_facts  # noqa: E402
+from facts_io import FACTS  # noqa: E402
 
 
 def count_transcript_build_pairs(json_gz_path: str) -> tuple[int, int]:
@@ -100,7 +100,7 @@ def main():
 
     out = Path("output/facts/coverage.csv")
     out.parent.mkdir(parents=True, exist_ok=True)
-    write_typed_facts(out, facts)
+    FACTS.write(out, facts)
     print(f"Written: {out}")
     print(f"  Total alignments:     {total_count:,}")
     print(f"  UTA count:            {uta_count:,}")

@@ -53,9 +53,9 @@ Read it, then `outline.md` in this directory, before doing anything.
    rewrite its claims sidecar to match the new sentences, and make the checks pass:
    ```
    .venv/bin/snakemake -s paper/Snakefile --cores 1        # refresh output/facts
-   ~/.local/bin/vibepaper lint --config paper/paper.toml --numbers --unused
-   ~/.local/bin/vibepaper check --config paper/paper.toml
-   ~/.local/bin/vibepaper wordcount --config paper/paper.toml
+   .venv/bin/vibepaper lint --config paper/paper.toml --numbers --unused
+   .venv/bin/vibepaper check --config paper/paper.toml
+   .venv/bin/vibepaper wordcount --config paper/paper.toml
    ```
    A fact that is no longer cited either goes under `[lint] unused_ok` in `paper.toml` or is
    removed. Keep facts that are used elsewhere.
@@ -134,10 +134,6 @@ of Methods was moved to Supplementary Methods for the same reason.
 
 ## Tooling notes
 
-- `.venv/bin/vibepaper` is a stale 0.8.0 with no `lint`/`check`/`wordcount`, so the
-  Snakefile `quick` rule copies the facts and then fails at its build step. Run the checks
-  with `~/.local/bin/vibepaper` (0.12.0) until the venv is reinstalled at the version
-  `pyproject.toml` pins.
 - Don't run `vibepaper wrap` on a section: it splits long lines without rejoining short
   ones, which leaves ragged one-word lines. Wrap edits by hand.
 
