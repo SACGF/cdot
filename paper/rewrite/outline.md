@@ -860,51 +860,14 @@ in `results.md`, which the supplement cross-references ("Results R2").
   sentence from R1 in `results.md`. The `VepHgvsGaps` bib entry can stay (unused entries do
   not render).
 
-### Restructure (agreed 2026-11-26)
+### Restructure (agreed and applied 2026-11-26)
 
-Each paragraph has one central result about cdot (see the runbook). Results goes from 20
-paragraphs to 7: R1 (coverage, accepted above as R1a), then R2a to R5 below. The "interesting
-things we found" that are not about cdot move to a new **Supplementary Results** section in
-`supplementary.md`, and the main text points to it. **The moves are applied in the files**
-(2026-11-26): `results.md` has the new shape, with R2a to R5 holding the old wording, cut, as
-placeholders until his dictation replaces them. The briefs for dictating them are in
+Each paragraph has one central result about cdot (see the runbook), so Results went from 20
+paragraphs to 7. What wasn't about cdot moved to Supplementary Results in `supplementary.md`,
+and the two-corpora point (old R4.4) moved to the start of the Discussion for D1. R1b and the
+hot/cold cache sentence were cut. R2a to R5 in `results.md` hold the old wording, cut, as
+placeholders until his dictation replaces them; the dictation briefs are in
 `results_briefs.md`.
-
-**Moving to Supplementary Results** (old entry → what moves; the old wording is in
-`results.md` until then):
-
-- Old R2.1: the current-version check method (UTA rate is membership of the exact
-  accession.version in its GRCh38 set, the live database agrees; the pair sets are
-  Ensembl-enriched so no aggregate is reported) and RefSeq parity on 500 pairs (100% vs
-  100%). Its Ensembl number stays in R2a.
-- Old R2.2: the residual breakdown (indel representation, paralog/copy-number transcripts,
-  five transcripts with bases unaligned between exons). Already Table S4, so just a pointer.
-- Old R2.3: weighted-by-submission (69.3%), retired transcripts (0.7%), absent from cdot
-  (0.6%), and "no submitted string cites Ensembl".
-- Old R2.4: submitter attribution (88 of 3,028 submitters; one lab has 94.8% of absent
-  citations; 82.9% of absent versions cited by one submitter only; looks like in-house
-  alignments).
-- Old R2.5: the era split (2008-15 / 2016-20 / 2021-26) and the cdot-only / UTA-only counts
-  (562,173 / 87). The era split tracks submission date, not transcript-version age, and most
-  of the gain is in 2021-26 submissions that cite old versions.
-- Old R2.6: the submitted-corpus residual (0.7%; 17,667 refused substitutions, 546 drift).
-  Already Table S8.
-- Old R2.7: the Shariant breakdown (1,654 of 3,731 transcripts cited at more than one version;
-  cdot-only 98.6% old RefSeq versions, 1.3% Ensembl; no ground truth). The headline stays in
-  R2b as one sentence.
-- Old R3.2: the hot/cold cache comparison. **Delete** rather than move.
-- Old R4.2: the fix-type walkthrough. Table 2 stays in the main text; only the dropped-prefix
-  sentence stays in R4a.
-- Old R4.3: the cleaning ceiling (887 queries, 2.7%: 63% incomplete, 28% fixable, 9% grammar
-  gap; 81 non-HGVS excluded). Already Table S6, so just a pointer.
-- Old R4.4: "database submissions fail by version age, typed input by formatting" (1,468
-  repaired on the submitted corpus, 0 regressions). Moves to **Discussion D1**, not the
-  supplement.
-- Old R4.5: the injection control as a no-regression check. Already Table S5. R4b introduces
-  the injected corpus.
-- Old R5.2: whole-CDS vs partial drift, and the 5'→3' decline. Already Figure S1.
-- Old R5.3: drift is concentrated (5.5% of RefSeq accessions ever drift; the top 5% hold 92.7%
-  of drifting pairs).
 
 ### R2a. cdot reproduces ClinVar's coordinates
 
