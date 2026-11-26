@@ -2,186 +2,94 @@
 
 ## Data sources and generation
 
-cdot merges three transcript-annotation sources into a single dataset per build
-(Figure 1A), downloading the complete run of historical releases from the RefSeq and
-Ensembl FTP sites:
-
-1. **RefSeq GFF3** [@OLeary2016]: {{ sources.refseq_grch37_releases | int }} GRCh37,
-   {{ sources.refseq_grch38_releases | int }} GRCh38, and
-   {{ sources.refseq_t2t_releases | int }} T2T-CHM13v2.0 NCBI annotation releases
-   through RS_2025_08 (Supplementary Table S1), plus NCBI's historical
-   transcript-alignment file (RS_2024_08), covering GRCh38 versions replaced or
-   suppressed before any archived release.
-
-2. **Ensembl GTF** [@Martin2023]: {{ sources.ensembl_grch37_releases | int }} GRCh37,
-   {{ sources.ensembl_grch38_releases | int }} GRCh38, and
-   {{ sources.ensembl_t2t_releases | int }} T2T-CHM13v2.0 releases, spanning Ensembl
-   releases 81 to 116 (Supplementary Table S2); GTF is used because Ensembl's GFF3
-   files omit transcript protein versions.
-
-3. **UTA**: the Universal Transcript Archive computes its own alignments, so it holds
-   some accessions never published in any annotation file; these fill gaps predating
-   the oldest releases and are overridden by official annotation where available.
-
-Releases are merged chronologically, newer entries overwriting older ones for the same
-transcript version; this also backfills fields missing from early files, such as the
-alignment-gap CIGAR strings absent from early RefSeq GFF3. A Snakemake pipeline parses
-each source with HTSeq, normalises contig names via bioutils [@bioutils], extracts
-coding-sequence (CDS) boundaries from start/stop codon features, attaches gene metadata
-(symbols, HGNC IDs, biotypes) from HGNC and NCBI gene-info files, and serialises to
-gzip-compressed JSON.
+cdot data collection works via a Snakemake pipeline downloading all of the official RefSeq
+GFF3 [@OLeary2016] and Ensembl GTF [@Martin2023] releases for GRCh37, GRCh38, and T2T
+(Figure 1A; Supplementary Tables S1 and S2). We also download UTA, which, as it computes
+its own alignments, has a few accessions that were never in any of the official releases.
+We also provide a cdot release which includes all of the historical releases RefSeq or
+Ensembl have made for a particular genome build. The historical versions are loaded with
+UTA first and then chronologically, so the official releases will override any custom
+alignments performed by UTA, and older versions will be overwritten by newer ones which
+contain new information such as gaps.
 
 ## JSON format
 
-JSON parses quickly in every major language and serialises cleanly over HTTP, so the
-same files drive both the in-memory provider and the REST API. Each transcript entry
-stores shared metadata plus a `genome_builds` dict keyed by assembly name, so one entry
-carries a transcript's GRCh37, GRCh38, and T2T-CHM13v2.0 alignments and a single-build
-file is a drop-in GTF/GFF replacement. Per-build fields include a per-exon `gap` string
-recording transcript-vs-genome indels, converted to HGVS CIGAR format at query time
-(transcript bases that align to neither of two adjacent exons become a transcript-only
-run at the end of the first), and
-canonical tags (MANE Select and Plus Clinical, RefSeq Select, Ensembl canonical) where
-present; a root-level `schema_version` lets clients reject incompatible files on load.
-Supplementary Table S3 summarises the schema; the full JSON Schema ships in the
-repository (`docs/cdot-json-schema.json`).
+The JSON format has one entry per transcript version with build-specific alignment data in
+a `genome_builds` dictionary keyed by build. The layout of the JSON data is the same
+whether `genome_builds` contains one or multiple genome builds. The exon data contains a
+`gap` field that records the indels found during alignment, and can be applied for
+handling gaps during conversion. We copy tags from the original GFF or GTF, such as MANE
+Select, MANE Plus Clinical, RefSeq Select, and Ensembl canonical. We include a top-level
+`schema_version`, which can be used to check what information it contains and whether it
+can be parsed by older clients (Supplementary Table S3).
 
-## String cleaning (`clean_hgvs()`)
+## String cleaning
 
-Many of the descriptions that reach a curation platform do not parse: copy/paste
-whitespace, lost casing, transposed punctuation, a swapped gene symbol and accession, a
-trailing protein annotation. The intended variant is usually unmistakable, but a strict
-grammar rejects the string; cdot repairs it instead.
-
-`clean_hgvs()` is a pure string operation: it takes an HGVS string and returns the
-repaired string with structured `HGVSFix` records describing every change. It needs no
-genome build, sequence, parser, or data provider, so it can run as a pre-pass anywhere,
-whichever downstream library consumes the result. Cleaning is an ordered pipeline of
-single-purpose operations that strip extraneous characters, repair structural
-punctuation, normalise casing and prefixes, and rebuild the canonical
-`transcript(GENE):c.` shape; the per-operation catalogue, with examples, is
-Supplementary Table S7. Each `HGVSFix` carries a severity, a stable code, a message,
-and the before/after values, so a caller can audit exactly what changed. What cleaning
-cannot fix (no colon at all, a bare variant body, an insertion given as a length instead
-of a sequence) is flagged as an `ERROR`-level fix; cleaning never raises and returns its
-best attempt.
-
-One repair needs transcript data: a bare-number accession whose RefSeq prefix was
-dropped entirely (`000059.4:c.68del`). `resolve_missing_accession_prefix()`, applied by
-`fix_hgvs()` when a data provider is supplied, generates the candidate accessions the
-kind letter allows and restores the prefix only when exactly one exists in the loaded
-data, reported as an `HGVSFix` like every other repair.
+For cleaning HGVS strings, we provide a function `fix_hgvs()`. Calling the function with an
+HGVS string returns the repaired string plus a list of fixes applied. Some examples include
+whitespace, quoting, double dots (`NM_000059..4`), uppercase, lowercase (`c.123delg`), and
+the swapped gene and transcript (`BRCA2(NM_000059.4)` → `NM_000059.4(BRCA2)`) (Supplementary
+Table S7). Passing a data provider to `fix_hgvs()` can also fix some transcript errors, such
+as a dropped accession prefix (`000059.4:c.68del` → `NM_000059.4:c.68del`). It only does
+this when exactly one candidate is possible. Passing a genome build also resolves a
+gene-only string, such as `BRCA2:c.68_69del`, by looking up the MANE transcript
+[@Morales2022; @Wright2023]. All string modifications return an accompanying `HGVSFix`,
+which has severity, code, and before/after, so the user has visibility on what operations
+were performed. What cannot be fixed is flagged as an error. The pure string conversion
+function is exposed as `clean_hgvs()`, which does not load any data. It is called by
+`fix_hgvs()`.
 
 ## Version substitution
 
-A separate, opt-in helper, `get_best_transcript_version()`, addresses transcript-version
-drift. Substituting a different version is a heuristic that can be wrong, so it is
-never applied automatically: when the requested version is absent from a caller's data,
-the helper returns the best available adjacent version (up-then-down, closest, or
-latest strategies) as a reported `HGVSFix`, and the caller decides whether to accept
-it. Before a substitution is offered as safe, cdot applies a build-independent check: a
-transcript version's intrinsic CDS structure (CDS length plus coding-exon segment
-lengths in transcript coordinates) is the same in every build, and a substitution
-passes only when the two versions' structures match, their CDS alignment gaps match,
-and, for a UTR variant, the relevant UTR length is preserved
-(`intrinsic_cds_structure()`, `is_version_substitution_safe()`; Supplementary Methods).
-The check is validated against ClinVar in Results R5.
+When the requested transcript version is not available, `fix_hgvs()` can substitute another
+version. This is off by default because it can be wrong. The function accepts a parameter
+`version_fallback`, where the caller sets the resolution strategy, such as trying higher
+versions then lower, closest or the latest. Checks are made to ensure the substituted
+transcript version has an identical CDS structure: the CDS length plus the length of coding
+exons. This is the same on every genome build, so the two versions can be compared even when
+one of them is not aligned or not available for the requested genome build. The alignment
+gaps must also match, and for a UTR variant, the UTR lengths must be the same
+(Supplementary Methods). The string is left unchanged if the version substitution is
+unsafe, and a `HGVSFix` error is returned. It is possible to override this to return a
+changed string and a warning that the coordinates may have moved.
 
 ## Access and client libraries
 
-cdot's client stack (Figure 1B) offers three data providers behind the same interface.
+cdot implements a biocommons HGVS data provider, so it can be swapped in to load the cdot
+transcript versions (Figure 1B). We provide three providers: `JSONDataProvider`, which
+loads the gzipped JSON into memory; `RESTDataProvider`, which makes network calls to
+cdotlib.org (it also has a prefetch, which batches them into more efficient calls); and
+`EnsemblTarkDataProvider`, which reads from Ensembl's official transcript archive, TARK.
+biocommons uses the `SeqFetcher` interface for sequence retrieval and provides a SeqRepo
+implementation [@Hart2020]. cdot implements a `SeqFetcher` (`FastaSeqFetcher`) that can
+load a local FASTA file, which pulls out the exon sequences and pastes them together to
+make a transcript. This works perfectly for Ensembl transcripts, which exactly match the
+genome, but is not guaranteed to be safe for RefSeq, where the transcript reference and the
+genome reference can have gaps and mismatches.
+We also provide `ChainedSeqFetcher`, which can be configured with other
+`SeqFetcher`s and take the first that succeeds. This can be used to prefer SeqRepo sequences
+when available, and fall back on the FASTA file.
 
-**Local JSON**: `JSONDataProvider` loads a JSON.gz file into memory with lazy interval
-trees and lookup dictionaries; retrieval is O(1).
+## Evaluation
 
-**REST API**: `cdot_rest` (https://github.com/SACGF/cdot_rest) serves the same JSON
-data at cdotlib.org. `RESTDataProvider` fetches one transcript version per request,
-suited to occasional lookups without downloading the full file, and can warm its cache
-with a single batched `prefetch()` request (Results R3).
-
-**Ensembl TARK**: `EnsemblTarkDataProvider` exposes the Ensembl Transcript Archive
-(TARK) REST service through the same interface.
-
-**biocommons/hgvs integration**: cdot implements the full
-`biocommons.hgvs.dataproviders.interface.Interface`, so it is a drop-in replacement for
-UTA in any biocommons/hgvs pipeline:
-
-```python
-from cdot.hgvs.dataproviders import JSONDataProvider
-hdp = JSONDataProvider(["cdot-0.2.36.refseq.GRCh38.json.gz"])
-```
-
-Sequence data comes from SeqRepo [@Hart2020] or cdot's `FastaSeqFetcher`, which
-reconstructs a transcript sequence by splicing its exon ranges out of a local genome
-FASTA, enabling fully offline operation. That reproduces an Ensembl transcript exactly
-but is not guaranteed to match a curated RefSeq transcript, whose sequence can differ
-from the genome at a few positions (Supplementary Methods). `ChainedSeqFetcher` tries
-several sequence sources in a caller-defined order.
-
-**PyHGVS integration**: `JSONPyHGVSTranscriptFactory` exposes the same data to the
-Counsyl PyHGVS library. PyHGVS is no longer maintained, so new development targets the
-biocommons/hgvs path.
-
-## Canonical transcript selection
-
-`resolve_gene_hgvs()` maps a gene symbol to a MANE Select (or MANE Plus Clinical)
-transcript accession [@Morales2022; @Wright2023] via the data provider's
-`get_tx_ac_tags_for_gene()`, which ranks a gene's transcripts by tag priority, so a
-pipeline given `BRCA1:c.68_69del` can resolve it through `NM_007294.4`. The selection
-is a sensible default for search and gene-name lookup, not an authoritative clinical
-choice.
-
-## Benchmarking
-
-Resolution accuracy and throughput are measured with scripts committed to the
-repository (`paper/scripts/`); protocol detail is in Supplementary Methods.
-`benchmark_resolution.py` resolves real (g.HGVS, c.HGVS) pairs through a pluggable
-provider (local JSON, REST, or UTA) and reports resolution rate, recovery from cleaning
-and version substitution, and speed; the ClinVar pair set is built by
-`build_clinvar_pairs.py`. Cleaning is evaluated on a production query corpus and, as a
-reproducible control, with `inject_and_clean.py`, which injects each fix category into
-clean ClinVar strings. `lovd_head_to_head.py` runs the same injected cases through both
-`clean_hgvs()` and the LOVD HGVS syntax checker [@LovdHgvsChecker]
-({{ lovd_comparison.lovd_version }}, run locally as a PHP CLI), scoring a case as
-recovered when the tool's output (for LOVD, its top-ranked correction) exactly matches
-the canonical target; the same false-correction check runs over the uncorrupted
-originals.
-
-`vv_mutalyzer_head_to_head.py` extends the same cases and scoring rule to the two
-sequence-aware validation services, VariantValidator [@Freeman2018] and Mutalyzer
-[@Lefter2021], over their public REST APIs
-({{ vv_mutalyzer_comparison.service_date }}; remote services cannot be version-pinned,
-so the service date and each API's reported version are recorded instead). On the
-uncorrupted originals, a valid input the service *alters* is a false correction while one
-it *rejects* is counted separately as a validity or coverage position. Version-substitution
-safety is measured by `compute_version_stability.py` on GRCh38, over a seeded
-{{ version_stability.sample_n | commas }}-accession sample of accessions cdot holds at
-two or more versions; the same run bins preserved coding bases by relative CDS position
-(Supplementary Figure S1).
-
-The submitted-string corpus (Results R2) is built by
-`build_clinvar_submitted_pairs.py` from the per-submission HGVS attributes of a ClinVar
-VCV XML release (ClinVarVCVRelease_2026-10): each SCV's first transcript c./n.
-expression is joined verbatim to the variant's VCF coordinate via its AlleleID and
-collapsed to unique (AlleleID, string) pairs, each tagged with the earliest SCV
-submission date (Supplementary Methods). Scoring uses the VCF coordinate rather than
-the g.HGVS string, since a submitted string may legitimately spell an indel differently
-from ClinVar's normalised form. Transcript version age is computed by
-`compute_submitted_version_age.py` against the released cdot RefSeq JSON, whose
-per-transcript source URL identifies whether an entry survives only through cdot's
-historical releases.
-
-Throughput (Table 1) is measured by `compute_benchmark.py`: every configuration
-resolves the identical committed set of {{ benchmark.n_pairs | commas }} ClinVar pairs
-through the same biocommons/hgvs engine with the sequence layer held constant (one
-shared local SeqRepo, file-descriptor cache enabled), so only the transcript-data layer
-varies between rows. Each configuration is timed over
-{{ benchmark.n_repeats | int }} passes and reported as median (IQR), steady-state
-resolution only (exclusions in Supplementary Methods). The REST rows run against the
-production server at cdotlib.org over the public internet; the public remote UTA row
-uses the first {{ benchmark.uta_remote_n | int }} pairs, a full-size pass being
-impractical at ~{{ benchmark.uta_remote_tps | dp(1) }} HGVS/s.
-
-Results marked **[private data]** are aggregate statistics from private production
-corpora, reported as frozen constants that a referee cannot regenerate; every other
-result is reproducible from public data with the scripts in the repository.
+Results from this paper that involve public data can be reproduced from a pipeline in this
+repository (`paper/scripts`, described in the Supplementary Methods). For HGVS resolution,
+we use ClinVar version {{ clinvar_vcf._prov.tools.clinvar }} and the VCV XML as historical
+data, which contain the original c.HGVS with the transcript versions provided by labs at
+submission time. We score converting c.HGVS to genomic coordinates against ClinVar's own
+VCF coordinate (CHROM/POS/REF/ALT). For a performance benchmark, we run
+{{ benchmark.n_pairs | int }} ClinVar pairs through the cdot local JSON, REST and the UTA
+local. We run only {{ benchmark.uta_remote_n | int }} pairs on the public UTA instance
+for performance reasons. The HGVS engine and sequence source are held consistent between
+runs. We use two data sets to test cleaning functionality: our own production search bar collection, which
+is {{ cleaning_corpus.corpus_n | commas }} queries and private data, and the
+{{ cleaning.inject_sample_size | commas }} clean public ClinVar strings with synthetically
+injected errors, {{ lovd_comparison.n_cases | commas }} cases in total. The synthetic data
+is also run on third-party cleaners LOVD [@LovdHgvsChecker], VariantValidator
+[@Freeman2018], and Mutalyzer [@Lefter2021]. We check transcript version substitution
+safety by comparing consecutive versions of {{ version_stability.sample_n | commas }}
+transcripts each from both RefSeq and Ensembl GRCh38. The invalid HGVS from production
+searches, used as examples of real-world data cleaning, are private because they contain
+clinical information. The HGVS sent from clinical labs into Shariant [@Tudini2022] are
+also used as a benchmark. We cannot provide this as it is private clinical data. We have
+converted this to aggregate counts which are included in the repository.

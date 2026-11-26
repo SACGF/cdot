@@ -31,6 +31,10 @@ essentially_flat = { within = 1 }
 [lint]
 # Facts kept on purpose that `vibepaper lint --unused` should not list.
 unused_ok = [
+    # hot/cold-cache repeats of the full-ClinVar run (the cache comparison was cut from Results)
+    "benchmark_fullscale.hot_*",
+    "benchmark_fullscale.cold_tps",
+    "benchmark_fullscale.n_runs",
     # per-decile and UTR breakdowns behind Figure S1 and Supplementary S4; the text
     # cites a few of them
     "positional_drift.*",
@@ -43,6 +47,8 @@ unused_ok = [
     "submitter_attribution.*",
     "version_safety_validation.*",
     "cleaning_corpus.*",
+    # data-provider interface survey (biocommons/hgvs#958); the introduction cites the implementer count
+    "adoption.n_interface_*",
     # the older g.HGVS-string mismatch analysis, kept as supporting work (PROVENANCE.md)
     "genomic_mismatch.*",
     # headline rates of the seeded 2,818-variant sample (PROVENANCE.md, clinvar.csv)
@@ -54,6 +60,8 @@ unused_ok = [
     "version_stability.build",
     # literature values cited in earlier drafts, kept with their citations
     # (PROVENANCE.md, literature/literature_review.md) in case the text cites them again
+    "literature.clinvar_variants",
+    "literature.uta_remote_tps",
     "literature.lof_agreement_pct",
     "literature.brca2_accuracy_pct",
     "literature.mane_coverage_pct",

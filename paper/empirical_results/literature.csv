@@ -5,7 +5,6 @@ mutalyzer_error_pct,41.2,percent
 mutalyzer_autocorrect_pct,7.1,percent
 lof_agreement_pct,44.0,percent
 brca2_accuracy_pct,32.0,percent
-uta_count,141000,count
 uta_remote_tps,1,
 mane_coverage_pct,97.0,percent
 seqrepo_speedup_fold,1300.0,ratio

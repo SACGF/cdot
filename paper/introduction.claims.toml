@@ -1,19 +1,21 @@
 # Claims for introduction.md (vibepaper claims sidecar, see the
 # README's "Claims sidecars"). A quote must match one sentence.
 
-[[ok]]
-quote = "over five years of production logs, only … could automatically correct only"
-reason = "Lefter 2021's figures, quoted"
+[[claim]]
+quote = "submitted over five years and found only half were correct"
+assert = "49 < literature.mutalyzer_correct_pct < 52"
+message = "Lefter 2021's figures, quoted: 'only half were correct'"
 
 [[claim]]
-quote = "over the PostgreSQL wire protocol, … (about one transcript per second at best"
-assert = "benchmark.uta_remote_tps < literature.uta_remote_tps"
-message = "'about one transcript per second at best' (public remote UTA)"
+quote = "Ensembl is not supported, and many historical RefSeq transcripts are missing"
+assert = "clinvar.uta_ensembl_pct == 0"
+message = "'Ensembl is not supported' (UTA holds no Ensembl alignments; R2)"
+
+[[claim]]
+quote = "allows us to collect all of the"
+assert = "coverage.total_count > coverage.uta_count"
+message = "'all of the' versioned alignments describes what is ingested, every RefSeq and Ensembl release"
 
 [[ok]]
-quote = "RefSeq only): it retains only … are absent entirely"
-reason = "'RefSeq only', 'absent entirely' describe UTA's contents; R2 asserts clinvar.uta_ensembl_pct == 0"
-
-[[ok]]
-quote = "from all available RefSeq GFF3"
-reason = "'all available' describes what is ingested"
+quote = "had errors, and it could only fix"
+reason = "Lefter 2021's figures, quoted"

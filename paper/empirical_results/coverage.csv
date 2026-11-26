@@ -7,4 +7,5 @@ ensembl_grch37_count,196501,count
 ensembl_grch38_count,854940,count
 ensembl_unique_count,854940,count
 t2t_unique_count,186644,count
-improvement_fold,13.9,ratio
+uta_count,301271,count
+improvement_fold,6.5,ratio

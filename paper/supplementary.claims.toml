@@ -39,7 +39,7 @@ quote = "sub-100% ceilings in the categories they otherwise repair are service-l
 reason = "'all recent Ensembl transcripts' characterises the rejected cases"
 
 [[ok]]
-quote = "under a fixed decision-tree taxonomy"
+quote = "\"Residual errors\"), under a fixed decision-tree taxonomy"
 reason = "'under a fixed decision-tree taxonomy' is method wording"
 
 [[claim]]
@@ -55,3 +55,91 @@ message = "Figure S1B: 'essentially flat' and 'most drift is a whole-CDS relocat
 [[ok]]
 quote = "Claude Fable 5 and Claude Opus 5.5"
 reason = "model names and versions of the re-rating LLMs, not results"
+
+# Moved with the Supplementary Results from results.md.
+
+[[ok]]
+quote = "no Ensembl pair is dropped"
+reason = "'no Ensembl pair is dropped' states why FastaSeqFetcher is used"
+
+[[claim]]
+quote = "On RefSeq the two backends are at parity"
+assert = "clinvar.cdot_refseq_pct == clinvar.uta_refseq_pct"
+message = "'On RefSeq the two backends are at parity'"
+
+[[claim]]
+quote = "not one submitted string cites an Ensembl transcript"
+assert = "clinvar_submitted.ensembl_pct == 0"
+message = "'not one submitted string cites an Ensembl transcript'"
+
+[[claim]]
+quote = "Most submitted traffic is historical, and only … of cited versions are absent from cdot's GRCh38 data"
+assert = "clinvar_submitted.version_not_current_pct > 50 and clinvar_submitted.absent_cdot_pct < 1"
+message = "'submitted traffic is historical' (most cite a superseded version); 'only X% of cited versions are absent'"
+
+[[claim]]
+quote = "Because cdot ingests every RefSeq and Ensembl annotation release, … submitters only"
+assert = "submitter_attribution.n_submitters_with_absent * 10 < submitter_attribution.n_submitters_total"
+message = "'only N submitters ever cite a version cdot lacks' (under a tenth)"
+
+[[claim]]
+quote = "The RefSeq gap invisible at the current-version ceiling (both backends ...)"
+assert = "clinvar.cdot_refseq_pct == clinvar.uta_refseq_pct"
+message = "'The RefSeq gap invisible at the current-version ceiling (both backends ...)'"
+
+[[claim]]
+quote = "lowest on the oldest submissions ... and lower on the newest than on 2016-2020"
+assert = "clinvar_submitted.era_old_uta_pct < clinvar_submitted.era_recent_uta_pct < clinvar_submitted.era_mid_uta_pct"
+message = "UTA by era: 'lowest on the oldest submissions ... and lower on the newest than on 2016-2020'"
+
+[[claim]]
+quote = "dominated by historical-version effects: … or an accession absent entirely"
+assert = "clinvar_submitted_residual.version_refused + clinvar_submitted_residual.coordinate_drift > clinvar_submitted_residual.n_residual / 2"
+message = "'The residual ... is dominated by historical-version effects'"
+
+[[ok]]
+quote = "which UTA holds no GRCh38 alignment and"
+reason = "method wording: 'holds no GRCh38 alignment'"
+
+[[claim]]
+quote = "Classified under a fixed decision-tree taxonomy … about a quarter is in principle fixable"
+assert = "cleaning_corpus.residual_incomplete_pct > 55 and 20 < cleaning_corpus.residual_fixable_pct < 30 and (cleaning_corpus.residual_incomplete_pct + cleaning_corpus.residual_fixable_pct + cleaning_corpus.residual_grammar_gap_pct - 100) | abs < 0.5"
+message = "Table S6 residual: 'well over half' incomplete, 'about a quarter' fixable, 'the remaining' grammar gap"
+
+[[claim]]
+quote = "the most dangerous case, a partial substitution … is rare"
+assert = "version_stability.refseq_full_drift_pct > 2 * version_stability.refseq_partial_drift_pct and version_stability.ensembl_full_drift_pct > 2 * version_stability.ensembl_partial_drift_pct"
+message = "'When a coordinate does move it is usually the whole CDS'"
+
+[[claim]]
+quote = "Within that tail the risk is positional: … so preservation falls"
+assert = "positional_drift.refseq_partial_decile1_pct > positional_drift.refseq_partial_decile10_pct and positional_drift.ensembl_partial_decile1_pct > positional_drift.ensembl_partial_decile10_pct"
+message = "'preservation falls from the 5'-most decile to the 3'-most'"
+
+[[claim]]
+quote = "Drift is also concentrated: only … so the risky transcripts form a short, identifiable list"
+assert = "version_stability.refseq_accessions_drift_pct < 10 and version_stability.ensembl_accessions_drift_pct < 10 and version_stability.refseq_top5_drift_share_pct > 90 and version_stability.ensembl_top5_drift_share_pct > 90"
+message = "'only X% of RefSeq accessions (Y% of Ensembl) ever drift', the top 5% hold over 90% of drifting pairs: 'a short, identifiable list'"
+
+[[claim]]
+quote = "because UTA holds no GRCh38 alignment for"
+assert = "clinvar_submitted.uta_no_data_pct >= clinvar_submitted.cdot_only_pct"
+message = "the cdot-only gap is explained 'because UTA holds no GRCh38 alignment' (UTA's no-data share covers it)"
+
+[[ok]]
+quote = "the 5% of accessions with the most drifting pairs"
+reason = "5% is the top-accession cutoff compute_version_stability.py uses for top5_drift_share_pct"
+
+# Moved with the Methods detail from methods.md.
+
+[[ok]]
+quote = "runs over the"
+reason = "'over' is a preposition, not a qualifier"
+
+[[ok]]
+quote = ["[@Lefter2021], over their", "GRCh38, over a"]
+reason = "'over' is a preposition, not a qualifier"
+
+[[ok]]
+quote = ["every configuration resolves the identical committed set … so only the transcript-data layer", "over … passes and reported as median (IQR), steady-state resolution only", "cdotlib.org over the"]
+reason = "protocol description: 'every configuration', 'only the transcript-data layer', 'only' steady state, 'over' passes"

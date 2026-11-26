@@ -13,18 +13,20 @@ Usage:
         --ensembl-grch37 cdot.ensembl.grch37.json.gz \
         --ensembl-grch38 cdot.ensembl.grch38.json.gz \
         --ensembl-t2t    cdot.ensembl.t2t.json.gz \
-        --uta-count 141000
+        --uta-grch37     Homo_sapiens_GRCh37_UTA_20241220.csv \
+        --uta-grch38     Homo_sapiens_GRCh38_UTA_20241220.csv
+
+The UTA count is the number of distinct accession versions in each build's UTA alignment
+dump (`ac` column), summed over builds, the same unit as cdot's total.
 """
 
 import argparse
+import csv
 import gzip
 import json
 from pathlib import Path
 
 from facts_io import write_typed_facts  # noqa: E402
-
-
-UTA_COUNT = 141000  # uta_20210129, from Hart 2020
 
 
 def count_transcript_build_pairs(json_gz_path: str) -> tuple[int, int]:
@@ -47,6 +49,13 @@ def count_transcript_build_pairs(json_gz_path: str) -> tuple[int, int]:
     return alignments, len(unique_accessions)
 
 
+def count_uta_alignments(csv_path: str) -> int:
+    """Return the number of distinct accession versions in a UTA alignment dump."""
+    csv.field_size_limit(10**9)
+    with open(csv_path, newline="") as fh:
+        return len({row["ac"] for row in csv.DictReader(fh)})
+
+
 def main():
     parser = argparse.ArgumentParser(description="Compute cdot transcript coverage stats.")
     parser.add_argument("--refseq-grch37",  default="")
@@ -55,7 +64,8 @@ def main():
     parser.add_argument("--ensembl-grch37", default="")
     parser.add_argument("--ensembl-grch38", default="")
     parser.add_argument("--ensembl-t2t",    default="")
-    parser.add_argument("--uta-count",      type=int, default=UTA_COUNT)
+    parser.add_argument("--uta-grch37",     required=True)
+    parser.add_argument("--uta-grch38",     required=True)
     args = parser.parse_args()
 
     refseq_grch37_count, _ = count_transcript_build_pairs(args.refseq_grch37)
@@ -72,7 +82,7 @@ def main():
         refseq_grch37_count + refseq_grch38_count + t2t_count
         + ensembl_grch37_count + ensembl_grch38_count
     )
-    uta_count = args.uta_count
+    uta_count = count_uta_alignments(args.uta_grch37) + count_uta_alignments(args.uta_grch38)
     improvement_fold = round(total_count / uta_count, 1) if uta_count else 0
 
     facts = {
@@ -84,6 +94,7 @@ def main():
         "ensembl_grch38_count": ensembl_grch38_count,
         "ensembl_unique_count": ensembl_unique_count,
         "t2t_unique_count":     t2t_unique_count,
+        "uta_count":            uta_count,
         "improvement_fold":     improvement_fold,
     }
 

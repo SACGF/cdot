@@ -1,14 +1,7 @@
 # Claims for methods.md (vibepaper claims sidecar, see the
 # README's "Claims sidecars"). A quote must match one sentence.
 
-[[ok]]
-quote = "runs over the"
-reason = "'over' is a preposition, not a qualifier"
-
-[[ok]]
-quote = ["[@Lefter2021], over their", "GRCh38, over a"]
-reason = "'over' is a preposition, not a qualifier"
-
-[[ok]]
-quote = ["every configuration resolves the identical committed set … so only the transcript-data layer", "over … passes and reported as median (IQR), steady-state resolution only", "cdotlib.org over the"]
-reason = "protocol description: 'every configuration', 'only the transcript-data layer', 'only' steady state, 'over' passes"
+[[claim]]
+quote = "We run only … pairs on the public UTA instance for performance reasons."
+assert = "benchmark.uta_remote_n < benchmark.n_pairs and benchmark.uta_remote_tps < benchmark.uta_local_tps"
+message = "remote UTA ran a smaller subset than the other backends, and is the slower UTA"
