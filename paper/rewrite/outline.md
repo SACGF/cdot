@@ -808,11 +808,12 @@ Facts and claims checks travel with their text (`sources.*`, `benchmark.n_*`,
 
 # Results
 
-**Flow:** coverage (R1) → correctness on ClinVar (R2) → old transcript versions in submitted
-strings and Shariant (R3) → speed (R4) → cleaning (R5) → other tools (R6) → version
-substitution, risk and check (R7).
+**Flow:** coverage (R1) → correctness on ClinVar (R2a) → old transcript versions in submitted
+strings and Shariant (R2b) → speed (R3) → cleaning (R4a) → other tools (R4b) → version
+substitution, risk and check (R5). The labels follow the `## R1` to `## R5` section headings
+in `results.md`, which the supplement cross-references ("Results R2").
 
-### R1a. Transcript coverage
+### R1a. Transcript coverage (in `results.md`)
 
 - **Job:** Headline coverage figure and where the gain comes from.
 - **Opens with:** the unit (one transcript version aligned to one build).
@@ -862,9 +863,12 @@ substitution, risk and check (R7).
 ### Restructure (agreed 2026-11-26)
 
 Each paragraph has one central result about cdot (see the runbook). Results goes from 20
-paragraphs to 7: R1 (coverage, accepted above as R1a), then R2 to R7 below. The "interesting
+paragraphs to 7: R1 (coverage, accepted above as R1a), then R2a to R5 below. The "interesting
 things we found" that are not about cdot move to a new **Supplementary Results** section in
-`supplementary.md`, and the main text points to it. Make each move when Results goes in.
+`supplementary.md`, and the main text points to it. **The moves are applied in the files**
+(2026-11-26): `results.md` has the new shape, with R2a to R5 holding the old wording, cut, as
+placeholders until his dictation replaces them. The briefs for dictating them are in
+`results_briefs.md`.
 
 **Moving to Supplementary Results** (old entry → what moves; the old wording is in
 `results.md` until then):
@@ -872,7 +876,7 @@ things we found" that are not about cdot move to a new **Supplementary Results**
 - Old R2.1: the current-version check method (UTA rate is membership of the exact
   accession.version in its GRCh38 set, the live database agrees; the pair sets are
   Ensembl-enriched so no aggregate is reported) and RefSeq parity on 500 pairs (100% vs
-  100%). Its Ensembl number stays in R2.
+  100%). Its Ensembl number stays in R2a.
 - Old R2.2: the residual breakdown (indel representation, paralog/copy-number transcripts,
   five transcripts with bases unaligned between exons). Already Table S4, so just a pointer.
 - Old R2.3: weighted-by-submission (69.3%), retired transcripts (0.7%), absent from cdot
@@ -887,22 +891,22 @@ things we found" that are not about cdot move to a new **Supplementary Results**
   Already Table S8.
 - Old R2.7: the Shariant breakdown (1,654 of 3,731 transcripts cited at more than one version;
   cdot-only 98.6% old RefSeq versions, 1.3% Ensembl; no ground truth). The headline stays in
-  R3 as one sentence.
+  R2b as one sentence.
 - Old R3.2: the hot/cold cache comparison. **Delete** rather than move.
 - Old R4.2: the fix-type walkthrough. Table 2 stays in the main text; only the dropped-prefix
-  sentence stays in R5.
+  sentence stays in R4a.
 - Old R4.3: the cleaning ceiling (887 queries, 2.7%: 63% incomplete, 28% fixable, 9% grammar
   gap; 81 non-HGVS excluded). Already Table S6, so just a pointer.
 - Old R4.4: "database submissions fail by version age, typed input by formatting" (1,468
   repaired on the submitted corpus, 0 regressions). Moves to **Discussion D1**, not the
   supplement.
-- Old R4.5: the injection control as a no-regression check. Already Table S5. R6 introduces
+- Old R4.5: the injection control as a no-regression check. Already Table S5. R4b introduces
   the injected corpus.
 - Old R5.2: whole-CDS vs partial drift, and the 5'→3' decline. Already Figure S1.
 - Old R5.3: drift is concentrated (5.5% of RefSeq accessions ever drift; the top 5% hold 92.7%
   of drifting pairs).
 
-### R2. cdot reproduces ClinVar's coordinates
+### R2a. cdot reproduces ClinVar's coordinates
 
 - **One-line result:** across every c.HGVS in ClinVar, cdot reproduces ClinVar's own genomic
   coordinate for 99.95% of the variants it resolves.
@@ -921,12 +925,12 @@ things we found" that are not about cdot move to a new **Supplementary Results**
   [[ok]]), "UTA stores no Ensembl alignments" (`clinvar.uta_ensembl_pct == 0`).
 - **Your version:**
 
-### R3. Labs cite old transcript versions, which cdot has and UTA doesn't
+### R2b. Labs cite old transcript versions, which cdot has and UTA doesn't
 
 - **One-line result:** most transcript versions labs submitted to ClinVar are superseded, so
   cdot resolves 99.3% of submitted strings against 81.9% for UTA. The same holds on Shariant's
   clinical data.
-- **Opens with:** the corpus in R2 uses ClinVar's recomputed names, always at the current
+- **Opens with:** the corpus in R2a uses ClinVar's recomputed names, always at the current
   version. The strings labs actually submitted (from the VCV XML, Methods) are the historical
   record: 3,245,277 pairs (`clinvar_submitted.full_n`).
 - **Lands on:** Shariant, one sentence: 36,010 strings (`historical.n_lines`) from clinical
@@ -945,7 +949,7 @@ things we found" that are not about cdot move to a new **Supplementary Results**
   aren't confused.
 - **Your version:**
 
-### R4. cdot is faster than UTA
+### R3. cdot is faster than UTA
 
 - **One-line result:** cdot is about 4× faster than UTA locally and about 830× faster
   remotely; all of ClinVar takes 2 hours, where the public UTA would take over a year.
@@ -963,7 +967,7 @@ things we found" that are not about cdot move to a new **Supplementary Results**
 - **Overlap:** I2b already gives UTA remote at 0.13 HGVS/s. Don't repeat it, use the ratio.
 - **Your version:**
 
-### R5. Cleaning makes most failing real-world queries usable [private data]
+### R4a. Cleaning makes most failing real-world queries usable [private data]
 
 - **One-line result:** on real search-box queries, cleaning makes 67% of the failing strings
   parseable (91.7% → 97.3%) with no regressions.
@@ -983,7 +987,7 @@ things we found" that are not about cdot move to a new **Supplementary Results**
   failed".
 - **Your version:**
 
-### R6. Other tools repair only part of the same errors
+### R4b. Other tools repair only part of the same errors
 
 - **One-line result:** on the same injected errors, LOVD repairs 69%, VariantValidator 54%
   and Mutalyzer 34% (weighted by the production error mix), and none of them changes a valid
@@ -1007,7 +1011,7 @@ things we found" that are not about cdot move to a new **Supplementary Results**
 - **Moves from:** the Discussion (D3/D4 keep only what the numbers mean).
 - **Your version:**
 
-### R7. Version substitution: risky without a check, safe with cdot's
+### R5. Version substitution: risky without a check, safe with cdot's
 
 - **One-line result:** swapping to a neighbouring version moves coordinates for about 4% of
   RefSeq version pairs, and cdot's structure check accepted 8.4 million ClinVar substitutions
@@ -1044,9 +1048,9 @@ design principle to take away (D6).
 - **Lands on:** it is a general source of versioned alignments, not tied to Python or
   biocommons/hgvs. This leads into D2.
 - **Beats:**
-  1. Historical strings: the gain is in old transcript versions (R3).
-  2. Speed: fast enough locally and over REST that no database is needed (R4).
-  3. Cleaning: rescues typed input without breaking valid input (R5). Moved in from old R4.4:
+  1. Historical strings: the gain is in old transcript versions (R2b).
+  2. Speed: fast enough locally and over REST that no database is needed (R3).
+  3. Cleaning: rescues typed input without breaking valid input (R4a). Moved in from old R4.4:
      the two corpora fail differently. Database submissions are well-formed and fail on old
      transcript versions (cleaning repaired only 1,468 submitted strings, 0 regressions,
      `clinvar_submitted.rescued_by_fix`, `clinvar_submitted.regressions`); typed input fails
@@ -1086,7 +1090,7 @@ design principle to take away (D6).
 
 ### D4. Why the tools score differently, and where they're heading
 
-- **Job:** Interpret R4.6.
+- **Job:** Interpret R4b.
 - **Opens with:** VariantValidator and Mutalyzer validate against the reference, so an
   unparseable string is an error for them to report.
 - **Lands on:** the LOVD figure also describes the syntax-repair layer of current
@@ -1140,7 +1144,7 @@ design principle to take away (D6).
 - **Beats:** N alignments, RefSeq + Ensembl, three builds (first T2T for the Python
   libraries), JSON.gz or REST, no database. ClinVar submitted strings (X% non-current): cdot X%
   vs UTA X%. ~N HGVS/s in memory, Nx local UTA. REST orders of magnitude faster than public
-  UTA. Cleaning: add the R4.1 rescue figure. Opt-in substitution only when the safety check
+  UTA. Cleaning: add the R4a rescue figure. Opt-in substitution only when the safety check
   passes.
 - **Must keep:** `coverage.total_count`, `clinvar_submitted.version_not_current_pct`,
   `clinvar_submitted.cdot_resolved_pct`, `clinvar_submitted.uta_resolved_pct`,

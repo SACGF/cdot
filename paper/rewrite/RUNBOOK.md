@@ -84,7 +84,7 @@ measured by `paper/scripts/compute_coverage.py` from the uta_20241220 dumps, as
 ## Word budget
 
 Bioinformatics allows about 5,000 words of main text. After the Introduction and Methods
-rewrites, the main text was 4,898 words (4,815 after the Methods informality pass) (Methods grew from about 500 to 966). The Introduction grew from about 440 words to
+rewrites, the main text was 4,898 words; after the Methods informality pass and the Results restructure it is 3,811 (Methods grew from about 500 to 966). The Introduction grew from about 440 words to
 about 780. Results and the Discussion must come down as they are rewritten: keep an eye on
 `vibepaper wordcount`.
 The detail of Methods was moved to Supplementary Methods for the same reason.
@@ -100,11 +100,16 @@ The detail of Methods was moved to Supplementary Methods for the same reason.
   Supplementary Methods, as "... (detail)" subsections, which stay AI text for now, to be
   lightly edited later. Some of it overlaps the older supplementary subsections, which needs
   tidying.
-  **Results in progress.** Restructured on 2026-11-26 to 7 paragraphs, each with one central
-  result about cdot (see "Restructure" under Results in `outline.md`, which also lists what
-  moves to a new Supplementary Results section). R1 (coverage, the old R1a) is accepted but
-  not yet copied into `results.md`; that happens when all of Results is done. R1b was cut.
-  **Next: present R2** (ClinVar correctness), then R3 to R7.
+  **Results in progress.** Restructured on 2026-11-26 to seven paragraphs (R1, R2a, R2b, R3,
+  R4a, R4b, R5, matching the `## R1` to `## R5` headings), each with one central result about
+  cdot. The restructure is applied in the files: details not about cdot moved to a new
+  Supplementary Results section in `supplementary.md`, the LOVD/VariantValidator/Mutalyzer
+  numbers moved from the Discussion into R4b, the two-corpora point moved to the start of the
+  Discussion (for D1), and the claims sidecars moved with their sentences. R1 is his accepted
+  text. R2a to R5 still hold the old AI wording, cut, as placeholders.
+  **Next:** he dictates R2a to R5 from `results_briefs.md` (one brief per paragraph, numbers
+  filled in), in one go if he likes. Record each dictation in `outline.md`, cut and join it,
+  then give feedback on the set and swap the accepted text into `results.md`.
 - **Informality pass: Introduction and Methods done.** The written text keeps spoken register ("you",
   contractions, "So"/"And"/"But" openers, "a bit of", "many, many"). Claude gives three
   informal sentences at a time with the reason, he re-dictates them, and they are swapped in
@@ -120,9 +125,10 @@ The detail of Methods was moved to Supplementary Methods for the same reason.
   - Do another pass over Results and the Discussion once they are written. After the passes
     he prints the paper and edits it by hand.
 - **Discussion, Abstract: not started.** Their outline entries describe the target
-  structure, including moves not yet made in the files. The biggest is that the
-  LOVD/VariantValidator/Mutalyzer numbers move from the Discussion into Results R6. Make
-  each move when that section's accepted text goes in. Do the Abstract last.
+  structure. The LOVD/VariantValidator/Mutalyzer move into Results is done; the Discussion's
+  first paragraph is the moved two-corpora point, a placeholder for D1. Do the Abstract last.
+- **Supplementary Results** is AI text moved from Results, joined lightly. Tidy it with the
+  rest of the supplement later.
 - **Figure caption, table captions, supplement:** optional, later.
 
 ## Tooling notes
