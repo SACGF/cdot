@@ -79,7 +79,7 @@ data, which contain the original c.HGVS with the transcript versions provided by
 submission time. We score converting c.HGVS to genomic coordinates against ClinVar's own
 VCF coordinate (CHROM/POS/REF/ALT). For a performance benchmark, we run
 {{ benchmark.n_pairs | int }} ClinVar pairs through the cdot local JSON, REST and the UTA
-local. We ran only {{ benchmark.uta_remote_n | int }} pairs on the public UTA instance
+local. We run only {{ benchmark.uta_remote_n | int }} pairs on the public UTA instance
 for performance reasons. The HGVS engine and sequence source are held consistent between
 runs. We use two data sets to test cleaning functionality: our own production search bar collection, which
 is {{ cleaning_corpus.corpus_n | commas }} queries and private data, and the

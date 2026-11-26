@@ -693,6 +693,7 @@ Facts and claims checks travel with their text (`sources.*`, `benchmark.n_*`,
   *Informality pass, M6 (as dictated, 2026-11-26):* We ran only { benchmark } pairs on the
   public UTA instance for performance reasons [replaces "For the UTA remote, we run only N
   pairs because it is slow."]
+  [At his request, "We ran" → "We run" to match the present tense of the rest of M6.]
 - **Accepted (your words, cut and joined only):**
 
   cdot implements a biocommons HGVS data provider, so it can be swapped in to load the cdot

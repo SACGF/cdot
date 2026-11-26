@@ -2,6 +2,6 @@
 # README's "Claims sidecars"). A quote must match one sentence.
 
 [[claim]]
-quote = "We ran only … pairs on the public UTA instance for performance reasons."
+quote = "We run only … pairs on the public UTA instance for performance reasons."
 assert = "benchmark.uta_remote_n < benchmark.n_pairs and benchmark.uta_remote_tps < benchmark.uta_local_tps"
 message = "remote UTA ran a smaller subset than the other backends, and is the slower UTA"
