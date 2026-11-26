@@ -84,10 +84,11 @@ measured by `paper/scripts/compute_coverage.py` from the uta_20241220 dumps, as
 ## Word budget
 
 Bioinformatics allows about 5,000 words of main text. After the Introduction and Methods
-rewrites, the main text was 4,898 words; after the Methods informality pass and the Results restructure it is 3,811 (Methods grew from about 500 to 966). The Introduction grew from about 440 words to
-about 780. Results and the Discussion must come down as they are rewritten: keep an eye on
-`vibepaper wordcount`.
-The detail of Methods was moved to Supplementary Methods for the same reason.
+rewrites the main text was 4,898 words (Methods grew from about 500 to 966, the Introduction
+from about 440 to about 780). After the Results restructure (2026-11-26) it is 3,811, with
+Results at about 1,090 and the Discussion at about 650, so the budget is no longer tight.
+Keep an eye on `vibepaper wordcount` as Results and the Discussion are rewritten. The detail
+of Methods was moved to Supplementary Methods for the same reason.
 
 ## Current state
 
