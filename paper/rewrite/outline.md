@@ -851,7 +851,10 @@ Facts and claims checks travel with their text (`sources.*`, `benchmark.n_*`,
 - **Lands on:** VEP doesn't apply them, so it can misplace variants after an indel in a gapped
   RefSeq alignment.
 - **Must keep:** `[@VepHgvsGaps]`.
-- **Your version:**
+- **Cut (author's decision, 2026-11-26).** Not a measured result, and M2 already says the
+  exon data has a `gap` field applied during conversion. When Results goes in, drop the VEP
+  sentence from R1 in `results.md`. The `VepHgvsGaps` bib entry can stay (unused entries do
+  not render).
 
 ### R2.1. Current-version ClinVar: parity on RefSeq, Ensembl only in cdot
 

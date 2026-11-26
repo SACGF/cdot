@@ -64,6 +64,16 @@ Pangram is not run on every paragraph any more. The method has been shown to wor
 runs once on the whole main text at the end. He pastes the text in himself. Give it with
 the numbers rendered and without `{{ }}` or `[@...]` markup.
 
+## Each Results paragraph needs one central result about cdot
+
+His rule (2026-11-26): a paragraph earns its place only if it can be summarised in one line
+as a result, and that result is a claim about cdot that we care about. "We store gaps and
+VEP doesn't apply them" fails: biocommons HGVS applies the gaps, not cdot, and VEP's
+behaviour isn't our result (R1b was cut for this). A paragraph that only sets up another,
+describes a table, explains a residual, or repeats another paragraph's result on a different
+corpus gets merged, moved to the supplement, or deleted. Write the one-line result in the
+outline entry before presenting the paragraph.
+
 ## When he asks for a change to data or facts
 
 Do it properly, in the facts pipeline, not in the prose. For example, the UTA count is now
