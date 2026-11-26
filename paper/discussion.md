@@ -1,5 +1,13 @@
 # Discussion
 
+The submitted strings are largely well-formed, so cleaning has little to rescue
+(`fix_hgvs()` repaired {{ clinvar_submitted.rescued_by_fix | commas }} strings, with
+{{ clinvar_submitted.regressions | int }} regressions). The public submitted-string
+corpus (R2) is the complement of the production corpus, and the two corpora locate the
+two failure axes: formal database submissions are largely well-formed and fail by
+transcript-version age, whereas interactive human-typed input carries the formatting
+damage cleaning repairs.
+
 cdot is, first, a general-purpose source of versioned transcript-to-genome alignments:
 RefSeq and Ensembl together, across GRCh37, GRCh38, and T2T-CHM13v2.0, with the full
 release history, in a JSON format that loads in seconds and can be read from any
@@ -25,26 +33,7 @@ parsing, returns every change as an auditable `HGVSFix`, and never breaks a desc
 that already parsed. cdot is complementary to these services, supplying the
 transcript-coordinate layer, not validation.
 
-The LOVD checker is the closest comparator (offline, no reference sequence), so we ran
-it head-to-head with `clean_hgvs()` on the injection corpus
-({{ lovd_comparison.n_cases | commas }} corrupted strings, checker
-{{ lovd_comparison.lovd_version }}; scoring in Methods, per-category breakdown in
-Supplementary Table S5). The corpus injects the error classes `clean_hgvs()` targets,
-so `clean_hgvs()` recovers every case by construction and the comparison measures how
-much of that territory a general syntax checker also covers. Weighted by the production
-error mix, LOVD's top-ranked correction restored
-{{ lovd_comparison.lovd_top1_weighted_pct | pct(0) }} of cases
-({{ lovd_comparison.lovd_top1_pct | pct(0) }} unweighted), matching `clean_hgvs()` on
-common single-token errors but not on free-text damage or cross-accession-family
-repairs; neither tool altered any valid input.
-
-The same corpus puts the sequence-aware services in context. Run over their public REST
-APIs ({{ vv_mutalyzer_comparison.service_date }}; Methods), VariantValidator's validated
-description recovered {{ vv_mutalyzer_comparison.vv_weighted_pct | pct(0) }} of cases
-weighted by the production error mix, and Mutalyzer
-{{ vv_mutalyzer_comparison.mut_weighted_pct | pct(0) }} (Supplementary Table S5). Each
-repairs the damage it can interpret and rejects the rest as invalid; neither falsely
-corrected a valid input. These services answer a different question from
+These services answer a different question from
 `clean_hgvs()`: they validate a description against the reference sequence, so a string
 that cannot be parsed is an error to report, not text to repair. The roles are
 converging, though. Since release 4.0.0 (June 2026) VariantValidator embeds the LOVD

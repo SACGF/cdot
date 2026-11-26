@@ -31,6 +31,10 @@ essentially_flat = { within = 1 }
 [lint]
 # Facts kept on purpose that `vibepaper lint --unused` should not list.
 unused_ok = [
+    # hot/cold-cache repeats of the full-ClinVar run (the cache comparison was cut from Results)
+    "benchmark_fullscale.hot_*",
+    "benchmark_fullscale.cold_tps",
+    "benchmark_fullscale.n_runs",
     # per-decile and UTR breakdowns behind Figure S1 and Supplementary S4; the text
     # cites a few of them
     "positional_drift.*",
