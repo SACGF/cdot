@@ -43,7 +43,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-from facts_io import write_typed_facts  # noqa: E402
+from facts_io import FACTS  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -158,7 +158,7 @@ def main():
               f"({pct(enrich['unknown_version'], n_no_data)}% of no_data)")
         # append a second facts file so the table stays tidy
         enr_out = out.with_name(out.stem + "_failure_reasons.csv")
-        write_typed_facts(enr_out, {
+        FACTS.write(enr_out, {
             "n_no_data": n_no_data,
             "unknown_accession": enrich["unknown_accession"],
             "unknown_version": enrich["unknown_version"],

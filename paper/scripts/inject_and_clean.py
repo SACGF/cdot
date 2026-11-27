@@ -48,7 +48,7 @@ from pathlib import Path
 import hgvs.parser
 
 from cdot.hgvs.clean import clean_hgvs
-from facts_io import write_typed_facts  # noqa: E402
+from facts_io import FACTS  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -469,7 +469,7 @@ def write_facts(facts):
         "inject_n_categories": facts["n_categories"],
         "inject_sample_size": facts["sample_size"],
     }
-    write_typed_facts(csv_path, row)
+    FACTS.write(csv_path, row)
     return json_path, csv_path
 
 

@@ -40,15 +40,13 @@ public/private fact model.
   `lint --unused` lists facts the paper never cites; list ones kept on purpose under
   `[lint] unused_ok`. `[limits]` in `paper.toml` holds the journal's ~5,000-word main-text
   limit; `vibepaper wordcount` prints the counts.
-- **vibepaper main at cec8979** (`vibepaper @ git+https://github.com/SACGF/vibepaper@cec8979`
-  in the `paper` extra and in CI), for claims sidecars, which no PyPI release has yet. Switch
-  both pins to a PyPI release (`vibepaper>=0.13`) once one is out. To move to a new release,
-  follow vibepaper's `UPGRADE_PROMPT.md`.
+- **vibepaper 0.13.0** (`vibepaper==0.13.0`, pinned in the `paper` extra and in CI). To
+  move to a new release, follow vibepaper's `UPGRADE_PROMPT.md`.
 - **Facts are typed.** Every facts CSV is vertical (`field,value,type`). Scripts write
-  them with `write_typed_facts()` from `scripts/facts_io.py`, which types each fact from
-  its name (`*_pct` percent, `n_*` count, `*_ratio` ratio, ...), so name a new fact to
-  match. Any other non-negative integer is a count unless its name marks a rate or a
-  duration (`*_tps*`, `*_s`, `*_min`, `*_days`, `*_pp`). In templates use `{{ x_pct | pct(1) }}`, not `{{ x_pct | dp(1) }}%`; a value out of
+  them with `FACTS.write()` from `scripts/facts_io.py` (a vibepaper `FactsWriter`), which
+  types each fact from its name as that module's docstring lists (`*_pct` percent, `n_*`
+  count, `*_ratio` ratio, ...), so name a new fact to match. A None or NaN value is an
+  error. A script that reads another's facts uses `vibepaper.facts.read_facts`. In templates use `{{ x_pct | pct(1) }}`, not `{{ x_pct | dp(1) }}%`; a value out of
   its type's range fails the load.
 - **Tool and data versions behind a fact come from its provenance sidecar**
   (`empirical_results/<fact>.provenance.json`, `{{ clinvar_vcf._prov.tools.cdot }}`), not

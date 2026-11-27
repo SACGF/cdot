@@ -66,7 +66,7 @@ from cdot.hgvs.clean import clean_hgvs
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import inject_and_clean as iac  # noqa: E402  (injectors, seed, sample, weights)
-from facts_io import write_typed_facts  # noqa: E402
+from facts_io import FACTS  # noqa: E402
 
 FACTS_DIR = iac.FACTS_DIR
 LOVD_VERSION = "v1.2.2"
@@ -276,7 +276,7 @@ def main():
         "lovd_anyrank_weighted_pct", "originals_n", "lovd_false_corrections",
         "lovd_flagged_invalid", "lovd_flagged_invalid_pct",
         "cdot_false_corrections")}
-    write_typed_facts(csv_path, row)
+    FACTS.write(csv_path, row)
 
     print(f"\nLOVD head-to-head ({LOVD_VERSION}, {n} injected cases, "
           f"LOVD wall time {lovd_seconds}s)")

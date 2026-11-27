@@ -22,7 +22,7 @@ Usage:
 """
 import argparse
 from pathlib import Path
-from facts_io import read_facts  # noqa: E402
+from vibepaper.facts import read_facts  # noqa: E402
 
 # Chart tokens (reference dataviz palette, light mode, print surface)
 INK = "#0b0b0b"

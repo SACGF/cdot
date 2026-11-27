@@ -50,7 +50,7 @@ from cdot.hgvs.version_safety import (
     intrinsic_cds_structure,
     _genomic_at,
 )
-from facts_io import write_typed_facts  # noqa: E402
+from facts_io import FACTS  # noqa: E402
 
 ACC_RE = re.compile(r"^(?P<acc>[A-Z]+_?\d+|ENST\d+)\.(?P<ver>\d+)$")
 
@@ -325,14 +325,14 @@ def main():
 
     out = Path("output/facts/version_stability.csv")
     out.parent.mkdir(parents=True, exist_ok=True)
-    write_typed_facts(out, facts)
+    FACTS.write(out, facts)
     print(f"Written: {out}")
     for k, v in facts.items():
         print(f"  {k}: {v}")
 
     if len(pos_facts) > 2:  # got at least one single-build file
         pos_out = Path("output/facts/positional_drift.csv")
-        write_typed_facts(pos_out, pos_facts)
+        FACTS.write(pos_out, pos_facts)
         print(f"Written: {pos_out}")
         for k, v in pos_facts.items():
             print(f"  {k}: {v}")

@@ -49,7 +49,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from benchmark_resolution import build_provider, classify, classify_vcf  # noqa: E402
 from cdot.hgvs.gene_hgvs import _cited_position  # noqa: E402
 from cdot.hgvs.version_safety import is_version_substitution_safe_by_accession  # noqa: E402
-from facts_io import write_typed_facts  # noqa: E402
+from facts_io import FACTS  # noqa: E402
 
 
 def under_version(c_hgvs, tx, w):
@@ -149,7 +149,7 @@ def main():
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    write_typed_facts(out, facts)
+    FACTS.write(out, facts)
 
     print(f"  provider              : {label}")
     print(f"  variants w/ alt version: {agg['variants_with_alt']}")

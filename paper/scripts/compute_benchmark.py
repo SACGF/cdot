@@ -46,7 +46,8 @@ from pathlib import Path
 # layer, dominates every row.
 os.environ.setdefault("SEQREPO_FD_CACHE_MAXSIZE", "128")
 
-from facts_io import read_facts, write_typed_facts  # noqa: E402
+from facts_io import FACTS  # noqa: E402
+from vibepaper.facts import read_facts  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PAIRS = REPO_ROOT / "tests/test_data/clinvar_hgvs/clinvar_hgvs_500.tsv"
@@ -76,7 +77,7 @@ def derive_only(csv_path):
     it holds. A full run derives them from the unrounded medians instead."""
     facts = read_facts(csv_path)
     facts.update(derived({k: float(v) for k, v in facts.items() if k.endswith("_tps")}))
-    write_typed_facts(csv_path, facts)
+    FACTS.write(csv_path, facts)
     print(f"Written: {csv_path}")
 
 
@@ -249,7 +250,7 @@ def main():
     out = Path("output/facts/benchmark.csv")
     out.parent.mkdir(parents=True, exist_ok=True)
     facts.update(derived(medians))
-    write_typed_facts(out, facts)
+    FACTS.write(out, facts)
     print(f"Written: {out}")
 
 
